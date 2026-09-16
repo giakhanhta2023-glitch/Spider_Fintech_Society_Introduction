@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# secrets — never commit these
+.env
+.env.local
+.streamlit/secrets.toml
+
+# derived / cached data
+fx_cache.json
+*.cache.json
+.DS_Store
+
+# editor
+.vscode/
+.idea/
+
+# test / tooling caches
+.pytest_cache/

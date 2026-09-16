@@ -1,0 +1,17 @@
+{
+  "name": "finquest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FinQuest - a 10-level project-based fintech training game with an AI tutor",
+  "type": "module",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "data": "python data/generate_datasets.py"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.126.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinQuest — Fintech Training Arcade</title>
+<meta name="description" content="A 10-level, project-based fintech course. Learn, drill, build, ship — with an AI tutor and full solution keys.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128200;</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Radix Themes: the component library the whole interface is built from -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/themes@3.2.1/styles.css">
+<link rel="stylesheet" href="assets/css/app.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.1.0",
+    "react-dom": "https://esm.sh/react-dom@19.1.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.1.0/client",
+    "react/jsx-runtime": "https://esm.sh/react@19.1.0/jsx-runtime",
+    "@radix-ui/themes": "https://esm.sh/@radix-ui/themes@3.2.1?external=react,react-dom",
+    "htm": "https://esm.sh/htm@3.1.1"
+  }
+}
+</script>
+</head>
+
+<body>
+  <div id="root">
+    <noscript>FinQuest needs JavaScript. The curriculum is also readable as Markdown in the repository.</noscript>
+  </div>
+
+  <!-- ============ data layer: plain scripts, no build step ============ -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/storage.js"></script>
+
+  <!-- ============ curriculum ============ -->
+  <script src="content/levels/level-01.js"></script>
+  <script src="content/levels/level-02.js"></script>
+  <script src="content/levels/level-03.js"></script>
+  <script src="content/levels/level-04.js"></script>
+  <script src="content/levels/level-05.js"></script>
+  <script src="content/levels/level-06.js"></script>
+  <script src="content/levels/level-07.js"></script>
+  <script src="content/levels/level-08.js"></script>
+  <script src="content/levels/level-09.js"></script>
+  <script src="content/levels/level-10.js"></script>
+
+  <!-- ============ interface: React + Radix Themes ============ -->
+  <script type="module" src="assets/js/ui/main.js"></script>
+</body>
+</html>
