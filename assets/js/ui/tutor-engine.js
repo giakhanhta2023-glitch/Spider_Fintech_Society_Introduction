@@ -143,7 +143,7 @@ function sentences(text, n) {
 }
 
 function levelLink(lv, tab, label) {
-  return '[' + (label || ('Level ' + lv)) + '](#/level/' + lv + (tab ? '/' + tab : '') + ')';
+  return '[' + (label || ('level ' + lv)) + '](#/level/' + lv + (tab ? '/' + tab : '') + ')';
 }
 
 const ERROR_HELP = {
@@ -172,7 +172,7 @@ export function offlineAnswer(question, ctx) {
   if (/^(hi|hey|hello|yo|good (morning|evening|afternoon))\b/.test(q)) {
     return {
       text: lv
-        ? `Hello. You are on **Level ${lv.id}: ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
+        ? `Hello. You are on **level ${lv.id}, ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
           '\n\nAsk me about any concept here, paste an error message, or say **hint** if the build has you stuck.'
         : 'Hello. I am Ada, your tutor for this course. Open a level and I will follow you into it, or ask me ' +
           'anything about fintech, Python, or the tools.',
@@ -185,8 +185,8 @@ export function offlineAnswer(question, ctx) {
   if (/where.*(start|begin)|what.*first|how.*(start|begin)/.test(q)) {
     const cur = FQ.store.currentLevel();
     return {
-      text: `Start at ${levelLink(cur, 'brief', 'Level ' + cur)}. Work the tabs in order: **Learn**, ` +
-            `**Tutorial**, **Drill**, **Build**. The drill needs ${CFG.quiz.passMark}/15 to unlock the build, ` +
+      text: `Start at ${levelLink(cur, 'brief', 'level ' + cur)}. Work the tabs in order: **learn**, ` +
+            `**tutorial**, **drill**, **build**. The drill needs ${CFG.quiz.passMark}/15 to unlock the build, ` +
             'and the build needs nothing beyond what that level taught you.\n\nNothing to install for levels 1 to 8. ' +
             'It all runs in Google Colab in a browser tab.',
       chips: ['Do I need to install Python?', 'What is Colab?', 'How does XP work?']
@@ -233,7 +233,7 @@ export function offlineAnswer(question, ctx) {
     return {
       text: `**${errorMatch[1]}**: ${ERROR_HELP[errorMatch[1]]}` +
             (hitsErr.length
-              ? `\n\nRelated, from Level ${hitsErr[0].doc.lv}: ${sentences(hitsErr[0].doc.text.join(' '), 2)}` +
+              ? `\n\nRelated, from level ${hitsErr[0].doc.lv}: ${sentences(hitsErr[0].doc.text.join(' '), 2)}` +
                 '\n\n' + levelLink(hitsErr[0].doc.lv, hitsErr[0].doc.tab, 'Open the section')
               : '') +
             '\n\nPaste the **last line** of the traceback if you want me to be more specific.',
@@ -257,14 +257,14 @@ export function offlineAnswer(question, ctx) {
       text: 'I could not find that in the course material.\n\nI answer from the ten levels in front of you, so try ' +
             'naming a concept (**compounding**, **idempotency**, **drawdown**, **precision**), pasting an error message, ' +
             'or asking for a **hint** on the build you are on.' +
-            (lv ? `\n\nYou are on Level ${lv.id}, which covers : ${lv.tags.join(', ')}.`: ''),
+            (lv ? `\n\nYou are on level ${lv.id}, which covers ${lv.tags.join(', ')}.` : ''),
       chips: lv ? lv.glossary.slice(0, 3).map((g) => 'What is ' + g.t + '?')
                   : ['What is fintech?', 'What is a ledger?', 'What is APR?']
     };
   }
 
   const best = hits[0].doc;
-  let answer = `**${best.title}**: Level ${best.lv}\n\n${sentences(best.text.join(' '), 4)}`;
+  let answer = `**${best.title}** (level ${best.lv})\n\n${sentences(best.text.join(' '), 4)}`;
   if (best.code) {
     answer += '\n\n```\n' + best.code.code.split('\n').slice(0, 14).join('\n') + '\n```';
   }
@@ -273,7 +273,7 @@ export function offlineAnswer(question, ctx) {
   const related = hits.slice(1).map((h) => h.doc.title);
   return {
     text: answer,
-    source: `Level ${best.lv} · ${best.kind}`,
+    source: `level ${best.lv}, ${best.kind}`,
     chips: related.length ? related.map((r) => 'Explain ' + r) : ['Give me an example', 'hint']
   };
 }

@@ -4,7 +4,7 @@ node_modules/
 __pycache__/
 *.pyc
 
-# secrets — never commit these
+# secrets, never commit these
 .env
 .env.local
 .streamlit/secrets.toml

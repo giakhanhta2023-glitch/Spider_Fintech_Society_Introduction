@@ -3,7 +3,7 @@ FinQuest level 1: lab check.
 
 Paste this whole file into one Google Colab cell and press Shift + Enter.
 It confirms the environment the rest of the course assumes, and demonstrates
-the one rule you need before Level 2: money is not a float.
+the one rule you need before level 2: money is not a float.
 """
 
 import sys

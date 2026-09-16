@@ -353,7 +353,7 @@ FQ.registerLevel({
     story: 'A member drops six months of their bank export on your desk with one question: "where is my money ' +
            'actually going?" Build the analyzer that answers it, and see if you can find them at least one thing ' +
            'worth cancelling.',
-    scope: 'Uses only this level plus Level 2: pandas (read_csv, masks, groupby, sort_values, value_counts, .dt, .abs), ' +
+    scope: 'Uses only this level plus level 2: pandas (read_csv, masks, groupby, sort_values, value_counts, .dt, .abs), ' +
            'matplotlib bar charts, f-string formatting, and functions. No machine learning, no APIs, no classes.',
     dataset: '{{RAW}}/data/level-03-transactions.csv',
     requirements: [

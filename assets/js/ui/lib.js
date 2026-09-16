@@ -1,21 +1,17 @@
 /* =========================================================================
-   Shared imports and small helpers for the Radix interface.
-   Everything UI-related goes through here so the component files stay short.
+   Shared imports and helpers.
+
+   Radix is used for behaviour only: tabs, dialogs, tooltips, focus traps.
+   Everything with a visual identity (buttons, tags, panels, tables) is our
+   own markup, so the editorial system is not fighting a component library.
    ========================================================================= */
 import React from 'react';
 import htm from 'htm';
-import * as RT from '@radix-ui/themes';
+import { Theme, Tabs, Dialog, AlertDialog, Tooltip } from '@radix-ui/themes';
 
 export const html = htm.bind(React.createElement);
-export { React, RT };
+export { React, Theme, Tabs, Dialog, AlertDialog, Tooltip };
 export const { useState, useEffect, useMemo, useRef, useCallback } = React;
-
-export const {
-  Theme, Container, Flex, Grid, Box, Section, Separator, Card, Heading, Text,
-  Badge, Button, IconButton, Link, Tabs, Progress, Callout, ScrollArea, Dialog,
-  TextField, TextArea, Table, Code, Blockquote, Kbd, Tooltip, Avatar, Inset,
-  Strong, Em, Spinner, Switch, SegmentedControl, DataList, AlertDialog
-} = RT;
 
 /* The curriculum data layer, loaded by the classic scripts before this runs. */
 export const FQ = window.FQ;
@@ -29,23 +25,38 @@ export function md(text) {
 }
 
 export function rawHtml(markup, props = {}) {
-  return html`<div...${props} dangerouslySetInnerHTML=${{ __html: markup }} />`;
+  return html`<div ...${props} dangerouslySetInnerHTML=${{ __html: markup }} />`;
 }
 
-export function navigate(hash) {
-  window.location.hash = hash;
-}
+export function navigate(hash) { window.location.hash = hash; }
 
-/* Difficulty shown as filled pips: denser and more legible than "7/10". */
-export function Pips({ value, max = 10 }) {
+/* Difficulty as a measured bar: ten ticks, filled to the level. */
+export function Gauge({ value, max = 10 }) {
   return html`
-    <span className="pips" title=${`Difficulty ${value} of ${max}`} aria-label=${`Difficulty ${value} of ${max}`}>
-      ${Array.from({ length: max }, (_, i) =>
-        html`<i key=${i} className=${i < value ? 'on' : ''} />`)}
+    <span class="gauge" title=${`Difficulty ${value} of ${max}`}
+          aria-label=${`Difficulty ${value} of ${max}`}>
+      ${Array.from({ length: max }, (_, i) => html`<i key=${i} class=${i < value ? 'on' : ''} />`)}
     </span>`;
 }
 
-/* Monospace figure: used for every number in the interface. */
-export function Figure({ children, size = '2', color }) {
-  return html`<${Text} as="span" size=${size} color=${color} className="figure">${children}<//>`;
+/* Structural button: square, mono label, optional trailing arrow. */
+export function Btn({ children, onClick, href, variant = '', small, disabled, arrow, type = 'button', ...rest }) {
+  const cls = ['btn', variant && 'btn-' + variant, small && 'btn-s'].filter(Boolean).join(' ');
+  const inner = html`${children}${arrow ? html`<span class="arrow" aria-hidden="true">→</span>` : null}`;
+  if (href) return html`<a class=${cls} href=${href} ...${rest}>${inner}</a>`;
+  return html`
+    <button class=${cls} type=${type} onClick=${onClick} disabled=${disabled} ...${rest}>${inner}</button>`;
+}
+
+export function Tag({ children, variant = '' }) {
+  return html`<span class=${'tag' + (variant ? ' tag-' + variant : '')}>${children}</span>`;
+}
+
+/* A rule, a title, and an optional right-hand note. */
+export function SectionHead({ title, note }) {
+  return html`
+    <div class="section-head">
+      <h2>${title}</h2>
+      ${note ? html`<span class="mono">${note}</span>` : null}
+    </div>`;
 }

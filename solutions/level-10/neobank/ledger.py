@@ -1,5 +1,5 @@
 """
-neobank.ledger: double-entry ledger (from Level 4)
+neobank.ledger: double-entry ledger (from level 4)
 ===================================================
 A double-entry ledger that cannot lose money:
 

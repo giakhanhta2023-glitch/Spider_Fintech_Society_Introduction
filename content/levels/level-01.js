@@ -90,13 +90,13 @@ FQ.registerLevel({
     { p: 'Professional systems store money as **integers in the smallest unit** (cents, satoshi, dong) and only format to ' +
          'decimals for display. $10.45 is stored as `1045`. You will use floats for *rates and projections* (where a rounding ' +
          'error is harmless) and integers for *balances and ledgers* (where it is not). Level 4 builds a real ledger this way.' },
-    { warn: 'If you remember one sentence from Level 1: **never store a balance as a float**.' },
+    { warn: 'If you remember one sentence from level 1: **never store a balance as a float**.' },
 
     { h: 'Why you will not be installing VS Code today' },
     { p: 'The fastest way to quit programming is to spend your first evening on installers, PATH variables, and version errors ' +
          'before writing a single line that does anything. So levels 1 to 8 of FinQuest run entirely in **Google Colab**: ' +
          'Python in a browser tab, with pandas, matplotlib and scikit-learn already installed, free, on any laptop.' },
-    { p: 'You will only set up a local editor in Level 9, when you have something worth deploying and the setup finally pays ' +
+    { p: 'You will only set up a local editor in level 9, when you have something worth deploying and the setup finally pays ' +
          'for itself. By then it will take ten minutes and make sense.' },
     { table: {
       head: ['Tool', 'What it is for', 'Cost / install'],
@@ -153,7 +153,7 @@ FQ.registerLevel({
       {
         t: 'Python in ten minutes: the five things you need',
         blocks: [
-          { p: 'Everything in Level 2 is built from these five ideas. Run each block and change the numbers.' },
+          { p: 'Everything in level 2 is built from these five ideas. Run each block and change the numbers.' },
           { h4: '1. Variables hold values' },
           { code: 'balance = 1045        # an integer: $10.45 stored as cents\nrate = 0.045          # a float: 4.5% as a decimal\nname = "Mai"          # a string\nis_verified = True    # a boolean\n\nprint(balance, rate, name, is_verified)', lang: 'python' },
           { h4: '2. f-strings format output for humans' },
@@ -230,7 +230,7 @@ FQ.registerLevel({
       {
         t: 'Find the solution keys (and how to use them honestly)',
         blocks: [
-          { p: 'Every project from Level 2 onward has a complete, commented solution in the FinQuest repo under `solutions/level-XX/`. ' +
+          { p: 'Every project from level 2 onward has a complete, commented solution in the FinQuest repo under `solutions/level-XX/`. ' +
                'Each folder holds the working code, a walkthrough README, and the quiz answer key.' },
           { p: 'The keys exist so you are never permanently stuck, but reading code teaches you far less than writing it. ' +
                'Use this order every time:' },
@@ -394,7 +394,7 @@ FQ.registerLevel({
         "Uploading a .ipynb notebook through the GitHub web interface"
       ],
       answer: 0,
-      why: "Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables: covered in Level 5." },
+      why: "Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables: covered in level 5." },
 
     { q: "APR stands for Annual Percentage Rate. What does it express?",
       options: [
@@ -430,7 +430,7 @@ FQ.registerLevel({
       'Caused an error on purpose and read the last line of the message',
       'Created a GitHub account with a portfolio-worthy username',
       'Created a public repository called finquest-portfolio with a README',
-      'Saved your Level 1 notebook into that repository from Colab',
+      'Saved your level 1 notebook into that repository from Colab',
       'Opened the FinQuest solutions folder on GitHub and found the level folders'
     ],
     solutionPath: 'solutions/level-01'
@@ -439,11 +439,11 @@ FQ.registerLevel({
   /* ==================== TUTOR KNOWLEDGE ==================== */
   faq: [
     { q: 'Do I need to install Python?',
-      a: 'No. Levels 1 to 8 run entirely in Google Colab in your browser. You only set up a local environment in Level 9, ' +
+      a: 'No. Levels 1 to 8 run entirely in Google Colab in your browser. You only set up a local environment in level 9, ' +
          'when you deploy a real web app and the setup finally earns its keep.' },
     { q: 'Colab asks me to sign in / my notebook will not save',
       a: 'Colab saves to Google Drive, so you need to be signed in to a Google account. If saving fails, use File → Save a copy ' +
-         'in Drive, or File → Download →.ipynb to keep a local copy.' },
+         'in Drive, or File → Download → .ipynb to keep a local copy.' },
     { q: 'My cell runs but nothing prints',
       a: 'Only the last expression in a cell is auto-displayed. If you assign a value (x = 5) nothing shows. Add print(x), ' +
          'or put the bare variable name on the last line.' },

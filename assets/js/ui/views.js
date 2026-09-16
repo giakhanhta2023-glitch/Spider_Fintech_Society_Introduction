@@ -1,62 +1,47 @@
 /* =========================================================================
-   Home (the mission ladder), glossary, and the progress dossier.
+   Home (masthead and contents index), glossary, dossier.
    ========================================================================= */
 import {
-  html, useState, useMemo, FQ, CFG, store, md, navigate, Pips, Box, Flex,
-  Grid, Card, Heading, Text, Badge, Button, Link, Separator, TextField,
-  Table, Callout, AlertDialog
+  html, useState, useMemo, FQ, CFG, store, md, navigate,
+  Gauge, Btn, Tag, SectionHead, AlertDialog
 } from './lib.js';
 
 /* =============================== HOME =============================== */
-function LadderRow({ level }) {
+function IndexRow({ level }) {
   const unlocked = store.isUnlocked(level.id);
   const cleared = store.isCleared(level.id);
   const current = store.currentLevel() === level.id && !cleared;
   const state = store.level(level.id);
 
+  const cls = ['index-row',
+    cleared && 'is-done',
+    current && 'is-current',
+    !unlocked && 'is-locked'].filter(Boolean).join(' ');
+
   const body = html`
-    <${Flex} gap="4" align="start">
-      <div className=${'medallion' + (cleared ? ' done' : current ? ' current' : '')}>
-        <span className="figure">${cleared ? '✓' : unlocked ? level.id : '🔒'}</span>
-      </div>
+    <span class="index-num">${String(level.id).padStart(2, '0')}</span>
 
-      <${Box} style=${{ flex: 1, minWidth: 0 }}>
-        <${Flex} justify="between" align="start" gap="3" wrap="wrap">
-          <${Box} style=${{ minWidth: 0 }}>
-            <${Text} size="1" color="gray" className="crumb">
-              ${unlocked ? level.codename : `locked · clear level ${level.id - 1}`}
-            <//>
-            <${Heading} size="4" mt="1" mb="1">${level.title}<//>
-            <${Text} as="p" size="2" color="gray" style=${{ maxWidth: '62ch' }}>
-              ${md(level.tagline)}
-            <//>
-          <//>
-          ${current ? html`<${Badge} color="blue" variant="solid" radius="full">you are here<//>`: null}
-        <//>
+    <span>
+      <span class="index-title">${level.title}</span>
+      <p class="index-sub">${md(level.tagline)}</p>
+    </span>
 
-        <${Flex} gap="2" mt="3" wrap="wrap" align="center">
-          <${Badge} variant="surface" color="gray"><${Pips} value=${level.difficulty} /><//>
-          <${Badge} variant="surface" color="gray">~${level.minutes} min<//>
-          <${Badge} variant="soft" color=${state.quizPassed ? 'grass' : 'gray'}>
-            drill ${state.quizBest}/${level.quiz.length}
-          <//>
-          <${Badge} variant="soft" color=${state.projectDone ? 'grass' : 'amber'}>
-            ${level.project
-              ? (state.projectDone ? 'project shipped' : 'project')
-              : (state.projectDone ? 'setup done' : 'setup')}
-          <//>
-        <//>
+    <span class="index-meta">
+      ${unlocked ? null : html`<${Tag}>locked<//>`}
+      <${Tag}><${Gauge} value=${level.difficulty} /><//>
+      <${Tag}>${level.minutes} min<//>
+      <${Tag} variant=${state.quizPassed ? 'moss' : ''}>
+        drill ${state.quizBest}/${level.quiz.length}
       <//>
-    <//>`;
+      <${Tag} variant=${state.projectDone ? 'moss' : ''}>
+        ${level.project ? (state.projectDone ? 'shipped' : 'build') : (state.projectDone ? 'ready' : 'setup')}
+      <//>
+      ${current ? html`<${Tag} variant="accent">you are here<//>` : null}
+    </span>`;
 
-  return html`
-    <li className=${'rung' + (unlocked ? '' : ' locked') + (cleared ? ' cleared' : '')}>
-      ${unlocked
-        ? html`<a className="rung-link" href=${`#/level/${level.id}`}>
-            <${Card} size="3" variant="surface" className="rung-card">${body}<//>
-          </a>`
-        : html`<${Card} size="3" variant="surface" className="rung-card">${body}<//>`}
-    </li>`;
+  return unlocked
+    ? html`<a class=${cls} href=${`#/level/${level.id}`}>${body}</a>`
+    : html`<div class=${cls} title=${`Clear level ${level.id - 1} first`}>${body}</div>`;
 }
 
 export function Home({ onAskTutor }) {
@@ -66,70 +51,68 @@ export function Home({ onAskTutor }) {
   const projects = FQ.levels.filter((l) => !!l.project).length;
 
   return html`
-    <${Flex} direction="column" gap="6">
-      <${Card} size="4" className="hero">
-        <${Badge} color="blue" variant="soft" radius="full" mb="3">
-          Spider Fintech Society · training arcade
-        <//>
-        <${Heading} size=${{ initial: '7', sm: '8', md: '9' }} mb="3" className="hero-title">
-          Learn fintech by <span className="accent">building</span> it.
-        <//>
-        <${Text} as="p" size=${{ initial: '3', sm: '4' }} color="gray" mb="5" style=${{ maxWidth: '64ch' }}>
-          Every level hands you the knowledge, a walkthrough you can follow along with, a 15-question
-          drill with a full answer key, and something to build using only what you just learned.
-        <//>
-        <${Flex} gap="3" wrap="wrap">
-          <${Button} size="3" onClick=${() => navigate(`#/level/${current}`)}>
-            ${cleared ? `Continue level ${current}`: 'Start level 1'}
-          <//>
-          <${Button} size="3" variant="surface" color="gray" onClick=${onAskTutor}>
-            Meet your AI tutor
-          <//>
-        <//>
-        <${Separator} size="4" my="5" />
-        <${Grid} columns=${{ initial: '2', sm: '4' }} gap="4">
-          ${[
-            [`${cleared}/10`, 'levels cleared'],
-            [questions, 'drill questions'],
-            [projects, 'build projects'],
-            [store.xp().toLocaleString(), 'total XP']
-          ].map(([value, label], i) => html`
-            <${Box} key=${i} className="stat">
-              <span className="stat-value figure">${value}</span>
-              <span className="stat-label">${label}</span>
-            <//>`)}
-        <//>
-      <//>
+    <div class="page">
 
-      <${Box}>
-        <${Flex} justify="between" align="end" gap="3" mb="4" wrap="wrap">
-          <${Heading} size="6">Mission map<//>
-          <${Text} size="2" color="gray">
-            Pass the drill, ship the build, and the next level opens up.
-          <//>
-        <//>
-        <ol className="ladder">
-          ${FQ.levels.map((lv) => html`<${LadderRow} key=${lv.id} level=${lv} />`)}
-        </ol>
-      <//>
+      <!-- Masthead: title occupies the left seven columns, the standfirst and
+           entry point sit in the right four. Deliberately off-centre. -->
+      <section class="section grid">
+        <div class="col-1-7">
+          <span class="kicker">Spider Fintech Society <b>/</b> ten levels</span>
+          <h1 class="display display-xl">
+            Learn fintech<br />by building it
+          </h1>
+        </div>
 
-      <${Box}>
-        <${Heading} size="6" mb="4">How a level works<//>
-        <${Grid} columns=${{ initial: '1', sm: '2', md: '4' }} gap="3">
+        <div class="col-9-12">
+          <p class="lede">
+            Every level hands you the knowledge, a walkthrough you can follow along with, a
+            15-question drill with a full answer key, and something to build using only what
+            you just learned.
+          </p>
+          <div class="btn-row" style=${{ marginTop: '28px' }}>
+            <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
+              ${cleared ? `continue level ${current}` : 'start level 01'}
+            <//>
+            <${Btn} variant="quiet" onClick=${onAskTutor}>meet the tutor<//>
+          </div>
+        </div>
+      </section>
+
+      <!-- The numbers, set as a ruled table rather than four glowing cards. -->
+      <div class="datastrip">
+        <div><span class="v">${cleared}/10</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${questions}</span><span class="k">drill questions</span></div>
+        <div><span class="v">${projects}</span><span class="k">things to build</span></div>
+        <div><span class="v">${store.xp().toLocaleString()}</span><span class="k">experience</span></div>
+      </div>
+
+      <!-- Contents page. -->
+      <section class="section">
+        <${SectionHead} title="Contents"
+          note="pass the drill, ship the build, the next level opens" />
+        <div class="index">
+          ${FQ.levels.map((lv) => html`<${IndexRow} key=${lv.id} level=${lv} />`)}
+        </div>
+      </section>
+
+      <!-- How a level works, as four numbered columns under one rule. -->
+      <section class="section-tight">
+        <${SectionHead} title="How a level works" note="four movements" />
+        <div class="grid" style=${{ rowGap: '28px' }}>
           ${[
-            ['Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],
-            ['Tutorial', 'Follow along step by step. Everything the build needs is introduced right here.'],
-            ['Drill', `15 questions with instant explanations. ${CFG.quiz.passMark}/15 unlocks the build.`],
-            ['Build', 'Something to build using only what you know, with a full solution waiting if you get stuck.']
-          ].map(([title, body], i) => html`
-            <${Card} key=${i} size="3" variant="surface">
-              <${Text} size="1" color="blue" className="figure">0${i + 1}<//>
-              <${Heading} size="3" mt="1" mb="2">${title}<//>
-              <${Text} as="p" size="2" color="gray">${body}<//>
-            <//>`)}
-        <//>
-      <//>
-    <//>`;
+            ['01', 'Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],
+            ['02', 'Tutorial', 'Follow along step by step. Everything the build needs is introduced right here.'],
+            ['03', 'Drill', `15 questions with instant explanations. ${CFG.quiz.passMark} of 15 opens the build.`],
+            ['04', 'Build', 'Something to make using only what you know, with a full solution if you get stuck.']
+          ].map(([n, title, body], i) => html`
+            <div key=${i} style=${{ gridColumn: 'span 3' }} class="how-col">
+              <span class="kicker"><b>${n}</b></span>
+              <h3 class="title title-m">${title}</h3>
+              <p class="index-sub">${body}</p>
+            </div>`)}
+        </div>
+      </section>
+    </div>`;
 }
 
 /* ============================= GLOSSARY ============================= */
@@ -139,44 +122,42 @@ export function Glossary() {
   const terms = useMemo(() => {
     const all = [];
     FQ.levels.forEach((lv) => (lv.glossary || []).forEach((g) =>
-      all.push({...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() })));
-    return all.sort((a, b) => a.t.toLowerCase() < b.t.toLowerCase() ? -1 : 1);
+      all.push({ ...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() })));
+    return all.sort((a, b) => (a.t.toLowerCase() < b.t.toLowerCase() ? -1 : 1));
   }, []);
 
   const q = query.trim().toLowerCase();
   const shown = q ? terms.filter((t) => t.blob.indexOf(q) !== -1) : terms;
 
   return html`
-    <${Flex} direction="column" gap="4">
-      <${Box}>
-        <${Text} size="1" color="gray" className="crumb">
-          <${Link} href="#/" color="gray">Mission map<//> / glossary
-        <//>
-        <${Heading} size=${{ initial: '6', sm: '8' }} mt="2" mb="2">Glossary<//>
-        <${Text} as="p" size="3" color="gray">
-          Every term the course explains, gathered in one place. ${terms.length} of them so far.
-        <//>
-      <//>
+    <div class="page">
+      <section class="section grid">
+        <div class="col-1-7">
+          <span class="kicker">reference <b>/</b> ${terms.length} entries</span>
+          <h1 class="display display-l">Glossary</h1>
+        </div>
+        <div class="col-9-12">
+          <p class="lede">Every term the course explains, gathered in one place.</p>
+        </div>
+      </section>
 
-      <${TextField.Root} size="3" placeholder="Search: try “idempotency” or “drawdown”"
-        value=${query} onChange=${(e) => setQuery(e.target.value)} />
+      <input class="search" type="search" value=${query} autoComplete="off"
+        placeholder="filter, try idempotency or drawdown"
+        onInput=${(e) => setQuery(e.target.value)} />
 
-      ${shown.length === 0
-        ? html`<${Callout.Root} color="gray" variant="surface">
-            <${Callout.Text}>Nothing matches that one. Try a shorter word, or just ask the tutor.<//>
-          <//>`
-        : html`
-          <${Grid} columns=${{ initial: '1', sm: '2' }} gap="3">
-            ${shown.map((g, i) => html`
-              <${Card} key=${i} size="2" variant="surface">
-                <${Flex} justify="between" align="start" gap="2" mb="1">
-                  <${Text} size="3" weight="medium" color="blue" className="figure">${g.t}<//>
-                  <${Link} size="1" color="gray" href=${`#/level/${g.lv}`}>level ${g.lv}<//>
-                <//>
-                <${Text} as="p" size="2" color="gray">${md(g.d)}<//>
-              <//>`)}
-          <//>`}
-    <//>`;
+      <section class="section-tight">
+        ${shown.length === 0
+          ? html`<p class="notice">Nothing matches that one. Try a shorter word, or just ask the tutor.</p>`
+          : html`
+            <dl class="deflist">
+              ${shown.map((g, i) => html`
+                <div class="defrow" key=${i}>
+                  <dt>${g.t} <a class="lv" href=${`#/level/${g.lv}`}>level ${String(g.lv).padStart(2, '0')}</a></dt>
+                  <dd>${md(g.d)}</dd>
+                </div>`)}
+            </dl>`}
+      </section>
+    </div>`;
 }
 
 /* ============================== DOSSIER ============================== */
@@ -195,113 +176,102 @@ export function Dossier({ onReset }) {
   });
 
   return html`
-    <${Flex} direction="column" gap="5">
-      <${Box}>
-        <${Text} size="1" color="gray" className="crumb">
-          <${Link} href="#/" color="gray">Mission map<//> / dossier
-        <//>
-        <${Heading} size=${{ initial: '6', sm: '8' }} mt="2" mb="2">Your dossier<//>
-        <${Flex} gap="2" align="center" wrap="wrap">
-          <${Badge} color="amber" variant="soft" radius="full" size="2">${store.rank()}<//>
-          <${Text} size="2" color="gray">kept in this browser only, never uploaded<//>
-        <//>
-      <//>
+    <div class="page">
+      <section class="section grid">
+        <div class="col-1-7">
+          <span class="kicker">record <b>/</b> this browser only</span>
+          <h1 class="display display-l">Dossier</h1>
+        </div>
+        <div class="col-9-12">
+          <p class="lede">
+            Rank <strong>${store.rank()}</strong>. Nothing here leaves your device.
+          </p>
+        </div>
+      </section>
 
-      <${Grid} columns=${{ initial: '2', sm: '5' }} gap="3">
-        ${[
-          [all.xp.toLocaleString(), 'total XP'],
-          [`${cleared}/10`, 'levels cleared'],
-          [`${quizzes}/10`, 'drills passed'],
-          [projects, 'builds shipped'],
-          [`${answered}/${totalQ}`, 'best answers']
-        ].map(([value, label], i) => html`
-          <${Card} key=${i} size="2" variant="surface">
-            <${Box} className="stat">
-              <span className="stat-value figure">${value}</span>
-              <span className="stat-label">${label}</span>
-            <//>
-          <//>`)}
-      <//>
+      <div class="datastrip">
+        <div><span class="v">${all.xp.toLocaleString()}</span><span class="k">experience</span></div>
+        <div><span class="v">${cleared}/10</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${quizzes}/10</span><span class="k">drills passed</span></div>
+        <div><span class="v">${answered}/${totalQ}</span><span class="k">best answers</span></div>
+      </div>
 
-      <${Box}>
-        <${Heading} size="5" mb="3">Badges<//>
-        <${Grid} columns=${{ initial: '2', sm: '4' }} gap="3">
+      <section class="section-tight">
+        <${SectionHead} title="Badges" note=${`${store.all().badges.length} of ${store.BADGES.length}`} />
+        <div class="grid" style=${{ rowGap: '16px' }}>
           ${store.BADGES.map((b) => {
             const got = store.badgeEarned(b.id);
             return html`
-              <${Card} key=${b.id} size="2" variant="surface" className=${got ? 'badge-card' : 'badge-card locked'}>
-                <${Flex} direction="column" align="center" gap="1" py="2">
-                  <span className="badge-ico">${b.ico}</span>
-                  <${Text} size="2" weight="medium" align="center">${b.name}<//>
-                  <${Text} size="1" color="gray" align="center">${got ? 'earned' : b.hint}<//>
-                <//>
-              <//>`;
+              <div key=${b.id} style=${{ gridColumn: 'span 3' }}
+                class=${'medal ' + (got ? 'is-earned' : 'is-locked')}>
+                <span class="ico">${b.ico}</span>
+                <b>${b.name}</b>
+                <span>${got ? 'earned' : b.hint}</span>
+              </div>`;
           })}
-        <//>
-      <//>
+        </div>
+      </section>
 
-      <${Box}>
-        <${Heading} size="5" mb="3">Level by level<//>
-        <${Card} size="1" variant="surface">
-          <${Table.Root} variant="ghost" size="1">
-            <${Table.Header}>
-              <${Table.Row}>
-                <${Table.ColumnHeaderCell}>Level<//>
-                <${Table.ColumnHeaderCell}>Best drill<//>
-                <${Table.ColumnHeaderCell}>Attempts<//>
-                <${Table.ColumnHeaderCell}>Build<//>
-                <${Table.ColumnHeaderCell}>Status<//>
-              <//>
-            <//>
-            <${Table.Body}>
+      <section class="section-tight">
+        <${SectionHead} title="Level by level" />
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr><th>level</th><th>best drill</th><th>attempts</th><th>build</th><th>status</th></tr>
+            </thead>
+            <tbody>
               ${FQ.levels.map((lv) => {
                 const st = store.level(lv.id);
-                const status = store.isCleared(lv.id)
-                  ? html`<${Badge} color="grass" variant="soft">cleared<//>`
-                  : store.isUnlocked(lv.id)
-                    ? html`<${Badge} color="amber" variant="soft">open<//>`
-                    : html`<${Badge} color="gray" variant="soft">locked<//>`;
+                const status = store.isCleared(lv.id) ? 'cleared'
+                  : store.isUnlocked(lv.id) ? 'open' : 'locked';
                 return html`
-                  <${Table.Row} key=${lv.id}>
-                    <${Table.RowHeaderCell}>
-                      <${Link} href=${`#/level/${lv.id}`}>${lv.id}. ${lv.title}<//>
-                    <//>
-                    <${Table.Cell}><span className="figure">${st.quizBest}/${lv.quiz.length}</span><//>
-                    <${Table.Cell}><span className="figure">${st.attempts || 0}</span><//>
-                    <${Table.Cell}>${st.projectDone ? '✓' : '·'}<//>
-                    <${Table.Cell}>${status}<//>
-                  <//>`;
+                  <tr key=${lv.id}>
+                    <td><a class="link" href=${`#/level/${lv.id}`}>
+                      ${String(lv.id).padStart(2, '0')} ${lv.title}</a></td>
+                    <td><span class="figure">${st.quizBest}/${lv.quiz.length}</span></td>
+                    <td><span class="figure">${st.attempts || 0}</span></td>
+                    <td><span class="figure">${st.projectDone ? 'yes' : 'no'}</span></td>
+                    <td><${Tag} variant=${status === 'cleared' ? 'moss' : status === 'open' ? 'accent' : ''}>
+                      ${status}<//></td>
+                  </tr>`;
               })}
-            <//>
-          <//>
-        <//>
-      <//>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      <${Card} size="3" variant="surface">
-        <${Heading} size="3" mb="1">Danger zone<//>
-        <${Text} as="p" size="2" color="gray" mb="3">
-          This wipes your XP, badges, scores and checklists on this device. Your notebooks and GitHub
-          repos are left alone.
-        <//>
-        <${AlertDialog.Root} open=${confirming} onOpenChange=${setConfirming}>
-          <${AlertDialog.Trigger}>
-            <${Button} color="red" variant="soft">Reset all progress<//>
-          <//>
-          <${AlertDialog.Content} maxWidth="440px">
-            <${AlertDialog.Title}>Erase all progress?<//>
-            <${AlertDialog.Description} size="2">
-              This clears every score, badge and checklist stored in this browser. It cannot be undone.
-            <//>
-            <${Flex} gap="3" mt="4" justify="end">
-              <${AlertDialog.Cancel}>
-                <${Button} variant="soft" color="gray">Keep it<//>
+      <section class="section-tight">
+        <${SectionHead} title="Danger zone" />
+        <div class="grid">
+          <div class="col-1-7">
+            <p class="index-sub" style=${{ maxWidth: '52ch' }}>
+              This wipes your experience, badges, scores and checklists on this device.
+              Your notebooks and GitHub repos are left alone.
+            </p>
+          </div>
+          <div class="col-9-12">
+            <${AlertDialog.Root} open=${confirming} onOpenChange=${setConfirming}>
+              <${AlertDialog.Trigger}>
+                <button class="btn btn-quiet">erase everything</button>
               <//>
-              <${AlertDialog.Action}>
-                <${Button} color="red" onClick=${onReset}>Erase everything<//>
+              <${AlertDialog.Content} maxWidth="440px" class="panel">
+                <${AlertDialog.Title} class="title title-m">Erase all progress?<//>
+                <${AlertDialog.Description}>
+                  <p class="index-sub">
+                    This clears every score, badge and checklist stored in this browser.
+                    It cannot be undone.
+                  </p>
+                <//>
+                <div class="btn-row" style=${{ marginTop: '22px' }}>
+                  <${AlertDialog.Cancel}><button class="btn btn-quiet">keep it</button><//>
+                  <${AlertDialog.Action}>
+                    <button class="btn" onClick=${onReset}>erase everything</button>
+                  <//>
+                </div>
               <//>
             <//>
-          <//>
-        <//>
-      <//>
-    <//>`;
+          </div>
+        </div>
+      </section>
+    </div>`;
 }

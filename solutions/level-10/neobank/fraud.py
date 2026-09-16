@@ -1,5 +1,5 @@
 """
-neobank.fraud: rule engine plus a logistic model (from Level 8).
+neobank.fraud: rule engine plus a logistic model (from level 8).
 
 The rules are data, so a reviewer can read the rulebook. Every score comes back
 with the reasons that produced it, because a flag nobody can explain is a flag

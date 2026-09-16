@@ -1,7 +1,7 @@
 """
 FinQuest level 2: Compound growth engine  (reference solution)
 ===============================================================
-Everything here uses only Level 2 material: arithmetic with **, functions with
+Everything here uses only level 2 material: arithmetic with **, functions with
 default arguments, for/while loops, if statements, and f-string formatting.
 No libraries, no file access, no classes.
 

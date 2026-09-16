@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 The investment club holds four assets and argues about them every month with no data to hand. Build the risk report that settles it: what each one returned, what it cost in risk along the way, and whether the mix beats its parts.
 
-**Scope:** Uses this level plus Level 3 (pandas) and Level 2 (formatting): pct_change, cumprod, cummax, std, corr, dot, quantile, and matplotlib. Numpy is used only for sqrt and arrays.
+**Scope:** Uses this level plus level 3 (pandas) and level 2 (formatting): pct_change, cumprod, cummax, std, corr, dot, quantile, and matplotlib. Numpy is used only for sqrt and arrays.
 
 ## Files here
 

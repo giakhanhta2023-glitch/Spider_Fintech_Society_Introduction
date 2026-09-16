@@ -384,7 +384,7 @@ FQ.registerLevel({
     story: 'A partner fintech is losing money to card fraud, and blocking far too many real customers while trying ' +
            'to stop it. Build the scoring engine, show what each setting actually costs, and recommend a threshold ' +
            'you would be happy to defend in a meeting.',
-    scope: 'Uses this level plus Level 3 (pandas) and Level 7 (evaluation thinking): feature engineering, a rule engine, ' +
+    scope: 'Uses this level plus level 3 (pandas) and level 7 (evaluation thinking): feature engineering, a rule engine, ' +
            'sklearn LogisticRegression, train_test_split, StandardScaler, and the metrics shown in the tutorial.',
     dataset: '{{RAW}}/data/level-08-transactions.csv',
     requirements: [

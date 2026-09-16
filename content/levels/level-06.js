@@ -27,7 +27,7 @@ FQ.registerLevel({
          'since the last one; whatever is left reduces the balance. Because the balance shrinks, the interest portion shrinks, ' +
          'so the principal portion grows: the same payment, split differently every month.' },
     { code: 'payment = P x i / (1 - (1 + i) ** -n)\n\nP = amount borrowed\ni = periodic rate  = annual rate / payments per year\nn = total payments = years x payments per year', lang: 'text', label: 'the amortization formula' },
-    { p: 'This is the Level 2 annuity relationship rearranged: the payment whose present value equals the loan. ' +
+    { p: 'This is the level 2 annuity relationship rearranged: the payment whose present value equals the loan. ' +
          'You are solving "what stream of payments is worth exactly $250,000 today at this discount rate?"' },
     { table: {
       head: ['Loan', 'Rate', 'Term', 'Monthly', 'Total interest'],
@@ -101,7 +101,7 @@ FQ.registerLevel({
   ],
 
   tutorial: {
-    intro: 'New notebook: `finquest-level-06.ipynb`. You will reuse pandas from Level 3 and the formatting habits from Level 2.',
+    intro: 'New notebook: `finquest-level-06.ipynb`. You will reuse pandas from level 3 and the formatting habits from level 2.',
     steps: [
       {
         t: 'The payment formula, with the zero-rate guard',
@@ -345,7 +345,7 @@ FQ.registerLevel({
     story: 'A member is torn between a 25-year and a 30-year mortgage, and wonders whether overpaying $200 a month ' +
            'beats investing it instead. Build the tool that answers both questions with numbers rather than ' +
            'opinions.',
-    scope: 'Uses this level plus Levels 2 and 3: the payment formula, a while loop, pandas DataFrames, matplotlib, ' +
+    scope: 'Uses this level plus levels 2 and 3: the payment formula, a while loop, pandas DataFrames, matplotlib, ' +
            'bisection, and f-string formatting. No new libraries.',
     requirements: [
       '`monthly_payment(principal, annual_rate, years, payments_per_year=12)` with a zero-rate guard',

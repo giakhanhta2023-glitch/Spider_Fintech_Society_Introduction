@@ -12,7 +12,7 @@ your own project skips the only step that actually teaches you anything.
 
 One repository, one deployed application, and everything you have learned so far pulled together. Aim for something you would be glad to have an interviewer open in front of you.
 
-**Scope:** Uses everything from Levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX code, restructured into modules behind one Streamlit interface, with tests and documentation.
+**Scope:** Uses everything from levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX code, restructured into modules behind one Streamlit interface, with tests and documentation.
 
 ## Files here
 

@@ -1,5 +1,5 @@
 """
-neobank.analytics: spending analysis (from Level 3).
+neobank.analytics: spending analysis (from level 3).
 
 Every function takes a DataFrame and returns data. No file reading (that is
 loaders.py), no printing (that is the interface).

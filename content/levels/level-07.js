@@ -381,7 +381,7 @@ FQ.registerLevel({
     story: 'The investment club holds four assets and argues about them every month with no data to hand. Build the ' +
            'risk report that settles it: what each one returned, what it cost in risk along the way, and whether the ' +
            'mix beats its parts.',
-    scope: 'Uses this level plus Level 3 (pandas) and Level 2 (formatting): pct_change, cumprod, cummax, std, corr, dot, ' +
+    scope: 'Uses this level plus level 3 (pandas) and level 2 (formatting): pct_change, cumprod, cummax, std, corr, dot, ' +
            'quantile, and matplotlib. Numpy is used only for sqrt and arrays.',
     dataset: '{{RAW}}/data/level-07-prices.csv',
     requirements: [

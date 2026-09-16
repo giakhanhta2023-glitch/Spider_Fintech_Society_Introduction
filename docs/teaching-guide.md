@@ -67,4 +67,4 @@ built to support exactly that order and will refuse to dump a full solution.
 - [ ] Deploy it (GitHub Pages is enough) and share one link
 - [ ] Decide whether you are running the AI tutor with a key, or leaving the offline tutor on
 - [ ] Run `python data/generate_datasets.py` once and confirm the datasets load
-- [ ] Do Level 1 yourself, on the wifi your members will actually be using
+- [ ] Do level 1 yourself, on the wifi your members will actually be using

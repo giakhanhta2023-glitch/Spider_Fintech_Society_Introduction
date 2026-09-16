@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 A member is torn between a 25-year and a 30-year mortgage, and wonders whether overpaying $200 a month beats investing it instead. Build the tool that answers both questions with numbers rather than opinions.
 
-**Scope:** Uses this level plus Levels 2 and 3: the payment formula, a while loop, pandas DataFrames, matplotlib, bisection, and f-string formatting. No new libraries.
+**Scope:** Uses this level plus levels 2 and 3: the payment formula, a while loop, pandas DataFrames, matplotlib, bisection, and f-string formatting. No new libraries.
 
 ## Files here
 

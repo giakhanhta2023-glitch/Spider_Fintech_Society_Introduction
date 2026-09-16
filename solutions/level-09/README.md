@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 Everything you built in levels 2 and 6 is sitting in notebooks nobody else can run. Time to ship it: a loan advisor a member can open on their phone, with your name on it.
 
-**Scope:** Uses this level plus Levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, Streamlit for the interface, pytest for the tests. Nothing beyond that is required.
+**Scope:** Uses this level plus levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, Streamlit for the interface, pytest for the tests. Nothing beyond that is required.
 
 ## Files here
 

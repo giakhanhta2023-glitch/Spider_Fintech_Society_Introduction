@@ -25,8 +25,8 @@ const NOTES = {
     files: [['`check_setup.py`', 'paste into Colab to verify your lab in one cell']],
     run: 'Open Colab, paste `check_setup.py` into a cell, press Shift + Enter.',
     design: [
-      'There is no project at Level 1 on purpose. A first evening spent on installers is the most common reason people quit before they write anything that works.',
-      'The checklist is the deliverable. `check_setup.py` only confirms it: it prints the Python version, imports the three libraries the course uses, formats a money value, and proves `0.1 + 0.2 != 0.3` so the float rule lands before Level 2 needs it.'
+      'There is no project at level 1 on purpose. A first evening spent on installers is the most common reason people quit before they write anything that works.',
+      'The checklist is the deliverable. `check_setup.py` only confirms it: it prints the Python version, imports the three libraries the course uses, formats a money value, and proves `0.1 + 0.2 != 0.3` so the float rule lands before level 2 needs it.'
     ],
     mistakes: [
       ['Nothing prints from a cell', 'Only the last expression is auto-displayed. Assigning a value shows nothing. Add `print(...)`.'],

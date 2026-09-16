@@ -1,7 +1,7 @@
 """
 FinQuest level 3: Personal spending analyzer  (reference solution)
 ===================================================================
-Uses only Level 3 material: pandas read_csv, boolean masks, groupby,
+Uses only level 3 material: pandas read_csv, boolean masks, groupby,
 sort_values, value_counts, the .dt accessor, matplotlib bar charts, and
 f-string formatting.
 
@@ -32,7 +32,7 @@ def load_data(url=URL):
     """Read the CSV and add the helper columns the rest of the file needs.
 
     Falls back to the copy in this repository so the solution also runs with
-    no network: the same three-layer thinking Level 5 formalises.
+    no network: the same three-layer thinking level 5 formalises.
     """
     try:
         df = pd.read_csv(url, parse_dates=["date"])

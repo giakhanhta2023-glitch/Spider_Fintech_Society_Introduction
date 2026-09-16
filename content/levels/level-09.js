@@ -380,7 +380,7 @@ FQ.registerLevel({
     title: 'Loan advisor, a web app you can share',
     story: 'Everything you built in levels 2 and 6 is sitting in notebooks nobody else can run. Time to ship it: a ' +
            'loan advisor a member can open on their phone, with your name on it.',
-    scope: 'Uses this level plus Levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, ' +
+    scope: 'Uses this level plus levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, ' +
            'Streamlit for the interface, pytest for the tests. Nothing beyond that is required.',
     requirements: [
       'A repository named `finquest-loan-advisor` with app.py, finance.py, test_finance.py, requirements.txt, .gitignore and README.md',
@@ -426,7 +426,7 @@ FQ.registerLevel({
       { pts: 10, t: 'README', d: 'Live URL, screenshot, local run instructions, and honest next steps.' }
     ],
     stretch: [
-      'Add a second page with the Level 2 savings projector using st.navigation or a page selector',
+      'Add a second page with the level 2 savings projector using st.navigation or a page selector',
       'Add st.session_state so a user can save and compare up to three scenarios side by side',
       'Rebuild the same engine behind a FastAPI endpoint and call it from the app: one engine, two interfaces',
       'Add a GitHub Action that runs pytest on every push and shows a passing badge in the README'

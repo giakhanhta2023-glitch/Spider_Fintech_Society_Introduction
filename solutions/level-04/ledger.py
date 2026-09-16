@@ -9,7 +9,7 @@ A double-entry ledger that cannot lose money:
   * a retried transfer with the same idempotency key posts once
   * an invalid transfer raises and writes nothing at all
 
-Uses only Level 4 material: classes, dicts, lists, custom exceptions,
+Uses only level 4 material: classes, dicts, lists, custom exceptions,
 integer arithmetic, f-strings, and datetime.
 
 Run:  python ledger.py

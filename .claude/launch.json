@@ -2,13 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "start",
-      "runtimeExecutable": "npm",
+      "name": "finquest",
+      "runtimeExecutable": "python",
       "runtimeArgs": [
-        "run",
-        "start"
+        "serve.py",
+        "8010"
       ],
-      "port": 3000
+      "port": 8010
     }
   ]
 }

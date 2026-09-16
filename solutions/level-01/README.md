@@ -25,8 +25,8 @@ Open Colab, paste `check_setup.py` into a cell, press Shift + Enter.
 
 ## Why the solution is shaped this way
 
-- There is no project at Level 1 on purpose. A first evening spent on installers is the most common reason people quit before they write anything that works.
-- The checklist is the deliverable. `check_setup.py` only confirms it: it prints the Python version, imports the three libraries the course uses, formats a money value, and proves `0.1 + 0.2 != 0.3` so the float rule lands before Level 2 needs it.
+- There is no project at level 1 on purpose. A first evening spent on installers is the most common reason people quit before they write anything that works.
+- The checklist is the deliverable. `check_setup.py` only confirms it: it prints the Python version, imports the three libraries the course uses, formats a money value, and proves `0.1 + 0.2 != 0.3` so the float rule lands before level 2 needs it.
 
 ## Where people get stuck
 
@@ -45,7 +45,7 @@ Open Colab, paste `check_setup.py` into a cell, press Shift + Enter.
 - [ ] Caused an error on purpose and read the last line of the message
 - [ ] Created a GitHub account with a portfolio-worthy username
 - [ ] Created a public repository called finquest-portfolio with a README
-- [ ] Saved your Level 1 notebook into that repository from Colab
+- [ ] Saved your level 1 notebook into that repository from Colab
 - [ ] Opened the FinQuest solutions folder on GitHub and found the level folders
 
 ---

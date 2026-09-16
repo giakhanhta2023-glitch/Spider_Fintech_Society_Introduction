@@ -1,10 +1,8 @@
 /* =========================================================================
-   Curriculum content blocks -> Radix components.
-   The level files stay plain data; this decides how each block type looks.
+   Curriculum blocks -> editorial elements.
+   The level files stay plain data; this decides how each block type sets.
    ========================================================================= */
-import {
-  html, useState, FQ, md, Box, Heading, Text, Callout, Table, Button
-} from './lib.js';
+import { html, useState, FQ, md } from './lib.js';
 
 /* ------------------------------------------------------------- code block */
 export function CodeBlock({ code, lang = 'python', label }) {
@@ -28,87 +26,65 @@ export function CodeBlock({ code, lang = 'python', label }) {
   }
 
   return html`
-    <div className="codeblock">
-      <div className="codeblock-bar">
-        <span className="codeblock-label">${label || lang}</span>
-        <${Button} size="1" variant="ghost" color="gray" onClick=${copy}>
-          ${copied ? 'Copied' : 'Copy'}
-        <//>
+    <div class="codeblock">
+      <div class="codeblock-bar">
+        <span class="codeblock-label">${label || lang}</span>
+        <button class="codeblock-copy" type="button" onClick=${copy}>
+          ${copied ? 'copied' : 'copy'}
+        </button>
       </div>
-      <pre className="codeblock-body"><code
+      <pre class="codeblock-body"><code
         dangerouslySetInnerHTML=${{ __html: FQ.highlight(source, lang) }} /></pre>
     </div>`;
 }
 
-/* ----------------------------------------------------------------- callout */
-const CALLOUTS = {
-  tip: { color: 'blue', label: 'Tip' },
-  warn: { color: 'amber', label: 'Watch out' },
-  money: { color: 'violet', label: 'Why it matters in fintech' }
+/* ----------------------------------------------------------------- notes */
+const NOTES = {
+  tip:   { cls: 'note-tip', label: 'note' },
+  warn:  { cls: 'note-warn', label: 'watch out' },
+  money: { cls: 'note-money', label: 'why it matters in fintech' }
 };
 
 function Note({ kind, text }) {
-  const meta = CALLOUTS[kind];
+  const meta = NOTES[kind];
   return html`
-    <${Callout.Root} color=${meta.color} variant="surface" my="4" className="note">
-      <${Callout.Text}>
-        <span className="note-label">${meta.label}</span>
-        ${md(text)}
-      <//>
-    <//>`;
+    <aside class=${'note ' + meta.cls}>
+      <span class="note-label">${meta.label}</span>
+      ${md(text)}
+    </aside>`;
 }
 
-/* ------------------------------------------------------------------ table */
+/* ----------------------------------------------------------------- table */
 function DataTable({ head, rows }) {
   return html`
-    <${Box} my="4" className="data-table">
-      <${Table.Root} variant="surface" size="1" layout="auto">
-        <${Table.Header}>
-          <${Table.Row}>
-            ${head.map((h, i) => html`<${Table.ColumnHeaderCell} key=${i}>${md(h)}<//>`)}
-          <//>
-        <//>
-        <${Table.Body}>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>${head.map((h, i) => html`<th key=${i}>${md(h)}</th>`)}</tr>
+        </thead>
+        <tbody>
           ${rows.map((row, r) => html`
-            <${Table.Row} key=${r}>
-              ${row.map((cell, c) => c === 0
-                ? html`<${Table.RowHeaderCell} key=${c}>${md(cell)}<//>`
-                : html`<${Table.Cell} key=${c}>${md(cell)}<//>`)}
-            <//>`)}
-        <//>
-      <//>
-    <//>`;
+            <tr key=${r}>${row.map((cell, c) => html`<td key=${c}>${md(cell)}</td>`)}</tr>`)}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 /* ------------------------------------------------------------------ lists */
 function List({ items, ordered }) {
   const Tag = ordered ? 'ol' : 'ul';
-  return html`
-    <${Tag} className=${'prose-list' + (ordered ? ' ordered' : '')}>
-      ${items.map((item, i) => html`
-        <li key=${i}><${Text} size="3" color="gray" as="span">${md(item)}<//></li>`)}
-    <//>`;
+  return html`<${Tag}>${items.map((item, i) => html`<li key=${i}>${md(item)}</li>`)}<//>`;
 }
 
-/* ---------------------------------------------------------------- renderer */
+/* --------------------------------------------------------------- renderer */
 export function Blocks({ blocks }) {
   if (!blocks || !blocks.length) return null;
 
-  return html`<${Box} className="prose">
+  return html`<div class="prose">
     ${blocks.map((b, i) => {
-      if (b.h) {
-        return html`
-          <${Heading} key=${i} as="h3" size="5" mt="6" mb="3" className="prose-h">
-            ${md(b.h)}
-          <//>`;
-      }
-      if (b.h4) {
-        return html`
-          <${Heading} key=${i} as="h4" size="3" mt="5" mb="2" color="blue">${md(b.h4)}<//>`;
-      }
-      if (b.p) {
-        return html`<${Text} key=${i} as="p" size="3" color="gray" mb="3">${md(b.p)}<//>`;
-      }
+      if (b.h) return html`<h3 key=${i}>${md(b.h)}</h3>`;
+      if (b.h4) return html`<h4 key=${i}>${md(b.h4)}</h4>`;
+      if (b.p) return html`<p key=${i}>${md(b.p)}</p>`;
       if (b.ul) return html`<${List} key=${i} items=${b.ul} />`;
       if (b.ol) return html`<${List} key=${i} items=${b.ol} ordered />`;
       if (b.code) return html`<${CodeBlock} key=${i} code=${b.code} lang=${b.lang} label=${b.label} />`;
@@ -118,5 +94,5 @@ export function Blocks({ blocks }) {
       if (b.table) return html`<${DataTable} key=${i} head=${b.table.head} rows=${b.table.rows} />`;
       return null;
     })}
-  <//>`;
+  </div>`;
 }

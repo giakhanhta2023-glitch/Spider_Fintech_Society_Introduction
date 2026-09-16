@@ -1,5 +1,5 @@
 """
-neobank.risk: portfolio risk statistics (from Level 7).
+neobank.risk: portfolio risk statistics (from level 7).
 
 Volatility scales with sqrt(252); Sharpe always states its risk-free rate;
 drawdown is measured from the running peak.

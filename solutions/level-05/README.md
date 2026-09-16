@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 The society holds cash in four currencies plus a little crypto, and right now nobody can say what the treasury is worth. Build the valuation service, and make sure it still works on the conference wifi that blocks half the internet.
 
-**Scope:** Uses this level plus Level 3 (pandas) and Level 2 (formatting): requests with timeout, retries, JSON, file caching, try/except, and a DataFrame for the output. No API key is required anywhere.
+**Scope:** Uses this level plus level 3 (pandas) and level 2 (formatting): requests with timeout, retries, JSON, file caching, try/except, and a DataFrame for the output. No API key is required anywhere.
 
 ## Files here
 

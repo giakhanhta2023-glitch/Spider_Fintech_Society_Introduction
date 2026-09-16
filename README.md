@@ -8,7 +8,7 @@ key waiting in this repository.
 Built for the Spider Fintech Society.
 
 > **Level 1 installs nothing.** No VS Code, no PATH variables, no `pip`. You will be running Python
-> in a browser tab about ten minutes after you start. A local editor only appears in Level 9, when
+> in a browser tab about ten minutes after you start. A local editor only appears in level 9, when
 > you have something worth deploying and the setup finally pays for itself.
 
 ---

@@ -116,7 +116,7 @@ FQ.registerLevel({
 
   tutorial: {
     intro: 'This tutorial is about assembly rather than new syntax: turning nine notebooks into one installable, testable, ' +
-           'documented project. Work in Codespaces or locally: whichever you chose in Level 9.',
+           'documented project. Work in Codespaces or locally: whichever you chose in level 9.',
     steps: [
       {
         t: 'Create the skeleton',
@@ -134,7 +134,7 @@ FQ.registerLevel({
           { p: 'Copy each notebook\'s functions into the matching module. Two rules while you do it: **delete every print ' +
                'statement from the service layer**, and **make every function take its inputs as arguments** rather than ' +
                'reading a global.' },
-          { code: '# neobank/lending.py\n"""Loan pricing and amortization (FinQuest Levels 2 and 6)."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n...\n\n\ndef schedule(principal, annual_rate, years, extra=0.0):\n...', lang: 'python' },
+          { code: '# neobank/lending.py\n"""Loan pricing and amortization (FinQuest levels 2 and 6)."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n...\n\n\ndef schedule(principal, annual_rate, years, extra=0.0):\n...', lang: 'python' },
           { code: '# app.py\nfrom neobank.lending import monthly_payment, schedule\nfrom neobank.fraud import score_transactions\nfrom neobank.risk import portfolio_stats', lang: 'python' },
           { warn: 'If an import fails with `ModuleNotFoundError: neobank`, you are running from inside the package folder. ' +
                   'Run from the project root, where `app.py` lives.' }
@@ -365,7 +365,7 @@ FQ.registerLevel({
     title: 'NeoBank analytics, the capstone',
     story: 'One repository, one deployed application, and everything you have learned so far pulled together. Aim ' +
            'for something you would be glad to have an interviewer open in front of you.',
-    scope: 'Uses everything from Levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX ' +
+    scope: 'Uses everything from levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX ' +
            'code, restructured into modules behind one Streamlit interface, with tests and documentation.',
     requirements: [
       'A public repository named `neobank-analytics` (or your own name) with the layered structure from the tutorial',

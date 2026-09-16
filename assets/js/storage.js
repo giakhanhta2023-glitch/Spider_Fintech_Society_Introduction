@@ -9,19 +9,19 @@
   var listeners = [];
 
   var BADGES = [
-    { id: 'orientation', ico: '🧭', name: 'Oriented', hint: 'Clear Level 1',
+    { id: 'orientation', ico: '🧭', name: 'Oriented', hint: 'Clear level 1',
       test: function (s) { return cleared(1, s); } },
     { id: 'toolsmith', ico: '🔧', name: 'Toolsmith', hint: 'Finish the setup checklist',
       test: function (s) { return lvl(1, s).projectDone; } },
-    { id: 'first-build', ico: '🛠️', name: 'First build', hint: 'Ship any project',
+    { id: 'first-build', ico: '🛠️', name: 'First build', hint: 'Ship any build',
       test: function (s) { return anyLevel(s, function (l) { return l.projectDone; }, 2); } },
-    { id: 'perfect', ico: '🎯', name: 'Flawless', hint: 'Score 15/15 on a quiz',
+    { id: 'perfect', ico: '🎯', name: 'Flawless', hint: 'Score 15 of 15 on a drill',
       test: function (s) { return anyLevel(s, function (l) { return l.quizBest === 15; }, 1); } },
     { id: 'halfway', ico: '⚡', name: 'Halfway', hint: 'Clear 5 levels',
       test: function (s) { return clearedCount(s) >= 5; } },
-    { id: 'scholar', ico: '📚', name: 'Scholar', hint: 'Pass all 10 quizzes',
+    { id: 'scholar', ico: '📚', name: 'Scholar', hint: 'Pass all 10 drills',
       test: function (s) { return countWhere(s, function (l) { return l.quizPassed; }) >= 10; } },
-    { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Ship 9 projects',
+    { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Finish the setup and all 9 builds',
       test: function (s) { return countWhere(s, function (l) { return l.projectDone; }) >= 10; } },
     { id: 'cfo', ico: '👑', name: 'Chief fintech officer', hint: 'Clear all 10 levels',
       test: function (s) { return clearedCount(s) >= 10; } }
@@ -141,22 +141,24 @@
     recordQuiz: function (id, score, total, answers) {
       var l = lvl(id);
       var firstPass = false;
+      var gained = 0;
       l.attempts++;
       l.answers = answers || null;
+      /* Only the improvement is paid for, so a drill cannot be farmed. */
       if (score > l.quizBest) {
-        var gain = (score - l.quizBest) * CFG.xp.perCorrectAnswer;
-        addXp(gain);
+        gained += (score - l.quizBest) * CFG.xp.perCorrectAnswer;
         l.quizBest = score;
       }
       if (score >= CFG.quiz.passMark && !l.quizPassed) {
         l.quizPassed = true;
         firstPass = true;
-        addXp(CFG.xp.quizPassBonus);
-        if (score === total) addXp(CFG.xp.perfectQuizBonus);
+        gained += CFG.xp.quizPassBonus;
+        if (score === total) gained += CFG.xp.perfectQuizBonus;
       }
+      if (gained) addXp(gained);
       var fresh = checkBadges();
       write();
-      return { firstPass: firstPass, badges: fresh, passed: l.quizPassed };
+      return { firstPass: firstPass, badges: fresh, passed: l.quizPassed, gained: gained };
     },
 
     toggleReq: function (id, idx) {

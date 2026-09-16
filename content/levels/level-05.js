@@ -39,7 +39,7 @@ FQ.registerLevel({
       ]
     }},
     { p: 'This level only uses `GET`, because reading market data is the safe half of the job. Note the pattern though: ' +
-         '`GET` is naturally repeatable, `POST` is not, which is exactly why Level 4 needed idempotency keys.' },
+         '`GET` is naturally repeatable, `POST` is not, which is exactly why level 4 needed idempotency keys.' },
 
     { h: 'Status codes tell you whose fault it is' },
     { table: {
@@ -179,7 +179,7 @@ FQ.registerLevel({
         blocks: [
           { code: 'coins = fetch_json("https://api.coingecko.com/api/v3/simple/price",\n                   {"ids": "bitcoin,ethereum", "vs_currencies": "usd"})\nprint(coins)          # {"bitcoin": {"usd": 64210}, "ethereum": {"usd": 2480}}\n\nbtc_usd = coins["bitcoin"]["usd"]', lang: 'python' },
           { p: 'Different API, different JSON shape. That is normal. Read the structure, then index it. ' +
-               'Build the portfolio table with pandas from Level 3:' },
+               'Build the portfolio table with pandas from level 3:' },
           { code: 'import pandas as pd\n\nholdings = [\n    {"asset": "Cash EUR", "currency": "EUR", "units": 1200},\n    {"asset": "Cash JPY", "currency": "JPY", "units": 90000},\n    {"asset": "Bitcoin",  "currency": "BTC", "units": 0.05},\n]\n\nrows = []\nfor h in holdings:\n    if h["currency"] == "BTC":\n        value = h["units"] * btc_usd\n    else:\n        value = convert(h["units"], h["currency"], "USD", rates)\n    rows.append({**h, "value_usd": round(value, 2)})\n\ndf = pd.DataFrame(rows)\ndf["weight"] = df["value_usd"] / df["value_usd"].sum()\nprint(df.to_string(index=False))\nprint(f"\\nTotal: ${df[\'value_usd\'].sum():,.2f}   source: {source} ({as_of})")', lang: 'python' },
           { p: '`{**h, "value_usd": value}` copies a dict and adds a key: a neat way to build result rows without mutating ' +
                'the original data.' }
@@ -363,7 +363,7 @@ FQ.registerLevel({
     story: 'The society holds cash in four currencies plus a little crypto, and right now nobody can say what the ' +
            'treasury is worth. Build the valuation service, and make sure it still works on the conference wifi that ' +
            'blocks half the internet.',
-    scope: 'Uses this level plus Level 3 (pandas) and Level 2 (formatting): requests with timeout, retries, JSON, ' +
+    scope: 'Uses this level plus level 3 (pandas) and level 2 (formatting): requests with timeout, retries, JSON, ' +
            'file caching, try/except, and a DataFrame for the output. No API key is required anywhere.',
     dataset: '{{RAW}}/data/level-05-fx-snapshot.json',
     requirements: [

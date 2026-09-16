@@ -1,12 +1,10 @@
 /* =========================================================================
    FinQuest: application root.
-   Radix Themes provides the design system; this file wires routing, the HUD,
-   toasts, and the tutor panel together.
+   Masthead, market tape, routing, toasts, tutor.
    ========================================================================= */
 import {
-  html, useState, useEffect, useCallback, FQ, CFG, store, navigate, Theme,
-  Container, Flex, Box, Text, Badge, Button, Progress, Link, Callout,
-  Separator, Tooltip
+  html, useState, useEffect, useCallback, FQ, CFG, store, navigate,
+  Theme, Tooltip, Btn
 } from './lib.js';
 import { createRoot } from 'react-dom/client';
 import { Home, Glossary, Dossier } from './views.js';
@@ -26,8 +24,8 @@ function parseHash() {
   return { name: 'home' };
 }
 
-/* ----------------------------------------------------------------- ticker */
-const TICKER = [
+/* ------------------------------------------------------------------- tape */
+const TAPE = [
   ['Auth', 'approve is not settle'],
   ['Ledger', 'entries must sum to zero'],
   ['Money', 'integers, never floats'],
@@ -44,14 +42,12 @@ const TICKER = [
   ['Rule 1', '0.1 + 0.2 is not 0.3']
 ];
 
-function Ticker() {
-  const row = TICKER.map(([tag, text], i) => html`
-    <span className="tick" key=${i}>
-      <b>${tag}</b><i>·</i>${text}
-    </span>`);
+function Tape() {
+  const run = TAPE.map(([tag, text], i) => html`
+    <span class="tape-item" key=${i}><b>${tag}</b>${text}</span>`);
   return html`
-    <div className="ticker" aria-hidden="true">
-      <div className="ticker-track">${row}${row}</div>
+    <div class="tape" aria-hidden="true">
+      <div class="tape-track">${run}${run}</div>
     </div>`;
 }
 
@@ -59,51 +55,42 @@ function Ticker() {
 function Toasts({ items }) {
   if (!items.length) return null;
   return html`
-    <div className="toasts">
+    <div class="toasts">
       ${items.map((t) => html`
-        <${Callout.Root} key=${t.id} color=${t.color} variant="surface" size="1" className="toast">
-          <${Callout.Text}>${t.text}<//>
-        <//>`)}
+        <div class=${'toast' + (t.tone === 'moss' ? ' is-moss' : '')} key=${t.id}>${t.text}</div>`)}
     </div>`;
 }
 
-/* ------------------------------------------------------------------- HUD */
-function Header({ route, onOpenTutor, version }) {
-  const xp = store.xp();
+/* --------------------------------------------------------------- masthead */
+function Masthead({ route, onOpenTutor }) {
   const progress = store.xpProgress();
 
-  const navLink = (href, label, active) => html`
-    <a className=${'navlink' + (active ? ' active' : '')} href=${href}>${label}</a>`;
+  const link = (href, label, active) => html`
+    <a href=${href} aria-current=${active ? 'page' : undefined}>${label}</a>`;
 
   return html`
-    <header className="topbar">
-      <${Container} size="4" px=${{ initial: '3', sm: '5' }}>
-        <${Flex} align="center" gap="4">
-          <a className="brand" href="#/">
-            <span className="brand-mark figure">FQ</span>
-            <span className="brand-text">Fin<em>Quest</em></span>
-          </a>
+    <header class="masthead">
+      <div class="page masthead-inner">
+        <a class="wordmark" href="#/">
+          <span class="wordmark-text">Fin<i>Quest</i></span>
+        </a>
 
-          <nav className="topnav">
-            ${navLink('#/', 'Map', route.name === 'home')}
-            ${navLink('#/glossary', 'Glossary', route.name === 'glossary')}
-            ${navLink('#/progress', 'Dossier', route.name === 'progress')}
-          </nav>
+        <nav class="mainnav">
+          ${link('#/', 'index', route.name === 'home')}
+          ${link('#/glossary', 'glossary', route.name === 'glossary')}
+          ${link('#/progress', 'dossier', route.name === 'progress')}
+        </nav>
 
-          <${Flex} align="center" gap="3" ml="auto">
-            <${Tooltip} content=${`${progress.into} / ${progress.tier} XP to the next tier`}>
-              <${Flex} align="center" gap="2" className="hud-xp">
-                <${Badge} color="amber" variant="surface" radius="full">${store.rank()}<//>
-                <${Box} className="hud-bar"><${Progress} value=${progress.pct} color="blue" size="1" /><//>
-                <${Text} size="1" color="gray" className="figure">${xp.toLocaleString()} XP<//>
-              <//>
-            <//>
-            <${Button} size="2" variant="surface" onClick=${onOpenTutor}>
-              <span className="pulse" /> Tutor
-            <//>
+        <div class="masthead-meta">
+          <${Tooltip} content=${`${progress.into} of ${progress.tier} XP into this tier`}>
+            <span class="rank-plate">${store.rank()}</span>
           <//>
-        <//>
-      <//>
+          <span class="xp-plate">
+            <b>${store.xp().toLocaleString()}</b><span>XP</span>
+          </span>
+          <${Btn} small onClick=${onOpenTutor} arrow>tutor<//>
+        </div>
+      </div>
     </header>`;
 }
 
@@ -133,13 +120,13 @@ function App() {
 
   useEffect(() => {
     document.title = route.name === 'level' && FQ.level(route.id)
-      ? `Level ${route.id}: ${FQ.level(route.id).title} · FinQuest`
-      : 'FinQuest: fintech training arcade';
+      ? `${FQ.level(route.id).title} · FinQuest`
+      : 'FinQuest, a fintech training arcade';
   }, [route]);
 
-  const toast = useCallback((text, color = 'blue') => {
+  const toast = useCallback((text, tone = 'accent') => {
     const id = Math.random().toString(36).slice(2);
-    setToasts((prev) => prev.concat([{ id, text, color }]));
+    setToasts((prev) => prev.concat([{ id, text, tone }]));
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3600);
   }, []);
 
@@ -149,7 +136,7 @@ function App() {
     store.reset();
     refresh();
     navigate('#/');
-    toast('Progress reset.', 'gray');
+    toast('Progress reset.');
   }
 
   let page;
@@ -167,27 +154,29 @@ function App() {
   }
 
   return html`
-    <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="medium" scaling="100%">
-      <${Header} route=${route} onOpenTutor=${() => setTutorOpen(true)} version=${version} />
-      <${Ticker} />
+    <${Theme} appearance="dark" accentColor="orange" grayColor="sand" radius="none"
+      scaling="100%" hasBackground=${false}>
+      <${Masthead} route=${route} onOpenTutor=${() => setTutorOpen(true)} />
+      <${Tape} />
+      <main>${page}</main>
 
-      <${Container} size="4" px=${{ initial: '3', sm: '5' }} py=${{ initial: '5', sm: '7' }}>
-        ${page}
-      <//>
-
-      <footer className="footer">
-        <${Container} size="4" px="4">
-          <${Separator} size="4" mb="5" />
-          <${Flex} direction="column" align="center" gap="1">
-            <${Text} size="2" color="gray">
-              FinQuest · built for the Spider Fintech Society ·
-              ${' '}<${Link} href=${CFG.repoUrl} target="_blank" rel="noopener">solution keys on GitHub<//>
-            <//>
-            <${Text} size="1" color="gray">
-              Educational material only. Every dataset is synthetic. Nothing here is financial advice.
-            <//>
-          <//>
-        <//>
+      <footer class="footer">
+        <div class="page">
+          <div class="grid">
+            <div class="col-1-7">
+              <span class="mono">
+                FinQuest, built for the Spider Fintech Society.
+                ${' '}<a class="link" href=${CFG.repoUrl} target="_blank" rel="noopener">solution keys on GitHub →</a>
+              </span>
+            </div>
+            <div class="col-9-12">
+              <span class="mono-s">
+                Educational material only. Every dataset is synthetic.
+                Nothing here is financial advice.
+              </span>
+            </div>
+          </div>
+        </div>
       </footer>
 
       <${Tutor} open=${tutorOpen} onOpenChange=${setTutorOpen}
@@ -201,9 +190,9 @@ const mount = document.getElementById('root');
 
 if (!FQ || !FQ.levels || !FQ.levels.length) {
   mount.innerHTML =
-    '<div style="max-width:40rem;margin:4rem auto;font-family:system-ui;color:#c4d0e6">' +
+    '<div style="max-width:40rem;margin:4rem auto;padding:0 24px;font-family:Georgia,serif;color:#EDEAE3">' +
     '<h2>No curriculum loaded</h2><p>The level files did not load. If you opened this file ' +
-    'directly from disk, serve the folder instead:</p><pre>python -m http.server 8000</pre></div>';
+    'directly from disk, serve the folder instead:</p><pre>python serve.py</pre></div>';
 } else {
   createRoot(mount).render(html`<${App} />`);
 }

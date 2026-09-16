@@ -127,7 +127,7 @@ FQ.registerLevel({
         t: 'Money helpers: cents in, dollars out',
         blocks: [
           { code: 'def to_cents(amount_text):\n    """Parse user input into integer cents, once, at the edge."""\n    return int(round(float(amount_text) * 100))\n\ndef money(cents):\n    """Format integer cents for display."""\n    sign = "-" if cents < 0 else ""\n    return f"{sign}${abs(cents) / 100:,.2f}"\n\nprint(to_cents("25.00"))    # 2500\nprint(to_cents("0.1") + to_cents("0.2") == to_cents("0.3"))   # True\nprint(money(-2500))         # -$25.00', lang: 'python' },
-          { p: 'Compare that `True` with Level 1\'s `0.1 + 0.2 == 0.3` being `False`. That is the entire argument for minor units, ' +
+          { p: 'Compare that `True` with level 1\'s `0.1 + 0.2 == 0.3` being `False`. That is the entire argument for minor units, ' +
                'in one line.' },
           { warn: '`int(2.999)` truncates to 2. It does not round. Always `int(round(x))` when converting money, or you will ' +
                   'lose a cent on roughly half of all inputs.' }

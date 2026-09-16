@@ -1,7 +1,7 @@
 """
 FinQuest level 6: Loan amortization and early-payoff simulator  (reference solution)
 ===================================================================================
-Uses only Levels 2, 3 and 6: the payment formula, a bounded while loop,
+Uses only levels 2, 3 and 6: the payment formula, a bounded while loop,
 pandas DataFrames, matplotlib, bisection, and f-string formatting.
 
 Run:  python loan_simulator.py

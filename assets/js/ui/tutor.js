@@ -1,9 +1,9 @@
 /* =========================================================================
-   Ada: the tutor panel. A Radix Dialog pinned to the right edge.
+   Ada, the tutor. A panel pinned to the right edge, set like a margin note:
+   mono for the machinery, serif for the answers.
    ========================================================================= */
 import {
-  html, useState, useEffect, useRef, FQ, store, rawHtml, Box, Flex, Text,
-  Badge, Button, IconButton, Dialog, TextField, Callout
+  html, useState, useEffect, useRef, FQ, store, rawHtml, Dialog, Btn, Tag
 } from './lib.js';
 import {
   offlineAnswer, askModel, chatMarkdown, apiState, endpoint, userKey,
@@ -12,17 +12,23 @@ import {
 
 function Bubble({ role, html: markup, source }) {
   if (role === 'user') {
-    return html`<div className="bubble me"><${Text} size="2">${markup}<//></div>`;
+    return html`<div class="bubble me">${markup}</div>`;
   }
   return html`
-    <div className="bubble bot">
-      ${rawHtml(markup, { className: 'bubble-body' })}
-      ${source ? html`<span className="bubble-source">${source}</span>`: null}
+    <div class="bubble bot">
+      ${rawHtml(markup, { class: 'bubble-body' })}
+      ${source ? html`<span class="bubble-source">${source}</span>` : null}
     </div>`;
 }
 
 function Typing() {
-  return html`<div className="bubble bot"><span className="typing"><i /><i /><i /></span></div>`;
+  return html`
+    <div class="bubble bot"><span class="typing"><i /><i /><i /></span></div>`;
+}
+
+function modeLabel() {
+  if (userKey()) return 'model, your key';
+  return apiState.working ? 'model, course endpoint' : 'course knowledge base';
 }
 
 export function Tutor({ open, onOpenChange, levelId }) {
@@ -58,9 +64,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages, busy]);
 
-  useEffect(() => {
-    setMode(userKey() ? 'model · your key' : apiState.working ? 'model · course endpoint' : 'course knowledge base');
-  }, [open, messages]);
+  useEffect(() => { setMode(modeLabel()); }, [open, messages]);
 
   function push(msg) { setMessages((prev) => prev.concat([msg])); }
 
@@ -83,7 +87,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
       historyRef.current.push({ role: 'assistant', content: a.text });
       setChips(a.chips || []);
       setBusy(false);
-      setMode(userKey() ? 'model · your key' : apiState.working ? 'model · course endpoint' : 'course knowledge base');
+      setMode(modeLabel());
     };
 
     if (!useModel) {
@@ -103,12 +107,12 @@ export function Tutor({ open, onOpenChange, levelId }) {
         push({
           role: 'bot',
           html: chatMarkdown(answer),
-          source: 'Claude · ' + (userKey() ? 'your key' : 'course endpoint')
+          source: 'Claude, ' + (userKey() ? 'your key' : 'course endpoint')
         });
         historyRef.current.push({ role: 'assistant', content: answer });
-        setChips(['Give me an example', 'hint', 'Why does that matter?']);
+        setChips(['give me an example', 'hint', 'why does that matter?']);
         setBusy(false);
-        setMode(userKey() ? 'model · your key' : 'model · course endpoint');
+        setMode(modeLabel());
       })
       .catch(() => {
         apiState.tried = true;
@@ -131,7 +135,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
       setStatus('saved');
       setTimeout(() => setStatus(''), 2000);
     } catch (e) {
-      setStatus('could not save. Storage is blocked');
+      setStatus('could not save, storage is blocked');
     }
   }
 
@@ -151,79 +155,90 @@ export function Tutor({ open, onOpenChange, levelId }) {
   return html`
     <${Dialog.Root} open=${open} onOpenChange=${onOpenChange}>
       <${Dialog.Content} className="tutor-panel" aria-describedby=${undefined}>
-        <${Flex} justify="between" align="start" gap="3" mb="2">
-          <${Box}>
-            <${Dialog.Title} mb="1">
-              Ada <${Text} size="2" weight="regular" color="gray">your fintech tutor<//>
+
+        <div class="tutor-head">
+          <div>
+            <span class="kicker" style=${{ marginBottom: '6px' }}>your fintech tutor</span>
+            <${Dialog.Title} className="display display-s" style=${{ margin: '0 0 12px' }}>
+              Ada
             <//>
-            <${Flex} gap="2" align="center" wrap="wrap">
-              <${Badge} color="blue" variant="soft" radius="full">
-                ${level ? `Level ${level.id} · ${level.codename}`: 'no level open'}
+            <span class="tag-row">
+              <${Tag}>
+                ${level ? `level ${String(level.id).padStart(2, '0')}, ${level.codename}` : 'no level open'}
               <//>
-              <${Text} size="1" color="gray" className="figure">${mode}<//>
-            <//>
-          <//>
-          <${Flex} gap="1">
-            <${IconButton} size="1" variant="ghost" color="gray" title="Connect a model"
-              onClick=${() => setShowSettings(!showSettings)}>⚙<//>
+              <span class="mono-s">${mode}</span>
+            </span>
+          </div>
+
+          <div class="tutor-tools">
+            <button type="button" class="tutor-x" title="connect a model"
+              onClick=${() => setShowSettings(!showSettings)}>settings</button>
             <${Dialog.Close}>
-              <${IconButton} size="1" variant="ghost" color="gray" title="Close">✕<//>
+              <button type="button" class="tutor-x" title="close">close</button>
             <//>
-          <//>
-        <//>
-
-        ${showSettings ? html`
-          <${Box} className="tutor-settings" mb="3">
-            <${Text} as="p" size="2" color="gray" mb="3">
-              The tutor already answers from the course material, with no setup at all.
-              Connect a model if you would like a free-form conversation.
-            <//>
-            <${Text} as="label" size="1" color="gray">Chat endpoint (recommended)<//>
-            <${TextField.Root} mt="1" mb="2" size="2" placeholder="/api/chat"
-              value=${endpointValue}
-              onChange=${(e) => setEndpointValue(e.target.value)} />
-            <${Text} as="p" size="1" color="gray" mb="3">
-              Deploy this repo with <code>ANTHROPIC_API_KEY</code> set and it works automatically.
-            <//>
-            <details>
-              <summary><${Text} size="1" color="gray">Advanced: use my own API key in this browser<//></summary>
-              <${TextField.Root} mt="2" size="2" type="password" placeholder="sk-ant-..."
-                value=${keyValue} onChange=${(e) => setKeyValue(e.target.value)} />
-              <${Callout.Root} color="amber" variant="surface" size="1" mt="2">
-                <${Callout.Text}>
-                  Stored in this browser only and sent straight to Anthropic. Anyone using this device
-                  can read it, never do this on a shared or public computer.
-                <//>
-              <//>
-            </details>
-            <${Flex} gap="2" mt="3" align="center">
-              <${Button} size="1" onClick=${saveSettings}>Save<//>
-              <${Button} size="1" variant="soft" color="gray" onClick=${clearSettings}>Clear<//>
-              ${status ? html`<${Text} size="1" color="grass">${status}<//>`: null}
-            <//>
-          <//>`: null}
-
-        <div className="tutor-log" ref=${logRef}>
-          ${messages.map((m, i) => html`<${Bubble} key=${i}...${m} />`)}
-          ${busy ? html`<${Typing} />`: null}
+          </div>
         </div>
 
-        ${chips.length ? html`
-          <${Flex} gap="2" wrap="wrap" mb="2">
-            ${chips.slice(0, 3).map((c, i) => html`
-              <${Button} key=${i} size="1" variant="surface" color="gray"
-                onClick=${() => ask(c)}>${c}<//>`)}
-          <//>`: null}
+        ${showSettings ? html`
+          <div class="tutor-settings">
+            <p class="mono-s" style=${{ lineHeight: 1.7, marginTop: 0 }}>
+              The tutor already answers from the course material with no setup at all.
+              Connect a model if you would like a free-form conversation.
+            </p>
 
-        <form onSubmit=${(e) => { e.preventDefault(); ask(input); }}>
-          <${Flex} gap="2">
-            <${Box} style=${{ flex: 1 }}>
-              <${TextField.Root} size="2" placeholder="Ask anything: e.g. “explain APR vs APY”"
-                value=${input} onChange=${(e) => setInput(e.target.value)} autoComplete="off" />
-            <//>
-            <${Button} type="submit" disabled=${busy || !input.trim()}>Send<//>
-          <//>
-        </form>
+            <label class="field">
+              <span class="field-label">chat endpoint, recommended</span>
+              <input class="tutor-input" type="text" placeholder="/api/chat" value=${endpointValue}
+                onInput=${(e) => setEndpointValue(e.target.value)} autoComplete="off" />
+            </label>
+            <p class="mono-s" style=${{ lineHeight: 1.7 }}>
+              Deploy this repo with <code>ANTHROPIC_API_KEY</code> set and it works on its own.
+            </p>
+
+            <details>
+              <summary class="mono-s">advanced: use my own key in this browser</summary>
+              <label class="field">
+                <span class="field-label">api key</span>
+                <input class="tutor-input" type="password" placeholder="sk-ant-..." value=${keyValue}
+                  onInput=${(e) => setKeyValue(e.target.value)} autoComplete="off" />
+              </label>
+              <aside class="note note-warn" style=${{ marginTop: '14px' }}>
+                <span class="note-label">careful</span>
+                It is stored in this browser only and sent straight to Anthropic. Anyone using this
+                device can read it, so never do this on a shared or public computer.
+              </aside>
+            </details>
+
+            <div class="btn-row" style=${{ marginTop: '18px' }}>
+              <${Btn} small onClick=${saveSettings}>save<//>
+              <${Btn} small variant="quiet" onClick=${clearSettings}>clear<//>
+              ${status ? html`<span class="mono-s" style=${{ color: 'var(--moss)' }}>${status}</span>` : null}
+            </div>
+          </div>` : null}
+
+        <div class="tutor-log" ref=${logRef}>
+          ${messages.map((m, i) => html`<${Bubble} key=${i} ...${m} />`)}
+          ${busy ? html`<${Typing} />` : null}
+        </div>
+
+        <div class="tutor-foot">
+          ${chips.length ? html`
+            <div class="chip-row">
+              ${chips.slice(0, 3).map((c, i) => html`
+                <button type="button" class="chip" key=${i} onClick=${() => ask(c)}>${c}</button>`)}
+            </div>` : null}
+
+          <form onSubmit=${(e) => { e.preventDefault(); ask(input); }} class="tutor-form">
+            <input class="tutor-input" type="text" value=${input} autoComplete="off"
+              placeholder="ask anything, try: explain APR against APY"
+              onInput=${(e) => setInput(e.target.value)}
+              onKeyDown=${(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(e.target.value); }
+              }} />
+            <${Btn} small type="submit" variant="accent" arrow disabled=${busy || !input.trim()}>send<//>
+          </form>
+        </div>
+
       <//>
     <//>`;
 }

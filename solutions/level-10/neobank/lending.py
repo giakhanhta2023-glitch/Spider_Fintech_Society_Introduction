@@ -1,5 +1,5 @@
 """
-neobank.lending: loan pricing and amortization (from Levels 2 and 6).
+neobank.lending: loan pricing and amortization (from levels 2 and 6).
 
 Pure functions: they validate, compute, and return. Charts and tables are the
 interface's job.

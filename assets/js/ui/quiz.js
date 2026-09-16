@@ -1,103 +1,91 @@
 /* =========================================================================
    The 15-question drill.
    ========================================================================= */
-import {
-  html, useState, useMemo, CFG, store, md, navigate, Box, Flex, Card,
-  Heading, Text, Badge, Button, Progress, Callout
-} from './lib.js';
+import { html, useState, useMemo, CFG, store, md, navigate, Btn } from './lib.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 function Option({ index, text, state, disabled, onPick }) {
   return html`
-    <button
-      type="button"
-      className=${'q-option' + (state ? ' ' + state : '')}
-      disabled=${disabled}
-      onClick=${() => onPick(index)}>
-      <span className="q-key">${LETTERS[index]}</span>
-      <span className="q-text">${md(text)}</span>
+    <button type="button" class=${'q-option' + (state ? ' is-' + state : '')}
+      disabled=${disabled} onClick=${() => onPick(index)}>
+      <span class="q-key">${LETTERS[index]}</span>
+      <span>${md(text)}</span>
     </button>`;
-}
-
-function Explanation({ correct, letter, why }) {
-  return html`
-    <${Callout.Root} mt="4" variant="surface" color=${correct ? 'grass' : 'violet'}>
-      <${Callout.Text}>
-        <span className="note-label">${correct ? 'Correct' : 'Answer: ' + letter}</span>
-        ${md(why)}
-      <//>
-    <//>`;
 }
 
 /* ------------------------------------------------------------ answer key */
 export function AnswerKey({ level, answers }) {
   return html`
-    <${Flex} direction="column" gap="3">
+    <div>
       ${level.quiz.map((q, i) => {
         const wrong = answers && answers[i] !== q.answer;
         return html`
-          <${Card} key=${i} variant="surface" className=${wrong ? 'key-card missed' : 'key-card'}>
-            <${Flex} justify="between" align="start" gap="3" mb="1">
-              <${Text} size="2" weight="medium">${i + 1}. ${md(q.q)}<//>
-              ${answers ? html`<${Badge} color=${wrong ? 'red' : 'grass'} variant="soft">
-                ${wrong ? 'missed' : 'correct'}<//>`: null}
-            <//>
-            <${Text} as="p" size="2" color="grass" mb="1">
+          <div class=${'key-item' + (wrong ? ' is-missed' : '')} key=${i}>
+            <span class="kicker">
+              <b>${String(i + 1).padStart(2, '0')}</b>
+              ${answers ? (wrong ? ' / missed' : ' / correct') : ''}
+            </span>
+            <p class="title title-s" style=${{ margin: '0 0 10px' }}>${md(q.q)}</p>
+            <p class="index-sub" style=${{ margin: '0 0 6px', color: 'var(--moss)' }}>
               ${LETTERS[q.answer]}. ${md(q.options[q.answer])}
-            <//>
-            <${Text} as="p" size="2" color="gray">${md(q.why)}<//>
-          <//>`;
+            </p>
+            <p class="index-sub" style=${{ margin: 0 }}>${md(q.why)}</p>
+          </div>`;
       })}
-    <//>`;
+    </div>`;
 }
 
 /* ------------------------------------------------------------- score card */
-function ScoreCard({ level, score, total, answers, onRetry, onRefresh }) {
+function ScoreCard({ level, score, total, answers, onRetry }) {
   const passed = score >= CFG.quiz.passMark;
   const pct = Math.round((score / total) * 100);
   const missed = level.quiz.filter((q, i) => answers[i] !== q.answer).length;
 
   return html`
-    <${Flex} direction="column" gap="5">
-      <${Card} size="4" variant="surface">
-        <${Flex} direction="column" align="center" gap="4" py="4">
-          <div className=${'score-ring' + (passed ? '' : ' fail')} style=${{ '--pct': pct }}>
-            <div className="score-ring-inner">
-              <span className="figure score-value">${score}/${total}</span>
-              <span className="score-pct">${pct}%</span>
-            </div>
-          </div>
-          <${Heading} size="6" align="center">
+    <div class="stack stack-6">
+      <div class=${'score ' + (passed ? 'is-pass' : 'is-fail')}>
+        <div>
+          <span class="score-figure">
+            ${score}/${total}
+            <small>${pct}% · pass mark ${CFG.quiz.passMark}</small>
+          </span>
+        </div>
+        <div class="stack stack-4">
+          <h2 class="display display-m">
             ${passed
-              ? (score === total ? 'Flawless. Nothing left to teach you here.' : 'Nicely done. The build is open.')
-              : `Not yet. You need ${CFG.quiz.passMark} of ${total}.`}
-          <//>
-          <${Text} size="3" color="gray" align="center" style=${{ maxWidth: '52ch' }}>
+              ? (score === total
+                  ? 'Flawless. Nothing left to teach you here.'
+                  : `Nicely done. The ${level.project ? 'build' : 'setup checklist'} is open.`)
+              : `Not quite yet. You need ${CFG.quiz.passMark} of ${total}.`}
+          </h2>
+          <p class="index-sub" style=${{ maxWidth: '54ch' }}>
             ${passed
-              ? 'Have a look at the key below for anything you missed, then go and build it.'
+              ? (level.project
+                  ? 'Have a look at the key below for anything you missed, then go and build it.'
+                  : 'Have a look at the key below for anything you missed, then go and finish setting up.')
               : 'No problem at all. Every question below shows the right answer and why, so re-read the bits you slipped on and run it again. Your best score is the one that counts.'}
-          <//>
-          <${Flex} gap="3" wrap="wrap" justify="center">
-            <${Button} variant="soft" color="gray" onClick=${onRetry}>Run it again<//>
+          </p>
+          <div class="btn-row">
+            <${Btn} variant="quiet" onClick=${onRetry}>run it again<//>
             ${passed
-              ? html`<${Button} onClick=${() => navigate(`#/level/${level.id}/build`)}>Go to the build<//>`
-              : html`<${Button} color="amber" onClick=${() => navigate(`#/level/${level.id}/learn`)}>
-                  Back to the knowledge<//>`}
-          <//>
-        <//>
-      <//>
+              ? html`<${Btn} variant="accent" arrow
+                  onClick=${() => navigate(`#/level/${level.id}/build`)}>
+                  ${level.project ? 'go to the build' : 'go to the setup'}<//>`
+              : html`<${Btn} arrow
+                  onClick=${() => navigate(`#/level/${level.id}/learn`)}>back to the knowledge<//>`}
+          </div>
+        </div>
+      </div>
 
-      <${Box}>
-        <${Flex} justify="between" align="center" mb="3" wrap="wrap" gap="2">
-          <${Heading} size="4">Answer key<//>
-          <${Text} size="2" color="gray">
-            ${missed ? `${missed} missed, marked below`: 'every question correct'}
-          <//>
-        <//>
+      <div>
+        <div class="section-head">
+          <h2>Answer key</h2>
+          <span class="mono">${missed ? `${missed} missed, marked in the margin` : 'every question correct'}</span>
+        </div>
         <${AnswerKey} level=${level} answers=${answers} />
-      <//>
-    <//>`;
+      </div>
+    </div>`;
 }
 
 /* ------------------------------------------------------------------ drill */
@@ -149,41 +137,45 @@ export function Drill({ level, onFinish }) {
   }
 
   return html`
-    <${Flex} direction="column" gap="4">
-      <${Flex} align="center" gap="4" wrap="wrap">
-        <${Text} size="2" color="gray">
-          Question <span className="figure">${idx + 1}</span> of ${total}
-        <//>
-        <${Box} style=${{ flex: 1, minWidth: '160px' }}>
-          <${Progress} value=${(answered / total) * 100} color="blue" size="2" />
-        <//>
-        <${Text} size="2" color="gray">
-          <span className="figure">${correct}</span> correct · pass at ${CFG.quiz.passMark}
-        <//>
-      <//>
+    <div class="stack stack-5">
+      <div>
+        <div class="section-head" style=${{ marginBottom: '14px' }}>
+          <h2 class="mono" style=${{ fontSize: '0.82rem', color: 'var(--ash)' }}>
+            question ${String(idx + 1).padStart(2, '0')} of ${total}
+          </h2>
+          <span class="mono">${correct} correct · pass at ${CFG.quiz.passMark}</span>
+        </div>
+        <div class="meter"><span style=${{ width: `${(answered / total) * 100}%` }} /></div>
+      </div>
 
-      <${Card} size="3" variant="surface">
-        <${Badge} color="blue" variant="soft" radius="full" mb="2">${level.codename} · drill<//>
-        <${Heading} size="4" mt="2" mb="4" weight="medium">${md(q.q)}<//>
+      <div>
+        <span class="kicker">${level.codename} <b>/</b> drill</span>
+        <h3 class="display display-m" style=${{ margin: '0 0 26px', maxWidth: '44ch' }}>
+          ${md(q.q)}
+        </h3>
 
-        <${Flex} direction="column" gap="2">
+        <div>
           ${q.options.map((opt, i) => html`
-            <${Option} key=${`${idx}-${i}`} index=${i} text=${opt} disabled=${isLocked}
-              onPick=${pick}
+            <${Option} key=${`${idx}-${i}`} index=${i} text=${opt} disabled=${isLocked} onPick=${pick}
               state=${!isLocked ? '' : i === q.answer ? 'right' : i === answers[idx] ? 'wrong' : 'muted'} />`)}
-        <//>
+        </div>
 
-        ${isLocked ? html`<${Explanation} correct=${answers[idx] === q.answer}
-                            letter=${LETTERS[q.answer]} why=${q.why} />`: null}
-      <//>
+        ${isLocked ? html`
+          <aside class=${'note ' + (answers[idx] === q.answer ? 'note-money' : 'note-warn')}
+            style=${{ marginTop: '26px' }}>
+            <span class="note-label">
+              ${answers[idx] === q.answer ? 'correct' : 'answer: ' + LETTERS[q.answer]}
+            </span>
+            ${md(q.why)}
+          </aside>` : null}
+      </div>
 
-      <${Flex} gap="3" wrap="wrap">
-        ${idx > 0 ? html`<${Button} variant="soft" color="gray"
-          onClick=${() => setIdx(idx - 1)}>Previous<//>`: null}
+      <div class="btn-row">
+        ${idx > 0 ? html`<${Btn} variant="quiet" onClick=${() => setIdx(idx - 1)}>previous<//>` : null}
         ${isLocked && idx < total - 1
-          ? html`<${Button} onClick=${() => setIdx(idx + 1)}>Next question<//>`: null}
+          ? html`<${Btn} onClick=${() => setIdx(idx + 1)} arrow>next question<//>` : null}
         ${isLocked && idx === total - 1
-          ? html`<${Button} color="amber" onClick=${finish}>See my score<//>`: null}
-      <//>
-    <//>`;
+          ? html`<${Btn} variant="accent" onClick=${finish} arrow>see my score<//>` : null}
+      </div>
+    </div>`;
 }

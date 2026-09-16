@@ -138,7 +138,7 @@
 - C. Making a repository public
 - D. Uploading a .ipynb notebook through the GitHub web interface
 
-**Why:** Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables: covered in Level 5.
+**Why:** Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables: covered in level 5.
 
 ### 14. APR stands for Annual Percentage Rate. What does it express?
 
