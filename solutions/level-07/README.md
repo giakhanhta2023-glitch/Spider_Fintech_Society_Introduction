@@ -1,7 +1,5 @@
 # Level 7: Risk and return
 
-> **Portfolio risk dashboard** · build project · difficulty 7/10
-
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
