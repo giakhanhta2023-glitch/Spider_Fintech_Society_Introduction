@@ -27,7 +27,7 @@ const MAX_TOKENS = Number(process.env.FINQUEST_MAX_TOKENS || 900);
    the caller may not choose the model, and cannot send unbounded input. */
 const MAX_MESSAGES = 12;
 const MAX_CHARS_PER_MESSAGE = 4000;
-const MAX_Total_CHARS = 20000;
+const MAX_TOTAL_CHARS = 20000;
 const MAX_CONTEXT_CHARS = 6000;
 
 /* The tutor's actual instructions live here, server-side, where a caller
@@ -73,7 +73,7 @@ function clean(messages) {
     const content = m.content.slice(0, MAX_CHARS_PER_MESSAGE).trim();
     if (!content) continue;
     total += content.length;
-    if (total > MAX_Total_CHARS) break;
+    if (total > MAX_TOTAL_CHARS) break;
     out.push({ role: m.role, content });
   }
   /* The Messages API requires the conversation to start with a user turn. */

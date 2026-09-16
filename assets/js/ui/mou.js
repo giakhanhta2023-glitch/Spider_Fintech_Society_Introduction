@@ -58,25 +58,29 @@ const FRAME = [
 ];
 
 const MOODS = {
-  /* Resting face. The eyes sit low in the skull, which is most of what makes
-     a face read as young, and a shine pixel only muddies them at this size. */
+  /* A two pixel curve is not enough to read as a smile at this size, so the
+     mouth is drawn open: four pixels wide, tapering to two. It sits a clear
+     row below the nose so the two marks never merge into one blob. */
   idle: {
     13: '..owwwweewwwwwweewwwwo..',
     14: '..owwwweewwwwwweewwwwo..',
     15: '..owbbwwwwwnnwwwwwbbwo..',
-    16: '..owbbwwwwnwwnwwwwbbwo..'
+    16: '..owbbwwwwwwwwwwwwbbwo..',
+    17: '..owwwwwwwnnnnwwwwwwwo..',
+    18: '..owwwwwwwwnnwwwwwwwwo..'
   },
 
-  /* Eyes squeezed shut and a wide open smile, for the moment an answer lands. */
+  /* Eyes squeezed shut, mouth wide: the moment an answer lands. */
   happy: {
     13: '..owwwweewwwwwweewwwwo..',
     14: '..owwwewwewwwwewwewwwo..',
     15: '..owbbwwwwwnnwwwwwbbwo..',
-    16: '..owbbwwwwnnnnwwwwbbwo..',
-    17: '..owwwwwwwwwnnwwwwwwwo..'
+    16: '..owbbwwwwwwwwwwwwbbwo..',
+    17: '..owwwwwwnnnnnnwwwwwwo..',
+    18: '..owwwwwwwnnnnwwwwwwwo..'
   },
 
-  /* Eyes lifted, a sparkle over one ear: Mou is working on your question. */
+  /* Eyes lifted, a sparkle over one ear, still smiling: Mou is on your question. */
   thinking: {
     2:  '......oppo....oppo..s...',
     3:  '......oppo....oppo.sss..',
@@ -84,14 +88,19 @@ const MOODS = {
     12: '..owwwweewwwwwweewwwwo..',
     13: '..owwwweewwwwwweewwwwo..',
     15: '..owbbwwwwwnnwwwwwbbwo..',
-    16: '..owbbwwwwnwwnwwwwbbwo..'
+    16: '..owbbwwwwwwwwwwwwbbwo..',
+    17: '..owwwwwwwnnnnwwwwwwwo..',
+    18: '..owwwwwwwwnnwwwwwwwwo..'
   },
 
-  /* Dozing, which is how the button looks until you open the panel. */
+  /* The masthead button: eyes closed in a contented smile. */
   rest: {
-    14: '..owwwweewwwwwweewwwwo..',
+    13: '..owwwweewwwwwweewwwwo..',
+    14: '..owwwewwewwwwewwewwwo..',
     15: '..owbbwwwwwnnwwwwwbbwo..',
-    16: '..owbbwwwwnwwnwwwwbbwo..'
+    16: '..owbbwwwwwwwwwwwwbbwo..',
+    17: '..owwwwwwwnnnnwwwwwwwo..',
+    18: '..owwwwwwwwnnwwwwwwwwo..'
   }
 };
 

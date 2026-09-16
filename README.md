@@ -1,3 +1,5 @@
+<img src="assets/img/finquest-logo.svg" alt="" width="104" height="104" align="left">
+
 # FinQuest, a fintech training arcade
 
 A ten-level, project-based fintech course that runs in a browser tab. Each level teaches the
