@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 2 — The Time Value of Money
+   LEVEL 2: The Time Value of Money
    ========================================================================= */
 FQ.registerLevel({
   id: 2,
@@ -9,14 +9,14 @@ FQ.registerLevel({
   difficulty: 2,
   minutes: 90,
   tags: ['interest', 'compounding', 'python basics'],
-  summary: 'A dollar today is worth more than a dollar next year. Every product in finance — savings, loans, bonds, ' +
-           'pensions, valuations — is a variation on that sentence. This level turns it into code.',
+  summary: 'A dollar today is worth more than a dollar next year. Every product in finance (savings, loans, bonds, ' +
+           'pensions, valuations) is a variation on that sentence. This level turns it into code.',
 
   objectives: [
     'Separate simple interest from compound interest and explain why the gap explodes over time',
     'Apply the future-value formula with any compounding frequency',
     'Add regular contributions using the annuity formula',
-    'Convert between APR, periodic rate, and APY/EAR — and say why banks quote each one',
+    'Convert between APR, periodic rate, and APY/EAR, and say why banks quote each one',
     'Discount a future amount back to present value and adjust returns for inflation',
     'Write Python functions with default arguments, loops, and formatted output'
   ],
@@ -38,11 +38,11 @@ FQ.registerLevel({
       ]
     }},
     { money: 'This table is why pension products, student loans, and credit-card debt all behave so differently from what ' +
-             'people expect. Compounding is not a small correction — over decades it is the whole result.' },
+             'people expect. Compounding is not a small correction. Over decades it is the whole result.' },
 
     { h: 'Compounding frequency: n matters, but less than you think' },
     { p: 'The same 8% can be applied once a year, monthly, daily, or continuously. More frequent compounding means each ' +
-         'slice of interest starts earning sooner, so the effective return rises — but with diminishing returns.' },
+         'slice of interest starts earning sooner, so the effective return rises, but with diminishing returns.' },
     { table: {
       head: ['Compounding of 8% on $1,000 for 1 year', 'n', 'Result'],
       rows: [
@@ -66,43 +66,43 @@ FQ.registerLevel({
             'When comparing two offers, always convert both to the same basis first.' },
 
     { h: 'Adding regular contributions' },
-    { p: 'Real savings are not one lump sum — they are $200 every month. Each contribution compounds for a different length of time, ' +
+    { p: 'Real savings are not one lump sum. They are $200 every month. Each contribution compounds for a different length of time, ' +
          'and summing that series gives the **future value of an annuity**:' },
     { code: 'FV_contributions = C x [ ((1 + i) ** N - 1) / i ]\n\nC = payment per period   i = rate per period (r/n)\nN = total periods (n x t)', lang: 'text', label: 'annuity (end of period)' },
     { p: 'The total for a plan with both a starting balance and monthly deposits is simply the two formulas added together. ' +
-         'When `i` is 0 the formula divides by zero — with no interest the answer is just `C x N`, and your code has to handle that case.' },
+         'When `i` is 0 the formula divides by zero: with no interest the answer is just `C x N`, and your code has to handle that case.' },
     { tip: '**Rule of 72**: money doubles in roughly `72 / rate%` years. At 8%, about 9 years. It is accurate enough for ' +
            'mental math in a meeting and it impresses people.' },
 
     { h: 'Running the formula backwards: present value' },
     { p: 'If $10,000 lands in your account in 5 years, what is that promise worth today at a 6% discount rate?' },
     { code: 'PV = FV / (1 + r) ** t\n\n10000 / 1.06 ** 5 = $7,472.58', lang: 'text', label: 'discounting' },
-    { p: 'This operation — **discounting** — is how bonds, company valuations, lease accounting and insurance reserves are priced. ' +
+    { p: 'This operation (**discounting**) is how bonds, company valuations, lease accounting and insurance reserves are priced. ' +
          'The rate you discount at expresses how risky and how delayed the money is.' },
 
     { h: 'Inflation: the return you actually keep' },
-    { p: 'Earning 6% while inflation runs at 4% does not leave you 2% better off in a naive sense — the exact relationship is:' },
+    { p: 'Earning 6% while inflation runs at 4% does not leave you 2% better off in a naive sense, the exact relationship is:' },
     { code: 'real return = (1 + nominal) / (1 + inflation) - 1\n\n(1.06 / 1.04) - 1 = 0.01923  ->  1.92%', lang: 'text', label: 'Fisher relation' },
     { p: 'Subtracting (6% - 4% = 2%) is a decent approximation at low rates and badly wrong at high ones. Any savings ' +
-         'projection that ignores inflation is selling an illusion — a "$1,000,000 retirement" in 40 years at 3% inflation ' +
+         'projection that ignores inflation is selling an illusion: a "$1,000,000 retirement" in 40 years at 3% inflation ' +
          'buys about $306,000 of today\'s shopping.' },
 
-    { h: 'Floats are fine here — with one rule' },
+    { h: 'Floats are fine here: with one rule' },
     { p: 'Level 1 said never store a *balance* as a float. Projections are different: you are modelling the future, ' +
          'not recording what happened, so tiny rounding is harmless. The rule is: **compute in full precision, round only when you print**.' },
     { code: 'total = 1234.5678\nprint(f"${total:,.2f}")   # $1,234.57  <- rounded for display only', lang: 'python' }
   ],
 
   tutorial: {
-    intro: 'Open a fresh Colab notebook called `finquest-level-02.ipynb`. Every tool the project needs is introduced below — ' +
-           'nothing else is required.',
+    intro: 'Open a fresh Colab notebook called `finquest-level-02.ipynb`. Every tool the project needs is introduced below. ' +
+           'Nothing else is required.',
     steps: [
       {
         t: 'Arithmetic and the power operator',
         blocks: [
           { p: 'Python uses `**` for exponents, not `^`. This is the single most common first-day mistake in financial code.' },
           { code: 'principal = 1000\nrate = 0.08\nyears = 10\n\nsimple = principal * (1 + rate * years)\ncompound = principal * (1 + rate) ** years\n\nprint(f"Simple:   ${simple:,.2f}")\nprint(f"Compound: ${compound:,.2f}")\nprint(f"Gap:      ${compound - simple:,.2f}")', lang: 'python' },
-          { warn: '`^` is **not** a power operator in Python — it is bitwise XOR. With a float rate you get ' +
+          { warn: '`^` is **not** a power operator in Python. It is bitwise XOR. With a float rate you get ' +
                   '`TypeError: unsupported operand type(s) for ^`, and with whole numbers it is worse: `2 ^ 10` quietly ' +
                   'returns `8` instead of `1024`. Always `**`.' }
         ],
@@ -120,7 +120,7 @@ FQ.registerLevel({
       {
         t: 'Add contributions with the annuity formula',
         blocks: [
-          { p: 'Guard the zero-rate case before you divide — this is the kind of edge case that crashes a real calculator ' +
+          { p: 'Guard the zero-rate case before you divide. This is the kind of edge case that crashes a real calculator ' +
                'the first time a user types 0.' },
           { code: 'def contributions_value(payment, annual_rate, years, compounds_per_year=12):\n    """Future value of a regular payment made at the end of each period."""\n    i = annual_rate / compounds_per_year\n    n = compounds_per_year * years\n    if i == 0:\n        return payment * n            # no interest: just the deposits\n    return payment * (((1 + i) ** n - 1) / i)\n\nplan = future_value(2000, 0.07, 20, 12) + contributions_value(200, 0.07, 20, 12)\nprint(f"20-year plan: ${plan:,.2f}")', lang: 'python' }
         ],
@@ -153,7 +153,7 @@ FQ.registerLevel({
         blocks: [
           { code: 'def apy(apr, compounds_per_year):\n    """Effective annual yield from a nominal APR."""\n    return (1 + apr / compounds_per_year) ** compounds_per_year - 1\n\ndef real_value(nominal_amount, inflation, years):\n    """What a future amount buys in today\'s money."""\n    return nominal_amount / (1 + inflation) ** years\n\nprint(f"24% APR monthly  -> APY {apy(0.24, 12):.2%}")     # 26.82%\nprint(f"$1,000,000 in 40y -> ${real_value(1_000_000, 0.03, 40):,.0f} today")', lang: 'python' },
           { p: 'Underscores in numbers (`1_000_000`) are ignored by Python and make large amounts readable. ' +
-               'The `.2%` format multiplies by 100 and adds the sign for you — never do that by hand.' }
+               'The `.2%` format multiplies by 100 and adds the sign for you, never do that by hand.' }
         ],
         check: 'apy(0.24, 12) prints 26.82% and the inflation-adjusted million is about $306,557.'
       }
@@ -167,7 +167,7 @@ FQ.registerLevel({
     { t: 'Compounding frequency (n)', d: 'How many times per year interest is applied. Higher n means a higher effective rate.' },
     { t: 'Future value (FV)', d: 'What an amount today will be worth at a future date given a rate.' },
     { t: 'Present value (PV)', d: 'What a future amount is worth today: FV / (1 + r)^t.' },
-    { t: 'Discounting', d: 'Converting a future cash flow into present value — the core of every valuation.' },
+    { t: 'Discounting', d: 'Converting a future cash flow into present value: the core of every valuation.' },
     { t: 'APR', d: 'Nominal annual rate: periodic rate x periods. Ignores compounding within the year.' },
     { t: 'APY / EAR', d: 'Effective annual rate including compounding: (1 + APR/n)^n - 1.' },
     { t: 'Annuity', d: 'A series of equal payments at regular intervals.' },
@@ -215,7 +215,7 @@ FQ.registerLevel({
         "2.00%"
       ],
       answer: 0,
-      why: "(1 + 0.24/12)^12 - 1 = 0.2682. The monthly 2% compounds into 26.82% a year — the gap the headline APR hides." },
+      why: "(1 + 0.24/12)^12 - 1 = 0.2682. The monthly 2% compounds into 26.82% a year: the gap the headline APR hides." },
 
     { q: "Why do lenders advertise APR while savings accounts advertise APY?",
       options: [
@@ -230,12 +230,12 @@ FQ.registerLevel({
     { q: "Increasing compounding from monthly to daily on an 8% account has what effect?",
       options: [
         "Roughly doubles the interest earned",
-        "Adds a very small amount — the returns to frequency diminish quickly",
+        "Adds a very small amount: the returns to frequency diminish quickly",
         "Has no effect at all",
         "Reduces the effective rate"
       ],
       answer: 1,
-      why: "On $1,000 for a year, monthly gives $1,083.00 and daily $1,083.28. Continuous compounding only reaches $1,083.29 — frequency matters far less than rate or time." },
+      why: "On $1,000 for a year, monthly gives $1,083.00 and daily $1,083.28. Continuous compounding only reaches $1,083.29: frequency matters far less than rate or time." },
 
     { q: "What does the annuity formula C x [((1+i)^N - 1) / i] calculate?",
       options: [
@@ -285,7 +285,7 @@ FQ.registerLevel({
         "18 years"
       ],
       answer: 1,
-      why: "72 / 9 = 8 years. The exact answer via logarithms is 8.04 years — close enough for mental math." },
+      why: "72 / 9 = 8 years. The exact answer via logarithms is 8.04 years: close enough for mental math." },
 
     { q: "Why is `for year in range(1, years + 1)` used instead of `range(years)`?",
       options: [
@@ -319,7 +319,7 @@ FQ.registerLevel({
 
     { q: "When should a financial projection round its numbers?",
       options: [
-        "Never — always show full precision",
+        "Never, always show full precision",
         "Only when the number exceeds 1,000",
         "Only when displaying the result to a user",
         "After every single calculation step"
@@ -351,12 +351,12 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 2 — Compound Growth Engine\nAuthor: <your name>\n"""\n\ndef future_value(principal, annual_rate, years, compounds_per_year=12):\n    """Future value of a lump sum. FV = P(1 + r/n)^(nt)"""\n    # TODO\n    pass\n\n\ndef contributions_value(payment, annual_rate, years, compounds_per_year=12):\n    """Future value of regular end-of-period payments.\n    Remember the zero-rate case: with no interest the answer is payment * periods.\n    """\n    # TODO\n    pass\n\n\ndef plan_value(principal, payment, annual_rate, years, compounds_per_year=12):\n    """Starting balance + contributions."""\n    # TODO\n    pass\n\n\ndef growth_table(principal, payment, annual_rate, years):\n    """Print year | balance | deposited | interest, aligned."""\n    # TODO\n    pass\n\n\ndef years_to_target(principal, payment, annual_rate, target, max_years=100):\n    """First whole year the balance reaches target, else None."""\n    # TODO\n    pass\n\n\ndef apy(apr, compounds_per_year):\n    """Effective annual yield."""\n    # TODO\n    pass\n\n\ndef real_value(amount, inflation, years):\n    """Purchasing power of a future amount in today\'s money."""\n    # TODO\n    pass\n\n\ndef summary(principal, payment, annual_rate, years, target, inflation=0.03):\n    """Print the full report."""\n    # TODO\n    pass\n\n\n# --- scenarios -------------------------------------------------------------\nsummary(principal=2000, payment=200, annual_rate=0.07, years=20, target=50000)\n'
+      code: '"""FinQuest Level 2: Compound Growth Engine\nAuthor: <your name>\n"""\n\ndef future_value(principal, annual_rate, years, compounds_per_year=12):\n    """Future value of a lump sum. FV = P(1 + r/n)^(nt)"""\n    # TODO\n    pass\n\n\ndef contributions_value(payment, annual_rate, years, compounds_per_year=12):\n    """Future value of regular end-of-period payments.\n    Remember the zero-rate case: with no interest the answer is payment * periods.\n    """\n    # TODO\n    pass\n\n\ndef plan_value(principal, payment, annual_rate, years, compounds_per_year=12):\n    """Starting balance + contributions."""\n    # TODO\n    pass\n\n\ndef growth_table(principal, payment, annual_rate, years):\n    """Print year | balance | deposited | interest, aligned."""\n    # TODO\n    pass\n\n\ndef years_to_target(principal, payment, annual_rate, target, max_years=100):\n    """First whole year the balance reaches target, else None."""\n    # TODO\n    pass\n\n\ndef apy(apr, compounds_per_year):\n    """Effective annual yield."""\n    # TODO\n    pass\n\n\ndef real_value(amount, inflation, years):\n    """Purchasing power of a future amount in today\'s money."""\n    # TODO\n    pass\n\n\ndef summary(principal, payment, annual_rate, years, target, inflation=0.03):\n    """Print the full report."""\n    # TODO\n    pass\n\n\n# --- scenarios -------------------------------------------------------------\nsummary(principal=2000, payment=200, annual_rate=0.07, years=20, target=50000)\n'
     },
     tests: [
       'future_value(1000, 0.08, 10, 1) is 2158.92 (to 2dp)',
       'future_value(1000, 0.08, 10, 12) is 2219.64 (to 2dp)',
-      'contributions_value(200, 0.0, 10, 12) is exactly 24000 — no crash',
+      'contributions_value(200, 0.0, 10, 12) is exactly 24000: no crash',
       'contributions_value(200, 0.07, 20, 12) is 104,185.33 (to 2dp)',
       'apy(0.24, 12) is 0.2682 (26.82%)',
       'years_to_target(2000, 200, 0.07, 50000) returns 13',
@@ -371,7 +371,7 @@ FQ.registerLevel({
       { pts: 15, t: 'Shipped', d: 'Notebook committed to your GitHub portfolio repo with a clear filename.' }
     ],
     stretch: [
-      'Add `monthly_needed(target, years, rate)` — solve the annuity formula for the payment instead of the total',
+      'Add `monthly_needed(target, years, rate)`: solve the annuity formula for the payment instead of the total',
       'Compare beginning-of-period contributions (multiply the annuity by (1 + i)) against end-of-period',
       'Add a simple text bar chart of the yearly balance using "#" * int(balance / 1000)'
     ],
@@ -386,9 +386,9 @@ FQ.registerLevel({
     { q: 'What is the difference between APR and APY again?',
       a: 'APR is the periodic rate multiplied out and ignores compounding. APY compounds it: (1 + APR/n)^n - 1. A 24% APR card charging monthly really costs 26.82% a year.' },
     { q: 'My years_to_target never returns',
-      a: 'It has no upper bound. Use for year in range(1, max_years + 1) and return None if the loop finishes — a 0% rate with no contributions can never reach a positive target.' },
+      a: 'It has no upper bound. Use for year in range(1, max_years + 1) and return None if the loop finishes: a 0% rate with no contributions can never reach a positive target.' },
     { q: 'How do I format a percentage?',
-      a: 'f"{rate:.2%}" — it multiplies by 100 and adds the % sign. Do not multiply by 100 yourself as well, or you will report 682% instead of 6.82%.' },
+      a: 'f"{rate:.2%}": it multiplies by 100 and adds the % sign. Do not multiply by 100 yourself as well, or you will report 682% instead of 6.82%.' },
     { q: 'Should I round inside my functions?',
       a: 'No. Keep full precision in the calculation and round only in the f-string when you print. Rounding early compounds the error along with the interest.' }
   ]

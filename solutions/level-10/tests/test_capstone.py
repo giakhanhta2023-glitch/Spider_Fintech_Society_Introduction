@@ -1,5 +1,5 @@
 """
-Capstone test suite — 38 tests across seven modules.
+Capstone test suite: 38 tests across seven modules.
 
 Priorities, in order: invariants (the ledger balances), refusals (bad input
 raises and writes nothing), and known values (numbers verifiable by hand).
@@ -16,7 +16,7 @@ from neobank.ledger import (DuplicateAccount, InsufficientFunds, InvalidAmount,
 
 
 # ===========================================================================
-# ledger — the invariant, the refusals, the retry
+# ledger: the invariant, the refusals, the retry
 # ===========================================================================
 def make_ledger():
     led = Ledger()
@@ -224,8 +224,8 @@ def test_volatility_drag_is_visible():
 
 def test_diversification_beats_the_average_of_the_parts():
     returns = risk.compute_returns(loaders.load_prices())
-    check = risk.diversification_check(returns, {"TECHX": .25, "BANKCO": .25,
-                                                 "GOLDF": .25, "CRYPTOZ": .25})
+    check = risk.diversification_check(returns, {"TECHX":.25, "BANKCO":.25,
+                                                 "GOLDF":.25, "CRYPTOZ":.25})
     assert check["portfolio_vol"] < check["weighted_average_vol"]
     assert check["benefit"] > 0.07
 
@@ -233,7 +233,7 @@ def test_diversification_beats_the_average_of_the_parts():
 def test_weights_must_sum_to_one():
     returns = risk.compute_returns(loaders.load_prices())
     with pytest.raises(AssertionError):
-        risk.portfolio_returns(returns, {"TECHX": .4, "BANKCO": .3, "GOLDF": .2, "CRYPTOZ": 0.0})
+        risk.portfolio_returns(returns, {"TECHX":.4, "BANKCO":.3, "GOLDF":.2, "CRYPTOZ": 0.0})
 
 
 # ===========================================================================

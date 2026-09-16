@@ -1,5 +1,5 @@
 /* =========================================================================
-   FinQuest — progress store (localStorage, fails soft in private mode)
+   FinQuest: progress store (localStorage, fails soft in private mode)
    ========================================================================= */
 (function (w) {
   'use strict';
@@ -131,7 +131,7 @@
       return CFG.ranks[Math.min(n, CFG.ranks.length - 1)];
     },
 
-    /* XP needed for the next rank tier — purely cosmetic pacing */
+    /* XP needed for the next rank tier: purely cosmetic pacing */
     xpProgress: function () {
       var tier = 500;
       var into = state.xp % tier;

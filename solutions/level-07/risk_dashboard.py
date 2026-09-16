@@ -1,5 +1,5 @@
 """
-FinQuest Level 7 — Portfolio Risk Dashboard  (reference solution)
+FinQuest Level 7: Portfolio Risk Dashboard  (reference solution)
 =================================================================
 Returns, volatility, Sharpe, drawdown, correlation, VaR and expected
 shortfall over three years of daily prices for four fictional assets.
@@ -35,11 +35,11 @@ def load_prices(url=URL):
     try:
         prices = pd.read_csv(url, parse_dates=["date"])
     except Exception:
-        print(f"(network unavailable — reading {LOCAL.name} from the repo)")
+        print(f"(network unavailable: reading {LOCAL.name} from the repo)")
         prices = pd.read_csv(LOCAL, parse_dates=["date"])
     prices = prices.set_index("date").sort_index()
     if prices.isna().any().any():
-        raise ValueError("price file contains gaps — fill or drop them before analysing")
+        raise ValueError("price file contains gaps: fill or drop them before analysing")
     return prices
 
 
@@ -51,7 +51,7 @@ def compute_returns(prices):
 def annualize(returns, trading_days=TRADING_DAYS):
     """(annual mean return, annual volatility).
 
-    Volatility scales with the SQUARE ROOT of time — variance is what adds.
+    Volatility scales with the SQUARE ROOT of time: variance is what adds.
     """
     ann_return = (1 + returns.mean()) ** trading_days - 1
     ann_vol = returns.std() * np.sqrt(trading_days)
@@ -60,7 +60,7 @@ def annualize(returns, trading_days=TRADING_DAYS):
 
 def cagr(prices, trading_days=TRADING_DAYS):
     """What you actually earned, compounded. Always lower than the arithmetic
-    mean when returns are volatile — that gap is volatility drag.
+    mean when returns are volatile. That gap is volatility drag.
     """
     years = (len(prices) - 1) / trading_days
     total = prices.iloc[-1] / prices.iloc[0] - 1
@@ -148,7 +148,7 @@ def plot_dashboard(returns, path=None):
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
     curve.plot(ax=ax1)
-    ax1.set_title("Growth of 1 unit — three years")
+    ax1.set_title("Growth of 1 unit, three years")
     ax1.set_ylabel("multiple of start")
     ax1.axhline(1, color="grey", linewidth=0.8)
 
@@ -191,7 +191,7 @@ def report():
     print("CORRELATION")
     print(correlation_matrix(returns).to_string())
     least = correlation_matrix(returns).apply(lambda c: c[c.index != c.name].abs().mean()).idxmin()
-    print(f"\n{least} has the lowest average correlation — it is doing most of the diversifying.")
+    print(f"\n{least} has the lowest average correlation. It is doing most of the diversifying.")
 
     print("\n" + "-" * width)
     print("WEIGHTINGS COMPARED")
@@ -218,7 +218,7 @@ def report():
           f"{best['max_dd']:.0%} maximum drawdown.")
     defensive = results["defensive tilt"]
     print(f"I would recommend the defensive tilt: Sharpe {defensive['sharpe']:.2f} for a "
-          f"{defensive['max_dd']:.0%} drawdown instead — nearly the same efficiency with a fall a real")
+          f"{defensive['max_dd']:.0%} drawdown instead: nearly the same efficiency with a fall a real")
     print("investor might actually sit through, which is the risk that decides whether a plan survives.")
     print("\nWhat this analysis cannot tell you: it is one three-year sample of synthetic data. Correlations")
     print("rise in a crisis, volatility is not risk of loss, and every statistic here assumes the future")

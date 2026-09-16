@@ -1,5 +1,5 @@
 """
-FinQuest Level 5 — Multi-Currency Portfolio Valuation  (reference solution)
+FinQuest Level 5: Multi-Currency Portfolio Valuation  (reference solution)
 ===========================================================================
 Three layers of defence, in order:
 
@@ -98,7 +98,7 @@ def get_rates(base="USD", offline=False):
             save_cache(live)
             return live["rates"], "live", live["date"]
         except RuntimeError as err:
-            print(f"  ! live FX feed unavailable ({err}) — falling back", file=sys.stderr)
+            print(f"  ! live FX feed unavailable ({err}): falling back", file=sys.stderr)
 
     try:
         snap = fetch_json(SNAPSHOT_URL, attempts=1, timeout=8)
@@ -129,7 +129,7 @@ def get_crypto_prices(ids=("bitcoin",), vs="usd"):
         data = fetch_json(CRYPTO_URL, {"ids": ",".join(ids), "vs_currencies": vs}, attempts=2)
         return {k: v[vs] for k, v in data.items() if vs in v}, "live"
     except (RuntimeError, KeyError, TypeError) as err:
-        print(f"  ! crypto feed unavailable ({err}) — valued at 0", file=sys.stderr)
+        print(f"  ! crypto feed unavailable ({err}): valued at 0", file=sys.stderr)
         return {}, "unavailable"
 
 
@@ -157,7 +157,7 @@ def value_portfolio(holdings, rates, crypto, base="USD", primary_source="live"):
 
     The live ECB feed quotes 29 currencies and VND is not one of them. Rather
     than dropping that holding, fall back to the bundled snapshot for just
-    that currency and label the row — mixed provenance, stated openly.
+    that currency and label the row: mixed provenance, stated openly.
     """
     fallback, fallback_date = None, None
     rows = []
@@ -170,7 +170,7 @@ def value_portfolio(holdings, rates, crypto, base="USD", primary_source="live"):
             if currency in CRYPTO_IDS:
                 unit_value = crypto.get(CRYPTO_IDS[currency], 0.0)
                 source = "coingecko" if unit_value else "unavailable"
-                note = "" if unit_value else "price unavailable — valued at 0"
+                note = "" if unit_value else "price unavailable: valued at 0"
             else:
                 try:
                     unit_value = convert(1, currency, base, rates)
@@ -179,7 +179,7 @@ def value_portfolio(holdings, rates, crypto, base="USD", primary_source="live"):
                         fallback, fallback_date = snapshot_rates(base)
                     unit_value = convert(1, currency, base, fallback)
                     source = "snapshot"
-                    note = f"not quoted by the live feed — snapshot rate of {fallback_date}"
+                    note = f"not quoted by the live feed: snapshot rate of {fallback_date}"
             value = h["units"] * unit_value
         except KeyError as err:
             unit_value, value, source, note = 0.0, 0.0, "unavailable", str(err)
@@ -209,7 +209,7 @@ def report(holdings=PORTFOLIO, base="USD", offline=False):
 
     width = 82
     print("=" * width)
-    print(f"{'SOCIETY TREASURY — VALUATION':^{width}}")
+    print(f"{'SOCIETY TREASURY: VALUATION':^{width}}")
     print("=" * width)
     print(f"{'asset':<18}{'ccy':<6}{'units':>16}{'unit value':>14}{'value ' + base:>16}{'weight':>9}  {'source':<10}")
     print("-" * width)
@@ -217,13 +217,13 @@ def report(holdings=PORTFOLIO, base="USD", offline=False):
         print(f"{r['asset']:<18}{r['currency']:<6}{r['units']:>16,.4f}"
               f"{r['unit_value']:>14,.6f}{r[column]:>16,.2f}{r['weight']:>9.1%}  {r['source']:<10}")
     for _, r in df[df["note"] != ""].iterrows():
-        print(f"  note: {r['asset']} — {r['note']}")
+        print(f"  note: {r['asset']}: {r['note']}")
     print("-" * width)
     print(f"{'TOTAL':<18}{'':<6}{'':>16}{'':>14}{total:>16,.2f}{df['weight'].sum():>9.1%}")
     print("=" * width)
-    print(f"FX source     : {source}   (as of {as_of})")
-    print(f"Crypto source : {crypto_source}")
-    print(f"Generated     : {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"FX source: {source}   (as of {as_of})")
+    print(f"Crypto source: {crypto_source}")
+    print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     if source.startswith("STALE"):
         print("WARNING: these rates are a bundled snapshot, not live market data.")
     return df

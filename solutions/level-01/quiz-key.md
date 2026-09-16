@@ -1,7 +1,7 @@
-# Level 1 — Fintech Orientation & Your Zero-Install Toolkit: quiz answer key
+# Level 1: Fintech Orientation & Your Zero-Install Toolkit: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -30,7 +30,7 @@
 - C. The department of a bank that buys software
 - D. Any startup that has raised venture capital
 
-**Why:** Fintech is defined by what the technology does — serving a financial need — not by company size, funding, or a specific technology like blockchain.
+**Why:** Fintech is defined by what the technology does (serving a financial need) not by company size, funding, or a specific technology like blockchain.
 
 ### 2. A customer taps a card and the terminal says APPROVED. What has just happened?
 
@@ -39,7 +39,7 @@
 - **C. The issuing bank promised to pay: an authorization, not a transfer** ✅
 - D. The shop's bank lent the shop the money
 
-**Why:** Approval is an authorization — the issuer reserves the funds and promises payment. Actual money movement happens at settlement, typically one to three days later.
+**Why:** Approval is an authorization: the issuer reserves the funds and promises payment. Actual money movement happens at settlement, typically one to three days later.
 
 ### 3. In a card payment, which party decides to approve or decline?
 
@@ -48,7 +48,7 @@
 - **C. The issuing bank** ✅
 - D. The card network (Visa/Mastercard)
 
-**Why:** The issuer — the bank that gave the customer the card — checks the balance and fraud rules and returns the decision. The network only routes the message.
+**Why:** The issuer (the bank that gave the customer the card) checks the balance and fraud rules and returns the decision. The network only routes the message.
 
 ### 4. What is a "rail" in payments?
 
@@ -57,7 +57,7 @@
 - C. The fee a merchant pays per transaction
 - D. A regulation limiting transaction size
 
-**Why:** Rails are the pipes money moves through. They differ in speed, cost, reversibility, and limits — picking between them is a genuine product decision.
+**Why:** Rails are the pipes money moves through. They differ in speed, cost, reversibility, and limits. Picking between them is a genuine product decision.
 
 ### 5. What makes a ledger different from simply storing a balance in a database column?
 
@@ -66,14 +66,14 @@
 - C. A ledger can only be used by licensed banks
 - **D. A ledger is append-only, so the balance is the sum of entries and history stays auditable** ✅
 
-**Why:** Ledgers never overwrite. Corrections are new entries, so you can always reconstruct how a balance came to be — which is exactly what auditors and support teams need.
+**Why:** Ledgers never overwrite. Corrections are new entries, so you can always reconstruct how a balance came to be, which is exactly what auditors and support teams need.
 
 ### 6. KYC refers to:
 
-- A. Keep Your Cash — a liquidity rule
-- **B. Know Your Customer — verifying a user's identity as required by law** ✅
-- C. Key Yield Calculation — a pricing method
-- D. Known Yearly Cost — a lending disclosure
+- A. Keep Your Cash: a liquidity rule
+- **B. Know Your Customer: verifying a user's identity as required by law** ✅
+- C. Key Yield Calculation: a pricing method
+- D. Known Yearly Cost: a lending disclosure
 
 **Why:** KYC is the legally required identity verification done before a customer can hold or move money. It sits alongside AML monitoring.
 
@@ -93,7 +93,7 @@
 - C. It depends on the operating system
 - **D. False** ✅
 
-**Why:** It is False. 0.1 + 0.2 produces 0.30000000000000004 because of binary floating point — the reason money belongs in integers.
+**Why:** It is False. 0.1 + 0.2 produces 0.30000000000000004 because of binary floating point, the reason money belongs in integers.
 
 ### 9. Which tool lets you write and run Python with no installation at all?
 
@@ -138,7 +138,7 @@
 - C. Making a repository public
 - D. Uploading a .ipynb notebook through the GitHub web interface
 
-**Why:** Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables — covered in Level 5.
+**Why:** Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables: covered in Level 5.
 
 ### 14. APR stands for Annual Percentage Rate. What does it express?
 

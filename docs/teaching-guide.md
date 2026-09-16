@@ -17,21 +17,21 @@ FinQuest works as self-study, but it was built for a cohort. This is how to run 
 | 9 | 9 | Deploy day. Everyone ends the session with a live URL. |
 | 10 | 10 | Capstone kickoff, then two weeks of build time and a demo evening. |
 
-Levels 1–8 are roughly 1.5–3 hours each; 9 and 10 need a fortnight between them.
+Levels 1-8 are roughly 1.5-3 hours each; 9 and 10 need a fortnight between them.
 
 ## Session structure that works
 
-- **15 min** — recap last week's build. One member demos, warts included.
-- **30 min** — walk the Learn tab on a projector. Skip what they can read; teach what they cannot.
-- **40 min** — everyone works the Tutorial in their own Colab. You circulate.
-- **10 min** — the drill, live. Show the answer key and argue about the near-misses.
-- **remainder** — start the build together so nobody leaves on a blank page.
+- **15 min**: recap last week's build. One member demos, warts included.
+- **30 min**: walk the Learn tab on a projector. Skip what they can read; teach what they cannot.
+- **40 min**: everyone works the Tutorial in their own Colab. You circulate.
+- **10 min**: the drill, live. Show the answer key and argue about the near-misses.
+- **remainder**: start the build together so nobody leaves on a blank page.
 
 ## The drill is a teaching tool, not a gate
 
 Every question has an explanation written to be read aloud. When the room splits on an answer, that
 question is the lesson. The pass mark (12/15) exists to stop people skipping to the build, not to
-rank anyone — re-running a drill can only raise a score.
+rank anyone, re-running a drill can only raise a score.
 
 ## Marking builds
 
@@ -47,13 +47,13 @@ almost certainly right, and you can spend your time on structure and communicati
 
 ## Keeping the solution keys honest
 
-Tell people the keys exist on day one — hiding them just moves the copying somewhere you cannot see.
+Tell people the keys exist on day one: hiding them just moves the copying somewhere you cannot see.
 The rule that works: **attempt, hint, read the stuck part only, retype from memory**. The tutor is
 built to support exactly that order and will refuse to dump a full solution.
 
 ## Adapting it
 
-- **Shorter course?** Levels 1–4 and 9 make a coherent five-week "build and ship" track.
+- **Shorter course?** Levels 1-4 and 9 make a coherent five-week "build and ship" track.
 - **Analytics-only?** Levels 1, 3, 7, 8 skip the payments engineering entirely.
 - **Different region?** The currencies, categories and merchant names live in
   `data/generate_datasets.py`; regenerate and the briefs' expected values update with them

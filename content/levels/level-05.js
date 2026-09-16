@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 5 — Market Data & APIs
+   LEVEL 5: Market Data & APIs
    ========================================================================= */
 FQ.registerLevel({
   id: 5,
@@ -39,17 +39,17 @@ FQ.registerLevel({
       ]
     }},
     { p: 'This level only uses `GET`, because reading market data is the safe half of the job. Note the pattern though: ' +
-         '`GET` is naturally repeatable, `POST` is not — which is exactly why Level 4 needed idempotency keys.' },
+         '`GET` is naturally repeatable, `POST` is not, which is exactly why Level 4 needed idempotency keys.' },
 
     { h: 'Status codes tell you whose fault it is' },
     { table: {
       head: ['Code', 'Meaning', 'What you should do'],
       rows: [
         ['`200`', 'OK', 'Carry on'],
-        ['`400`', 'Bad request', 'Your parameters are wrong — fix the code, do not retry'],
+        ['`400`', 'Bad request', 'Your parameters are wrong. Fix the code, do not retry'],
         ['`401` / `403`', 'Unauthorized / forbidden', 'Key missing, wrong, or out of permissions'],
         ['`404`', 'Not found', 'Wrong path or unknown symbol'],
-        ['`429`', 'Too many requests', 'You hit the rate limit — back off and slow down'],
+        ['`429`', 'Too many requests', 'You hit the rate limit: back off and slow down'],
         ['`500` / `502` / `503`', 'Their server broke', 'Retry with backoff; it may fix itself']
       ]
     }},
@@ -59,18 +59,18 @@ FQ.registerLevel({
             'Every request in production code has a timeout. No exceptions.' },
 
     { h: 'Rate limits and backoff' },
-    { p: 'Free APIs cap how often you may call them — perhaps 30 requests a minute. Exceed it and you get `429`, sometimes ' +
+    { p: 'Free APIs cap how often you may call them: perhaps 30 requests a minute. Exceed it and you get `429`, sometimes ' +
          'followed by a temporary ban. The polite and effective response is **exponential backoff**: wait 1 second, then 2, then 4.' },
     { code: 'for attempt in range(3):\n    try:\n        r = requests.get(url, timeout=10)\n        r.raise_for_status()\n        return r.json()\n    except requests.RequestException:\n        time.sleep(2 ** attempt)        # 1s, 2s, 4s\nraise RuntimeError("giving up after 3 attempts")', lang: 'python' },
-    { money: 'A trading desk that hammers a rate-limited feed gets throttled precisely when markets are volatile — the ' +
+    { money: 'A trading desk that hammers a rate-limited feed gets throttled precisely when markets are volatile: the ' +
              'moment the data matters most. Backoff is not politeness, it is self-preservation.' },
 
     { h: 'Never trust a single live call' },
     { p: 'An app that shows a blank screen when an API is slow is a broken app. Three layers of defence, in order:' },
     { ol: [
-      '**Cache** — save the last good response with a timestamp. If it is younger than your freshness window, use it and skip the call entirely.',
-      '**Retry** — on a network error or 5xx, try again a few times with backoff.',
-      '**Fallback** — if everything fails, use a bundled snapshot and **label it clearly as stale**.'
+      '**Cache**: save the last good response with a timestamp. If it is younger than your freshness window, use it and skip the call entirely.',
+      '**Retry**: on a network error or 5xx, try again a few times with backoff.',
+      '**Fallback**: if everything fails, use a bundled snapshot and **label it clearly as stale**.'
     ]},
     { p: 'The last part matters more than the code: a rate shown without its age is a lie waiting to happen. ' +
          'Every number you display from an external source should carry where it came from and when.' },
@@ -84,7 +84,7 @@ FQ.registerLevel({
         ['Read from an environment variable', 'Paste the key into a cell you will commit'],
         ['Prompt with `getpass` in a notebook', 'Put it in a URL you print or log'],
         ['Add `.env` to `.gitignore`', 'Email it to a teammate'],
-        ['Rotate a key the moment it leaks', 'Assume a deleted commit is gone — it is not']
+        ['Rotate a key the moment it leaks', 'Assume a deleted commit is gone. It is not']
       ]
     }},
     { warn: 'Deleting a key from a file does **not** remove it from git history. If a key is ever committed, revoke it immediately. ' +
@@ -95,21 +95,21 @@ FQ.registerLevel({
          'Reading it backwards is the single most common FX bug.' },
     { code: '# Given rates quoted against USD:\n#   EUR = 0.9123   (1 USD buys 0.9123 EUR)\n#   GBP = 0.7684\n\nusd_to_eur = 250 * 0.9123           # 228.08 EUR\neur_to_usd = 250 / 0.9123           # 274.03 USD   <- divide to go back\n\n# cross rate EUR -> GBP, via the common base\neur_to_gbp = 0.7684 / 0.9123        # 0.8423', lang: 'python' },
     { p: 'Real trading quotes come in pairs: the **bid** (what a dealer pays you) and the **ask** (what they charge you). ' +
-         'The gap is the **spread**, and it is how the dealer earns. A mid-market rate — the average — is what news sites show ' +
+         'The gap is the **spread**, and it is how the dealer earns. A mid-market rate (the average) is what news sites show ' +
          'and is never what you actually get. Consumer apps quoting "the real exchange rate" mean mid-market plus a stated fee.' },
     { tip: 'Sanity-check every conversion: if 1 USD buys 25,480 VND, then $10 should be about 254,800 VND. If your ' +
            'answer is 0.0004, you divided when you should have multiplied.' },
 
     { h: 'No feed covers everything' },
-    { p: 'The free FX API in this level publishes the **European Central Bank reference set** — 29 currencies. ' +
+    { p: 'The free FX API in this level publishes the **European Central Bank reference set**: 29 currencies. ' +
          'USD, EUR, GBP, JPY, SGD and INR are in it. **VND is not**, and neither are most African, Middle Eastern, ' +
          'and smaller Asian currencies.' },
     { p: 'This is normal, and it is a design question rather than a bug. When a source does not quote a currency you hold, ' +
-         'you have three options: drop the holding (wrong — it understates the total), value it at zero (worse — it lies ' +
+         'you have three options: drop the holding (wrong (it understates the total), value it at zero (worse) it lies ' +
          'quietly), or **fall back to another source for that one currency and label the row**. The third is what real ' +
          'systems do, and it is why professional valuation tables carry a source column rather than a single footnote.' },
     { money: 'Mixed provenance is the normal state of financial data: a treasury report routinely blends a live feed, ' +
-             'a broker file, and a manually entered rate. The discipline is not avoiding the mix — it is labelling it.' }
+             'a broker file, and a manually entered rate. The discipline is not avoiding the mix. It is labelling it.' }
   ],
 
   tutorial: {
@@ -130,7 +130,7 @@ FQ.registerLevel({
         t: 'Check the response before you trust it',
         blocks: [
           { p: '`raise_for_status()` turns any 4xx/5xx into an exception so a bad response cannot slip through as data.' },
-          { code: 'r = requests.get("https://api.frankfurter.app/latest",\n                 params={"base": "XYZ"}, timeout=10)\nprint(r.status_code)         # 404 — XYZ is not a currency\n\ntry:\n    r.raise_for_status()\nexcept requests.HTTPError as err:\n    print("API said no:", err)', lang: 'python' },
+          { code: 'r = requests.get("https://api.frankfurter.app/latest",\n                 params={"base": "XYZ"}, timeout=10)\nprint(r.status_code)         # 404. XYZ is not a currency\n\ntry:\n    r.raise_for_status()\nexcept requests.HTTPError as err:\n    print("API said no:", err)', lang: 'python' },
           { warn: 'Without `raise_for_status()`, calling `.json()` on an error response either throws a confusing JSON error ' +
                   'or hands you an error object that your code treats as rates.' }
         ],
@@ -150,7 +150,7 @@ FQ.registerLevel({
         blocks: [
           { code: 'import json, os\nfrom datetime import datetime, timedelta\n\nCACHE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\ndef load_cache():\n    if not os.path.exists(CACHE):\n        return None\n    with open(CACHE, "r", encoding="utf-8") as fh:\n        blob = json.load(fh)\n    age = datetime.now() - datetime.fromisoformat(blob["fetched_at"])\n    return blob if age < MAX_AGE else None\n\ndef save_cache(payload):\n    blob = {"fetched_at": datetime.now().isoformat(), "payload": payload}\n    with open(CACHE, "w", encoding="utf-8") as fh:\n        json.dump(blob, fh, indent=2)', lang: 'python' },
           { p: '`with open(...)` closes the file for you even if something throws. `json.dump` writes, `json.load` reads. ' +
-               'In Colab the file lives in the session and disappears on restart — which is fine, that is what a cache is.' }
+               'In Colab the file lives in the session and disappears on restart, which is fine, that is what a cache is.' }
         ],
         check: 'Running your fetch twice writes fx_cache.json once and reuses it the second time.'
       },
@@ -178,10 +178,10 @@ FQ.registerLevel({
         t: 'A second source: crypto, and a portfolio table',
         blocks: [
           { code: 'coins = fetch_json("https://api.coingecko.com/api/v3/simple/price",\n                   {"ids": "bitcoin,ethereum", "vs_currencies": "usd"})\nprint(coins)          # {"bitcoin": {"usd": 64210}, "ethereum": {"usd": 2480}}\n\nbtc_usd = coins["bitcoin"]["usd"]', lang: 'python' },
-          { p: 'Different API, different JSON shape — that is normal. Read the structure, then index it. ' +
+          { p: 'Different API, different JSON shape. That is normal. Read the structure, then index it. ' +
                'Build the portfolio table with pandas from Level 3:' },
           { code: 'import pandas as pd\n\nholdings = [\n    {"asset": "Cash EUR", "currency": "EUR", "units": 1200},\n    {"asset": "Cash JPY", "currency": "JPY", "units": 90000},\n    {"asset": "Bitcoin",  "currency": "BTC", "units": 0.05},\n]\n\nrows = []\nfor h in holdings:\n    if h["currency"] == "BTC":\n        value = h["units"] * btc_usd\n    else:\n        value = convert(h["units"], h["currency"], "USD", rates)\n    rows.append({**h, "value_usd": round(value, 2)})\n\ndf = pd.DataFrame(rows)\ndf["weight"] = df["value_usd"] / df["value_usd"].sum()\nprint(df.to_string(index=False))\nprint(f"\\nTotal: ${df[\'value_usd\'].sum():,.2f}   source: {source} ({as_of})")', lang: 'python' },
-          { p: '`{**h, "value_usd": value}` copies a dict and adds a key — a neat way to build result rows without mutating ' +
+          { p: '`{**h, "value_usd": value}` copies a dict and adds a key: a neat way to build result rows without mutating ' +
                'the original data.' }
         ],
         check: 'A portfolio table prints with USD values, weights summing to 1.0, and a source stamp.'
@@ -202,7 +202,7 @@ FQ.registerLevel({
     { t: 'Base / quote', d: 'In EUR/USD, EUR is the base and USD the quote: one EUR costs 1.09 USD.' },
     { t: 'Cross rate', d: 'A rate between two currencies derived through a common third currency.' },
     { t: 'Bid / ask / spread', d: 'What a dealer pays, what they charge, and the gap they earn.' },
-    { t: 'Mid-market rate', d: 'The midpoint of bid and ask — a reference price, not a price you can trade at.' },
+    { t: 'Mid-market rate', d: 'The midpoint of bid and ask: a reference price, not a price you can trade at.' },
     { t: 'Environment variable', d: 'A value supplied by the environment, used to keep secrets out of source code.' }
   ],
 
@@ -225,14 +225,14 @@ FQ.registerLevel({
         "The status code"
       ],
       answer: 0,
-      why: "It parses the body into native Python objects — JSON objects become dicts, arrays become lists — so you can index straight into it." },
+      why: "It parses the body into native Python objects (JSON objects become dicts, arrays become lists) so you can index straight into it." },
 
     { q: "You receive HTTP 429. What is the correct response?",
       options: [
         "Retry immediately in a tight loop",
         "Fix your query parameters",
         "Rotate your API key",
-        "Back off — wait, then retry more slowly, because you have hit the rate limit"
+        "Back off: wait, then retry more slowly, because you have hit the rate limit"
       ],
       answer: 3,
       why: "429 means too many requests. Retrying immediately makes it worse and can earn a temporary ban. Exponential backoff is the standard fix." },
@@ -255,7 +255,7 @@ FQ.registerLevel({
         "To avoid rate limits"
       ],
       answer: 1,
-      why: "A server that accepts a connection and never replies will block your thread forever. requests has no default timeout — you must set it." },
+      why: "A server that accepts a connection and never replies will block your thread forever. Requests has no default timeout. You must set it." },
 
     { q: "What does `raise_for_status()` do?",
       options: [
@@ -270,7 +270,7 @@ FQ.registerLevel({
     { q: "What is exponential backoff?",
       options: [
         "Reducing the timeout on each retry",
-        "Waiting progressively longer between retries — 1s, 2s, 4s",
+        "Waiting progressively longer between retries: 1s, 2s, 4s",
         "Switching to a backup API immediately",
         "Requesting more data with each attempt"
       ],
@@ -285,7 +285,7 @@ FQ.registerLevel({
         "Retry in a loop until it succeeds"
       ],
       answer: 1,
-      why: "Degrade, do not disappear — but never present old data as current. Every displayed rate should carry its source and age." },
+      why: "Degrade, do not disappear, but never present old data as current. Every displayed rate should carry its source and age." },
 
     { q: "Where should an API key live?",
       options: [
@@ -299,7 +299,7 @@ FQ.registerLevel({
 
     { q: "You accidentally committed a key to a public repo and deleted it in the next commit. What now?",
       options: [
-        "Nothing — the deletion removed it",
+        "Nothing, the deletion removed it",
         "Make the repository private and keep the key",
         "Rename the variable",
         "Revoke and rotate the key immediately; it is still in the history"
@@ -361,7 +361,7 @@ FQ.registerLevel({
   project: {
     title: 'Multi-Currency Portfolio Valuation Service',
     story: 'Society members hold cash in four currencies and a little crypto, and nobody can say what the treasury is worth. ' +
-           'Build the valuation service — and make it keep working on the conference wifi that blocks half the internet.',
+           'Build the valuation service, and make it keep working on the conference wifi that blocks half the internet.',
     scope: 'Uses this level plus Level 3 (pandas) and Level 2 (formatting): requests with timeout, retries, JSON, ' +
            'file caching, try/except, and a DataFrame for the output. No API key is required anywhere.',
     dataset: '{{RAW}}/data/level-05-fx-snapshot.json',
@@ -372,7 +372,7 @@ FQ.registerLevel({
       'The snapshot path must be exercised: prove it works by pointing the live URL at a dead endpoint',
       'A `convert(amount, frm, to, rates, base)` handling same-currency, base-to-x, x-to-base, and cross rates',
       'A `get_crypto_prices(ids)` call to CoinGecko that fails soft: if it errors, crypto is valued at 0 with a clear warning',
-      'Per-currency fallback: the live feed does not quote VND, so that holding must be valued from the snapshot and labelled — not dropped and not silently zero',
+      'Per-currency fallback: the live feed does not quote VND, so that holding must be valued from the snapshot and labelled, not dropped and not silently zero',
       'A `source` column on every row of the output showing where that particular rate came from',
       'A portfolio defined as a list of dicts with at least 5 holdings across 4+ currencies plus one crypto asset',
       'A `value_portfolio(holdings, base)` returning a DataFrame with asset, currency, units, unit value, value in base, and weight',
@@ -384,11 +384,11 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 5 — Multi-Currency Portfolio Valuation"""\n\nimport json\nimport os\nimport time\nfrom datetime import datetime, timedelta\n\nimport pandas as pd\nimport requests\n\nFX_URL = "https://api.frankfurter.app/latest"\nCRYPTO_URL = "https://api.coingecko.com/api/v3/simple/price"\nSNAPSHOT_URL = "{{RAW}}/data/level-05-fx-snapshot.json"\nCACHE_FILE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\nPORTFOLIO = [\n    {"asset": "Operating cash", "currency": "USD", "units": 4200},\n    {"asset": "Event float",    "currency": "EUR", "units": 1500},\n    {"asset": "Sponsor escrow", "currency": "GBP", "units": 800},\n    {"asset": "Travel fund",    "currency": "JPY", "units": 250000},\n    {"asset": "Local reserve",  "currency": "VND", "units": 12000000},\n    {"asset": "Bitcoin",        "currency": "BTC", "units": 0.05},\n]\n\n\ndef fetch_json(url, params=None, attempts=3, timeout=10):\n    """GET JSON with retries and exponential backoff. Raise on final failure."""\n    # TODO\n    pass\n\n\ndef load_cache():\n    """Return the cached payload if it is younger than MAX_AGE, else None."""\n    # TODO\n    pass\n\n\ndef save_cache(payload):\n    # TODO\n    pass\n\n\ndef get_rates(base="USD"):\n    """Return (rates, source, as_of). Try cache -> live -> snapshot."""\n    # TODO\n    pass\n\n\ndef get_crypto_prices(ids=("bitcoin",), vs="usd"):\n    """Return {id: price}. Must fail soft — never crash the valuation."""\n    # TODO\n    pass\n\n\ndef convert(amount, frm, to, rates, base="USD"):\n    """Convert through the base currency. Handle frm == to."""\n    # TODO\n    pass\n\n\ndef value_portfolio(holdings, rates, crypto, base="USD"):\n    """Return a DataFrame with value_base and weight columns."""\n    # TODO\n    pass\n\n\ndef report(holdings=PORTFOLIO, base="USD"):\n    """Print the table, the total, and the data-source stamp."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest Level 5: Multi-Currency Portfolio Valuation"""\n\nimport json\nimport os\nimport time\nfrom datetime import datetime, timedelta\n\nimport pandas as pd\nimport requests\n\nFX_URL = "https://api.frankfurter.app/latest"\nCRYPTO_URL = "https://api.coingecko.com/api/v3/simple/price"\nSNAPSHOT_URL = "{{RAW}}/data/level-05-fx-snapshot.json"\nCACHE_FILE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\nPORTFOLIO = [\n    {"asset": "Operating cash", "currency": "USD", "units": 4200},\n    {"asset": "Event float",    "currency": "EUR", "units": 1500},\n    {"asset": "Sponsor escrow", "currency": "GBP", "units": 800},\n    {"asset": "Travel fund",    "currency": "JPY", "units": 250000},\n    {"asset": "Local reserve",  "currency": "VND", "units": 12000000},\n    {"asset": "Bitcoin",        "currency": "BTC", "units": 0.05},\n]\n\n\ndef fetch_json(url, params=None, attempts=3, timeout=10):\n    """GET JSON with retries and exponential backoff. Raise on final failure."""\n    # TODO\n    pass\n\n\ndef load_cache():\n    """Return the cached payload if it is younger than MAX_AGE, else None."""\n    # TODO\n    pass\n\n\ndef save_cache(payload):\n    # TODO\n    pass\n\n\ndef get_rates(base="USD"):\n    """Return (rates, source, as_of). Try cache -> live -> snapshot."""\n    # TODO\n    pass\n\n\ndef get_crypto_prices(ids=("bitcoin",), vs="usd"):\n    """Return {id: price}. Must fail soft, never crash the valuation."""\n    # TODO\n    pass\n\n\ndef convert(amount, frm, to, rates, base="USD"):\n    """Convert through the base currency. Handle frm == to."""\n    # TODO\n    pass\n\n\ndef value_portfolio(holdings, rates, crypto, base="USD"):\n    """Return a DataFrame with value_base and weight columns."""\n    # TODO\n    pass\n\n\ndef report(holdings=PORTFOLIO, base="USD"):\n    """Print the table, the total, and the data-source stamp."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
       'fetch_json against a 404 URL raises RuntimeError after its retries rather than hanging',
-      'Every requests.get call in your file passes a timeout — grep your own code to confirm',
+      'Every requests.get call in your file passes a timeout: grep your own code to confirm',
       'get_rates returns source "live" first, then "cache" on an immediate second call',
       'With the live URL broken, get_rates returns the snapshot and source says STALE',
       'convert(100, "USD", "USD", rates) == 100 exactly',
@@ -419,7 +419,7 @@ FQ.registerLevel({
 
   faq: [
     { q: 'My request hangs forever',
-      a: 'You forgot timeout=. requests has no default. Add timeout=10 to every call, and wrap it in try/except requests.RequestException.' },
+      a: 'You forgot timeout=. Requests has no default. Add timeout=10 to every call, and wrap it in try/except requests.RequestException.' },
     { q: 'I get a 404 from the FX API',
       a: 'Usually an invalid currency code in base or symbols. Codes are three-letter ISO 4217, uppercase: USD, EUR, VND. Use raise_for_status to surface it clearly.' },
     { q: 'KeyError: "USD" inside convert',
@@ -431,10 +431,10 @@ FQ.registerLevel({
     { q: 'CoinGecko returns 429',
       a: 'That is the free rate limit. Back off, cache the crypto price like you cache FX, and make the crypto call fail soft so the rest of the report still prints.' },
     { q: 'The API returns no rate for VND',
-      a: 'It never will — the feed publishes the 29-currency ECB reference set and VND is not in it. That is the point of ' +
+      a: 'It never will: the feed publishes the 29-currency ECB reference set and VND is not in it. That is the point of ' +
          'that holding. Catch the KeyError, fall back to the bundled snapshot rate for that one currency, and label the row ' +
          'as snapshot-sourced.' },
     { q: 'Should I commit the cache file?',
-      a: 'No. Add fx_cache.json to .gitignore — it is derived data that goes stale. Commit only the snapshot, which is deliberately versioned.' }
+      a: 'No. Add fx_cache.json to .gitignore: it is derived data that goes stale. Commit only the snapshot, which is deliberately versioned.' }
   ]
 });

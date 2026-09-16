@@ -1,5 +1,5 @@
 """
-neobank.fx — currency conversion (from Level 5).
+neobank.fx: currency conversion (from Level 5).
 
 The rates come from loaders; this module only does the arithmetic and is
 honest about which currencies it can and cannot handle.

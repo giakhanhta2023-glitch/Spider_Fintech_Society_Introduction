@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 4 — Payments & Ledgers
+   LEVEL 4: Payments & Ledgers
    ========================================================================= */
 FQ.registerLevel({
   id: 4,
@@ -25,9 +25,9 @@ FQ.registerLevel({
     { h: 'Money cannot appear from nowhere' },
     { p: 'Every movement of money has two sides: it leaves somewhere and arrives somewhere. **Double-entry bookkeeping**, ' +
          'standardised in Venice in 1494 and unchanged since, writes both sides as separate entries and requires them to cancel out. ' +
-         'If a transaction\'s entries do not sum to zero, the transaction is invalid — not "slightly off", *invalid*.' },
+         'If a transaction\'s entries do not sum to zero, the transaction is invalid, not "slightly off", *invalid*.' },
     { code: 'Alice pays Bob $25.00\n\n  entry 1:  alice   -2500   (cents)\n  entry 2:  bob     +2500\n  ---------------------------\n  sum                    0     <- the invariant', lang: 'text', label: 'one transfer, two entries' },
-    { p: 'In traditional accounting the two sides are called **debit** and **credit** — a debit increases an asset account and ' +
+    { p: 'In traditional accounting the two sides are called **debit** and **credit**: a debit increases an asset account and ' +
          'decreases a liability one, which confuses everybody for about a month. Many modern ledger systems keep the identical ' +
          'invariant with **signed amounts**: positive means value in, negative means value out, and a valid transaction sums to zero. ' +
          'That is the model you will build, and it is exactly equivalent.' },
@@ -35,18 +35,18 @@ FQ.registerLevel({
              'or the transaction never happened. There is no valid state in between.' },
 
     { h: 'Three or more sides: fees' },
-    { p: 'Nothing says a transaction has only two entries — it needs only to **balance**. A $25 payment with a 50-cent platform fee is three entries:' },
+    { p: 'Nothing says a transaction has only two entries. It needs only to **balance**. A $25 payment with a 50-cent platform fee is three entries:' },
     { code: '  customer   -2500\n  merchant   +2450\n  fee_income   +50\n  --------------------\n  sum            0', lang: 'text', label: 'a payment with a fee' },
     { p: 'This is how every payment processor records revenue. The customer\'s view ("I paid $25") and the merchant\'s view ' +
          '("I received $24.50") are both true, on the same balanced transaction.' },
 
     { h: 'The balance is derived, never stored' },
-    { p: 'An account\'s balance is the **sum of its entries** — not a column you update. If you store a balance and also store ' +
+    { p: 'An account\'s balance is the **sum of its entries**, not a column you update. If you store a balance and also store ' +
          'entries, the day will come when they disagree, and you will not know which one is lying.' },
     { code: 'def balance(account_id):\n    return sum(e.amount for e in entries if e.account == account_id)', lang: 'python' },
     { p: 'Production systems cache balances for speed, but the cache is always rebuildable from entries. The entries are the truth.' },
     { warn: 'Never `UPDATE` or `DELETE` a posted entry. If a payment was wrong, post a **reversing entry** that cancels it. ' +
-            'The original stays visible forever — that is what makes the history auditable, and in most jurisdictions, legal.' },
+            'The original stays visible forever. That is what makes the history auditable, and in most jurisdictions, legal.' },
 
     { h: 'Integer minor units, revisited' },
     { p: 'Level 1 warned you: never store a balance as a float. Here is the discipline in practice.' },
@@ -61,7 +61,7 @@ FQ.registerLevel({
       ]
     }},
     { p: 'That last one has a name: the **penny-splitting problem**. If you split $10.00 between three people you cannot give ' +
-         'each $3.333... Someone must get the extra cent, and your code must decide who — deterministically. Silently dropping ' +
+         'each $3.333... Someone must get the extra cent, and your code must decide who: deterministically. Silently dropping ' +
          'it means your transaction no longer sums to zero.' },
 
     { h: 'Idempotency: the network will lie to you' },
@@ -78,7 +78,7 @@ FQ.registerLevel({
     { table: {
       head: ['State', 'Meaning', 'Money moved?'],
       rows: [
-        ['`pending`', 'Authorized — funds reserved on the payer', 'No'],
+        ['`pending`', 'Authorized: funds reserved on the payer', 'No'],
         ['`posted`', 'Captured and written to the ledger', 'Yes, in your books'],
         ['`settled`', 'Cleared between institutions', 'Yes, for real'],
         ['`reversed`', 'Cancelled by a balancing entry', 'Net zero'],
@@ -86,10 +86,10 @@ FQ.registerLevel({
       ]
     }},
     { p: 'Refunds, chargebacks and disputes are all reversals with different reasons and different deadlines. ' +
-         'Your ledger does not need to know which — it only needs to record a balanced, reasoned entry.' },
+         'Your ledger does not need to know which. It only needs to record a balanced, reasoned entry.' },
 
     { h: 'Fail loudly, not quietly' },
-    { p: 'When a transfer is invalid — unknown account, zero amount, insufficient funds — the correct behaviour is to ' +
+    { p: 'When a transfer is invalid (unknown account, zero amount, insufficient funds) the correct behaviour is to ' +
          '**raise an error and write nothing**. Returning `False` or `None` invites a caller to ignore it, and a ledger that ' +
          'silently skips a write is worse than one that crashes.' },
     { code: 'class InsufficientFunds(Exception):\n    """Raised when an account cannot cover a debit."""\n\nif self.balance(src) < amount:\n    raise InsufficientFunds(f"{src} has {self.balance(src)}, needs {amount}")', lang: 'python' },
@@ -98,15 +98,15 @@ FQ.registerLevel({
   ],
 
   tutorial: {
-    intro: 'New notebook: `finquest-level-04.ipynb`. This level introduces classes — the tool for bundling data with the ' +
+    intro: 'New notebook: `finquest-level-04.ipynb`. This level introduces classes: the tool for bundling data with the ' +
            'rules that protect it. Everything the project needs is here.',
     steps: [
       {
         t: 'Dictionaries: the record type you already have',
         blocks: [
           { p: 'A dict maps keys to values. A list of dicts is a perfectly good table when you do not need pandas.' },
-          { code: 'entry = {"txn_id": "T1", "account": "alice", "amount": -2500}\nprint(entry["account"])\nprint(entry.get("memo", "no memo"))     # .get never raises KeyError\n\nentries = [\n    {"txn_id": "T1", "account": "alice", "amount": -2500},\n    {"txn_id": "T1", "account": "bob",   "amount":  2500},\n]\nprint(sum(e["amount"] for e in entries))   # 0 -> balanced', lang: 'python' },
-          { p: 'That last line is a **generator expression** inside `sum()` — read it as "the amount of each entry, added up". ' +
+          { code: 'entry = {"txn_id": "T1", "account": "alice", "amount": -2500}\nprint(entry["account"])\nprint(entry.get("memo", "no memo"))     #.get never raises KeyError\n\nentries = [\n    {"txn_id": "T1", "account": "alice", "amount": -2500},\n    {"txn_id": "T1", "account": "bob",   "amount":  2500},\n]\nprint(sum(e["amount"] for e in entries))   # 0 -> balanced', lang: 'python' },
+          { p: 'That last line is a **generator expression** inside `sum()`: read it as "the amount of each entry, added up". ' +
                'You will write it constantly.' }
         ],
         check: 'You can build a list of entry dicts and prove they sum to zero.'
@@ -129,7 +129,7 @@ FQ.registerLevel({
           { code: 'def to_cents(amount_text):\n    """Parse user input into integer cents, once, at the edge."""\n    return int(round(float(amount_text) * 100))\n\ndef money(cents):\n    """Format integer cents for display."""\n    sign = "-" if cents < 0 else ""\n    return f"{sign}${abs(cents) / 100:,.2f}"\n\nprint(to_cents("25.00"))    # 2500\nprint(to_cents("0.1") + to_cents("0.2") == to_cents("0.3"))   # True\nprint(money(-2500))         # -$25.00', lang: 'python' },
           { p: 'Compare that `True` with Level 1\'s `0.1 + 0.2 == 0.3` being `False`. That is the entire argument for minor units, ' +
                'in one line.' },
-          { warn: '`int(2.999)` truncates to 2 — it does not round. Always `int(round(x))` when converting money, or you will ' +
+          { warn: '`int(2.999)` truncates to 2. It does not round. Always `int(round(x))` when converting money, or you will ' +
                   'lose a cent on roughly half of all inputs.' }
         ],
         check: 'to_cents("19.99") returns 1999 and money(1999) returns $19.99.'
@@ -146,8 +146,8 @@ FQ.registerLevel({
       {
         t: 'Build the ledger core',
         blocks: [
-          { p: 'The ledger owns its entries. Nothing outside the class may touch the list — that is what makes the invariant enforceable.' },
-          { code: 'from datetime import datetime\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}          # id -> Account\n        self.entries = []           # append-only list of dicts\n        self._next_id = 1\n\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        if account_id in self.accounts:\n            raise LedgerError(f"account {account_id} already exists")\n        self.accounts[account_id] = Account(account_id, kind, allow_negative)\n        return self.accounts[account_id]\n\n    def balance(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return sum(e["amount"] for e in self.entries if e["account"] == account_id)\n\n    def _post(self, legs, memo):\n        """Write a balanced set of legs: [(account_id, signed_cents), ...]"""\n        if sum(amount for _, amount in legs) != 0:\n            raise LedgerError("transaction does not balance")\n        txn_id = f"TXN{self._next_id:05d}"\n        self._next_id += 1\n        stamp = datetime.now().isoformat(timespec="seconds")\n        for account_id, amount in legs:\n            self.entries.append({\n                "txn_id": txn_id, "account": account_id, "amount": amount,\n                "memo": memo, "at": stamp,\n            })\n        return txn_id', lang: 'python' },
+          { p: 'The ledger owns its entries. Nothing outside the class may touch the list. That is what makes the invariant enforceable.' },
+          { code: 'from datetime import datetime\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}          # id -> Account\n        self.entries = []           # append-only list of dicts\n        self._next_id = 1\n\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        if account_id in self.accounts:\n            raise LedgerError(f"account {account_id} already exists")\n        self.accounts[account_id] = Account(account_id, kind, allow_negative)\n        return self.accounts[account_id]\n\n    def balance(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return sum(e["amount"] for e in self.entries if e["account"] == account_id)\n\n    def _post(self, legs, memo):\n        """Write a balanced set of legs: [(account_id, signed_cents),...]"""\n        if sum(amount for _, amount in legs) != 0:\n            raise LedgerError("transaction does not balance")\n        txn_id = f"TXN{self._next_id:05d}"\n        self._next_id += 1\n        stamp = datetime.now().isoformat(timespec="seconds")\n        for account_id, amount in legs:\n            self.entries.append({\n                "txn_id": txn_id, "account": account_id, "amount": amount,\n                "memo": memo, "at": stamp,\n            })\n        return txn_id', lang: 'python' },
           { p: 'The leading underscore in `_post` is a convention meaning *internal*: callers should use `transfer`, ' +
                'which validates first. Python will not stop them, but every Python programmer reads it as "do not touch".' }
         ],
@@ -159,7 +159,7 @@ FQ.registerLevel({
           { code: 'class Ledger(Ledger):        # (in the notebook, just extend the class above)\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        if amount <= 0:\n            raise InvalidAmount("deposit must be positive")\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return self._post([(account_id, amount), ("world", -amount)], memo)\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        if key is not None and key in self._keys:\n            return self._keys[key]                     # idempotent replay\n        if amount <= 0:\n            raise InvalidAmount("amount must be positive")\n        for acct in (src, dst):\n            if acct not in self.accounts:\n                raise UnknownAccount(acct)\n        if not self.accounts[src].allow_negative and self.balance(src) < amount + fee:\n            raise InsufficientFunds(f"{src} holds {money(self.balance(src))}")\n\n        legs = [(src, -(amount + fee)), (dst, amount)]\n        if fee:\n            legs.append(("fee_income", fee))\n        txn_id = self._post(legs, memo)\n        if key is not None:\n            self._keys[key] = txn_id\n        return txn_id', lang: 'python' },
           { p: 'Note the order: **validate everything, then write**. Never write one leg and then discover the second is invalid. ' +
                'Remember to create `self._keys = {}` in `__init__`.' },
-          { tip: 'The `"world"` account is the outside world — money entering your system from a bank rail. It is allowed to go ' +
+          { tip: 'The `"world"` account is the outside world: money entering your system from a bank rail. It is allowed to go ' +
                  'negative, and its balance is the mirror image of all customer money you hold. Real ledgers call this a ' +
                  'contra or nostro account.' }
         ],
@@ -170,16 +170,16 @@ FQ.registerLevel({
         blocks: [
           { code: 'class Ledger(Ledger):\n\n    def reverse(self, txn_id, memo=None):\n        original = [e for e in self.entries if e["txn_id"] == txn_id]\n        if not original:\n            raise LedgerError(f"unknown transaction {txn_id}")\n        legs = [(e["account"], -e["amount"]) for e in original]\n        return self._post(legs, memo or f"reversal of {txn_id}")\n\n    def check_invariant(self):\n        """Every transaction, and the ledger as a whole, must sum to zero."""\n        total = sum(e["amount"] for e in self.entries)\n        if total != 0:\n            raise LedgerError(f"ledger is out of balance by {total}")\n        return True', lang: 'python' },
           { p: 'Reversing flips the sign of every leg, so the pair nets to zero while both remain visible. Run `check_invariant()` ' +
-               'after every operation in your tests — if it ever fails, the bug is in the last thing you wrote.' }
+               'after every operation in your tests, if it ever fails, the bug is in the last thing you wrote.' }
         ],
         check: 'After reversing a transfer, both balances return to their earlier values and check_invariant() passes.'
       },
       {
         t: 'Print a statement',
         blocks: [
-          { code: 'class Ledger(Ledger):\n\n    def statement(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        rows = [e for e in self.entries if e["account"] == account_id]\n        running = 0\n        print(f"STATEMENT — {account_id}")\n        print(f"{\'txn\':<10}{\'memo\':<22}{\'amount\':>12}{\'balance\':>14}")\n        for e in rows:\n            running += e["amount"]\n            print(f"{e[\'txn_id\']:<10}{e[\'memo\'][:21]:<22}{money(e[\'amount\']):>12}{money(running):>14}")\n        print(f"{\'\':<32}{\'CLOSING\':>12}{money(running):>14}")', lang: 'python' },
+          { code: 'class Ledger(Ledger):\n\n    def statement(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        rows = [e for e in self.entries if e["account"] == account_id]\n        running = 0\n        print(f"STATEMENT: {account_id}")\n        print(f"{\'txn\':<10}{\'memo\':<22}{\'amount\':>12}{\'balance\':>14}")\n        for e in rows:\n            running += e["amount"]\n            print(f"{e[\'txn_id\']:<10}{e[\'memo\'][:21]:<22}{money(e[\'amount\']):>12}{money(running):>14}")\n        print(f"{\'\':<32}{\'CLOSING\':>12}{money(running):>14}")', lang: 'python' },
           { p: 'A running balance column is what makes a statement usable: it shows not just what happened but what the ' +
-               'balance was after each event — the first thing support asks for.' }
+               'balance was after each event: the first thing support asks for.' }
         ],
         check: 'Your statement prints entries in order with a running balance that ends at the current balance.'
       }
@@ -189,7 +189,7 @@ FQ.registerLevel({
   glossary: [
     { t: 'Double-entry', d: 'Every transaction is recorded as balanced entries that sum to zero.' },
     { t: 'Entry (leg)', d: 'One side of a transaction: an account and a signed amount.' },
-    { t: 'Invariant', d: 'A condition that must always hold — here, that entries sum to zero.' },
+    { t: 'Invariant', d: 'A condition that must always hold: here, that entries sum to zero.' },
     { t: 'Minor units', d: 'The smallest currency unit (cents). Money is stored as integers of these.' },
     { t: 'Idempotency key', d: 'A client-supplied unique string letting a server recognise a retry and return the original result.' },
     { t: 'Reversal', d: 'A new transaction with opposite signs that cancels an earlier one without deleting it.' },
@@ -230,7 +230,7 @@ FQ.registerLevel({
         "customer -2500, merchant +2450"
       ],
       answer: 0,
-      why: "The customer paid $25.00, the merchant nets $24.50, and the platform keeps $0.50 — three legs summing to zero. The two-leg version that credits the merchant $24.50 loses 50 cents and would be rejected as unbalanced." },
+      why: "The customer paid $25.00, the merchant nets $24.50, and the platform keeps $0.50: three legs summing to zero. The two-leg version that credits the merchant $24.50 loses 50 cents and would be rejected as unbalanced." },
 
     { q: "A payment request arrives with an idempotency key the server has already seen. What should happen?",
       options: [
@@ -320,7 +320,7 @@ FQ.registerLevel({
         "The total money held"
       ],
       answer: 2,
-      why: "Every transaction balances, so the whole ledger sums to zero. A non-zero result means a bug wrote an unbalanced transaction — check it after every operation in tests." },
+      why: "Every transaction balances, so the whole ledger sums to zero. A non-zero result means a bug wrote an unbalanced transaction: check it after every operation in tests." },
 
     { q: "Why is a custom exception class better than returning False on failure?",
       options: [
@@ -344,7 +344,7 @@ FQ.registerLevel({
 
     { q: "What does the leading underscore in `_post` communicate?",
       options: [
-        "The method is internal by convention — validated public methods should be used instead",
+        "The method is internal by convention. Validated public methods should be used instead",
         "The method is private and enforced by Python",
         "The method is deprecated",
         "The method returns nothing"
@@ -362,7 +362,7 @@ FQ.registerLevel({
     requirements: [
       'Custom exceptions: `LedgerError` base plus `UnknownAccount`, `InsufficientFunds`, `InvalidAmount`, `DuplicateAccount`',
       'An `Account` class holding id, kind, and an `allow_negative` flag, with a readable `__repr__`',
-      'A `Ledger` class that owns an append-only `entries` list — no method may edit or remove an existing entry',
+      'A `Ledger` class that owns an append-only `entries` list, no method may edit or remove an existing entry',
       '`to_cents(text)` and `money(cents)` helpers; every internal amount is an integer',
       '`open_account(id, kind, allow_negative=False)` raising DuplicateAccount on a repeat',
       '`balance(id)` computed by summing entries, raising UnknownAccount for unknown ids',
@@ -380,7 +380,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 4 — Mini Ledger & Payment Engine"""\n\nfrom datetime import datetime\n\n\nclass LedgerError(Exception):\n    """Base class for every refusal this ledger makes."""\n\nclass UnknownAccount(LedgerError): pass\nclass InsufficientFunds(LedgerError): pass\nclass InvalidAmount(LedgerError): pass\nclass DuplicateAccount(LedgerError): pass\n\n\ndef to_cents(amount_text):\n    """\'25.00\' -> 2500. Round, never truncate."""\n    # TODO\n    pass\n\n\ndef money(cents):\n    """2500 -> \'$25.00\'  |  -2500 -> \'-$25.00\'"""\n    # TODO\n    pass\n\n\nclass Account:\n    def __init__(self, account_id, kind="customer", allow_negative=False):\n        # TODO\n        pass\n\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}\n        self.entries = []          # append-only. never edit, never delete.\n        self._keys = {}            # idempotency key -> txn_id\n        self._next_id = 1\n\n    # --- internals ---------------------------------------------------\n    def _post(self, legs, memo):\n        """legs = [(account_id, signed_cents), ...] and must sum to zero."""\n        # TODO\n        pass\n\n    # --- public API --------------------------------------------------\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        pass\n\n    def balance(self, account_id):\n        pass\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        pass\n\n    def withdraw(self, account_id, amount, memo="withdrawal"):\n        pass\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        pass\n\n    def split_payment(self, src, recipients, amount, memo="split"):\n        """Divide amount between recipients; leftover cents go to the first\n        recipients in order so the transaction still balances."""\n        pass\n\n    def reverse(self, txn_id, memo=None):\n        pass\n\n    def check_invariant(self):\n        pass\n\n    def statement(self, account_id):\n        pass\n\n\ndef demo():\n    """End-to-end story the treasurer could read."""\n    pass\n\n\nif __name__ == "__main__":\n    demo()\n'
+      code: '"""FinQuest Level 4: Mini Ledger & Payment Engine"""\n\nfrom datetime import datetime\n\n\nclass LedgerError(Exception):\n    """Base class for every refusal this ledger makes."""\n\nclass UnknownAccount(LedgerError): pass\nclass InsufficientFunds(LedgerError): pass\nclass InvalidAmount(LedgerError): pass\nclass DuplicateAccount(LedgerError): pass\n\n\ndef to_cents(amount_text):\n    """\'25.00\' -> 2500. Round, never truncate."""\n    # TODO\n    pass\n\n\ndef money(cents):\n    """2500 -> \'$25.00\'  |  -2500 -> \'-$25.00\'"""\n    # TODO\n    pass\n\n\nclass Account:\n    def __init__(self, account_id, kind="customer", allow_negative=False):\n        # TODO\n        pass\n\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}\n        self.entries = []          # append-only. Never edit, never delete.\n        self._keys = {}            # idempotency key -> txn_id\n        self._next_id = 1\n\n    # --- internals ---------------------------------------------------\n    def _post(self, legs, memo):\n        """legs = [(account_id, signed_cents),...] and must sum to zero."""\n        # TODO\n        pass\n\n    # --- public API --------------------------------------------------\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        pass\n\n    def balance(self, account_id):\n        pass\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        pass\n\n    def withdraw(self, account_id, amount, memo="withdrawal"):\n        pass\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        pass\n\n    def split_payment(self, src, recipients, amount, memo="split"):\n        """Divide amount between recipients; leftover cents go to the first\n        recipients in order so the transaction still balances."""\n        pass\n\n    def reverse(self, txn_id, memo=None):\n        pass\n\n    def check_invariant(self):\n        pass\n\n    def statement(self, account_id):\n        pass\n\n\ndef demo():\n    """End-to-end story the treasurer could read."""\n    pass\n\n\nif __name__ == "__main__":\n    demo()\n'
     },
     tests: [
       'to_cents("19.99") == 1999 and to_cents("0.1") + to_cents("0.2") == to_cents("0.3")',

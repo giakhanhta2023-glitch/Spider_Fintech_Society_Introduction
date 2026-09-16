@@ -1,7 +1,7 @@
-# Level 6 — Credit, Loans & Amortization: quiz answer key
+# Level 6: Credit, Loans & Amortization: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -39,7 +39,7 @@
 - **C. Current outstanding balance x periodic rate** ✅
 - D. Total interest divided by the number of payments
 
-**Why:** Interest accrues on what is still owed. Using the original amount is the classic bug — the balance then never reaches zero.
+**Why:** Interest accrues on what is still owed. Using the original amount is the classic bug: the balance then never reaches zero.
 
 ### 3. On a $250,000 loan at 5.5% over 30 years, roughly what share of the first payment reduces the debt?
 
@@ -48,7 +48,7 @@
 - C. About 50%
 - **D. About 19%** ✅
 
-**Why:** Month 1 is $1,145.83 interest and $273.64 principal out of $1,419.47 — 19.3%. The split crosses over around month 180.
+**Why:** Month 1 is $1,145.83 interest and $273.64 principal out of $1,419.47: 19.3%. The split crosses over around month 180.
 
 ### 4. What does the crossover point of an amortization schedule mean?
 
@@ -57,7 +57,7 @@
 - **C. The month the principal portion first exceeds the interest portion** ✅
 - D. The month the balance goes negative
 
-**Why:** It marks the shift from mostly paying for the money to mostly repaying it. On this 30-year mortgage it lands in month 210 — year 18 — far later than most borrowers expect.
+**Why:** It marks the shift from mostly paying for the money to mostly repaying it. On this 30-year mortgage it lands in month 210 (year 18) far later than most borrowers expect.
 
 ### 5. A lender charges a $400 fee on a $20,000 loan at 7% for 5 years. What happens to the APR?
 
@@ -93,7 +93,7 @@
 - **C. Principal only** ✅
 - D. Split in the same ratio as the regular payment
 
-**Why:** The scheduled payment already covers the accrued interest, so anything extra reduces the balance directly — which is exactly why overpaying is so effective.
+**Why:** The scheduled payment already covers the accrued interest, so anything extra reduces the balance directly, which is exactly why overpaying is so effective.
 
 ### 9. Why is the last payment of a real loan usually a different amount?
 
@@ -102,7 +102,7 @@
 - C. Interest rates change at the end of a term
 - D. Lenders charge a closing fee
 
-**Why:** Each payment is rounded, so a tiny residue accumulates. The final payment is whatever is actually left — and your schedule should end at exactly zero.
+**Why:** Each payment is rounded, so a tiny residue accumulates. The final payment is whatever is actually left, and your schedule should end at exactly zero.
 
 ### 10. What does a DTI of 31.3% mean?
 
@@ -144,7 +144,7 @@
 
 - A. The interest rate is too high
 - **B. The final payment was not capped at the remaining balance** ✅
-- C. Nothing — negative balances are normal
+- C. Nothing, negative balances are normal
 - D. The loop ran too few times
 
 **Why:** When the principal portion exceeds what is left, cap it at the remaining balance so the final payment is smaller and the loan ends at exactly zero.

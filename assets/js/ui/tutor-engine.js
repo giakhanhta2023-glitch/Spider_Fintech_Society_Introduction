@@ -1,5 +1,5 @@
 /* =========================================================================
-   Ada — the tutor's brain. No UI in this file.
+   Ada: the tutor's brain. No UI in this file.
 
    Offline mode (the default) answers by retrieval over the whole curriculum,
    so the tutor works with zero setup. If a chat endpoint or an API key is
@@ -68,7 +68,7 @@ function buildIndex() {
     ((lv.tutorial && lv.tutorial.steps) || []).forEach((s) =>
       docs.push({
         title: s.t,
-        text: blocksText(s.blocks).concat(s.check ? ['You know it worked when: ' + s.check] : []),
+        text: blocksText(s.blocks).concat(s.check ? ['You know it worked when : ' + s.check]: []),
         code: firstCode(s.blocks),
         lv: lv.id, kind: 'tutorial', tab: 'tutorial'
       }));
@@ -149,16 +149,16 @@ function levelLink(lv, tab, label) {
 const ERROR_HELP = {
   nameerror: 'Python has never seen that name. Either a typo, or you never ran the cell that created it. ' +
              'In a notebook, **Runtime → Restart session** then run every cell from the top.',
-  typeerror: 'You mixed types — usually text where a number was expected. `int("100") + 50` works; `"100" + 50` does not.',
-  indentationerror: 'Your spaces are inconsistent. Everything inside a `def`, `if` or `for` must be indented by the same amount — use 4 spaces.',
+  typeerror: 'You mixed types: usually text where a number was expected. `int("100") + 50` works; `"100" + 50` does not.',
+  indentationerror: 'Your spaces are inconsistent. Everything inside a `def`, `if` or `for` must be indented by the same amount: use 4 spaces.',
   keyerror: 'You asked a dict for a key it does not have. Print the keys first: `print(data.keys())`. In FX code this is usually the base currency missing from the rates map.',
-  valueerror: 'The value was the right type but the wrong value — often a failed conversion, or your own validation refusing bad input.',
+  valueerror: 'The value was the right type but the wrong value, often a failed conversion, or your own validation refusing bad input.',
   zerodivisionerror: 'Something divided by zero. In this course it is nearly always the annuity or payment formula at a 0% rate. Guard it with an `if` before dividing.',
   modulenotfounderror: 'That library is not installed, or you are running from the wrong folder. In Colab: `!pip install name`. For your own package: run from the project root.',
-  attributeerror: 'That object does not have that method. A common one is calling `.dt` on a column that is still text — use `parse_dates` when loading.',
+  attributeerror: 'That object does not have that method. A common one is calling `.dt` on a column that is still text: use `parse_dates` when loading.',
   settingwithcopy: 'You filtered a DataFrame and then added a column. Take a copy when you filter: `spend = df[df["amount"] < 0].copy()`.',
   filenotfounderror: 'The path is wrong relative to where the code is running. Build paths from the module location rather than the working directory.',
-  indexerror: 'You asked for a position that does not exist — often `[0]` on an empty result. Check the length first.',
+  indexerror: 'You asked for a position that does not exist, often `[0]` on an empty result. Check the length first.',
   syntaxerror: 'Python could not parse the line. Look at the line *above* the one reported: a missing bracket or quote usually shows up one line late.',
   importerror: 'The library exists but the name you asked for does not. Check the spelling and the version.'
 };
@@ -172,9 +172,9 @@ export function offlineAnswer(question, ctx) {
   if (/^(hi|hey|hello|yo|good (morning|evening|afternoon))\b/.test(q)) {
     return {
       text: lv
-        ? `Hello. You are on **Level ${lv.id} — ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
+        ? `Hello. You are on **Level ${lv.id}: ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
           '\n\nAsk me about any concept here, paste an error message, or say **hint** if the build has you stuck.'
-        : 'Hello. I am Ada, your tutor for this course. Open a level and I will follow you into it — or ask me ' +
+        : 'Hello. I am Ada, your tutor for this course. Open a level and I will follow you into it, or ask me ' +
           'anything about fintech, Python, or the tools.',
       chips: lv
         ? ['What do I need for the project?', 'hint', 'Explain ' + (lv.glossary[0] ? lv.glossary[0].t : 'the basics')]
@@ -187,16 +187,16 @@ export function offlineAnswer(question, ctx) {
     return {
       text: `Start at ${levelLink(cur, 'brief', 'Level ' + cur)}. Work the tabs in order: **Learn**, ` +
             `**Tutorial**, **Drill**, **Build**. The drill needs ${CFG.quiz.passMark}/15 to unlock the build, ` +
-            'and the build needs nothing beyond what that level taught you.\n\nNothing to install for levels 1 to 8 — ' +
-            'it all runs in Google Colab in a browser tab.',
+            'and the build needs nothing beyond what that level taught you.\n\nNothing to install for levels 1 to 8. ' +
+            'It all runs in Google Colab in a browser tab.',
       chips: ['Do I need to install Python?', 'What is Colab?', 'How does XP work?']
     };
   }
 
-  if (/(give|show|write|just tell).*(me)?.*(the )?(answer|solution|full code|whole code)|do (it|my project) for me/.test(q)) {
+  if (/(give|show|write|just tell).*(me)?.*(the)?(answer|solution|full code|whole code)|do (it|my project) for me/.test(q)) {
     const path = lv && (lv.project ? lv.project.solutionPath : (lv.setup ? lv.setup.solutionPath : null));
     return {
-      text: 'I would rather get you unstuck than hand it over — copying a solution teaches almost nothing, and you ' +
+      text: 'I would rather get you unstuck than hand it over: copying a solution teaches almost nothing, and you ' +
             'will feel that in the next level.\n\nTell me **which requirement** is blocking you and I will give you the ' +
             'next step only.\n\nIf you genuinely want to read the finished version, it lives in the repo' +
             (path ? ' at `' + path + '/`' : '') + '. Read only the part you are stuck on, close it, and retype the fix ' +
@@ -217,7 +217,7 @@ export function offlineAnswer(question, ctx) {
       return {
         text: 'Take the next unticked requirement on its own:\n\n> ' + next + '\n\n' +
               (hits.length
-                ? `The tutorial step that covers it is **${hits[0].doc.title}** — ` +
+                ? `The tutorial step that covers it is **${hits[0].doc.title}**: ` +
                   sentences(hits[0].doc.text.join(' '), 2) + '\n\n' +
                   levelLink(lv.id, hits[0].doc.tab, 'Open that step')
                 : 'Everything you need is in the ' + levelLink(lv.id, 'tutorial', 'tutorial') + '.') +
@@ -231,7 +231,7 @@ export function offlineAnswer(question, ctx) {
   if (errorMatch) {
     const hitsErr = search(errorMatch[1] + ' ' + question, levelId, 2);
     return {
-      text: `**${errorMatch[1]}** — ${ERROR_HELP[errorMatch[1]]}` +
+      text: `**${errorMatch[1]}**: ${ERROR_HELP[errorMatch[1]]}` +
             (hitsErr.length
               ? `\n\nRelated, from Level ${hitsErr[0].doc.lv}: ${sentences(hitsErr[0].doc.text.join(' '), 2)}` +
                 '\n\n' + levelLink(hitsErr[0].doc.lv, hitsErr[0].doc.tab, 'Open the section')
@@ -245,7 +245,7 @@ export function offlineAnswer(question, ctx) {
     return {
       text: `Each correct drill answer is worth ${CFG.xp.perCorrectAnswer} XP, passing a drill adds ` +
             `${CFG.xp.quizPassBonus}, and shipping a project adds ${CFG.xp.projectComplete}. ` +
-            'A level counts as cleared once you pass its drill **and** mark its build complete — that is what opens the next one.' +
+            'A level counts as cleared once you pass its drill **and** mark its build complete. That is what opens the next one.' +
             '\n\nEverything is stored in this browser only, so your progress will not follow you to another device.',
       chips: ['Where do I start?', 'What is in the repo?']
     };
@@ -257,14 +257,14 @@ export function offlineAnswer(question, ctx) {
       text: 'I could not find that in the course material.\n\nI answer from the ten levels in front of you, so try ' +
             'naming a concept (**compounding**, **idempotency**, **drawdown**, **precision**), pasting an error message, ' +
             'or asking for a **hint** on the build you are on.' +
-            (lv ? `\n\nYou are on Level ${lv.id}, which covers: ${lv.tags.join(', ')}.` : ''),
+            (lv ? `\n\nYou are on Level ${lv.id}, which covers : ${lv.tags.join(', ')}.`: ''),
       chips: lv ? lv.glossary.slice(0, 3).map((g) => 'What is ' + g.t + '?')
-                : ['What is fintech?', 'What is a ledger?', 'What is APR?']
+                  : ['What is fintech?', 'What is a ledger?', 'What is APR?']
     };
   }
 
   const best = hits[0].doc;
-  let answer = `**${best.title}** — Level ${best.lv}\n\n${sentences(best.text.join(' '), 4)}`;
+  let answer = `**${best.title}**: Level ${best.lv}\n\n${sentences(best.text.join(' '), 4)}`;
   if (best.code) {
     answer += '\n\n```\n' + best.code.code.split('\n').slice(0, 14).join('\n') + '\n```';
   }
@@ -285,7 +285,7 @@ export function systemPrompt(ctx) {
     'You are Ada, the tutor inside FinQuest, a 10-level project-based fintech course for university students. ' +
     'Teach in plain English, use small worked numbers, and keep answers under about 200 words unless asked for more. ' +
     'You help learners reason to their own answer: give the next step or a hint, never a complete project solution, ' +
-    'even if asked directly — point them to the repo solution key instead and tell them to read only what they are stuck on. ' +
+    'even if asked directly: point them to the repo solution key instead and tell them to read only what they are stuck on. ' +
     'Python runs in Google Colab for levels 1-8, so never tell a beginner to install an IDE before level 9. ' +
     'Money is stored as integer minor units, never floats. You are not a financial adviser: no investment recommendations. ' +
     'If something is outside the course, say so briefly and bring it back to the level they are on.';

@@ -1,7 +1,7 @@
-# Level 10 — Compliance, Architecture & the Capstone Build: quiz answer key
+# Level 10: Compliance, Architecture & the Capstone Build: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -93,7 +93,7 @@
 - C. Rebalancing a portfolio to target weights
 - D. Merging two customer accounts
 
-**Why:** Every real money system reconciles daily. An unexplained break is a bug, a timing difference, or fraud — and you cannot tell which without investigating.
+**Why:** Every real money system reconciles daily. An unexplained break is a bug, a timing difference, or fraud, and you cannot tell which without investigating.
 
 ### 9. Your ledger says $10,450 and the bank statement says $10,400. What is the correct response?
 
@@ -129,7 +129,7 @@
 - C. Synthetic data produces better charts
 - D. Regulators require open source projects to use synthetic data
 
-**Why:** Repositories keep history forever and may become public. Generate realistic data instead — and say clearly in the README that it is generated.
+**Why:** Repositories keep history forever and may become public. Generate realistic data instead, and say clearly in the README that it is generated.
 
 ### 13. Open banking is best summarised as:
 

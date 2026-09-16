@@ -29,14 +29,14 @@ export function md(text) {
 }
 
 export function rawHtml(markup, props = {}) {
-  return html`<div ...${props} dangerouslySetInnerHTML=${{ __html: markup }} />`;
+  return html`<div...${props} dangerouslySetInnerHTML=${{ __html: markup }} />`;
 }
 
 export function navigate(hash) {
   window.location.hash = hash;
 }
 
-/* Difficulty shown as filled pips — denser and more legible than "7/10". */
+/* Difficulty shown as filled pips: denser and more legible than "7/10". */
 export function Pips({ value, max = 10 }) {
   return html`
     <span className="pips" title=${`Difficulty ${value} of ${max}`} aria-label=${`Difficulty ${value} of ${max}`}>
@@ -45,7 +45,7 @@ export function Pips({ value, max = 10 }) {
     </span>`;
 }
 
-/* Monospace figure — used for every number in the interface. */
+/* Monospace figure: used for every number in the interface. */
 export function Figure({ children, size = '2', color }) {
   return html`<${Text} as="span" size=${size} color=${color} className="figure">${children}<//>`;
 }

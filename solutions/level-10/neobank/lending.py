@@ -1,5 +1,5 @@
 """
-neobank.lending — loan pricing and amortization (from Levels 2 and 6).
+neobank.lending: loan pricing and amortization (from Levels 2 and 6).
 
 Pure functions: they validate, compute, and return. Charts and tables are the
 interface's job.
@@ -66,7 +66,7 @@ def schedule(principal, annual_rate, years, extra=0.0, payments_per_year=12, max
 
 
 def summarise(df):
-    """Totals plus the crossover — the month principal finally overtakes interest."""
+    """Totals plus the crossover: the month principal finally overtakes interest."""
     crossing = df[df["principal"] > df["interest"]]
     return {
         "months": len(df),
@@ -122,7 +122,7 @@ def ltv(loan_amount, asset_value):
 
 
 def assess(payment, other_debts, income, loan, value):
-    """Bands are conventions, not law — 36% and 43% are the common US thresholds."""
+    """Bands are conventions, not law: 36% and 43% are the common US thresholds."""
     ratio = dti(payment + other_debts, income)
     band = "comfortable" if ratio < 0.36 else "stretched" if ratio < 0.43 else "high risk"
     return {"dti": ratio, "band": band, "ltv": ltv(loan, value)}

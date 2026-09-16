@@ -1,5 +1,5 @@
 """
-FinQuest Level 2 — Compound Growth Engine  (reference solution)
+FinQuest Level 2: Compound Growth Engine  (reference solution)
 ===============================================================
 Everything here uses only Level 2 material: arithmetic with **, functions with
 default arguments, for/while loops, if statements, and f-string formatting.
@@ -110,7 +110,7 @@ def summary(principal, payment, annual_rate, years, target, inflation=0.03):
 
 
 # ---------------------------------------------------------------------------
-# Self-checks — the numbers from the project brief
+# Self-checks: the numbers from the project brief
 # ---------------------------------------------------------------------------
 def self_test():
     assert round(future_value(1000, 0.08, 10, 1), 2) == 2158.92
@@ -128,9 +128,9 @@ if __name__ == "__main__":
     self_test()
 
     print(f"Credit card: 24.00% APR compounding monthly is really "
-          f"{apy(0.24, 12):.2%} APY — {apy(0.24, 12) - 0.24:.2%} more than the headline.\n")
+          f"{apy(0.24, 12):.2%} APY: {apy(0.24, 12) - 0.24:.2%} more than the headline.\n")
 
     # Three scenarios, same saver, different risk appetite.
     for label, rate in [("conservative", 0.04), ("balanced", 0.07), ("aggressive", 0.10)]:
-        print(f"### {label.upper()} — {rate:.0%}")
+        print(f"### {label.upper()}: {rate:.0%}")
         summary(principal=2000, payment=200, annual_rate=rate, years=20, target=50000)

@@ -1,5 +1,5 @@
 /* =========================================================================
-   Ada — the tutor panel. A Radix Dialog pinned to the right edge.
+   Ada: the tutor panel. A Radix Dialog pinned to the right edge.
    ========================================================================= */
 import {
   html, useState, useEffect, useRef, FQ, store, rawHtml, Box, Flex, Text,
@@ -17,7 +17,7 @@ function Bubble({ role, html: markup, source }) {
   return html`
     <div className="bubble bot">
       ${rawHtml(markup, { className: 'bubble-body' })}
-      ${source ? html`<span className="bubble-source">${source}</span>` : null}
+      ${source ? html`<span className="bubble-source">${source}</span>`: null}
     </div>`;
 }
 
@@ -131,7 +131,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
       setStatus('saved');
       setTimeout(() => setStatus(''), 2000);
     } catch (e) {
-      setStatus('could not save — storage is blocked');
+      setStatus('could not save. Storage is blocked');
     }
   }
 
@@ -158,7 +158,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
             <//>
             <${Flex} gap="2" align="center" wrap="wrap">
               <${Badge} color="blue" variant="soft" radius="full">
-                ${level ? `Level ${level.id} · ${level.codename}` : 'no level open'}
+                ${level ? `Level ${level.id} · ${level.codename}`: 'no level open'}
               <//>
               <${Text} size="1" color="gray" className="figure">${mode}<//>
             <//>
@@ -192,20 +192,20 @@ export function Tutor({ open, onOpenChange, levelId }) {
               <${Callout.Root} color="amber" variant="surface" size="1" mt="2">
                 <${Callout.Text}>
                   Stored in this browser only and sent straight to Anthropic. Anyone using this device
-                  can read it — never do this on a shared or public computer.
+                  can read it, never do this on a shared or public computer.
                 <//>
               <//>
             </details>
             <${Flex} gap="2" mt="3" align="center">
               <${Button} size="1" onClick=${saveSettings}>Save<//>
               <${Button} size="1" variant="soft" color="gray" onClick=${clearSettings}>Clear<//>
-              ${status ? html`<${Text} size="1" color="grass">${status}<//>` : null}
+              ${status ? html`<${Text} size="1" color="grass">${status}<//>`: null}
             <//>
-          <//>` : null}
+          <//>`: null}
 
         <div className="tutor-log" ref=${logRef}>
-          ${messages.map((m, i) => html`<${Bubble} key=${i} ...${m} />`)}
-          ${busy ? html`<${Typing} />` : null}
+          ${messages.map((m, i) => html`<${Bubble} key=${i}...${m} />`)}
+          ${busy ? html`<${Typing} />`: null}
         </div>
 
         ${chips.length ? html`
@@ -213,12 +213,12 @@ export function Tutor({ open, onOpenChange, levelId }) {
             ${chips.slice(0, 3).map((c, i) => html`
               <${Button} key=${i} size="1" variant="surface" color="gray"
                 onClick=${() => ask(c)}>${c}<//>`)}
-          <//>` : null}
+          <//>`: null}
 
         <form onSubmit=${(e) => { e.preventDefault(); ask(input); }}>
           <${Flex} gap="2">
             <${Box} style=${{ flex: 1 }}>
-              <${TextField.Root} size="2" placeholder="Ask anything — e.g. “explain APR vs APY”"
+              <${TextField.Root} size="2" placeholder="Ask anything: e.g. “explain APR vs APY”"
                 value=${input} onChange=${(e) => setInput(e.target.value)} autoComplete="off" />
             <//>
             <${Button} type="submit" disabled=${busy || !input.trim()}>Send<//>

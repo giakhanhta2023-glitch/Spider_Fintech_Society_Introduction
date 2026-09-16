@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 9 — Shipping a Fintech Service
+   LEVEL 9: Shipping a Fintech Service
    ========================================================================= */
 FQ.registerLevel({
   id: 9,
@@ -10,7 +10,7 @@ FQ.registerLevel({
   minutes: 210,
   tags: ['Streamlit', 'deployment', 'validation', 'testing'],
   summary: 'Eight levels of analysis have lived inside your notebooks. This level moves the code into a real application ' +
-           'with inputs, validation, tests, and a public address — and yes, this is where you finally set up a proper editor.',
+           'with inputs, validation, tests, and a public address, and yes, this is where you finally set up a proper editor.',
 
   objectives: [
     'Explain the client-server model and where your code runs',
@@ -55,7 +55,7 @@ FQ.registerLevel({
 
     { h: 'Separate the maths from the buttons' },
     { p: 'The single most important structural decision: **pure functions in one file, interface in another**.' },
-    { code: 'finance.py     <- pure functions. no printing, no widgets, no I/O\napp.py         <- Streamlit UI. imports finance, calls it, displays results\ntest_finance.py <- tests. imports finance only, needs no browser', lang: 'text', label: 'project layout' },
+    { code: 'finance.py     <- pure functions. No printing, no widgets, no I/O\napp.py         <- Streamlit UI. Imports finance, calls it, displays results\ntest_finance.py <- tests. Imports finance only, needs no browser', lang: 'text', label: 'project layout' },
     { p: 'A **pure function** takes arguments and returns a value, with no side effects. It can be tested in one line, ' +
          'reused in an API tomorrow, and reasoned about without running the app. The moment a calculation contains ' +
          '`st.write()`, it is welded to the interface forever.' },
@@ -65,7 +65,7 @@ FQ.registerLevel({
     { h: 'Validate everything a stranger can type' },
     { p: 'Your users will enter a negative loan, a 900% rate, a zero term, and text where a number should be. Every one of ' +
          'those must produce a clear message, never a traceback.' },
-    { code: 'if principal <= 0:\n    st.error("Loan amount must be greater than zero.")\n    st.stop()\n\nif term_years > 40:\n    st.warning("Terms over 40 years are unusual — check this is intended.")', lang: 'python' },
+    { code: 'if principal <= 0:\n    st.error("Loan amount must be greater than zero.")\n    st.stop()\n\nif term_years > 40:\n    st.warning("Terms over 40 years are unusual. Check this is intended.")', lang: 'python' },
     { table: {
       head: ['Input', 'Guard'],
       rows: [
@@ -73,7 +73,7 @@ FQ.registerLevel({
         ['Interest rate', '0% to ~50%, and handle exactly 0%'],
         ['Term', 'At least 1 period, capped at something plausible'],
         ['Extra payment', 'Not negative, and warn if it exceeds the payment itself'],
-        ['Income', 'Positive if you are dividing by it — never divide by user input unchecked']
+        ['Income', 'Positive if you are dividing by it, never divide by user input unchecked']
       ]
     }},
     { warn: 'Widget constraints (`min_value`, `max_value`) are a convenience, not a security control. Validate in your ' +
@@ -91,7 +91,7 @@ FQ.registerLevel({
 
     { h: 'Tests that run in a second' },
     { p: 'You separated the maths precisely so you could do this. A test file of plain `assert` statements catches the ' +
-         'bugs that a UI hides — and running it takes less time than clicking through the app once.' },
+         'bugs that a UI hides, and running it takes less time than clicking through the app once.' },
     { code: 'from finance import monthly_payment\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\ndef test_zero_rate():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\ndef test_rejects_negative():\n    try:\n        monthly_payment(-100, 0.05, 10)\n    except ValueError:\n        return\n    raise AssertionError("should have raised")', lang: 'python' },
     { p: 'Run them with `pytest` (or just call each function at the bottom of the file). The habit that matters: ' +
          '**every bug you fix gets a test** so it cannot come back quietly.' },
@@ -99,36 +99,36 @@ FQ.registerLevel({
     { h: 'Secrets in a deployed app' },
     { p: 'Level 5\'s rule still holds, with one addition: deployment platforms give you a secrets store. Streamlit Cloud ' +
          'has a settings panel that populates `st.secrets`; the values never appear in your repository.' },
-    { code: 'import streamlit as st\n\napi_key = st.secrets.get("MARKET_API_KEY")     # set in the platform UI\nif not api_key:\n    st.info("Running without a market feed — using bundled snapshot data.")', lang: 'python' },
+    { code: 'import streamlit as st\n\napi_key = st.secrets.get("MARKET_API_KEY")     # set in the platform UI\nif not api_key:\n    st.info("Running without a market feed: using bundled snapshot data.")', lang: 'python' },
     { p: 'Note the fallback. An app that dies because an optional key is missing is worse than one that degrades and says so.' },
 
     { h: 'Caching, because the server is shared' },
     { p: 'Streamlit re-runs your entire script on every interaction. That is a simple and surprising model: move a slider, ' +
-         'the whole file runs again. Anything slow — a CSV download, an API call — must be cached or your app will crawl.' },
+         'the whole file runs again. Anything slow (a CSV download, an API call) must be cached or your app will crawl.' },
     { code: '@st.cache_data(ttl=3600)      # remember for an hour\ndef load_prices(url):\n    return pd.read_csv(url, parse_dates=["date"])', lang: 'python' },
     { warn: 'Never cache anything that must be fresh per user, and never cache a function that writes to a database. ' +
             'Cache reads, not writes.' }
   ],
 
   tutorial: {
-    intro: 'This is the level where you set up a real editor — and you get to choose how. Path A needs no installation at ' +
+    intro: 'This is the level where you set up a real editor, and you get to choose how. Path A needs no installation at ' +
            'all; Path B is the classic local setup. Both end with a deployed app.',
     steps: [
       {
         t: 'Choose your workspace: Codespaces or local',
         blocks: [
-          { h4: 'Path A — GitHub Codespaces (browser, nothing to install)' },
+          { h4: 'Path A: GitHub Codespaces (browser, nothing to install)' },
           { ol: [
             'Create a new GitHub repository called `finquest-loan-advisor` with a README.',
             'On the repo page click **Code -> Codespaces -> Create codespace on main**.',
             'Wait about a minute. You now have VS Code in a browser tab, with Python already installed.',
             'The terminal at the bottom is a normal shell: `python --version` should answer.'
           ]},
-          { p: 'The free tier gives every GitHub account a generous monthly allowance of Codespaces hours — plenty for this ' +
+          { p: 'The free tier gives every GitHub account a generous monthly allowance of Codespaces hours: plenty for this ' +
                'level. Stop the codespace when you finish and it stops consuming them.' },
-          { h4: 'Path B — local install' },
+          { h4: 'Path B: local install' },
           { ol: [
-            'Install Python from [python.org/downloads](https://python.org/downloads). **On Windows, tick "Add Python to PATH"** on the first screen — this one checkbox causes most beginner setup pain.',
+            'Install Python from [python.org/downloads](https://python.org/downloads). **On Windows, tick "Add Python to PATH"** on the first screen: this one checkbox causes most beginner setup pain.',
             'Install [VS Code](https://code.visualstudio.com) and its Python extension.',
             'Clone your repo: **File -> Open Folder** after using GitHub Desktop, or `git clone <url>` in a terminal.',
             'Verify with `python --version` in the VS Code terminal.'
@@ -143,8 +143,8 @@ FQ.registerLevel({
         blocks: [
           { code: 'python -m venv .venv\nsource .venv/bin/activate        # Windows: .venv\\Scripts\\activate\npip install streamlit pandas numpy matplotlib\npip freeze > requirements.txt', lang: 'bash' },
           { p: 'Then create these files:' },
-          { code: 'finquest-loan-advisor/\n  app.py              <- the interface\n  finance.py          <- the maths (pure functions)\n  test_finance.py     <- the tests\n  requirements.txt\n  .gitignore          <- contains .venv/ and __pycache__/\n  README.md', lang: 'text' },
-          { warn: 'If `streamlit` is "not recognised" after installing, your virtual environment is not active — the prompt ' +
+          { code: 'finquest-loan-advisor/\n  app.py              <- the interface\n  finance.py          <- the maths (pure functions)\n  test_finance.py     <- the tests\n  requirements.txt\n  .gitignore          <- contains.venv/ and __pycache__/\n  README.md', lang: 'text' },
+          { warn: 'If `streamlit` is "not recognised" after installing, your virtual environment is not active. The prompt ' +
                   'should show `(.venv)`. Activate it again, or use `python -m streamlit run app.py`.' }
         ],
         check: 'The folder exists with all six files and `pip list` shows streamlit.'
@@ -152,7 +152,7 @@ FQ.registerLevel({
       {
         t: 'Write the engine first (no UI anywhere)',
         blocks: [
-          { code: '"""finance.py — pure loan maths. No printing, no widgets, no I/O."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    """Equal payment that amortizes a loan to zero."""\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n    if annual_rate < 0:\n        raise ValueError("rate cannot be negative")\n    if years <= 0:\n        raise ValueError("term must be at least one period")\n\n    i = annual_rate / periods_per_year\n    n = int(years * periods_per_year)\n    if i == 0:\n        return principal / n\n    return principal * i / (1 - (1 + i) ** -n)\n\n\ndef schedule(principal, annual_rate, years, extra=0.0, periods_per_year=12):\n    """List of dicts: month, payment, interest, principal, balance."""\n    payment = monthly_payment(principal, annual_rate, years, periods_per_year)\n    i = annual_rate / periods_per_year\n    if extra < 0:\n        raise ValueError("extra payment cannot be negative")\n\n    balance = principal\n    rows = []\n    month = 0\n    while balance > 0.005 and month < 1200:\n        month += 1\n        interest = balance * i\n        principal_part = min(payment + extra - interest, balance)\n        if principal_part <= 0:\n            raise ValueError("payment does not cover the interest")\n        balance -= principal_part\n        rows.append({\n            "month": month,\n            "payment": round(interest + principal_part, 2),\n            "interest": round(interest, 2),\n            "principal": round(principal_part, 2),\n            "balance": round(max(balance, 0), 2),\n        })\n    return rows', lang: 'python' },
+          { code: '"""finance.py: pure loan maths. No printing, no widgets, no I/O."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    """Equal payment that amortizes a loan to zero."""\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n    if annual_rate < 0:\n        raise ValueError("rate cannot be negative")\n    if years <= 0:\n        raise ValueError("term must be at least one period")\n\n    i = annual_rate / periods_per_year\n    n = int(years * periods_per_year)\n    if i == 0:\n        return principal / n\n    return principal * i / (1 - (1 + i) ** -n)\n\n\ndef schedule(principal, annual_rate, years, extra=0.0, periods_per_year=12):\n    """List of dicts: month, payment, interest, principal, balance."""\n    payment = monthly_payment(principal, annual_rate, years, periods_per_year)\n    i = annual_rate / periods_per_year\n    if extra < 0:\n        raise ValueError("extra payment cannot be negative")\n\n    balance = principal\n    rows = []\n    month = 0\n    while balance > 0.005 and month < 1200:\n        month += 1\n        interest = balance * i\n        principal_part = min(payment + extra - interest, balance)\n        if principal_part <= 0:\n            raise ValueError("payment does not cover the interest")\n        balance -= principal_part\n        rows.append({\n            "month": month,\n            "payment": round(interest + principal_part, 2),\n            "interest": round(interest, 2),\n            "principal": round(principal_part, 2),\n            "balance": round(max(balance, 0), 2),\n        })\n    return rows', lang: 'python' },
           { p: 'Notice this file imports nothing but the standard library, raises on bad input, and returns plain data. ' +
                'It could be dropped into an API, a batch job, or a test suite unchanged.' }
         ],
@@ -163,7 +163,7 @@ FQ.registerLevel({
         blocks: [
           { code: '"""test_finance.py"""\nimport pytest\nfrom finance import monthly_payment, schedule\n\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\n\ndef test_zero_rate_splits_evenly():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\n\ndef test_schedule_ends_at_zero():\n    rows = schedule(20000, 0.07, 5)\n    assert len(rows) == 60\n    assert rows[-1]["balance"] == 0.0\n\n\ndef test_extra_payment_shortens_term():\n    assert len(schedule(20000, 0.07, 5, extra=100)) < 60\n\n\n@pytest.mark.parametrize("bad", [-1000, 0])\ndef test_rejects_bad_principal(bad):\n    with pytest.raises(ValueError):\n        monthly_payment(bad, 0.05, 10)', lang: 'python' },
           { code: 'pip install pytest\npytest -q', lang: 'bash' },
-          { p: '`pytest.raises` asserts that an error *does* happen — testing the refusals matters as much as testing the ' +
+          { p: '`pytest.raises` asserts that an error *does* happen: testing the refusals matters as much as testing the ' +
                'happy path. `parametrize` runs the same test for each value in the list.' }
         ],
         check: 'pytest reports 6 passed.'
@@ -171,9 +171,9 @@ FQ.registerLevel({
       {
         t: 'Build the interface',
         blocks: [
-          { code: '"""app.py — Streamlit interface."""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    principal = st.number_input("Amount borrowed", min_value=1000.0,\n                                max_value=5_000_000.0, value=250_000.0, step=1000.0)\n    rate_pct = st.slider("Interest rate (%)", 0.0, 25.0, 5.5, 0.1)\n    years = st.slider("Term (years)", 1, 40, 30)\n    extra = st.number_input("Extra monthly payment", min_value=0.0, value=0.0, step=50.0)\n\nrate = rate_pct / 100\n\nif extra > 0 and extra > monthly_payment(principal, rate, years) * 3:\n    st.warning("That extra payment is unusually large compared with the scheduled one.")\n\nbase = pd.DataFrame(schedule(principal, rate, years))\nfast = pd.DataFrame(schedule(principal, rate, years, extra=extra))\n\ncol1, col2, col3 = st.columns(3)\ncol1.metric("Monthly payment", f"${monthly_payment(principal, rate, years):,.2f}")\ncol2.metric("Total interest", f"${base[\'interest\'].sum():,.0f}")\ncol3.metric("Months to clear", len(fast),\n            delta=f"{len(fast) - len(base)} vs standard" if extra else None)\n\ntab1, tab2 = st.tabs(["Balance over time", "Full schedule"])\nwith tab1:\n    chart = pd.DataFrame({"standard": base["balance"]})\n    if extra > 0:\n        chart["with extra"] = fast["balance"]\n    st.line_chart(chart)\nwith tab2:\n    st.dataframe(fast, use_container_width=True, hide_index=True)\n    st.download_button("Download schedule (CSV)",\n                       fast.to_csv(index=False).encode("utf-8"),\n                       "schedule.csv", "text/csv")', lang: 'python' },
+          { code: '"""app.py: Streamlit interface."""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    principal = st.number_input("Amount borrowed", min_value=1000.0,\n                                max_value=5_000_000.0, value=250_000.0, step=1000.0)\n    rate_pct = st.slider("Interest rate (%)", 0.0, 25.0, 5.5, 0.1)\n    years = st.slider("Term (years)", 1, 40, 30)\n    extra = st.number_input("Extra monthly payment", min_value=0.0, value=0.0, step=50.0)\n\nrate = rate_pct / 100\n\nif extra > 0 and extra > monthly_payment(principal, rate, years) * 3:\n    st.warning("That extra payment is unusually large compared with the scheduled one.")\n\nbase = pd.DataFrame(schedule(principal, rate, years))\nfast = pd.DataFrame(schedule(principal, rate, years, extra=extra))\n\ncol1, col2, col3 = st.columns(3)\ncol1.metric("Monthly payment", f"${monthly_payment(principal, rate, years):,.2f}")\ncol2.metric("Total interest", f"${base[\'interest\'].sum():,.0f}")\ncol3.metric("Months to clear", len(fast),\n            delta=f"{len(fast) - len(base)} vs standard" if extra else None)\n\ntab1, tab2 = st.tabs(["Balance over time", "Full schedule"])\nwith tab1:\n    chart = pd.DataFrame({"standard": base["balance"]})\n    if extra > 0:\n        chart["with extra"] = fast["balance"]\n    st.line_chart(chart)\nwith tab2:\n    st.dataframe(fast, use_container_width=True, hide_index=True)\n    st.download_button("Download schedule (CSV)",\n                       fast.to_csv(index=False).encode("utf-8"),\n                       "schedule.csv", "text/csv")', lang: 'python' },
           { code: 'streamlit run app.py', lang: 'bash' },
-          { p: 'Your browser opens on localhost. Move a slider and the whole script re-runs — that is the Streamlit model, ' +
+          { p: 'Your browser opens on localhost. Move a slider and the whole script re-runs. That is the Streamlit model, ' +
                'and it is why slow work belongs behind `@st.cache_data`.' }
         ],
         check: 'The app runs, the metrics update as you move the sliders, and the CSV downloads.'
@@ -184,7 +184,7 @@ FQ.registerLevel({
           { p: 'Wrap calls that can raise, and turn the error into a sentence a user understands.' },
           { code: 'try:\n    base = pd.DataFrame(schedule(principal, rate, years))\nexcept ValueError as err:\n    st.error(f"Cannot build a schedule: {err}")\n    st.stop()          # nothing below this line runs', lang: 'python' },
           { p: '`st.stop()` halts the script cleanly, leaving the error on screen and no half-drawn charts below it. ' +
-               'Try every bad input you can think of before you deploy — that is a real testing pass, not an optional one.' }
+               'Try every bad input you can think of before you deploy. That is a real testing pass, not an optional one.' }
         ],
         check: 'No input combination produces a red Python traceback on the page.'
       },
@@ -192,14 +192,14 @@ FQ.registerLevel({
         t: 'Deploy to a public URL',
         blocks: [
           { ol: [
-            'Commit and push everything to GitHub (in Codespaces: the Source Control panel; locally: `git add . && git commit -m "Loan advisor" && git push`).',
+            'Commit and push everything to GitHub (in Codespaces: the Source Control panel; locally: `git add. && git commit -m "Loan advisor" && git push`).',
             'Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.',
             'Click **New app**, choose your repo, branch `main`, and main file `app.py`.',
             'Click **Deploy**. The first build takes a couple of minutes while it installs requirements.txt.',
-            'You get a public URL. Open it on your phone — it works.'
+            'You get a public URL. Open it on your phone: it works.'
           ]},
           { warn: 'Deployment failing is almost always requirements.txt: a missing package, or a version that does not exist ' +
-                  'on the platform\'s Python. Read the build log — it names the package on the failing line.' },
+                  'on the platform\'s Python. Read the build log: it names the package on the failing line.' },
           { p: 'Put the live URL at the top of your README with a screenshot. This is the single most valuable artefact ' +
                'in your portfolio, because anyone can click it without reading a line of your code.' }
         ],
@@ -253,7 +253,7 @@ FQ.registerLevel({
         "Avoiding repeating slow work like file downloads on every re-run"
       ],
       answer: 3,
-      why: "Since the script re-runs constantly, uncached downloads or API calls would repeat on every slider move. Cache reads — never cache writes." },
+      why: "Since the script re-runs constantly, uncached downloads or API calls would repeat on every slider move. Cache reads, never cache writes." },
 
     { q: "Where should a deployed app get its API key?",
       options: [
@@ -283,7 +283,7 @@ FQ.registerLevel({
         "To encrypt your source code"
       ],
       answer: 1,
-      why: "A per-project library folder means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore — it is rebuildable." },
+      why: "A per-project library folder means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable." },
 
     { q: "A user enters a loan of 0. What should happen?",
       options: [
@@ -333,7 +333,7 @@ FQ.registerLevel({
         "That ValueError is imported"
       ],
       answer: 0,
-      why: "It is how you test refusals. If the block completes without raising, the test fails — which is exactly what you want when checking validation." },
+      why: "It is how you test refusals. If the block completes without raising, the test fails, which is exactly what you want when checking validation." },
 
     { q: "Your app works locally but fails on Streamlit Cloud. What do you check first?",
       options: [
@@ -377,14 +377,14 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Loan Advisor — Deployed Web App',
+    title: 'Loan Advisor: Deployed Web App',
     story: 'Everything you built in Levels 2 and 6 lives in notebooks nobody else can run. Ship it: a public loan advisor ' +
            'a society member can open on their phone, with your name on it.',
     scope: 'Uses this level plus Levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, ' +
            'Streamlit for the interface, pytest for the tests. Nothing beyond that is required.',
     requirements: [
       'A repository named `finquest-loan-advisor` with app.py, finance.py, test_finance.py, requirements.txt, .gitignore and README.md',
-      'finance.py contains only pure functions — no Streamlit import anywhere in it',
+      'finance.py contains only pure functions: no Streamlit import anywhere in it',
       '`monthly_payment`, `schedule`, `summarise`, `compare_terms`, and `affordability` all live in finance.py',
       'Every public function raises ValueError with a readable message on invalid input',
       'test_finance.py with at least 8 tests including known values, the zero-rate case, and at least two `pytest.raises` tests',
@@ -394,7 +394,7 @@ FQ.registerLevel({
       'A chart of balance over time showing standard vs overpaid when an extra payment is entered',
       'A tab or expander with the full schedule table and a CSV download button',
       'An affordability panel showing DTI with a comfortable / stretched / high-risk band',
-      'Every invalid input handled with `st.error` and `st.stop()` — no traceback is ever visible on the page',
+      'Every invalid input handled with `st.error` and `st.stop()`: no traceback is ever visible on the page',
       'A visible disclaimer that the tool is educational and not financial advice',
       '`@st.cache_data` used on at least one genuinely slow operation, with a comment explaining why',
       'Deployed to Streamlit Community Cloud with a working public URL',
@@ -402,7 +402,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""app.py — FinQuest Level 9 starter.\nKeep every calculation in finance.py. This file is interface only.\n"""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule, summarise, affordability\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool built for the Spider Fintech Society. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    # TODO: number_input / slider for amount, rate, term, extra, income\n\n# TODO: validate inputs -> st.error(...) + st.stop()\n\n# TODO: build the schedules (standard and with extra)\n\n# TODO: three st.metric headline numbers\n\n# TODO: tabs -> balance chart, full schedule + download button\n\n# TODO: affordability panel with DTI banding\n'
+      code: '"""app.py: FinQuest Level 9 starter.\nKeep every calculation in finance.py. This file is interface only.\n"""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule, summarise, affordability\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool built for the Spider Fintech Society. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    # TODO: number_input / slider for amount, rate, term, extra, income\n\n# TODO: validate inputs -> st.error(...) + st.stop()\n\n# TODO: build the schedules (standard and with extra)\n\n# TODO: three st.metric headline numbers\n\n# TODO: tabs -> balance chart, full schedule + download button\n\n# TODO: affordability panel with DTI banding\n'
     },
     tests: [
       'monthly_payment(250000, 0.055, 30) == 1419.47 to 2dp',
@@ -428,7 +428,7 @@ FQ.registerLevel({
     stretch: [
       'Add a second page with the Level 2 savings projector using st.navigation or a page selector',
       'Add st.session_state so a user can save and compare up to three scenarios side by side',
-      'Rebuild the same engine behind a FastAPI endpoint and call it from the app — one engine, two interfaces',
+      'Rebuild the same engine behind a FastAPI endpoint and call it from the app: one engine, two interfaces',
       'Add a GitHub Action that runs pytest on every push and shows a passing badge in the README'
     ],
     solutionPath: 'solutions/level-09'
@@ -436,13 +436,13 @@ FQ.registerLevel({
 
   faq: [
     { q: 'I cannot install Python / PATH errors on Windows',
-      a: 'Use GitHub Codespaces instead — VS Code in a browser tab with Python already installed. If you retry the installer, tick "Add Python to PATH" on the first screen.' },
+      a: 'Use GitHub Codespaces instead: VS Code in a browser tab with Python already installed. If you retry the installer, tick "Add Python to PATH" on the first screen.' },
     { q: 'streamlit: command not found',
       a: 'Your virtual environment is not active (the prompt should show (.venv)), or streamlit was installed elsewhere. Activate it, or run python -m streamlit run app.py.' },
     { q: 'My app is very slow',
       a: 'Streamlit re-runs the whole script on every interaction. Put @st.cache_data on any download or heavy computation, and keep the uncached path small.' },
     { q: 'Deployment fails on Streamlit Cloud',
-      a: 'Read the build log — it names the failing package. Usually requirements.txt is missing a library or pins a version that is unavailable. Regenerate it with pip freeze inside a clean environment.' },
+      a: 'Read the build log: it names the failing package. Usually requirements.txt is missing a library or pins a version that is unavailable. Regenerate it with pip freeze inside a clean environment.' },
     { q: 'Should finance.py import streamlit?',
       a: 'No. That is the one rule that keeps the engine testable and reusable. If a calculation needs to report a problem, raise ValueError and let app.py turn it into st.error.' },
     { q: 'How many tests are enough?',

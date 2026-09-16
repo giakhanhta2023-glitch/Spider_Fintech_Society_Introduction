@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 3 — Reading the Money: transaction data with pandas
+   LEVEL 3: Reading the Money: transaction data with pandas
    ========================================================================= */
 FQ.registerLevel({
   id: 3,
@@ -10,7 +10,7 @@ FQ.registerLevel({
   minutes: 120,
   tags: ['pandas', 'data cleaning', 'analytics'],
   summary: 'Every fintech product is, underneath, a pile of transaction rows. This level teaches you to load them, ' +
-           'clean them, group them, and answer questions with them — the single most employable skill in the industry.',
+           'clean them, group them, and answer questions with them: the single most employable skill in the industry.',
 
   objectives: [
     'Describe the anatomy of a transaction record and why sign conventions matter',
@@ -23,8 +23,8 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'Anatomy of a transaction' },
-    { p: 'Whatever the bank, a transaction row carries the same skeleton. Everything else — merchant logos, categories, ' +
-         'emoji in your app — is decoration built on these fields.' },
+    { p: 'Whatever the bank, a transaction row carries the same skeleton. Everything else (merchant logos, categories, ' +
+         'emoji in your app) is decoration built on these fields.' },
     { table: {
       head: ['Field', 'Purpose', 'The trap'],
       rows: [
@@ -48,11 +48,11 @@ FQ.registerLevel({
          'otherwise write, and it is what analysts at every fintech actually use.' },
     { code: 'df.groupby("category")["amount"].sum()', lang: 'python', label: 'a whole report in one line' },
     { p: 'A **Series** is a single column. A **boolean mask** is a Series of True/False used to select rows. ' +
-         'Those three words — DataFrame, Series, mask — cover 80% of everything you will read in pandas code.' },
+         'Those three words (DataFrame, Series, mask) cover 80% of everything you will read in pandas code.' },
 
     { h: 'Types are the first thing to check' },
     { p: 'A CSV has no types: everything arrives as text and pandas guesses. Dates load as strings unless you say otherwise, ' +
-         'and a single stray value like `"N/A"` in an amount column turns the whole column into text — at which point ' +
+         'and a single stray value like `"N/A"` in an amount column turns the whole column into text: at which point ' +
          '`.sum()` silently concatenates strings instead of adding numbers.' },
     { code: 'df.info()          # types and non-null counts for every column\ndf.dtypes          # just the types\ndf.head()          # first five rows\ndf.shape           # (rows, columns)', lang: 'python' },
     { tip: '`object` in `dtypes` means "text or mixed". Seeing `object` on a column you expect to be numeric is the ' +
@@ -62,40 +62,40 @@ FQ.registerLevel({
     { p: 'Almost every analytics question is the same shape: **split** the rows into groups, **apply** a calculation to each, ' +
          '**combine** the answers into a table. In pandas that is `groupby`.' },
     { code: '# how much did I spend in each category?\nspend = df[df["amount"] < 0].copy()\nspend["abs_amount"] = spend["amount"].abs()\nby_cat = spend.groupby("category")["abs_amount"].sum().sort_values(ascending=False)', lang: 'python' },
-    { p: 'To group by month you need a month column first. pandas gives you date parts through the `.dt` accessor ' +
+    { p: 'To group by month you need a month column first. Pandas gives you date parts through the `.dt` accessor ' +
          'once the column is a real datetime:' },
-    { code: 'df["month"] = df["date"].dt.to_period("M")      # 2025-03, 2025-04, ...\ndf["weekday"] = df["date"].dt.day_name()        # Monday, Tuesday, ...\nmonthly = df.groupby("month")["amount"].sum()', lang: 'python' },
+    { code: 'df["month"] = df["date"].dt.to_period("M")      # 2025-03, 2025-04,...\ndf["weekday"] = df["date"].dt.day_name()        # Monday, Tuesday,...\nmonthly = df.groupby("month")["amount"].sum()', lang: 'python' },
     { warn: 'Filtering then adding a column to the filtered result raises `SettingWithCopyWarning`. The fix is `.copy()` ' +
-            'when you filter, as above — it tells pandas you meant to make a new table.' },
+            'when you filter, as above: it tells pandas you meant to make a new table.' },
 
     { h: 'Finding subscriptions: the same charge, again and again' },
     { p: 'A subscription is a merchant that bills an **identical amount** on a **regular cadence**. You do not need machine ' +
-         'learning for this — grouping by merchant *and* amount and counting occurrences finds them immediately.' },
+         'learning for this: grouping by merchant *and* amount and counting occurrences finds them immediately.' },
     { code: 'counts = (spend.groupby(["description", "abs_amount"])\n                .size()\n                .reset_index(name="times"))\nrecurring = counts[counts["times"] >= 3]', lang: 'python' },
     { money: 'Every serious money app ships this feature, because forgotten subscriptions are the fastest saving a user can ' +
-             'make. In this dataset one of the five recurring charges is a streaming service the user clearly never watches — ' +
+             'make. In this dataset one of the five recurring charges is a streaming service the user clearly never watches, ' +
              'finding it is worth more to them than any chart you draw.' },
 
     { h: 'The numbers a user actually wants' },
     { ul: [
-      '**Net cash flow** — did more come in than went out? `df["amount"].sum()`',
-      '**Total income** — sum of rows where category is income (*not* where amount is positive)',
-      '**Total spend** — absolute sum of negative rows, usually excluding transfers to your own savings',
-      '**Savings rate** — `(income - spend) / income`, the one number that predicts financial health',
-      '**Fixed vs variable split** — rent, utilities and subscriptions versus everything you choose each day'
+      '**Net cash flow**: did more come in than went out? `df["amount"].sum()`',
+      '**Total income**: sum of rows where category is income (*not* where amount is positive)',
+      '**Total spend**: absolute sum of negative rows, usually excluding transfers to your own savings',
+      '**Savings rate**: `(income - spend) / income`, the one number that predicts financial health',
+      '**Fixed vs variable split**: rent, utilities and subscriptions versus everything you choose each day'
     ]},
-    { p: 'A transfer to your own savings account is **not spending** — the money is still yours. Counting it as an expense ' +
+    { p: 'A transfer to your own savings account is **not spending**: the money is still yours. Counting it as an expense ' +
          'makes users look poorer than they are, and is a genuine bug in several shipped budgeting apps.' },
 
     { h: 'One chart, chosen on purpose' },
     { p: 'Charts are for comparison, not decoration. For "which category is biggest" use a **horizontal bar chart sorted by size**: ' +
          'bars share a baseline so the eye compares lengths accurately. Pie charts ask people to compare angles, which they cannot do. ' +
          'For "how did this change over time" use a **line**.' },
-    { code: 'import matplotlib.pyplot as plt\n\nby_cat.sort_values().plot(kind="barh", figsize=(8, 4))\nplt.title("Spending by category — Mar to Aug 2025")\nplt.xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' }
+    { code: 'import matplotlib.pyplot as plt\n\nby_cat.sort_values().plot(kind="barh", figsize=(8, 4))\nplt.title("Spending by category: Mar to Aug 2025")\nplt.xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' }
   ],
 
   tutorial: {
-    intro: 'New notebook: `finquest-level-03.ipynb`. pandas and matplotlib are already installed in Colab — no pip needed. ' +
+    intro: 'New notebook: `finquest-level-03.ipynb`. Pandas and matplotlib are already installed in Colab: no pip needed. ' +
            'The dataset is six months of a fictional person\'s account, generated for this course.',
     steps: [
       {
@@ -104,7 +104,7 @@ FQ.registerLevel({
           { p: '`read_csv` accepts a URL as happily as a filename, so there is nothing to download.' },
           { code: 'import pandas as pd\n\nURL = "{{RAW}}/data/level-03-transactions.csv"\ndf = pd.read_csv(URL, parse_dates=["date"])\n\nprint(df.shape)        # (233, 6)\ndf.head()', lang: 'python' },
           { p: '`parse_dates=["date"]` is what turns that column from text into real timestamps. Without it, `.dt` will not exist ' +
-               'and sorting by date sorts alphabetically — which puts 2025-10 before 2025-3.' },
+               'and sorting by date sorts alphabetically, which puts 2025-10 before 2025-3.' },
           { tip: 'Prefer working offline, or the URL is blocked on your network? Download the CSV from the repo, then in Colab ' +
                  'click the folder icon on the left and drag the file in. Load it with `pd.read_csv("level-03-transactions.csv", parse_dates=["date"])`.' }
         ],
@@ -113,7 +113,7 @@ FQ.registerLevel({
       {
         t: 'Inspect before you trust',
         blocks: [
-          { code: 'df.info()\nprint(df["amount"].dtype)          # float64 — good\nprint(df["category"].value_counts())\nprint(df["date"].min(), "->", df["date"].max())', lang: 'python' },
+          { code: 'df.info()\nprint(df["amount"].dtype)          # float64: good\nprint(df["category"].value_counts())\nprint(df["date"].min(), "->", df["date"].max())', lang: 'python' },
           { p: 'You are checking three things: the amount column is numeric, the date range is what you expect, ' +
                'and there are no surprise categories. `value_counts()` on any text column is the fastest way to see what is in it.' }
         ],
@@ -123,18 +123,18 @@ FQ.registerLevel({
         t: 'Filter rows with boolean masks',
         blocks: [
           { p: 'A comparison on a column produces a True/False Series. Put it inside `df[...]` to keep only the True rows.' },
-          { code: 'spend = df[df["amount"] < 0].copy()          # money out only\nincome = df[df["category"] == "income"]      # NOT amount > 0 — refunds!\n\nprint(len(spend), "outgoing rows")\nprint(f"Income:  ${income[\'amount\'].sum():,.2f}")\nprint(f"Outgoing: ${spend[\'amount\'].sum():,.2f}")', lang: 'python' },
-          { p: 'Combine conditions with `&` (and) / `|` (or), and wrap each condition in brackets — Python\'s operator ' +
+          { code: 'spend = df[df["amount"] < 0].copy()          # money out only\nincome = df[df["category"] == "income"]      # NOT amount > 0: refunds!\n\nprint(len(spend), "outgoing rows")\nprint(f"Income:  ${income[\'amount\'].sum():,.2f}")\nprint(f"Outgoing: ${spend[\'amount\'].sum():,.2f}")', lang: 'python' },
+          { p: 'Combine conditions with `&` (and) / `|` (or), and wrap each condition in brackets: Python\'s operator ' +
                'precedence will bite you otherwise:' },
           { code: 'big_dining = df[(df["category"] == "dining") & (df["amount"] < -30)]\nprint(big_dining[["date", "description", "amount"]].to_string(index=False))', lang: 'python' }
         ],
-        check: 'Income prints $20,100.00 — confirming that the refunds were correctly excluded.'
+        check: 'Income prints $20,100.00, confirming that the refunds were correctly excluded.'
       },
       {
         t: 'Add columns you need',
         blocks: [
           { code: 'spend["abs_amount"] = spend["amount"].abs()\nspend["month"] = spend["date"].dt.to_period("M")\nspend["weekday"] = spend["date"].dt.day_name()\n\nspend.head(3)', lang: 'python' },
-          { p: 'Assigning to a column name that does not exist creates it. This is why you took a `.copy()` when filtering — ' +
+          { p: 'Assigning to a column name that does not exist creates it. This is why you took a `.copy()` when filtering: ' +
                'without it pandas cannot tell whether you meant to modify the original table.' }
         ],
         check: 'spend has abs_amount, month and weekday columns and no SettingWithCopyWarning.'
@@ -143,7 +143,7 @@ FQ.registerLevel({
         t: 'Aggregate with groupby',
         blocks: [
           { code: '# by category, largest first\nby_cat = spend.groupby("category")["abs_amount"].sum().sort_values(ascending=False)\nprint(by_cat.round(2).to_string())\n\n# by month\nby_month = spend.groupby("month")["abs_amount"].sum()\nprint(by_month.round(2).to_string())\n\n# top merchants\ntop = spend.groupby("description")["abs_amount"].sum().sort_values(ascending=False).head(10)', lang: 'python' },
-          { p: 'You can aggregate several ways at once with `.agg()` — useful when you want both a total and a count:' },
+          { p: 'You can aggregate several ways at once with `.agg()`: useful when you want both a total and a count:' },
           { code: 'summary = spend.groupby("category")["abs_amount"].agg(["sum", "count", "mean"]).round(2)\nsummary = summary.sort_values("sum", ascending=False)\nsummary', lang: 'python' }
         ],
         check: 'Housing is the largest category at $6,900.00 and subscriptions total $461.76.'
@@ -154,7 +154,7 @@ FQ.registerLevel({
           { p: 'Group by merchant **and** amount together by passing a list. `.size()` counts rows in each group; ' +
                '`reset_index` turns the result back into a normal DataFrame.' },
           { code: 'counts = (spend.groupby(["description", "abs_amount"])\n                .size()\n                .reset_index(name="times"))\n\nrecurring = counts[counts["times"] >= 3].sort_values("abs_amount", ascending=False)\nrecurring["yearly_cost"] = recurring["abs_amount"] * 12\nprint(recurring.to_string(index=False))', lang: 'python' },
-          { p: 'Rent and the savings transfer will show up too — they are genuinely recurring. Your report should separate ' +
+          { p: 'Rent and the savings transfer will show up too. They are genuinely recurring. Your report should separate ' +
                '"subscriptions you could cancel" from "fixed commitments you cannot", and that is a judgement your code makes explicit.' }
         ],
         check: 'You can list the recurring charges with their annual cost, including CLOUDSTREAM TV at $191.88 a year.'
@@ -162,7 +162,7 @@ FQ.registerLevel({
       {
         t: 'Draw one honest chart',
         blocks: [
-          { code: 'import matplotlib.pyplot as plt\n\nchart = by_cat.drop("savings", errors="ignore").sort_values()\nax = chart.plot(kind="barh", figsize=(8, 4), color="#2ee6a8")\nax.set_title("Spending by category — Mar to Aug 2025")\nax.set_xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' },
+          { code: 'import matplotlib.pyplot as plt\n\nchart = by_cat.drop("savings", errors="ignore").sort_values()\nax = chart.plot(kind="barh", figsize=(8, 4), color="#2ee6a8")\nax.set_title("Spending by category: Mar to Aug 2025")\nax.set_xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' },
           { p: 'Dropping `savings` is a deliberate analytical choice, not a trick: transfers to yourself are not consumption, ' +
                'and leaving them in the chart makes the biggest bar a lie. Say so in a comment.' },
           { tip: 'Save a chart with `plt.savefig("spending.png", dpi=150, bbox_inches="tight")` and upload the PNG to your ' +
@@ -187,7 +187,7 @@ FQ.registerLevel({
     { t: 'Series', d: 'A single typed column of a DataFrame.' },
     { t: 'Boolean mask', d: 'A True/False Series used inside df[...] to select rows.' },
     { t: 'groupby', d: 'Split rows into groups, apply an aggregation, combine results into a table.' },
-    { t: 'dtype', d: 'The type of a column. object means text or mixed — usually a warning sign on numeric data.' },
+    { t: 'dtype', d: 'The type of a column. Object means text or mixed, usually a warning sign on numeric data.' },
     { t: 'parse_dates', d: 'read_csv argument that converts text columns into real datetimes.' },
     { t: '.dt accessor', d: 'Gives date parts (month, day_name, year) from a datetime column.' },
     { t: 'Sign convention', d: 'The rule deciding whether money out is negative. Must be verified before analysis.' },
@@ -215,14 +215,14 @@ FQ.registerLevel({
         "Sorts the rows by date"
       ],
       answer: 2,
-      why: "Without it the column stays text, the .dt accessor is unavailable, and sorting is alphabetical — which places 2025-10 before 2025-3." },
+      why: "Without it the column stays text, the .dt accessor is unavailable, and sorting is alphabetical, which places 2025-10 before 2025-3." },
 
     { q: "df.dtypes shows the amount column as `object`. What does that mean?",
       options: [
         "It is a currency type with correct rounding",
         "It is an integer column",
         "The column has been indexed",
-        "It contains text or mixed values — a stray non-numeric entry got in"
+        "It contains text or mixed values: a stray non-numeric entry got in"
       ],
       answer: 3,
       why: "object means text or mixed. Calling .sum() on it concatenates strings instead of adding numbers, giving a silently wrong answer." },
@@ -255,7 +255,7 @@ FQ.registerLevel({
         "You are out of memory"
       ],
       answer: 0,
-      why: "pandas cannot tell whether you meant to modify the original or the filtered view. Adding .copy() when you filter states your intent and removes the warning." },
+      why: "pandas cannot tell whether you meant to modify the original or the filtered view. Adding.copy() when you filter states your intent and removes the warning." },
 
     { q: "What does the split-apply-combine pattern describe?",
       options: [
@@ -285,14 +285,14 @@ FQ.registerLevel({
         "The number of columns in each group"
       ],
       answer: 1,
-      why: "Passing a list groups by both keys at once, and .size() counts the rows — which is how identical repeated charges reveal themselves." },
+      why: "Passing a list groups by both keys at once, and .size() counts the rows, which is how identical repeated charges reveal themselves." },
 
     { q: "Why should a transfer to your own savings account be excluded from \"spending\"?",
       options: [
         "Because savings transfers are usually duplicates",
         "Because banks do not report transfers",
         "Because transfers always have a zero amount",
-        "Because the money is still yours — counting it as an expense understates the user's position"
+        "Because the money is still yours: counting it as an expense understates the user's position"
       ],
       answer: 3,
       why: "Moving money between your own accounts changes location, not net worth. Several shipped budgeting apps get this wrong and users notice immediately." },
@@ -325,7 +325,7 @@ FQ.registerLevel({
         "66.5%"
       ],
       answer: 2,
-      why: "(20,100 - 13,358.30) / 20,100 = 0.3354. The savings rate is the share of income that did not get spent — not the share that was transferred." },
+      why: "(20,100 - 13,358.30) / 20,100 = 0.3354. The savings rate is the share of income that did not get spent, not the share that was transferred." },
 
     { q: "What does `.value_counts()` on a text column tell you?",
       options: [
@@ -335,7 +335,7 @@ FQ.registerLevel({
         "The sum of the column"
       ],
       answer: 1,
-      why: "It is the fastest way to see what is actually in a categorical column — including typos and unexpected categories." },
+      why: "It is the fastest way to see what is actually in a categorical column: including typos and unexpected categories." },
 
     { q: "In `f\"${total:>14,.2f}\"`, what does the `>` do?",
       options: [
@@ -351,7 +351,7 @@ FQ.registerLevel({
   project: {
     title: 'Personal Spending Analyzer',
     story: 'A society member hands you six months of their bank export and one question: "where is my money going?" ' +
-           'Build the analyzer that answers it — and finds them at least one thing worth cancelling.',
+           'Build the analyzer that answers it, and finds them at least one thing worth cancelling.',
     scope: 'Uses only this level plus Level 2: pandas (read_csv, masks, groupby, sort_values, value_counts, .dt, .abs), ' +
            'matplotlib bar charts, f-string formatting, and functions. No machine learning, no APIs, no classes.',
     dataset: '{{RAW}}/data/level-03-transactions.csv',
@@ -372,7 +372,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 3 — Personal Spending Analyzer"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nURL = "{{RAW}}/data/level-03-transactions.csv"\n\n\ndef load_data(url=URL):\n    """Read the CSV and add abs_amount, month and weekday columns."""\n    # TODO: parse_dates, then build the helper columns\n    pass\n\n\ndef headline_numbers(df):\n    """Return a dict: income, spend (excl. savings), net, savings_rate."""\n    # TODO\n    pass\n\n\ndef by_category(df):\n    """Spend per category, largest first."""\n    # TODO\n    pass\n\n\ndef by_month(df):\n    """Spend and income per month."""\n    # TODO\n    pass\n\n\ndef top_merchants(df, n=10):\n    """Biggest merchants by total spend."""\n    # TODO\n    pass\n\n\ndef find_recurring(df, min_times=3):\n    """Merchants charging an identical amount at least min_times.\n    Include a yearly_cost column and a flag for cancellable vs fixed.\n    """\n    # TODO\n    pass\n\n\ndef weekday_pattern(df):\n    """Total spend by day of week."""\n    # TODO\n    pass\n\n\ndef plot_categories(df):\n    """Sorted horizontal bar chart, savings transfers excluded."""\n    # TODO\n    pass\n\n\ndef report(df):\n    """Print the whole analysis as an aligned text report."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    data = load_data()\n    report(data)\n    plot_categories(data)\n'
+      code: '"""FinQuest Level 3: Personal Spending Analyzer"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nURL = "{{RAW}}/data/level-03-transactions.csv"\n\n\ndef load_data(url=URL):\n    """Read the CSV and add abs_amount, month and weekday columns."""\n    # TODO: parse_dates, then build the helper columns\n    pass\n\n\ndef headline_numbers(df):\n    """Return a dict: income, spend (excl. Savings), net, savings_rate."""\n    # TODO\n    pass\n\n\ndef by_category(df):\n    """Spend per category, largest first."""\n    # TODO\n    pass\n\n\ndef by_month(df):\n    """Spend and income per month."""\n    # TODO\n    pass\n\n\ndef top_merchants(df, n=10):\n    """Biggest merchants by total spend."""\n    # TODO\n    pass\n\n\ndef find_recurring(df, min_times=3):\n    """Merchants charging an identical amount at least min_times.\n    Include a yearly_cost column and a flag for cancellable vs fixed.\n    """\n    # TODO\n    pass\n\n\ndef weekday_pattern(df):\n    """Total spend by day of week."""\n    # TODO\n    pass\n\n\ndef plot_categories(df):\n    """Sorted horizontal bar chart, savings transfers excluded."""\n    # TODO\n    pass\n\n\ndef report(df):\n    """Print the whole analysis as an aligned text report."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    data = load_data()\n    report(data)\n    plot_categories(data)\n'
     },
     tests: [
       'The DataFrame has 233 rows and 6 original columns',
@@ -382,7 +382,7 @@ FQ.registerLevel({
       'Savings rate is 33.5% (to one decimal)',
       'Housing is the top category at $6,900.00; subscriptions total $461.76 over six months',
       'find_recurring finds 8 recurring charges at min_times=3, of which 5 are cancellable subscriptions',
-      'CLOUDSTREAM TV appears at $15.99 x 6 — an annual cost of $191.88',
+      'CLOUDSTREAM TV appears at $15.99 x 6. An annual cost of $191.88',
       'Monthly subscription cost is $76.96'
     ],
     rubric: [

@@ -1,5 +1,5 @@
 /* =========================================================================
-   FinQuest — configuration
+   FinQuest: configuration
    Edit this file to point the app at your own repo / AI endpoint.
    ========================================================================= */
 window.FQ_CONFIG = {
@@ -25,7 +25,7 @@ window.FQ_CONFIG = {
     perfectQuizBonus: 40
   },
 
-  /* Rank ladder — index = number of levels cleared */
+  /* Rank ladder: index = number of levels cleared */
   ranks: [
     'Intern', 'Junior Analyst', 'Analyst', 'Data Analyst', 'Quant Apprentice',
     'Credit Engineer', 'Risk Quant', 'Fraud Engineer', 'Platform Engineer',

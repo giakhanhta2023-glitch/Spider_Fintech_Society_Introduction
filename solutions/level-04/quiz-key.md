@@ -1,7 +1,7 @@
-# Level 4 — Payments & the Double-Entry Ledger: quiz answer key
+# Level 4: Payments & the Double-Entry Ledger: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -48,7 +48,7 @@
 - C. customer -2550, merchant +2500, fee_income +50
 - D. customer -2500, merchant +2450
 
-**Why:** The customer paid $25.00, the merchant nets $24.50, and the platform keeps $0.50 — three legs summing to zero. The two-leg version that credits the merchant $24.50 loses 50 cents and would be rejected as unbalanced.
+**Why:** The customer paid $25.00, the merchant nets $24.50, and the platform keeps $0.50: three legs summing to zero. The two-leg version that credits the merchant $24.50 loses 50 cents and would be rejected as unbalanced.
 
 ### 4. A payment request arrives with an idempotency key the server has already seen. What should happen?
 
@@ -129,7 +129,7 @@
 - **C. Zero** ✅
 - D. The total money held
 
-**Why:** Every transaction balances, so the whole ledger sums to zero. A non-zero result means a bug wrote an unbalanced transaction — check it after every operation in tests.
+**Why:** Every transaction balances, so the whole ledger sums to zero. A non-zero result means a bug wrote an unbalanced transaction: check it after every operation in tests.
 
 ### 13. Why is a custom exception class better than returning False on failure?
 
@@ -151,7 +151,7 @@
 
 ### 15. What does the leading underscore in `_post` communicate?
 
-- **A. The method is internal by convention — validated public methods should be used instead** ✅
+- **A. The method is internal by convention. Validated public methods should be used instead** ✅
 - B. The method is private and enforced by Python
 - C. The method is deprecated
 - D. The method returns nothing

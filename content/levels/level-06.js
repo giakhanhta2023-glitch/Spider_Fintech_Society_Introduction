@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 6 — Credit & Lending
+   LEVEL 6: Credit & Lending
    ========================================================================= */
 FQ.registerLevel({
   id: 6,
@@ -25,7 +25,7 @@ FQ.registerLevel({
     { h: 'An amortizing loan in one sentence' },
     { p: 'You borrow a lump sum and repay it with **equal payments**. Each payment first covers the interest that accrued ' +
          'since the last one; whatever is left reduces the balance. Because the balance shrinks, the interest portion shrinks, ' +
-         'so the principal portion grows — the same payment, split differently every month.' },
+         'so the principal portion grows: the same payment, split differently every month.' },
     { code: 'payment = P x i / (1 - (1 + i) ** -n)\n\nP = amount borrowed\ni = periodic rate  = annual rate / payments per year\nn = total payments = years x payments per year', lang: 'text', label: 'the amortization formula' },
     { p: 'This is the Level 2 annuity relationship rearranged: the payment whose present value equals the loan. ' +
          'You are solving "what stream of payments is worth exactly $250,000 today at this discount rate?"' },
@@ -37,14 +37,14 @@ FQ.registerLevel({
         ['$5,000 card debt', '24.0%', '2 yrs', '$264.36', '$1,344.53']
       ]
     }},
-    { money: 'On that mortgage the borrower repays $511,010 for a $250,000 house. The interest is not a rounding detail — ' +
-             'it is the second house. Showing this clearly is the single most useful feature a lending product can ship.' },
+    { money: 'On that mortgage the borrower repays $511,010 for a $250,000 house. The interest is not a rounding detail. ' +
+             'It is the second house. Showing this clearly is the single most useful feature a lending product can ship.' },
 
     { h: 'Why the first payment barely dents the debt' },
     { p: 'On the $250,000 mortgage the first payment of $1,419.47 splits like this:' },
     { code: 'interest  = 250,000 x (0.055 / 12) = $1,145.83\nprincipal = 1,419.47 - 1,145.83    =   $273.64', lang: 'text', label: 'month 1' },
     { p: 'Only **19%** of the first payment reduces the debt. By month 210 the split has crossed over and most of the payment ' +
-         'is principal. This is not a trick by the bank — it falls out of charging interest on the outstanding balance — ' +
+         'is principal. This is not a trick by the bank (it falls out of charging interest on the outstanding balance) ' +
          'but borrowers are consistently shocked by it, which makes it worth showing on screen.' },
     { warn: 'Recomputing interest on the *original* amount each month instead of the *current balance* is the most common ' +
             'bug in a first amortization schedule. Your final balance will not land on zero, which is how you catch it.' },
@@ -54,22 +54,22 @@ FQ.registerLevel({
          'fees, so two loans can be compared fairly. If a lender charges a $400 origination fee on a $20,000 loan at 7%, ' +
          'the borrower receives only $19,600 but still repays $396.02 a month.' },
     { code: 'Rate stated:  7.00%\nCash received: $19,600  (after the $400 fee)\nPayment:       $396.02 x 60 months\n\nTrue APR:      7.85%   <- the rate that makes the payments worth $19,600 today', lang: 'text', label: 'fees change the real cost' },
-    { p: 'There is no closed-form solution for that APR — you find it by **searching**: try a rate, compute the present value ' +
+    { p: 'There is no closed-form solution for that APR: you find it by **searching**: try a rate, compute the present value ' +
          'of the payments, and adjust. Halving the search range each time (bisection) converges in a handful of steps.' },
 
     { h: 'Overpayment: the highest-return move most borrowers never make' },
     { p: 'An extra payment goes **entirely to principal**. Every dollar of principal removed also removes all the future ' +
-         'interest that dollar would have generated — which is why the effect is so large.' },
+         'interest that dollar would have generated, which is why the effect is so large.' },
     { table: {
       head: ['$250,000 at 5.5% over 30 years', 'Standard', 'Plus $200/month'],
       rows: [
         ['Monthly payment', '$1,419.47', '$1,619.47'],
         ['Months to clear', '360', '**269**'],
         ['Total interest', '$261,010', '$185,394'],
-        ['Interest saved', '—', '**$75,616**']
+        ['Interest saved', ': ', '**$75,616**']
       ]
     }},
-    { p: 'An extra $200 a month — $54,000 of deposits over 22 years — removes about $75,616 of interest and ends the loan ' +
+    { p: 'An extra $200 a month ($54,000 of deposits over 22 years) removes about $75,616 of interest and ends the loan ' +
          'seven and a half years early. Comparing that against an investment returning the same rate is a genuinely ' +
          'useful thing for a product to do.' },
     { tip: 'Not all lenders treat overpayments the same way. Some reduce the term (best for the borrower), others reduce ' +
@@ -96,7 +96,7 @@ FQ.registerLevel({
 
     { h: 'Rounding the last payment' },
     { p: 'Payments are rounded to cents, so 359 identical payments will not clear the balance exactly. Real lenders make the ' +
-         '**final payment different** — it is whatever is left. Your schedule should do the same, and finish with a balance of ' +
+         '**final payment different**: it is whatever is left. Your schedule should do the same, and finish with a balance of ' +
          'exactly zero rather than $0.04 or -$0.17.' }
   ],
 
@@ -126,8 +126,8 @@ FQ.registerLevel({
         t: 'Find the crossover month',
         blocks: [
           { code: 'crossover = df[df["principal"] > df["interest"]].iloc[0]\nprint(f"Principal overtakes interest in month {int(crossover[\'month\'])}"\n      f" (year {int(crossover[\'month\']) // 12 + 1})")\n\nfirst = df.iloc[0]\nprint(f"Month 1: {first[\'principal\'] / first[\'payment\']:.1%} of the payment reduces the debt")', lang: 'python' },
-          { p: '`.iloc[0]` takes the first row of a filtered DataFrame by position. This one statistic — "you cross over in ' +
-               'year 15" — communicates more about a 30-year mortgage than the whole schedule.' }
+          { p: '`.iloc[0]` takes the first row of a filtered DataFrame by position. This one statistic ("you cross over in ' +
+               'year 15") communicates more about a 30-year mortgage than the whole schedule.' }
         ],
         check: 'You can state the crossover month and the month-1 principal share (19.3%).'
       },
@@ -144,7 +144,7 @@ FQ.registerLevel({
           { p: 'To include fees you need the rate at which the payment stream is worth the **cash actually received**. ' +
                'Bisection: keep a low and a high guess, test the midpoint, and discard the half that cannot contain the answer.' },
           { code: 'def present_value(payment, annual_rate, years, payments_per_year=12):\n    i = annual_rate / payments_per_year\n    n = years * payments_per_year\n    if i == 0:\n        return payment * n\n    return payment * (1 - (1 + i) ** -n) / i\n\n\ndef true_apr(principal, fees, annual_rate, years):\n    """The APR a borrower really pays once fees are deducted up front."""\n    payment = monthly_payment(principal, annual_rate, years)\n    received = principal - fees\n    low, high = 0.0, 1.0\n    for _ in range(100):\n        mid = (low + high) / 2\n        if present_value(payment, mid, years) > received:\n            low = mid          # rate too low -> payments look too valuable\n        else:\n            high = mid\n    return low\n\n\nprint(f"{true_apr(20000, 400, 0.07, 5):.2%}")     # 7.85%', lang: 'python' },
-          { tip: '100 iterations of bisection narrows a range of 1.0 to about 1e-30 — far more precision than money needs. ' +
+          { tip: '100 iterations of bisection narrows a range of 1.0 to about 1e-30: far more precision than money needs. ' +
                  'Twenty would do; the loop is cheap either way.' }
         ],
         check: 'true_apr(20000, 400, 0.07, 5) returns 7.85%.'
@@ -152,9 +152,9 @@ FQ.registerLevel({
       {
         t: 'Affordability ratios',
         blocks: [
-          { code: 'def dti(monthly_debt_payments, gross_monthly_income):\n    return monthly_debt_payments / gross_monthly_income\n\ndef ltv(loan_amount, asset_value):\n    return loan_amount / asset_value\n\ndef assess(payment, other_debts, income, loan, value):\n    ratio = dti(payment + other_debts, income)\n    band = "comfortable" if ratio < 0.36 else "stretched" if ratio < 0.43 else "high risk"\n    print(f"DTI {ratio:.1%} — {band}")\n    print(f"LTV {ltv(loan, value):.1%}")\n\n\nassess(payment=1419.47, other_debts=250, income=6000, loan=250000, value=312500)', lang: 'python' },
+          { code: 'def dti(monthly_debt_payments, gross_monthly_income):\n    return monthly_debt_payments / gross_monthly_income\n\ndef ltv(loan_amount, asset_value):\n    return loan_amount / asset_value\n\ndef assess(payment, other_debts, income, loan, value):\n    ratio = dti(payment + other_debts, income)\n    band = "comfortable" if ratio < 0.36 else "stretched" if ratio < 0.43 else "high risk"\n    print(f"DTI {ratio:.1%}: {band}")\n    print(f"LTV {ltv(loan, value):.1%}")\n\n\nassess(payment=1419.47, other_debts=250, income=6000, loan=250000, value=312500)', lang: 'python' },
           { p: 'A chained conditional expression (`a if cond else b if cond2 else c`) reads top to bottom and is the ' +
-               'clearest way to turn a number into a band. Thresholds like 36% and 43% are conventions, not laws — ' +
+               'clearest way to turn a number into a band. Thresholds like 36% and 43% are conventions, not laws: ' +
                'document where yours came from.' }
         ],
         check: 'Your assessor prints a DTI band and an LTV percentage.'
@@ -162,8 +162,8 @@ FQ.registerLevel({
       {
         t: 'Chart the split over time',
         blocks: [
-          { code: 'import matplotlib.pyplot as plt\n\nfig, ax = plt.subplots(figsize=(9, 4))\nax.plot(df["month"], df["interest"], label="interest")\nax.plot(df["month"], df["principal"], label="principal")\nax.set_title("Where each payment goes — $250,000 at 5.5% over 30 years")\nax.set_xlabel("month")\nax.set_ylabel("USD")\nax.legend()\nplt.tight_layout()\nplt.show()', lang: 'python' },
-          { p: 'Two lines crossing is the clearest possible picture of amortization. Always label both series and both axes — ' +
+          { code: 'import matplotlib.pyplot as plt\n\nfig, ax = plt.subplots(figsize=(9, 4))\nax.plot(df["month"], df["interest"], label="interest")\nax.plot(df["month"], df["principal"], label="principal")\nax.set_title("Where each payment goes: $250,000 at 5.5% over 30 years")\nax.set_xlabel("month")\nax.set_ylabel("USD")\nax.legend()\nplt.tight_layout()\nplt.show()', lang: 'python' },
+          { p: 'Two lines crossing is the clearest possible picture of amortization. Always label both series and both axes, ' +
                'an unlabelled financial chart is decoration, not evidence.' }
         ],
         check: 'A chart shows the interest line falling and the principal line rising, crossing near month 210.'
@@ -207,7 +207,7 @@ FQ.registerLevel({
         "Total interest divided by the number of payments"
       ],
       answer: 2,
-      why: "Interest accrues on what is still owed. Using the original amount is the classic bug — the balance then never reaches zero." },
+      why: "Interest accrues on what is still owed. Using the original amount is the classic bug: the balance then never reaches zero." },
 
     { q: "On a $250,000 loan at 5.5% over 30 years, roughly what share of the first payment reduces the debt?",
       options: [
@@ -217,7 +217,7 @@ FQ.registerLevel({
         "About 19%"
       ],
       answer: 3,
-      why: "Month 1 is $1,145.83 interest and $273.64 principal out of $1,419.47 — 19.3%. The split crosses over around month 180." },
+      why: "Month 1 is $1,145.83 interest and $273.64 principal out of $1,419.47: 19.3%. The split crosses over around month 180." },
 
     { q: "What does the crossover point of an amortization schedule mean?",
       options: [
@@ -227,7 +227,7 @@ FQ.registerLevel({
         "The month the balance goes negative"
       ],
       answer: 2,
-      why: "It marks the shift from mostly paying for the money to mostly repaying it. On this 30-year mortgage it lands in month 210 — year 18 — far later than most borrowers expect." },
+      why: "It marks the shift from mostly paying for the money to mostly repaying it. On this 30-year mortgage it lands in month 210 (year 18) far later than most borrowers expect." },
 
     { q: "A lender charges a $400 fee on a $20,000 loan at 7% for 5 years. What happens to the APR?",
       options: [
@@ -267,7 +267,7 @@ FQ.registerLevel({
         "Split in the same ratio as the regular payment"
       ],
       answer: 2,
-      why: "The scheduled payment already covers the accrued interest, so anything extra reduces the balance directly — which is exactly why overpaying is so effective." },
+      why: "The scheduled payment already covers the accrued interest, so anything extra reduces the balance directly, which is exactly why overpaying is so effective." },
 
     { q: "Why is the last payment of a real loan usually a different amount?",
       options: [
@@ -277,7 +277,7 @@ FQ.registerLevel({
         "Lenders charge a closing fee"
       ],
       answer: 1,
-      why: "Each payment is rounded, so a tiny residue accumulates. The final payment is whatever is actually left — and your schedule should end at exactly zero." },
+      why: "Each payment is rounded, so a tiny residue accumulates. The final payment is whatever is actually left, and your schedule should end at exactly zero." },
 
     { q: "What does a DTI of 31.3% mean?",
       options: [
@@ -323,7 +323,7 @@ FQ.registerLevel({
       options: [
         "The interest rate is too high",
         "The final payment was not capped at the remaining balance",
-        "Nothing — negative balances are normal",
+        "Nothing, negative balances are normal",
         "The loop ran too few times"
       ],
       answer: 1,
@@ -364,7 +364,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 6 — Loan Amortization & Early-Payoff Simulator"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\n\ndef monthly_payment(principal, annual_rate, years, payments_per_year=12):\n    """Equal payment that amortizes the loan to zero. Handle rate == 0."""\n    # TODO\n    pass\n\n\ndef schedule(principal, annual_rate, years, extra=0, payments_per_year=12):\n    """DataFrame: month, payment, interest, principal, balance.\n    Interest on the CURRENT balance. Cap the final payment. Bound the loop.\n    """\n    # TODO\n    pass\n\n\ndef summarise(df):\n    """Total paid, total interest, interest share, crossover month."""\n    # TODO\n    pass\n\n\ndef compare_terms(principal, annual_rate, terms=(15, 25, 30)):\n    # TODO\n    pass\n\n\ndef compare_overpayment(principal, annual_rate, years, extra):\n    # TODO\n    pass\n\n\ndef present_value(payment, annual_rate, years, payments_per_year=12):\n    # TODO\n    pass\n\n\ndef true_apr(principal, fees, annual_rate, years):\n    """Bisection search for the fee-inclusive APR."""\n    # TODO\n    pass\n\n\ndef dti(monthly_debt_payments, gross_monthly_income):\n    pass\n\n\ndef ltv(loan_amount, asset_value):\n    pass\n\n\ndef assess(payment, other_debts, income, loan, value):\n    pass\n\n\ndef plot_split(df):\n    """Interest vs principal per month, crossover marked."""\n    pass\n\n\ndef plot_balances(principal, annual_rate, years, extra):\n    """Standard vs overpaid balance on one chart."""\n    pass\n\n\ndef invest_instead(extra, invest_rate, years):\n    """Future value of investing the overpayment instead (Level 2 annuity)."""\n    pass\n\n\ndef report(principal=250000, annual_rate=0.055, years=30, extra=200, fees=400):\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest Level 6: Loan Amortization & Early-Payoff Simulator"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\n\ndef monthly_payment(principal, annual_rate, years, payments_per_year=12):\n    """Equal payment that amortizes the loan to zero. Handle rate == 0."""\n    # TODO\n    pass\n\n\ndef schedule(principal, annual_rate, years, extra=0, payments_per_year=12):\n    """DataFrame: month, payment, interest, principal, balance.\n    Interest on the CURRENT balance. Cap the final payment. Bound the loop.\n    """\n    # TODO\n    pass\n\n\ndef summarise(df):\n    """Total paid, total interest, interest share, crossover month."""\n    # TODO\n    pass\n\n\ndef compare_terms(principal, annual_rate, terms=(15, 25, 30)):\n    # TODO\n    pass\n\n\ndef compare_overpayment(principal, annual_rate, years, extra):\n    # TODO\n    pass\n\n\ndef present_value(payment, annual_rate, years, payments_per_year=12):\n    # TODO\n    pass\n\n\ndef true_apr(principal, fees, annual_rate, years):\n    """Bisection search for the fee-inclusive APR."""\n    # TODO\n    pass\n\n\ndef dti(monthly_debt_payments, gross_monthly_income):\n    pass\n\n\ndef ltv(loan_amount, asset_value):\n    pass\n\n\ndef assess(payment, other_debts, income, loan, value):\n    pass\n\n\ndef plot_split(df):\n    """Interest vs principal per month, crossover marked."""\n    pass\n\n\ndef plot_balances(principal, annual_rate, years, extra):\n    """Standard vs overpaid balance on one chart."""\n    pass\n\n\ndef invest_instead(extra, invest_rate, years):\n    """Future value of investing the overpayment instead (Level 2 annuity)."""\n    pass\n\n\ndef report(principal=250000, annual_rate=0.055, years=30, extra=200, fees=400):\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
       'monthly_payment(20000, 0.07, 5) == 396.02 (to 2dp)',
@@ -410,6 +410,6 @@ FQ.registerLevel({
     { q: 'Is overpaying always better than investing?',
       a: 'No. Overpaying earns a guaranteed return equal to the loan rate; investing may earn more but is uncertain and less liquid. Compare the rate gap, then say plainly that risk and access to cash are part of the answer.' },
     { q: 'Why is my crossover month different from the example?',
-      a: 'It depends on rate and term. Check you are finding the first month where principal > interest, not where the balance is halved — those are very different months.' }
+      a: 'It depends on rate and term. Check you are finding the first month where principal > interest, not where the balance is halved. Those are very different months.' }
   ]
 });

@@ -1,5 +1,5 @@
 """
-FinQuest Level 6 — Loan Amortization & Early-Payoff Simulator  (reference solution)
+FinQuest Level 6: Loan Amortization & Early-Payoff Simulator  (reference solution)
 ===================================================================================
 Uses only Levels 2, 3 and 6: the payment formula, a bounded while loop,
 pandas DataFrames, matplotlib, bisection, and f-string formatting.
@@ -77,7 +77,7 @@ def schedule(principal, annual_rate, years, extra=0.0, payments_per_year=12, max
 
 
 def summarise(df):
-    """Totals plus the crossover — the month principal finally overtakes interest."""
+    """Totals plus the crossover: the month principal finally overtakes interest."""
     crossing = df[df["principal"] > df["interest"]]
     return {
         "months": len(df),
@@ -133,7 +133,7 @@ def ltv(loan_amount, asset_value):
 
 
 def assess(payment, other_debts, income, loan, value):
-    """Bands are conventions, not law — 36% and 43% are the common US thresholds."""
+    """Bands are conventions, not law: 36% and 43% are the common US thresholds."""
     ratio = dti(payment + other_debts, income)
     band = "comfortable" if ratio < 0.36 else "stretched" if ratio < 0.43 else "high risk"
     return {"dti": ratio, "band": band, "ltv": ltv(loan, value)}
@@ -174,7 +174,7 @@ def compare_overpayment(principal, annual_rate, years, extra):
 
 def invest_instead(extra, invest_rate, years, loan_rate):
     """Overpaying earns a guaranteed return equal to the loan rate. Investing
-    may earn more — with uncertainty and less access to the cash.
+    may earn more: with uncertainty and less access to the cash.
     """
     months = int(years * 12)
     i = invest_rate / 12
@@ -185,7 +185,7 @@ def invest_instead(extra, invest_rate, years, loan_rate):
     print(f"{'  of which growth':<30}{future - deposited:>18,.2f}")
     verdict = ("investing wins on expected value" if invest_rate > loan_rate
                else "overpaying wins, and it is the certain option")
-    print(f"\nLoan rate {loan_rate:.2%} vs assumed return {invest_rate:.2%} — {verdict}.")
+    print(f"\nLoan rate {loan_rate:.2%} vs assumed return {invest_rate:.2%}: {verdict}.")
     print("The honest caveat: the loan return is guaranteed and the market return is not,")
     print("and money inside a mortgage is much harder to reach in an emergency.")
     return future

@@ -1,7 +1,7 @@
-# Level 8 — Fraud Detection & Decision Thresholds: quiz answer key
+# Level 8: Fraud Detection & Decision Thresholds: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -30,7 +30,7 @@
 - **C. 98.2%** ✅
 - D. It cannot be calculated
 
-**Why:** It is right on every legitimate transaction. That is why accuracy is meaningless under imbalance — it measures the base rate, not the model.
+**Why:** It is right on every legitimate transaction. That is why accuracy is meaningless under imbalance: it measures the base rate, not the model.
 
 ### 2. What does precision measure?
 
@@ -39,13 +39,13 @@
 - C. The share of fraud that was caught
 - **D. How often a flagged transaction really is fraud** ✅
 
-**Why:** Precision is TP / (TP + FP) — the quality of your flags. Recall is the other question: what share of all fraud you caught.
+**Why:** Precision is TP / (TP + FP): the quality of your flags. Recall is the other question: what share of all fraud you caught.
 
 ### 3. At threshold 3 the rule engine catches 106 of 108 frauds but raises 1,454 false alarms. What is wrong with shipping it?
 
 - **A. Precision is 6.8%: over 93% of flagged customers are innocent and would be blocked** ✅
 - B. Recall is too low
-- C. Nothing — catching fraud is the goal
+- C. Nothing, catching fraud is the goal
 - D. The model is overfitting
 
 **Why:** A false decline is a real customer whose card fails in public. Issuers consistently find false declines cost more in lost business than the fraud they prevent.
@@ -66,12 +66,12 @@
 - **C. F1 treats false positives and false negatives as equally costly, and this business does not** ✅
 - D. F1 is only valid for balanced data
 
-**Why:** F1 is symmetric by construction. Once a missed fraud costs the transaction amount and a review costs $4, the optimum moves — the cost assumptions are the real model.
+**Why:** F1 is symmetric by construction. Once a missed fraud costs the transaction amount and a review costs $4, the optimum moves. The cost assumptions are the real model.
 
 ### 6. Which feature is typically the strongest signal in card fraud?
 
 - A. The card issuer
-- **B. Transaction velocity — how many transactions occurred in the last hour** ✅
+- **B. Transaction velocity: how many transactions occurred in the last hour** ✅
 - C. The merchant name
 - D. The day of the week
 
@@ -111,7 +111,7 @@
 - C. tp, tn, fp, fn
 - D. tp, fp, fn, tn
 
-**Why:** tn, fp, fn, tp — reading across the rows of the matrix. Assuming the wrong order silently inverts precision and recall.
+**Why:** tn, fp, fn, tp: reading across the rows of the matrix. Assuming the wrong order silently inverts precision and recall.
 
 ### 11. Why is logistic regression the default first model in regulated financial services?
 
@@ -136,18 +136,18 @@
 - A. Remove all country data and ship
 - **B. Investigate and fix it: disparate outcomes are a legal and ethical problem, and the data explanation is not a defence** ✅
 - C. Raise the threshold for everyone
-- D. Ship it — the model learned it from the data
+- D. Ship it: the model learned it from the data
 
 **Why:** Fair-lending and consumer-protection law looks at outcomes. Check flag rates across groups before shipping, keep a human review route, and document the decision.
 
 ### 14. What does an AUC of 0.999 on this dataset tell you?
 
-- **A. The data is synthetic and unusually separable — real fraud models sit far lower** ✅
+- **A. The data is synthetic and unusually separable. Real fraud models sit far lower** ✅
 - B. AUC is being computed incorrectly
 - C. The model is production-ready
 - D. The model has memorised the test set
 
-**Why:** Real card fraud models run around 0.85-0.95 against adversaries who adapt. Treat the workflow as realistic and the score as flattering — and say so in your report.
+**Why:** Real card fraud models run around 0.85-0.95 against adversaries who adapt. Treat the workflow as realistic and the score as flattering, and say so in your report.
 
 ### 15. What is the most useful output of a fraud system for an operations team?
 

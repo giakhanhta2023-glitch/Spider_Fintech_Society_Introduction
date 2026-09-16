@@ -1,5 +1,5 @@
 """
-neobank.risk — portfolio risk statistics (from Level 7).
+neobank.risk: portfolio risk statistics (from Level 7).
 
 Volatility scales with sqrt(252); Sharpe always states its risk-free rate;
 drawdown is measured from the running peak.
@@ -20,7 +20,7 @@ def compute_returns(prices):
 def annualize(returns, trading_days=TRADING_DAYS):
     """(annual mean return, annual volatility).
 
-    Volatility scales with the SQUARE ROOT of time — variance is what adds.
+    Volatility scales with the SQUARE ROOT of time: variance is what adds.
     """
     ann_return = (1 + returns.mean()) ** trading_days - 1
     ann_vol = returns.std() * np.sqrt(trading_days)
@@ -29,7 +29,7 @@ def annualize(returns, trading_days=TRADING_DAYS):
 
 def cagr(prices, trading_days=TRADING_DAYS):
     """What you actually earned, compounded. Always lower than the arithmetic
-    mean when returns are volatile — that gap is volatility drag.
+    mean when returns are volatile. That gap is volatility drag.
     """
     years = (len(prices) - 1) / trading_days
     total = prices.iloc[-1] / prices.iloc[0] - 1

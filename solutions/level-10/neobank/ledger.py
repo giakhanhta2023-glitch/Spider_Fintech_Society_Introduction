@@ -1,11 +1,11 @@
 """
-neobank.ledger — double-entry ledger (from Level 4)
+neobank.ledger: double-entry ledger (from Level 4)
 ===================================================
 A double-entry ledger that cannot lose money:
 
   * every transaction's legs sum to exactly zero
   * money is integer cents, never floats
-  * entries are append-only — corrections are reversing entries
+  * entries are append-only. Corrections are reversing entries
   * a retried transfer with the same idempotency key posts once
   * an invalid transfer raises and writes nothing at all
 
@@ -17,7 +17,7 @@ from datetime import datetime
 
 
 # ---------------------------------------------------------------------------
-# Errors — a caller can catch LedgerError broadly, or one kind precisely
+# Errors, a caller can catch LedgerError broadly, or one kind precisely
 # ---------------------------------------------------------------------------
 class LedgerError(Exception):
     """Base class for every refusal this ledger makes."""
@@ -40,7 +40,7 @@ class DuplicateAccount(LedgerError):
 
 
 # ---------------------------------------------------------------------------
-# Money helpers — parse once at the edge, format only for display
+# Money helpers: parse once at the edge, format only for display
 # ---------------------------------------------------------------------------
 def to_cents(amount_text):
     """'25.00' -> 2500.  round(), never int() truncation."""
@@ -79,7 +79,7 @@ class Ledger:
 
     # ---------------- internals ----------------
     def _post(self, legs, memo):
-        """Write a balanced set of legs: [(account_id, signed_cents), ...]"""
+        """Write a balanced set of legs: [(account_id, signed_cents),...]"""
         if not legs:
             raise LedgerError("a transaction needs at least one leg")
         if sum(amount for _, amount in legs) != 0:
@@ -159,7 +159,7 @@ class Ledger:
 
     def split_payment(self, src, recipients, amount, memo="split"):
         """Divide amount between recipients. The leftover cents go to the first
-        recipients in order — deterministic, and the transaction still balances.
+        recipients in order: deterministic, and the transaction still balances.
         """
         if amount <= 0:
             raise InvalidAmount("amount must be positive")

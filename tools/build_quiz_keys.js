@@ -28,10 +28,10 @@ for (const lv of levels) {
   fs.mkdirSync(dir, { recursive: true });
 
   const lines = [];
-  lines.push(`# Level ${lv.id} — ${lv.title}: quiz answer key`);
+  lines.push(`# Level ${lv.id}: ${lv.title}: quiz answer key`);
   lines.push('');
   lines.push(`> ${lv.quiz.length} questions. Pass mark is 12/15 (80%).`);
-  lines.push('> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.');
+  lines.push('> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.');
   lines.push('');
   lines.push('| # | Answer |');
   lines.push('|---|--------|');

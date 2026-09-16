@@ -29,7 +29,7 @@ const NOTES = {
       'The checklist is the deliverable. `check_setup.py` only confirms it: it prints the Python version, imports the three libraries the course uses, formats a money value, and proves `0.1 + 0.2 != 0.3` so the float rule lands before Level 2 needs it.'
     ],
     mistakes: [
-      ['Nothing prints from a cell', 'Only the last expression is auto-displayed. Assigning a value shows nothing — add `print(...)`.'],
+      ['Nothing prints from a cell', 'Only the last expression is auto-displayed. Assigning a value shows nothing. Add `print(...)`.'],
       ['Colab will not save', 'You are not signed in to a Google account, or the notebook is a read-only copy. Use **File → Save a copy in Drive**.'],
       ['`Save a copy in GitHub` is greyed out', 'Authorise Colab against GitHub once, from the same menu. It needs permission before the repo list appears.']
     ]
@@ -53,7 +53,7 @@ const NOTES = {
     files: [['`spending_analyzer.py`', 'load, aggregate, detect recurring charges, report, chart']],
     run: 'python spending_analyzer.py',
     design: [
-      'Income is selected by **category**, never by sign. The dataset contains refunds — positive amounts that are not income — and filtering on `amount > 0` overstates income by exactly those.',
+      'Income is selected by **category**, never by sign. The dataset contains refunds (positive amounts that are not income) and filtering on `amount > 0` overstates income by exactly those.',
       'Savings transfers are excluded from spending. Moving money to your own account changes its location, not your net worth; counting it as an expense is a real bug in shipped budgeting apps.',
       '`find_recurring` groups by merchant **and** amount, then splits the result into cancellable subscriptions and fixed commitments. Rent is perfectly recurring too, and a report that tells you to cancel it is useless.',
       'The chart drops savings transfers and sorts before plotting, because an unsorted bar chart with a misleading biggest bar is worse than no chart.'
@@ -69,7 +69,7 @@ const NOTES = {
     run: 'python ledger.py',
     design: [
       '`_post` is the only method that appends, and it refuses anything that does not sum to zero. Every public method funnels through it, so the invariant cannot be bypassed by accident.',
-      'Validation happens **before** any write. A refused transfer leaves `len(entries)` unchanged — the tests assert exactly that, because a half-written transaction is worse than a rejected one.',
+      'Validation happens **before** any write. A refused transfer leaves `len(entries)` unchanged: the tests assert exactly that, because a half-written transaction is worse than a rejected one.',
       'The idempotency key is stored **after** a successful post. Storing it first would make a failed attempt permanently "already done".',
       '`reverse` writes the mirror image rather than deleting. The error and the correction both stay visible, which is what an audit needs.',
       '`split_payment` uses `divmod` and hands the leftover cents to the first recipients in order. Dropping the remainder would silently break the invariant.'
@@ -84,11 +84,11 @@ const NOTES = {
     files: [['`fx_portfolio.py`', 'retrying client, disk cache, snapshot fallback, valuation report']],
     run: 'python fx_portfolio.py    (add --offline to force the snapshot path)',
     design: [
-      'Three layers, tried in order: fresh cache, live call with backoff, bundled snapshot. The function never raises — there is always an answer, and it always says where the answer came from.',
+      'Three layers, tried in order: fresh cache, live call with backoff, bundled snapshot. The function never raises. There is always an answer, and it always says where the answer came from.',
       'Every `requests.get` passes `timeout=`. Without one, a server that accepts a connection and never replies blocks forever.',
       '`convert` adds `table[base] = 1.0` before looking anything up, so one code path handles base→x, x→base, x→y and x→x.',
       'The live ECB feed quotes 29 currencies and **VND is not one of them**. Rather than dropping that holding, the solution falls back to the snapshot for that single currency and labels the row. Mixed provenance, stated openly, is how real treasury reports work.',
-      'Weights are stored at full precision and rounded only for display — rounding each one first makes the column sum to 1.000001.'
+      'Weights are stored at full precision and rounded only for display, rounding each one first makes the column sum to 1.000001.'
     ],
     mistakes: [
       ['The script hangs', 'A missing `timeout=`.'],
@@ -102,14 +102,14 @@ const NOTES = {
     design: [
       'Interest is charged on the **current** balance every month. Using the original amount is the classic bug, and it shows up as a final balance that never reaches zero.',
       'The final payment is capped at the remaining balance, so the schedule ends at exactly `0.00` instead of a few stray cents.',
-      'The loop is bounded and raises a readable error when the payment cannot cover the interest — otherwise the balance grows every month and the `while` never ends.',
+      'The loop is bounded and raises a readable error when the payment cannot cover the interest: otherwise the balance grows every month and the `while` never ends.',
       '`true_apr` uses bisection because the rate has no closed-form solution. Eighty iterations is far more precision than money needs and costs nothing.',
       'The invest-instead comparison deliberately refuses to give a one-word answer: overpaying returns a guaranteed rate, investing is uncertain and illiquid, and a tool that hides that is selling something.'
     ],
     mistakes: [
       ['Balance never reaches zero', 'Interest computed on the original principal, or no cap on the final payment.'],
       ['Payment about 12× too big', 'You passed the annual rate as `i`, or years as `n`. Both must be per period.'],
-      ['Crossover month looks wrong', 'It is the first month `principal > interest` — not the month the balance halves.']
+      ['Crossover month looks wrong', 'It is the first month `principal > interest`, not the month the balance halves.']
     ]
   },
   7: {
@@ -117,7 +117,7 @@ const NOTES = {
     run: 'python risk_dashboard.py',
     design: [
       'Volatility is annualized with `sqrt(252)`, not 252. Variance adds over time; standard deviation is its square root. Using 252 overstates risk roughly sixteenfold.',
-      'The table reports the arithmetic mean **and** the CAGR side by side, with the gap in its own column. On `CRYPTOZ` that gap is 32 points — the clearest possible demonstration of volatility drag.',
+      'The table reports the arithmetic mean **and** the CAGR side by side, with the gap in its own column. On `CRYPTOZ` that gap is 32 points: the clearest possible demonstration of volatility drag.',
       '`portfolio_returns` asserts the weights sum to 1. Weights summing to 0.9 produce no error and scale every number in the report down by 10%.',
       'VaR is always reported next to expected shortfall. VaR gives the threshold and is silent about how bad the tail gets; reporting it alone is how institutions got surprised in 2008.',
       'The conclusion recommends the mix with the tolerable drawdown rather than the best Sharpe, and says what the analysis cannot tell you. That paragraph is the point of the level.'
@@ -141,28 +141,28 @@ const NOTES = {
     ],
     mistakes: [
       ['"My model is 98% accurate"', 'So is flagging nothing. Report precision and recall.'],
-      ['Precision and recall look swapped', '`confusion_matrix(...).ravel()` returns `tn, fp, fn, tp` — in that order.'],
+      ['Precision and recall look swapped', '`confusion_matrix(...).ravel()` returns `tn, fp, fn, tp`: in that order.'],
       ['`amount` coefficient is ~0', 'Unscaled features. Standardise before comparing coefficient magnitudes.']
     ]
   },
   9: {
     files: [
-      ['`finance.py`', 'pure loan maths — imports no UI, prints nothing'],
-      ['`app.py`', 'the Streamlit interface — contains no formulas'],
+      ['`finance.py`', 'pure loan maths: imports no UI, prints nothing'],
+      ['`app.py`', 'the Streamlit interface: contains no formulas'],
       ['`test_finance.py`', '22 tests, no browser required'],
       ['`requirements.txt`', 'pinned dependencies for deployment']
     ],
     run: 'pip install -r requirements.txt && pytest -q && streamlit run app.py',
     design: [
       'The separation is the lesson. `finance.py` imports no UI library, so it can be tested in milliseconds, reused behind an API, and read by someone who has never seen Streamlit.',
-      'Every public function raises `ValueError` with a sentence a user could read. `app.py` catches those and turns them into `st.error(...)` followed by `st.stop()` — no traceback ever reaches the page.',
+      'Every public function raises `ValueError` with a sentence a user could read. `app.py` catches those and turns them into `st.error(...)` followed by `st.stop()`: no traceback ever reaches the page.',
       'Validation lives in the functions, not only in the widget limits. `min_value` is a property of one interface; the engine has to defend itself wherever it is called from.',
       '`@st.cache_data` wraps the schedule builder because Streamlit re-runs the entire script on every slider move, and a 40-year schedule is 480 rows each time.',
       'Nine of the 22 tests assert refusals. Testing that validation fires matters as much as testing the happy path.'
     ],
     mistakes: [
       ['`streamlit: command not found`', 'The virtual environment is not active. The prompt should show `(.venv)`.'],
-      ['Works locally, fails when deployed', 'Almost always `requirements.txt`. Read the build log — it names the package.'],
+      ['Works locally, fails when deployed', 'Almost always `requirements.txt`. Read the build log: it names the package.'],
       ['The app is slow', 'Uncached work re-running on every interaction.']
     ]
   },
@@ -176,7 +176,7 @@ const NOTES = {
     ],
     run: 'pip install -r requirements.txt && python data/generate.py && pytest -q && streamlit run app.py',
     design: [
-      'Dependencies run one way only: `app.py` calls services, services call `loaders`, and nothing calls upward. Two greppable rules enforce it — no `streamlit` anywhere in `neobank/`, and no `read_csv` outside `loaders.py`. Both are asserted.',
+      'Dependencies run one way only: `app.py` calls services, services call `loaders`, and nothing calls upward. Two greppable rules enforce it: no `streamlit` anywhere in `neobank/`, and no `read_csv` outside `loaders.py`. Both are asserted.',
       '`ledger.statement()` returns rows instead of printing them. That single change is the layer boundary made concrete: the service produces data, the interface decides how it looks.',
       '`loaders.py` anchors paths to its own file location and validates the schema on load, so a malformed CSV fails immediately with a clear message rather than producing a wrong number ten functions later.',
       'Reconciliation compares the ledger against an external statement and reports breaks without auto-adjusting anything. A break is a bug, a timing difference, or fraud, and silently "fixing" it destroys the evidence.',
@@ -200,7 +200,7 @@ for (const lv of levels) {
   const requirements = lv.project ? lv.project.requirements : lv.setup.checklist;
 
   const L = [];
-  L.push(`# Level ${lv.id} — ${lv.title}`);
+  L.push(`# Level ${lv.id}: ${lv.title}`);
   L.push('');
   L.push(`> **${brief.title}** · ${lv.project ? 'build project' : 'setup mission'} · difficulty ${lv.difficulty}/10`);
   L.push('');

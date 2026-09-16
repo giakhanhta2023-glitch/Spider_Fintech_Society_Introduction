@@ -41,7 +41,7 @@ export function AnswerKey({ level, answers }) {
             <${Flex} justify="between" align="start" gap="3" mb="1">
               <${Text} size="2" weight="medium">${i + 1}. ${md(q.q)}<//>
               ${answers ? html`<${Badge} color=${wrong ? 'red' : 'grass'} variant="soft">
-                ${wrong ? 'missed' : 'correct'}<//>` : null}
+                ${wrong ? 'missed' : 'correct'}<//>`: null}
             <//>
             <${Text} as="p" size="2" color="grass" mb="1">
               ${LETTERS[q.answer]}. ${md(q.options[q.answer])}
@@ -71,12 +71,12 @@ function ScoreCard({ level, score, total, answers, onRetry, onRefresh }) {
           <${Heading} size="6" align="center">
             ${passed
               ? (score === total ? 'Flawless. Nothing left to teach you here.' : 'Cleared. The build is unlocked.')
-              : `Not yet — you need ${CFG.quiz.passMark} of ${total}.`}
+              : `Not yet. You need ${CFG.quiz.passMark} of ${total}.`}
           <//>
           <${Text} size="3" color="gray" align="center" style=${{ maxWidth: '52ch' }}>
             ${passed
               ? 'Read the key below for anything you missed, then go and build.'
-              : 'Every question below shows the correct answer and why. Re-read the sections you slipped on, then run it again — your best score is the one that counts.'}
+              : 'Every question below shows the correct answer and why. Re-read the sections you slipped on, then run it again. Your best score is the one that counts.'}
           <//>
           <${Flex} gap="3" wrap="wrap" justify="center">
             <${Button} variant="soft" color="gray" onClick=${onRetry}>Run it again<//>
@@ -92,7 +92,7 @@ function ScoreCard({ level, score, total, answers, onRetry, onRefresh }) {
         <${Flex} justify="between" align="center" mb="3" wrap="wrap" gap="2">
           <${Heading} size="4">Answer key<//>
           <${Text} size="2" color="gray">
-            ${missed ? `${missed} missed, marked below` : 'every question correct'}
+            ${missed ? `${missed} missed, marked below`: 'every question correct'}
           <//>
         <//>
         <${AnswerKey} level=${level} answers=${answers} />
@@ -174,16 +174,16 @@ export function Drill({ level, onFinish }) {
         <//>
 
         ${isLocked ? html`<${Explanation} correct=${answers[idx] === q.answer}
-                            letter=${LETTERS[q.answer]} why=${q.why} />` : null}
+                            letter=${LETTERS[q.answer]} why=${q.why} />`: null}
       <//>
 
       <${Flex} gap="3" wrap="wrap">
         ${idx > 0 ? html`<${Button} variant="soft" color="gray"
-          onClick=${() => setIdx(idx - 1)}>Previous<//>` : null}
+          onClick=${() => setIdx(idx - 1)}>Previous<//>`: null}
         ${isLocked && idx < total - 1
-          ? html`<${Button} onClick=${() => setIdx(idx + 1)}>Next question<//>` : null}
+          ? html`<${Button} onClick=${() => setIdx(idx + 1)}>Next question<//>`: null}
         ${isLocked && idx === total - 1
-          ? html`<${Button} color="amber" onClick=${finish}>See my score<//>` : null}
+          ? html`<${Button} color="amber" onClick=${finish}>See my score<//>`: null}
       <//>
     <//>`;
 }

@@ -1,7 +1,7 @@
-# Level 2 — The Time Value of Money: quiz answer key
+# Level 2: The Time Value of Money: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -57,7 +57,7 @@
 - C. 22.14%
 - D. 2.00%
 
-**Why:** (1 + 0.24/12)^12 - 1 = 0.2682. The monthly 2% compounds into 26.82% a year — the gap the headline APR hides.
+**Why:** (1 + 0.24/12)^12 - 1 = 0.2682. The monthly 2% compounds into 26.82% a year: the gap the headline APR hides.
 
 ### 5. Why do lenders advertise APR while savings accounts advertise APY?
 
@@ -71,11 +71,11 @@
 ### 6. Increasing compounding from monthly to daily on an 8% account has what effect?
 
 - A. Roughly doubles the interest earned
-- **B. Adds a very small amount — the returns to frequency diminish quickly** ✅
+- **B. Adds a very small amount: the returns to frequency diminish quickly** ✅
 - C. Has no effect at all
 - D. Reduces the effective rate
 
-**Why:** On $1,000 for a year, monthly gives $1,083.00 and daily $1,083.28. Continuous compounding only reaches $1,083.29 — frequency matters far less than rate or time.
+**Why:** On $1,000 for a year, monthly gives $1,083.00 and daily $1,083.28. Continuous compounding only reaches $1,083.29: frequency matters far less than rate or time.
 
 ### 7. What does the annuity formula C x [((1+i)^N - 1) / i] calculate?
 
@@ -120,7 +120,7 @@
 - C. 12 years
 - D. 18 years
 
-**Why:** 72 / 9 = 8 years. The exact answer via logarithms is 8.04 years — close enough for mental math.
+**Why:** 72 / 9 = 8 years. The exact answer via logarithms is 8.04 years: close enough for mental math.
 
 ### 12. Why is `for year in range(1, years + 1)` used instead of `range(years)`?
 
@@ -151,7 +151,7 @@
 
 ### 15. When should a financial projection round its numbers?
 
-- A. Never — always show full precision
+- A. Never, always show full precision
 - B. Only when the number exceeds 1,000
 - **C. Only when displaying the result to a user** ✅
 - D. After every single calculation step

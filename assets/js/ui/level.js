@@ -42,7 +42,7 @@ function Brief({ level, state }) {
           ${level.project ? html`
             <${Text} as="p" size="1" color="gray" mt="3">
               <strong>Scope:</strong> ${md(level.project.scope)}
-            <//>` : null}
+            <//>`: null}
         <//>
       <//>
 
@@ -104,7 +104,7 @@ function Tutorial({ level }) {
           <${Callout.Text}>
             <span className="note-label">Promise</span>
             Everything the project needs is taught here. If the build asks for something this tutorial
-            did not cover, that is a bug in the course — not in you.
+            did not cover, that is a bug in the course, not in you.
           <//>
         <//>
       <//>
@@ -120,7 +120,7 @@ function Tutorial({ level }) {
                 <${Flex} gap="2" align="start" className="step-check" mt="3">
                   <${Badge} color="blue" variant="soft" radius="full">Check<//>
                   <${Text} size="2" color="gray">${md(step.check)}<//>
-                <//>` : null}
+                <//>`: null}
             <//>
           </li>`)}
       </ol>
@@ -138,7 +138,7 @@ function DrillTab({ level, state, onProgress }) {
 
   if (running) {
     /* The Drill renders its own score card when it finishes, so this only
-       forwards the result upward — unmounting here would hide the score. */
+       forwards the result upward, unmounting here would hide the score. */
     return html`<${Drill} level=${level} onFinish=${onProgress} />`;
   }
 
@@ -148,7 +148,7 @@ function DrillTab({ level, state, onProgress }) {
         <${Heading} size="4" mb="2">Drill: ${level.quiz.length} questions<//>
         <${Text} as="p" size="3" color="gray">
           Score <strong>${CFG.quiz.passMark} of ${level.quiz.length}</strong> to unlock the build.
-          Every answer comes with an explanation, and the full key is shown at the end — including
+          Every answer comes with an explanation, and the full key is shown at the end: including
           on a fail. Your best score is the one that sticks.
         <//>
         ${state.quizPassed ? html`
@@ -159,7 +159,7 @@ function DrillTab({ level, state, onProgress }) {
               ${' ' + state.attempts} attempt${state.attempts === 1 ? '' : 's'}.
               Running it again cannot lower it.
             <//>
-          <//>` : null}
+          <//>`: null}
         <${Flex} gap="3" mt="4" wrap="wrap">
           <${Button} onClick=${() => setRunning(true)}>
             ${state.attempts ? 'Run the drill again' : 'Start the drill'}
@@ -167,10 +167,10 @@ function DrillTab({ level, state, onProgress }) {
           ${state.quizPassed ? html`
             <${Button} variant="soft" color="gray" onClick=${() => setShowKey(!showKey)}>
               ${showKey ? 'Hide the answer key' : 'Show the answer key'}
-            <//>` : null}
+            <//>`: null}
         <//>
       <//>
-      ${showKey ? html`<${AnswerKey} level=${level} answers=${null} />` : null}
+      ${showKey ? html`<${AnswerKey} level=${level} answers=${null} />`: null}
     <//>`;
 }
 
@@ -220,7 +220,7 @@ function SolutionKey({ path, level }) {
       <${Callout.Root} color="amber" variant="surface" mb="3">
         <${Callout.Text}>
           <span className="note-label">Use it properly</span>
-          Attempt it yourself, ask the tutor for a hint, then read only the part you are stuck on —
+          Attempt it yourself, ask the tutor for a hint, then read only the part you are stuck on,
           and retype the fix rather than pasting it.
         <//>
       <//>
@@ -263,17 +263,17 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
             <${Callout.Text}>
               <span className="note-label">Scope</span>${md(project.scope)}
             <//>
-          <//>` : null}
+          <//>`: null}
         ${project && project.dataset ? html`
           <${Text} as="p" size="1" color="gray" mt="3">
             Dataset: <${Code}>${FQ.subst(project.dataset)}<//>
-          <//>` : null}
+          <//>`: null}
       <//>
 
       <${Card} size="3" variant="surface">
         <${Heading} size="3" mb="1">${project ? 'Requirements' : 'Checklist'}<//>
         <${Text} as="p" size="1" color="gray" mb="3">
-          Tick them off as you go — your progress is saved on this device.
+          Tick them off as you go. Your progress is saved on this device.
         <//>
         <${Checklist} levelId=${level.id} items=${items} onChange=${onChecklistChange} />
       <//>
@@ -328,7 +328,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
             ${project.stretch.map((s, i) => html`
               <li key=${i}><${Text} size="2" color="gray">${md(s)}<//></li>`)}
           </ul>
-        <//>` : null}
+        <//>`: null}
 
       <${SolutionKey} path=${brief.solutionPath} level=${level} />
 
@@ -337,7 +337,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
           ${state.projectDone ? html`
             <${Heading} size="4" color="grass">Shipped<//>
             <${Text} size="2" color="gray">
-              ${level.id < 10 ? `Level ${level.id + 1} is open.` : 'The course is complete.'}
+              ${level.id < 10 ? `Level ${level.id + 1} is open.`: 'The course is complete.'}
             <//>
             <${Flex} gap="3" wrap="wrap" justify="center">
               ${level.id < 10
@@ -345,7 +345,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
                 : html`<${Button} onClick=${() => navigate('#/progress')}>See your dossier<//>`}
               <${Button} variant="soft" color="gray" onClick=${onReopen}>Reopen it<//>
             <//>`
-          : html`
+                : html`
             <${Heading} size="4">Finished building?<//>
             <${Text} size="2" color="gray" align="center" style=${{ maxWidth: '52ch' }}>
               Mark it complete once your code runs, the self-checks pass, and it is committed to
@@ -384,7 +384,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
           <${Callout.Text}>
             This level is locked. Clear
             ${' '}<${Link} href=${`#/level/${level.id - 1}`}>level ${level.id - 1}<//>
-            ${' '}— pass its drill and mark its build complete — to open it.
+            ${' '} (pass its drill and mark its build complete) to open it.
           <//>
         <//>
       <//>`;
@@ -397,7 +397,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
     const items = level.project ? level.project.requirements : level.setup.checklist;
     const ticked = store.reqCount(level.id);
     if (ticked < Math.ceil(items.length * 0.6)) {
-      toast(`Tick off what you have actually finished first — ${ticked}/${items.length} so far.`, 'amber');
+      toast(`Tick off what you have actually finished first: ${ticked}/${items.length} so far.`, 'amber');
       return;
     }
     const res = store.completeProject(level.id);
@@ -432,7 +432,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
           <${Badge} variant="surface" color="gray">~${level.minutes} min<//>
           ${level.tags.map((t, i) => html`<${Badge} key=${i} variant="soft" color="gray">${t}<//>`)}
           ${store.isCleared(level.id)
-            ? html`<${Badge} color="grass" variant="soft">cleared</${Badge}>` : null}
+            ? html`<${Badge} color="grass" variant="soft">cleared</${Badge}>`: null}
         <//>
       <//>
 
@@ -445,18 +445,18 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
               ${t.id === 'drill' ? html`
                 <${Badge} ml="2" size="1" variant="soft" color=${state.quizPassed ? 'grass' : 'gray'}>
                   ${state.quizBest}/${level.quiz.length}
-                <//>` : null}
+                <//>`: null}
               ${t.id === 'build' && state.projectDone ? html`
-                <${Badge} ml="2" size="1" variant="soft" color="grass">done<//>` : null}
+                <${Badge} ml="2" size="1" variant="soft" color="grass">done<//>`: null}
               ${t.id === 'build' && !state.projectDone && !state.quizPassed ? html`
-                <${Badge} ml="2" size="1" variant="soft" color="gray">locked<//>` : null}
+                <${Badge} ml="2" size="1" variant="soft" color="gray">locked<//>`: null}
             <//>`)}
         <//>
 
         <${Box} pt="5">
-          ${active === 'brief' ? html`<${Brief} level=${level} state=${state} />` : null}
-          ${active === 'learn' ? html`<${Learn} level=${level} onAskTutor=${onAskTutor} />` : null}
-          ${active === 'tutorial' ? html`<${Tutorial} level=${level} />` : null}
+          ${active === 'brief' ? html`<${Brief} level=${level} state=${state} />`: null}
+          ${active === 'learn' ? html`<${Learn} level=${level} onAskTutor=${onAskTutor} />`: null}
+          ${active === 'tutorial' ? html`<${Tutorial} level=${level} />`: null}
           ${active === 'drill' ? html`
             <${DrillTab} level=${level} state=${state} onProgress=${(outcome, score) => {
               if (outcome.firstPass) {
@@ -466,10 +466,10 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
                 setTimeout(() => toast(`Badge unlocked: ${b.name}`, 'violet'), 700 * (i + 1)));
               refresh();
               onProgress();
-            }} />` : null}
+            }} />`: null}
           ${active === 'build' ? html`
             <${Build} level=${level} state=${state} onComplete=${complete} onReopen=${reopen}
-              onChecklistChange=${refresh} />` : null}
+              onChecklistChange=${refresh} />`: null}
         <//>
       <//>
     <//>`;

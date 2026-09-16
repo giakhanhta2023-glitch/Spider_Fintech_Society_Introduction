@@ -1,5 +1,5 @@
 """
-neobank.analytics — spending analysis (from Level 3).
+neobank.analytics: spending analysis (from Level 3).
 
 Every function takes a DataFrame and returns data. No file reading (that is
 loaders.py), no printing (that is the interface).
@@ -14,7 +14,7 @@ def outgoing(df):
 
 
 def headline_numbers(df):
-    """Income is a category, not a sign — refunds are positive and are not income."""
+    """Income is a category, not a sign: refunds are positive and are not income."""
     spend = outgoing(df)
     income = df[df["category"] == "income"]["amount"].sum()
     spending = spend[~spend["category"].isin(NON_SPEND_CATEGORIES)]["abs_amount"].sum()
@@ -59,7 +59,7 @@ def top_merchants(df, n=10):
 
 
 def find_recurring(df, min_times=3):
-    """Same merchant, same amount, repeatedly — split into cancellable and fixed."""
+    """Same merchant, same amount, repeatedly: split into cancellable and fixed."""
     spend = outgoing(df)
     counts = (spend.groupby(["description", "abs_amount"]).size()
               .reset_index(name="times"))

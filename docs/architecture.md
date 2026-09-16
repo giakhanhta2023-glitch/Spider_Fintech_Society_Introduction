@@ -48,17 +48,17 @@ html`<${Card} size="3" variant="surface">${body}<//>`
 ```
 
 The trade-off is a runtime dependency on a CDN. If you would rather vendor it, replace the import map
-in `index.html` with local copies — nothing else changes.
+in `index.html` with local copies: nothing else changes.
 
 ## 3. Radix Themes owns the design system
 
 Colour, spacing, radii, typography scales, focus rings, dialog behaviour and accessibility all come
-from Radix. `assets/css/app.css` only adds what Radix does not ship — the mission ladder, the prose
-styles for curriculum content, the code block, the score ring, and the tutor panel geometry — and it
+from Radix. `assets/css/app.css` only adds what Radix does not ship: the mission ladder, the prose
+styles for curriculum content, the code block, the score ring, and the tutor panel geometry, and it
 does so using Radix tokens (`--blue-9`, `--gray-a4`, `--space-3`, `--radius-3`) so the whole thing
 follows the theme rather than fighting it.
 
-Changing `accentColor` on the `<Theme>` in `main.js` restyles the entire app — that one prop is how
+Changing `accentColor` on the `<Theme>` in `main.js` restyles the entire app. That one prop is how
 the interface went from jade to blue.
 
 One rule survives an accent change: **colour carries meaning, so the accent is not allowed to eat the
@@ -67,7 +67,7 @@ semantics.** Each colour has exactly one job, and success stays green whatever t
 | Colour | Job |
 |--------|-----|
 | **blue** (accent) | brand, links, buttons, progress, where you currently are |
-| **grass** | a state the learner achieved — correct, passed, cleared, shipped |
+| **grass** | a state the learner achieved: correct, passed, cleared, shipped |
 | **red** | wrong |
 | **amber** | warnings, rank, difficulty |
 | **violet** | editorial asides: "why it matters in fintech", build briefs |
@@ -85,7 +85,7 @@ main.js          routing, HUD, toasts, theme        <- knows about everything
     quiz.js      the drill and the answer key
     blocks.js    curriculum blocks -> Radix components
   tutor.js       the tutor panel (a Radix Dialog pinned right)
-    tutor-engine.js   retrieval, prompting, API calls — no UI in this file
+    tutor-engine.js   retrieval, prompting, API calls: no UI in this file
   lib.js         shared imports and small helpers
 ---------------------------------------------------------------
 core.js          registry, markdown subset, syntax highlighting
@@ -104,11 +104,11 @@ weigh heaviest, the learner's current level is boosted, later levels are penalis
 spoil them), and the best section is summarised back with a link.
 
 Specific intents are handled before retrieval: greetings, "where do I start", Python error names,
-requests for the whole solution (declined, with the reason), and `hint` — which looks up the
+requests for the whole solution (declined, with the reason), and `hint`, which looks up the
 learner's first unticked requirement and points at the tutorial step covering it.
 
 If an endpoint or API key is configured, the question goes to Claude instead, with the current
-level's material in the system prompt. Any failure — network, timeout, bad key — falls back to the
+level's material in the system prompt. Any failure (network, timeout, bad key) falls back to the
 offline path, so the tutor cannot leave a learner stuck.
 
 ## Progress model

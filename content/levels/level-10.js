@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 10 — Capstone: the whole system
+   LEVEL 10: Capstone: the whole system
    ========================================================================= */
 FQ.registerLevel({
   id: 10,
@@ -9,8 +9,8 @@ FQ.registerLevel({
   difficulty: 10,
   minutes: 300,
   tags: ['architecture', 'RegTech', 'documentation', 'capstone'],
-  summary: 'The final level covers the two things that separate a student project from a professional one — compliance ' +
-           'awareness and architecture — then asks you to assemble everything you have built into a single coherent product.',
+  summary: 'The final level covers the two things that separate a student project from a professional one (compliance ' +
+           'awareness and architecture) then asks you to assemble everything you have built into a single coherent product.',
 
   objectives: [
     'Describe the compliance obligations a money-handling product carries: KYC, AML, PII, retention',
@@ -35,21 +35,21 @@ FQ.registerLevel({
       ]
     }},
     { p: 'Notice how much of this is *engineering*, not paperwork. Append-only storage, immutable audit logs, and ' +
-         'explainable decisions are architectural choices made early — retrofitting them is close to impossible, which ' +
+         'explainable decisions are architectural choices made early. Retrofitting them is close to impossible, which ' +
          'is why they belong in your capstone from the first commit.' },
 
     { h: 'PII: the data that changes your obligations' },
     { p: '**Personally Identifiable Information** is anything that identifies a person: name, address, national ID, ' +
-         'card number, and — importantly — combinations that identify someone together, like a postcode plus a birth date.' },
+         'card number, and (importantly) combinations that identify someone together, like a postcode plus a birth date.' },
     { ul: [
-      '**Minimise** — do not collect what you do not need. The safest PII is the field you never stored.',
-      '**Mask** — show `**** 4471`, not the full number. Full card numbers ("PAN") have their own standard, PCI DSS, and you do not want to be in scope for it.',
-      '**Separate** — keep identity data apart from transaction data, joined by an opaque id.',
-      '**Expire** — define how long you keep records, and actually delete them.',
-      '**Log access** — in a regulated system, reading data is an event worth recording too.'
+      '**Minimise**: do not collect what you do not need. The safest PII is the field you never stored.',
+      '**Mask**: show `**** 4471`, not the full number. Full card numbers ("PAN") have their own standard, PCI DSS, and you do not want to be in scope for it.',
+      '**Separate**: keep identity data apart from transaction data, joined by an opaque id.',
+      '**Expire**: define how long you keep records, and actually delete them.',
+      '**Log access**: in a regulated system, reading data is an event worth recording too.'
     ]},
     { warn: 'Never commit real personal data to a repository, even privately, even briefly. Every dataset in this course ' +
-            'is synthetic for exactly this reason — and your capstone must be too. If you want realistic data, generate it.' },
+            'is synthetic for exactly this reason, and your capstone must be too. If you want realistic data, generate it.' },
 
     { h: 'Open banking, in one paragraph' },
     { p: 'Regulation in the UK, EU, and a growing list of countries requires banks to expose customer data through APIs ' +
@@ -58,7 +58,7 @@ FQ.registerLevel({
          'If your product reads someone else\'s data, that is the standard you design to.' },
 
     { h: 'Architecture: layers and why they exist' },
-    { code: 'interface        Streamlit pages, CLI, API endpoints\n     |           (no business logic — just input and display)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. pure where possible. fully tested)\ndata             loaders, validators, synthetic generators\n     |           (everything that touches a file or a network)\nstorage          CSV / SQLite / append-only entry log', lang: 'text', label: 'four layers' },
+    { code: 'interface        Streamlit pages, CLI, API endpoints\n     |           (no business logic: just input and display)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. Pure where possible. Fully tested)\ndata             loaders, validators, synthetic generators\n     |           (everything that touches a file or a network)\nstorage          CSV / SQLite / append-only entry log', lang: 'text', label: 'four layers' },
     { p: 'The rule is one-directional: **upper layers may call lower ones, never the reverse**. Your ledger must not know ' +
          'a Streamlit page exists. Follow it and you can swap the interface, test the middle in isolation, and reason about ' +
          'one layer at a time. Break it and everything becomes one thing that can only be tested by clicking.' },
@@ -82,13 +82,13 @@ FQ.registerLevel({
          'what they spend it on. In order:' },
     { ol: [
       '**One sentence** saying what it is and who it is for.',
-      '**A live link and a screenshot** — the fastest possible proof it is real.',
+      '**A live link and a screenshot**: the fastest possible proof it is real.',
       '**Features**, as five or six bullets of what it actually does.',
-      '**Architecture** — the layer diagram and one line per module.',
-      '**Run it locally** — commands that work when copied, in order.',
-      '**Tests** — how to run them and what passes.',
-      '**Data** — stated clearly as synthetic, with the generator script.',
-      '**Limitations and next steps** — the section that signals seniority.'
+      '**Architecture**: the layer diagram and one line per module.',
+      '**Run it locally**: commands that work when copied, in order.',
+      '**Tests**: how to run them and what passes.',
+      '**Data**: stated clearly as synthetic, with the generator script.',
+      '**Limitations and next steps**: the section that signals seniority.'
     ]},
     { money: 'That last section is the one people skip and the one interviewers notice. Writing "this ledger is ' +
              'single-process and would need row-level locking to be concurrent" tells a reviewer you understand the ' +
@@ -97,7 +97,7 @@ FQ.registerLevel({
     { h: 'Reconciliation: the daily ritual' },
     { p: 'Every real money system runs a **reconciliation** job: compare your ledger against an external source of truth ' +
          '(a bank statement, a processor\'s settlement file) and explain every difference. A break that nobody explains ' +
-         'is either a bug, a timing difference, or fraud — and you cannot tell which until you look.' },
+         'is either a bug, a timing difference, or fraud, and you cannot tell which until you look.' },
     { code: 'internal_total = sum(all ledger entries for the account)\nexternal_total = statement closing balance\nbreak         = internal_total - external_total\n\nif break != 0:\n    investigate, categorise, and record the explanation', lang: 'text' },
     { p: 'Including even a simple reconciliation check in your capstone puts you ahead of most student projects, because ' +
          'it shows you understand that a ledger is only trustworthy if something independent agrees with it.' },
@@ -116,13 +116,13 @@ FQ.registerLevel({
 
   tutorial: {
     intro: 'This tutorial is about assembly rather than new syntax: turning nine notebooks into one installable, testable, ' +
-           'documented project. Work in Codespaces or locally — whichever you chose in Level 9.',
+           'documented project. Work in Codespaces or locally: whichever you chose in Level 9.',
     steps: [
       {
         t: 'Create the skeleton',
         blocks: [
-          { code: 'mkdir -p neobank/neobank neobank/data neobank/tests neobank/docs/screenshots\ncd neobank\ntouch neobank/__init__.py app.py README.md requirements.txt .gitignore', lang: 'bash' },
-          { p: 'On Windows without a bash shell, create the folders in the VS Code explorer — the structure matters, ' +
+          { code: 'mkdir -p neobank/neobank neobank/data neobank/tests neobank/docs/screenshots\ncd neobank\ntouch neobank/__init__.py app.py README.md requirements.txt.gitignore', lang: 'bash' },
+          { p: 'On Windows without a bash shell, create the folders in the VS Code explorer: the structure matters, ' +
                'not the command that made it.' },
           { code: '# .gitignore\n.venv/\n__pycache__/\n*.pyc\n.streamlit/secrets.toml\n*.cache.json', lang: 'text' }
         ],
@@ -134,7 +134,7 @@ FQ.registerLevel({
           { p: 'Copy each notebook\'s functions into the matching module. Two rules while you do it: **delete every print ' +
                'statement from the service layer**, and **make every function take its inputs as arguments** rather than ' +
                'reading a global.' },
-          { code: '# neobank/lending.py\n"""Loan pricing and amortization (FinQuest Levels 2 and 6)."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n    ...\n\n\ndef schedule(principal, annual_rate, years, extra=0.0):\n    ...', lang: 'python' },
+          { code: '# neobank/lending.py\n"""Loan pricing and amortization (FinQuest Levels 2 and 6)."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n...\n\n\ndef schedule(principal, annual_rate, years, extra=0.0):\n...', lang: 'python' },
           { code: '# app.py\nfrom neobank.lending import monthly_payment, schedule\nfrom neobank.fraud import score_transactions\nfrom neobank.risk import portfolio_stats', lang: 'python' },
           { warn: 'If an import fails with `ModuleNotFoundError: neobank`, you are running from inside the package folder. ' +
                   'Run from the project root, where `app.py` lives.' }
@@ -146,7 +146,7 @@ FQ.registerLevel({
         blocks: [
           { code: '# neobank/loaders.py\n"""Every file and network read lives here. Nothing else touches the disk."""\nfrom pathlib import Path\nimport pandas as pd\n\nDATA = Path(__file__).resolve().parent.parent / "data"\n\n\ndef load_transactions(path=None):\n    path = Path(path) if path else DATA / "transactions.csv"\n    if not path.exists():\n        raise FileNotFoundError(f"missing data file: {path}")\n    df = pd.read_csv(path, parse_dates=["date"])\n    required = {"date", "description", "category", "amount"}\n    missing = required - set(df.columns)\n    if missing:\n        raise ValueError(f"transactions file is missing columns: {sorted(missing)}")\n    return df', lang: 'python' },
           { p: 'Two things worth stealing here. `Path(__file__).resolve().parent.parent` finds the project root regardless ' +
-               'of where the app was started from — the fix for "it works on my machine". And **validating the schema on ' +
+               'of where the app was started from. The fix for "it works on my machine". And **validating the schema on ' +
                'load** means a malformed CSV fails immediately with a clear message instead of producing a wrong number ten ' +
                'functions later.' }
         ],
@@ -183,7 +183,7 @@ FQ.registerLevel({
       {
         t: 'Write the README last, and properly',
         blocks: [
-          { code: '# NeoBank Analytics\n\nA personal-finance and risk platform built across the FinQuest fintech course:\nledger, spending analytics, loan pricing, portfolio risk, and fraud scoring\nin one Streamlit application.\n\n**Live demo:** https://your-app.streamlit.app\n\n![Dashboard](docs/screenshots/overview.png)\n\n## Features\n- Double-entry ledger with idempotent transfers and reversals\n- Spending analytics with recurring-charge detection\n- Loan pricing, amortization, and early-payoff comparison\n- Portfolio risk: volatility, Sharpe, drawdown, correlation, VaR\n- Fraud scoring with a cost-tuned threshold and an explained review queue\n- Daily reconciliation against an external balance file\n\n## Architecture\n    app.py         Streamlit interface, no business logic\n    neobank/       services: ledger, analytics, lending, risk, fraud, fx\n    neobank/loaders.py   all file and network access\n    data/          synthetic datasets (see data/generate.py)\n    tests/         pytest suite — 31 tests, all passing\n\n## Run locally\n    python -m venv .venv && source .venv/bin/activate\n    pip install -r requirements.txt\n    pytest -q\n    streamlit run app.py\n\n## Data\nAll data is synthetic and generated by `data/generate.py`. No real customer\ndata is used anywhere in this project.\n\n## Limitations and next steps\n- The ledger is single-process; concurrent writes would need row-level locking\n- Fraud thresholds are tuned on one static sample and would drift in production\n- Risk statistics assume the past resembles the future, which is the standard\n  weakness of every historical risk measure\n- Next: move storage to SQLite, add an authentication layer, schedule the\n  reconciliation job', lang: 'text', label: 'README.md' },
+          { code: '# NeoBank Analytics\n\nA personal-finance and risk platform built across the FinQuest fintech course:\nledger, spending analytics, loan pricing, portfolio risk, and fraud scoring\nin one Streamlit application.\n\n**Live demo:** https://your-app.streamlit.app\n\n![Dashboard](docs/screenshots/overview.png)\n\n## Features\n- Double-entry ledger with idempotent transfers and reversals\n- Spending analytics with recurring-charge detection\n- Loan pricing, amortization, and early-payoff comparison\n- Portfolio risk: volatility, Sharpe, drawdown, correlation, VaR\n- Fraud scoring with a cost-tuned threshold and an explained review queue\n- Daily reconciliation against an external balance file\n\n## Architecture\n    app.py         Streamlit interface, no business logic\n    neobank/       services: ledger, analytics, lending, risk, fraud, fx\n    neobank/loaders.py   all file and network access\n    data/          synthetic datasets (see data/generate.py)\n    tests/         pytest suite, 31 tests, all passing\n\n## Run locally\n    python -m venv.venv && source.venv/bin/activate\n    pip install -r requirements.txt\n    pytest -q\n    streamlit run app.py\n\n## Data\nAll data is synthetic and generated by `data/generate.py`. No real customer\ndata is used anywhere in this project.\n\n## Limitations and next steps\n- The ledger is single-process; concurrent writes would need row-level locking\n- Fraud thresholds are tuned on one static sample and would drift in production\n- Risk statistics assume the past resembles the future, which is the standard\n  weakness of every historical risk measure\n- Next: move storage to SQLite, add an authentication layer, schedule the\n  reconciliation job', lang: 'text', label: 'README.md' },
           { tip: 'Take screenshots at a normal window size and commit them under `docs/screenshots/`. A README with a ' +
                  'picture gets read; one without usually does not.' }
         ],
@@ -195,14 +195,14 @@ FQ.registerLevel({
   glossary: [
     { t: 'KYC', d: 'Identity verification required before a customer may hold or move money.' },
     { t: 'AML', d: 'Monitoring and reporting designed to stop criminal funds moving through the system.' },
-    { t: 'PII', d: 'Personally identifiable information — data that identifies a person, alone or combined.' },
+    { t: 'PII', d: 'Personally identifiable information: data that identifies a person, alone or combined.' },
     { t: 'PAN masking', d: 'Displaying only the last four digits of a card number.' },
     { t: 'PCI DSS', d: 'The security standard that applies when you store or process full card numbers.' },
     { t: 'Data minimisation', d: 'Collecting only the personal data you actually need.' },
     { t: 'Retention policy', d: 'A defined lifetime for records, after which they are deleted.' },
     { t: 'Audit log', d: 'An immutable record of what happened and who did it.' },
     { t: 'Open banking', d: 'Regulated, consented API access to a customer\'s bank data.' },
-    { t: 'Layered architecture', d: 'Interface, services, data, storage — upper layers call lower ones only.' },
+    { t: 'Layered architecture', d: 'Interface, services, data, storage: upper layers call lower ones only.' },
     { t: 'Package', d: 'A folder with __init__.py that can be imported as a module path.' },
     { t: 'Reconciliation', d: 'Comparing internal records against an external source and explaining every difference.' },
     { t: 'Break', d: 'An unexplained difference found during reconciliation.' },
@@ -288,7 +288,7 @@ FQ.registerLevel({
         "Merging two customer accounts"
       ],
       answer: 1,
-      why: "Every real money system reconciles daily. An unexplained break is a bug, a timing difference, or fraud — and you cannot tell which without investigating." },
+      why: "Every real money system reconciles daily. An unexplained break is a bug, a timing difference, or fraud, and you cannot tell which without investigating." },
 
     { q: "Your ledger says $10,450 and the bank statement says $10,400. What is the correct response?",
       options: [
@@ -328,7 +328,7 @@ FQ.registerLevel({
         "Regulators require open source projects to use synthetic data"
       ],
       answer: 1,
-      why: "Repositories keep history forever and may become public. Generate realistic data instead — and say clearly in the README that it is generated." },
+      why: "Repositories keep history forever and may become public. Generate realistic data instead, and say clearly in the README that it is generated." },
 
     { q: "Open banking is best summarised as:",
       options: [
@@ -362,7 +362,7 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'NeoBank Analytics — Capstone',
+    title: 'NeoBank Analytics: Capstone',
     story: 'One repository. One deployed application. Everything you have learned, assembled into a product you would be ' +
            'happy for an interviewer to open in front of you.',
     scope: 'Uses everything from Levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX ' +
@@ -391,7 +391,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'text',
-      code: 'neobank-analytics/\n  README.md\n  requirements.txt\n  .gitignore\n  app.py                    # Streamlit entry point — interface only\n  neobank/\n    __init__.py\n    ledger.py               # Level 4\n    analytics.py            # Level 3\n    lending.py              # Levels 2 + 6\n    risk.py                 # Level 7\n    fraud.py                # Level 8\n    fx.py                   # Level 5   (optional but recommended)\n    reconcile.py            # Level 10\n    loaders.py              # ALL file and network access\n  data/\n    generate.py             # produces every CSV below\n    transactions.csv\n    prices.csv\n    card_transactions.csv\n    external_balances.csv\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_analytics.py\n    test_fraud.py\n  docs/\n    architecture.md\n    demo-script.md\n    screenshots/\n\n# Build order that works:\n#   1. loaders.py + data/generate.py      (get data flowing)\n#   2. one service module + its tests     (prove the pattern)\n#   3. the remaining services + tests\n#   4. app.py, one section at a time\n#   5. reconciliation, README, deploy\n'
+      code: 'neobank-analytics/\n  README.md\n  requirements.txt\n  .gitignore\n  app.py                    # Streamlit entry point: interface only\n  neobank/\n    __init__.py\n    ledger.py               # Level 4\n    analytics.py            # Level 3\n    lending.py              # Levels 2 + 6\n    risk.py                 # Level 7\n    fraud.py                # Level 8\n    fx.py                   # Level 5   (optional but recommended)\n    reconcile.py            # Level 10\n    loaders.py              # ALL file and network access\n  data/\n    generate.py             # produces every CSV below\n    transactions.csv\n    prices.csv\n    card_transactions.csv\n    external_balances.csv\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_analytics.py\n    test_fraud.py\n  docs/\n    architecture.md\n    demo-script.md\n    screenshots/\n\n# Build order that works:\n#   1. Loaders.py + data/generate.py      (get data flowing)\n#   2. One service module + its tests     (prove the pattern)\n#   3. The remaining services + tests\n#   4. App.py, one section at a time\n#   5. Reconciliation, README, deploy\n'
     },
     tests: [
       'A fresh clone plus `pip install -r requirements.txt` then `pytest -q` passes with 20 or more tests',
@@ -407,7 +407,7 @@ FQ.registerLevel({
       'The deployed URL loads on a phone and every section is usable'
     ],
     rubric: [
-      { pts: 20, t: 'It runs for a stranger', d: 'Clone, install, test, run — all from the README, with no undocumented steps.' },
+      { pts: 20, t: 'It runs for a stranger', d: 'Clone, install, test, run: all from the README, with no undocumented steps.' },
       { pts: 20, t: 'Architecture', d: 'Clean layers, no logic in the interface, all data access in one module, imports one-directional.' },
       { pts: 15, t: 'Integration', d: 'All five domains genuinely present and working together, not five disconnected demos.' },
       { pts: 15, t: 'Tests', d: '20+ meaningful tests across modules, covering invariants and refusals, all passing.' },
@@ -429,7 +429,7 @@ FQ.registerLevel({
     { q: 'ModuleNotFoundError: No module named "neobank"',
       a: 'Run from the project root (the folder containing app.py), not from inside the package. Confirm neobank/__init__.py exists.' },
     { q: 'How much of my old notebook code can I reuse?',
-      a: 'All of it — that is the point. Strip the prints, turn globals into arguments, and move each function into the module that owns its domain.' },
+      a: 'All of it: that is the point. Strip the prints, turn globals into arguments, and move each function into the module that owns its domain.' },
     { q: 'How many tests are enough for the capstone?',
       a: 'Twenty across four modules is the floor. Prioritise invariants (the ledger balances), refusals (bad input raises), and known values (a payment you can verify by hand).' },
     { q: 'Can I use real bank data for realism?',
@@ -439,6 +439,6 @@ FQ.registerLevel({
     { q: 'What goes in the limitations section?',
       a: 'Concrete technical facts: single-process ledger, thresholds tuned on one static sample, risk statistics assuming the past resembles the future. Specific beats modest.' },
     { q: 'How do I present this in an interview?',
-      a: 'Open the live URL, complete one user journey in ninety seconds, then show the ledger invariant test. Lead with a limitation you have already identified — it changes the whole conversation.' }
+      a: 'Open the live URL, complete one user journey in ninety seconds, then show the ledger invariant test. Lead with a limitation you have already identified: it changes the whole conversation.' }
   ]
 });

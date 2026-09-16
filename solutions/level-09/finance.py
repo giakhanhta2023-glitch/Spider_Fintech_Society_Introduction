@@ -1,5 +1,5 @@
 """
-finance.py — pure loan maths for the Level 9 Loan Advisor.
+finance.py: pure loan maths for the Level 9 Loan Advisor.
 
 The one rule that makes this file worth having: it imports no UI library and
 prints nothing. Every function takes arguments and returns a value, so it can
@@ -109,7 +109,7 @@ def overpayment_saving(principal, annual_rate, years, extra):
 def affordability(payment, other_debts, gross_monthly_income, loan=None, asset_value=None):
     """Debt-to-income with a band, plus loan-to-value when an asset is given.
 
-    The 36% / 43% thresholds are common conventions, not law — documented here
+    The 36% / 43% thresholds are common conventions, not law. Documented here
     so nobody has to guess where they came from.
     """
     if gross_monthly_income <= 0:

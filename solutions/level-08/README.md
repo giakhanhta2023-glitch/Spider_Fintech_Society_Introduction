@@ -1,4 +1,4 @@
-# Level 8 — Fraud Detection & Decision Thresholds
+# Level 8: Fraud Detection & Decision Thresholds
 
 > **Fraud Scoring Engine** · build project · difficulty 8/10
 
@@ -41,12 +41,12 @@ python fraud_engine.py
 | Symptom | Cause |
 |---------|-------|
 | "My model is 98% accurate" | So is flagging nothing. Report precision and recall. |
-| Precision and recall look swapped | `confusion_matrix(...).ravel()` returns `tn, fp, fn, tp` — in that order. |
+| Precision and recall look swapped | `confusion_matrix(...).ravel()` returns `tn, fp, fn, tp`: in that order. |
 | `amount` coefficient is ~0 | Unscaled features. Standardise before comparing coefficient magnitudes. |
 
 ## Self-checks the solution satisfies
 
-- The dataset has 6,000 rows with 108 frauds — a base rate of 1.80%
+- The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%
 - Do-nothing accuracy is 98.20% and appears in your output before any model
 - Mean amount is about $31.85 for legitimate rows and $167.25 for fraud
 - card_present is 61.1% of legitimate rows and 3.7% of fraud
@@ -54,7 +54,7 @@ python fraud_engine.py
 - Threshold 7 gives 77 TP, 14 FP, precision 84.6%, recall 71.3%
 - Threshold 9 gives precision 100% and recall 28.7%
 - The cost curve at $4 review cost is cheapest at threshold 4 (about $2,068), with threshold 6 close at about $2,086
-- Raising the review cost to $20 moves the cheapest threshold — report where it lands
+- Raising the review cost to $20 moves the cheapest threshold: report where it lands
 - Test AUC is above 0.98 and your report notes why that is unrealistically high
 - Every flagged row in the review queue carries a non-empty reasons string
 

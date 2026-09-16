@@ -1,7 +1,7 @@
-# Level 7 — Risk & Return: quiz answer key
+# Level 7: Risk & Return: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -54,10 +54,10 @@
 
 - A. Inflation
 - B. Trading fees
-- **C. Volatility drag — large swings make the compounded result fall short of the average** ✅
+- **C. Volatility drag, large swings make the compounded result fall short of the average** ✅
 - D. A calculation error
 
-**Why:** A 50% loss requires a 100% gain to recover. The bigger the swings, the further compounding lags the arithmetic mean — which is why CAGR is the honest headline.
+**Why:** A 50% loss requires a 100% gain to recover. The bigger the swings, the further compounding lags the arithmetic mean, which is why CAGR is the honest headline.
 
 ### 5. What does the Sharpe ratio measure?
 
@@ -75,7 +75,7 @@
 - C. It lost money every day
 - D. Its volatility was negative
 
-**Why:** Negative Sharpe means cash would have beaten it. The holder took real risk — a 33% drawdown here — and was paid less than a government bill.
+**Why:** Negative Sharpe means cash would have beaten it. The holder took real risk (a 33% drawdown here) and was paid less than a government bill.
 
 ### 7. How is maximum drawdown calculated?
 
@@ -99,7 +99,7 @@
 
 - A. The Sharpe calculation must be wrong
 - B. Drawdown is irrelevant when Sharpe is high
-- **C. No single ratio captures risk — Sharpe rewards average efficiency and says nothing about the worst path** ✅
+- **C. No single ratio captures risk: Sharpe rewards average efficiency and says nothing about the worst path** ✅
 - D. The asset is risk-free
 
 **Why:** Sharpe uses the whole distribution symmetrically. An -88.6% fall would have removed most real investors from the strategy long before the recovery.
@@ -107,7 +107,7 @@
 ### 10. The four assets have an average individual volatility of 34.6%, and an equal-weight portfolio of them has 27.1%. Why?
 
 - A. Because equal weighting always reduces returns
-- B. A calculation error — the portfolio must equal the average
+- B. A calculation error, the portfolio must equal the average
 - C. Because the portfolio has fewer observations
 - **D. Imperfect correlation: assets do not fall at the same moment, so the swings partly offset** ✅
 
@@ -143,7 +143,7 @@
 ### 14. What does expected shortfall add to VaR?
 
 - A. A confidence interval on the estimate
-- **B. The average loss on the days that breach VaR — the size of the tail** ✅
+- **B. The average loss on the days that breach VaR: the size of the tail** ✅
 - C. A longer time horizon
 - D. An adjustment for inflation
 

@@ -1,4 +1,4 @@
-# Level 6 — Credit, Loans & Amortization
+# Level 6: Credit, Loans & Amortization
 
 > **Loan Amortization & Early-Payoff Simulator** · build project · difficulty 6/10
 
@@ -31,7 +31,7 @@ python loan_simulator.py
 
 - Interest is charged on the **current** balance every month. Using the original amount is the classic bug, and it shows up as a final balance that never reaches zero.
 - The final payment is capped at the remaining balance, so the schedule ends at exactly `0.00` instead of a few stray cents.
-- The loop is bounded and raises a readable error when the payment cannot cover the interest — otherwise the balance grows every month and the `while` never ends.
+- The loop is bounded and raises a readable error when the payment cannot cover the interest: otherwise the balance grows every month and the `while` never ends.
 - `true_apr` uses bisection because the rate has no closed-form solution. Eighty iterations is far more precision than money needs and costs nothing.
 - The invest-instead comparison deliberately refuses to give a one-word answer: overpaying returns a guaranteed rate, investing is uncertain and illiquid, and a tool that hides that is selling something.
 
@@ -41,7 +41,7 @@ python loan_simulator.py
 |---------|-------|
 | Balance never reaches zero | Interest computed on the original principal, or no cap on the final payment. |
 | Payment about 12× too big | You passed the annual rate as `i`, or years as `n`. Both must be per period. |
-| Crossover month looks wrong | It is the first month `principal > interest` — not the month the balance halves. |
+| Crossover month looks wrong | It is the first month `principal > interest`, not the month the balance halves. |
 
 ## Self-checks the solution satisfies
 

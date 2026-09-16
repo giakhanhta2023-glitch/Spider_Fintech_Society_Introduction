@@ -1,5 +1,5 @@
 /* =========================================================================
-   FinQuest — application root.
+   FinQuest: application root.
    Radix Themes provides the design system; this file wires routing, the HUD,
    toasts, and the tutor panel together.
    ========================================================================= */
@@ -133,8 +133,8 @@ function App() {
 
   useEffect(() => {
     document.title = route.name === 'level' && FQ.level(route.id)
-      ? `Level ${route.id} — ${FQ.level(route.id).title} · FinQuest`
-      : 'FinQuest — Fintech Training Arcade';
+      ? `Level ${route.id}: ${FQ.level(route.id).title} · FinQuest`
+      : 'FinQuest: Fintech Training Arcade';
   }, [route]);
 
   const toast = useCallback((text, color = 'blue') => {

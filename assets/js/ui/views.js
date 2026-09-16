@@ -31,7 +31,7 @@ function LadderRow({ level }) {
               ${md(level.tagline)}
             <//>
           <//>
-          ${current ? html`<${Badge} color="blue" variant="solid" radius="full">you are here<//>` : null}
+          ${current ? html`<${Badge} color="blue" variant="solid" radius="full">you are here<//>`: null}
         <//>
 
         <${Flex} gap="2" mt="3" wrap="wrap" align="center">
@@ -72,16 +72,15 @@ export function Home({ onAskTutor }) {
           Spider Fintech Society · training arcade
         <//>
         <${Heading} size=${{ initial: '7', sm: '8', md: '9' }} mb="3" className="hero-title">
-          Learn fintech by <span className="accent">building</span> it.<br />Ten levels, ten missions.
+          Learn fintech by <span className="accent">building</span> it.
         <//>
         <${Text} as="p" size=${{ initial: '3', sm: '4' }} color="gray" mb="5" style=${{ maxWidth: '64ch' }}>
           Every level gives you the knowledge, a hands-on tutorial, a 15-question drill with a full
           answer key, and a build you can finish with nothing but what that level taught you.
-          Level 1 installs nothing — you will be running Python in a browser tab in about ten minutes.
         <//>
         <${Flex} gap="3" wrap="wrap">
           <${Button} size="3" onClick=${() => navigate(`#/level/${current}`)}>
-            ${cleared ? `Continue level ${current}` : 'Start level 1'}
+            ${cleared ? `Continue level ${current}`: 'Start level 1'}
           <//>
           <${Button} size="3" variant="surface" color="gray" onClick=${onAskTutor}>
             Meet your AI tutor
@@ -121,7 +120,7 @@ export function Home({ onAskTutor }) {
             ['Learn', 'Concepts, worked numbers, and the reasons behind them. No filler.'],
             ['Tutorial', 'Hands-on steps. Every tool the build needs is introduced here and nowhere else.'],
             ['Drill', `15 questions with instant explanations. ${CFG.quiz.passMark}/15 unlocks the build.`],
-            ['Build', 'A project scoped to exactly what you know — with a full solution key in the repo.']
+            ['Build', 'A project scoped to exactly what you know: with a full solution key in the repo.']
           ].map(([title, body], i) => html`
             <${Card} key=${i} size="3" variant="surface">
               <${Text} size="1" color="blue" className="figure">0${i + 1}<//>
@@ -140,7 +139,7 @@ export function Glossary() {
   const terms = useMemo(() => {
     const all = [];
     FQ.levels.forEach((lv) => (lv.glossary || []).forEach((g) =>
-      all.push({ ...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() })));
+      all.push({...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() })));
     return all.sort((a, b) => a.t.toLowerCase() < b.t.toLowerCase() ? -1 : 1);
   }, []);
 
@@ -159,7 +158,7 @@ export function Glossary() {
         <//>
       <//>
 
-      <${TextField.Root} size="3" placeholder="Search — try “idempotency” or “drawdown”"
+      <${TextField.Root} size="3" placeholder="Search: try “idempotency” or “drawdown”"
         value=${query} onChange=${(e) => setQuery(e.target.value)} />
 
       ${shown.length === 0
@@ -269,7 +268,7 @@ export function Dossier({ onReset }) {
                     <//>
                     <${Table.Cell}><span className="figure">${st.quizBest}/${lv.quiz.length}</span><//>
                     <${Table.Cell}><span className="figure">${st.attempts || 0}</span><//>
-                    <${Table.Cell}>${st.projectDone ? '✓' : '—'}<//>
+                    <${Table.Cell}>${st.projectDone ? '✓' : '·'}<//>
                     <${Table.Cell}>${status}<//>
                   <//>`;
               })}

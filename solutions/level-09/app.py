@@ -1,5 +1,5 @@
 """
-app.py — the Loan Advisor interface.
+app.py: the Loan Advisor interface.
 
 Interface only: every number on this page comes from finance.py. If you find
 yourself writing a formula in this file, it belongs in the other one.
@@ -16,7 +16,7 @@ from finance import (affordability, compare_terms, invest_instead,
 st.set_page_config(page_title="Loan Advisor", page_icon="\U0001F4B0", layout="wide")
 
 st.title("Loan Advisor")
-st.caption("Built for the Spider Fintech Society. Educational tool — not financial advice.")
+st.caption("Built for the Spider Fintech Society. Educational tool, not financial advice.")
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ invest_rate = invest_rate_pct / 100
 
 
 # ---------------------------------------------------------------------------
-# Validation — every failure is a sentence, never a traceback
+# Validation, every failure is a sentence, never a traceback
 # ---------------------------------------------------------------------------
 @st.cache_data(ttl=3600)
 def build_schedule(principal, rate, years, extra):
@@ -160,4 +160,4 @@ with tab_afford:
 
 st.divider()
 st.caption("All calculations run in finance.py, which imports no UI library and is covered by "
-           "22 tests. Educational use only — this is not financial advice.")
+           "22 tests. Educational use only. This is not financial advice.")

@@ -106,7 +106,7 @@ for (let id = 1; id <= 10; id++) {
   }
   if (end === -1) throw new Error(`${name}: quiz block not closed`);
 
-  const next = [...lines.slice(0, start), serialiseQuiz(rebuilt), ...lines.slice(end + 1)];
+  const next = [...lines.slice(0, start), serialiseQuiz(rebuilt),...lines.slice(end + 1)];
   fs.writeFileSync(file, next.join('\n'), 'utf8');
 
   /* verify the rewritten file still parses and keeps the same answers */
@@ -124,4 +124,4 @@ for (let id = 1; id <= 10; id++) {
 }
 
 console.log(summary.join('\n'));
-console.log(checkOnly ? '\n(check only — no files written)' : '\nrewritten and verified');
+console.log(checkOnly ? '\n(check only : no files written)': '\nrewritten and verified');

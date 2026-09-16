@@ -1,4 +1,4 @@
-# Level 1 — Fintech Orientation & Your Zero-Install Toolkit
+# Level 1: Fintech Orientation & Your Zero-Install Toolkit
 
 > **Mission Zero: Get Your Lab Running** · setup mission · difficulty 1/10
 
@@ -34,7 +34,7 @@ Open Colab, paste `check_setup.py` into a cell, press Shift + Enter.
 
 | Symptom | Cause |
 |---------|-------|
-| Nothing prints from a cell | Only the last expression is auto-displayed. Assigning a value shows nothing — add `print(...)`. |
+| Nothing prints from a cell | Only the last expression is auto-displayed. Assigning a value shows nothing. Add `print(...)`. |
 | Colab will not save | You are not signed in to a Google account, or the notebook is a read-only copy. Use **File → Save a copy in Drive**. |
 | `Save a copy in GitHub` is greyed out | Authorise Colab against GitHub once, from the same menu. It needs permission before the repo list appears. |
 

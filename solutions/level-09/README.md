@@ -1,6 +1,6 @@
-# Level 9 — Shipping a Fintech Service
+# Level 9: Shipping a Fintech Service
 
-> **Loan Advisor — Deployed Web App** · build project · difficulty 9/10
+> **Loan Advisor: Deployed Web App** · build project · difficulty 9/10
 
 ## Read this second
 
@@ -18,8 +18,8 @@ Everything you built in Levels 2 and 6 lives in notebooks nobody else can run. S
 
 | File | What it is |
 |------|------------|
-| `finance.py` | pure loan maths — imports no UI, prints nothing |
-| `app.py` | the Streamlit interface — contains no formulas |
+| `finance.py` | pure loan maths: imports no UI, prints nothing |
+| `app.py` | the Streamlit interface: contains no formulas |
 | `test_finance.py` | 22 tests, no browser required |
 | `requirements.txt` | pinned dependencies for deployment |
 | `quiz-key.md` | all 15 drill answers with explanations |
@@ -33,7 +33,7 @@ pip install -r requirements.txt && pytest -q && streamlit run app.py
 ## Why the solution is shaped this way
 
 - The separation is the lesson. `finance.py` imports no UI library, so it can be tested in milliseconds, reused behind an API, and read by someone who has never seen Streamlit.
-- Every public function raises `ValueError` with a sentence a user could read. `app.py` catches those and turns them into `st.error(...)` followed by `st.stop()` — no traceback ever reaches the page.
+- Every public function raises `ValueError` with a sentence a user could read. `app.py` catches those and turns them into `st.error(...)` followed by `st.stop()`: no traceback ever reaches the page.
 - Validation lives in the functions, not only in the widget limits. `min_value` is a property of one interface; the engine has to defend itself wherever it is called from.
 - `@st.cache_data` wraps the schedule builder because Streamlit re-runs the entire script on every slider move, and a 40-year schedule is 480 rows each time.
 - Nine of the 22 tests assert refusals. Testing that validation fires matters as much as testing the happy path.
@@ -43,7 +43,7 @@ pip install -r requirements.txt && pytest -q && streamlit run app.py
 | Symptom | Cause |
 |---------|-------|
 | `streamlit: command not found` | The virtual environment is not active. The prompt should show `(.venv)`. |
-| Works locally, fails when deployed | Almost always `requirements.txt`. Read the build log — it names the package. |
+| Works locally, fails when deployed | Almost always `requirements.txt`. Read the build log: it names the package. |
 | The app is slow | Uncached work re-running on every interaction. |
 
 ## Self-checks the solution satisfies

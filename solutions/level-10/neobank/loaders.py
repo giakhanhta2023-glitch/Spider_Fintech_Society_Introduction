@@ -1,5 +1,5 @@
 """
-neobank.loaders — the ONLY module that touches a file or a network.
+neobank.loaders: the ONLY module that touches a file or a network.
 
 Everything above this layer receives DataFrames and dicts and never learns
 where they came from. Paths are anchored to this file's own location rather
@@ -72,7 +72,7 @@ def load_prices(path=None):
     if df.empty:
         raise DataError(f"{path.name} has no rows")
     if df.isna().any().any():
-        raise DataError(f"{path.name} contains gaps — fill or drop them before analysing")
+        raise DataError(f"{path.name} contains gaps: fill or drop them before analysing")
     return df
 
 

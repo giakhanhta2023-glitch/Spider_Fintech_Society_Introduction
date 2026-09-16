@@ -1,4 +1,4 @@
-# Level 2 — The Time Value of Money
+# Level 2: The Time Value of Money
 
 > **Compound Growth Engine** · build project · difficulty 2/10
 
@@ -46,7 +46,7 @@ python compound_growth.py
 
 - future_value(1000, 0.08, 10, 1) is 2158.92 (to 2dp)
 - future_value(1000, 0.08, 10, 12) is 2219.64 (to 2dp)
-- contributions_value(200, 0.0, 10, 12) is exactly 24000 — no crash
+- contributions_value(200, 0.0, 10, 12) is exactly 24000: no crash
 - contributions_value(200, 0.07, 20, 12) is 104,185.33 (to 2dp)
 - apy(0.24, 12) is 0.2682 (26.82%)
 - years_to_target(2000, 200, 0.07, 50000) returns 13

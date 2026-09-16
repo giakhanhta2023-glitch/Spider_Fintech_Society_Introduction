@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 1 — Orientation & Toolkit   (no build project: knowledge + setup)
+   LEVEL 1: Orientation & Toolkit   (no build project: knowledge + setup)
    ========================================================================= */
 FQ.registerLevel({
   id: 1,
@@ -10,13 +10,13 @@ FQ.registerLevel({
   minutes: 60,
   tags: ['fintech basics', 'vocabulary', 'setup'],
   summary: 'Before you build anything, you need a map of the industry and a place to run code. ' +
-           'This level gives you both — and you will not install a single thing.',
+           'This level gives you both, and you will not install a single thing.',
 
   objectives: [
     'Explain what fintech is and name the six sectors it is usually split into',
     'Trace the path of a card payment from tap to settlement',
     'Use the core vocabulary: ledger, rail, API, KYC, APR, neobank',
-    'Run Python in your browser with Google Colab — no installation',
+    'Run Python in your browser with Google Colab: no installation',
     'Create a GitHub account and put a notebook in a repository without touching a terminal'
   ],
 
@@ -48,21 +48,21 @@ FQ.registerLevel({
          'a ledger for payments, analytics for wealth, a detector for fraud, and a dashboard that ties them together.' },
 
     { h: 'How money actually moves: one card payment' },
-    { p: 'You tap a card for a $10 coffee. It feels instant. It is not — what happened in that second is an *authorization*, ' +
+    { p: 'You tap a card for a $10 coffee. It feels instant. It is not: what happened in that second is an *authorization*, ' +
          'and the money itself arrives days later.' },
     { ol: [
-      '**Tap** — the card sends its details to the shop\'s terminal.',
-      '**Acquirer** — the shop\'s payment provider (the *merchant acquirer*) receives the request and passes it on.',
-      '**Card network** — Visa/Mastercard routes the request to the bank that issued your card.',
-      '**Issuer** — your bank checks the balance, runs fraud rules, and answers **approve** or **decline**. This is the *authorization*: a promise, not a payment. Your available balance drops; the money has not moved.',
-      '**Capture** — usually at end of day, the shop confirms the sale it wants to actually collect.',
-      '**Settlement** — a day or three later, real money moves between banks in a batch, and the shop is paid ~$9.70 after fees.'
+      '**Tap**: the card sends its details to the shop\'s terminal.',
+      '**Acquirer**: the shop\'s payment provider (the *merchant acquirer*) receives the request and passes it on.',
+      '**Card network**: Visa/Mastercard routes the request to the bank that issued your card.',
+      '**Issuer**: your bank checks the balance, runs fraud rules, and answers **approve** or **decline**. This is the *authorization*: a promise, not a payment. Your available balance drops; the money has not moved.',
+      '**Capture**: usually at end of day, the shop confirms the sale it wants to actually collect.',
+      '**Settlement**: a day or three later, real money moves between banks in a batch, and the shop is paid ~$9.70 after fees.'
     ]},
     { tip: 'The gap between *authorization* and *settlement* is where a huge amount of fintech engineering lives: ' +
            'pending transactions, refunds, chargebacks, reconciliation, and "why does my balance look wrong?" support tickets.' },
 
     { h: 'Rails, ledgers, and the vocabulary that unlocks the rest' },
-    { p: 'A **rail** is a pipe money travels along — card networks, bank transfers (ACH in the US, SEPA in Europe, ' +
+    { p: 'A **rail** is a pipe money travels along: card networks, bank transfers (ACH in the US, SEPA in Europe, ' +
          'Faster Payments in the UK, PromptPay/VietQR style instant schemes in Asia), and newer blockchain rails. ' +
          'Rails differ in speed, cost, reversibility, and limits, and choosing between them is a real product decision.' },
     { p: 'A **ledger** is the record of what money exists and who owns it. Your bank balance is not a number stored in a box; ' +
@@ -73,11 +73,11 @@ FQ.registerLevel({
       rows: [
         ['**API**', 'A doorway one program uses to ask another program for data or an action, over the internet'],
         ['**Ledger**', 'The append-only list of entries whose sum is a balance'],
-        ['**KYC**', '*Know Your Customer* — legally verifying who a user is before they can hold money'],
-        ['**AML**', '*Anti-Money-Laundering* — rules and monitoring that stop criminal money being cleaned'],
-        ['**APR**', '*Annual Percentage Rate* — the yearly cost of borrowing including fees, stated as a percentage'],
+        ['**KYC**', '*Know Your Customer*: legally verifying who a user is before they can hold money'],
+        ['**AML**', '*Anti-Money-Laundering*: rules and monitoring that stop criminal money being cleaned'],
+        ['**APR**', '*Annual Percentage Rate*: the yearly cost of borrowing including fees, stated as a percentage'],
         ['**Neobank**', 'A bank that exists only as an app, usually with no branches and often no banking licence of its own'],
-        ['**PSP**', '*Payment Service Provider* — a company that handles payments for merchants (Stripe, Adyen, PayPal)'],
+        ['**PSP**', '*Payment Service Provider*: a company that handles payments for merchants (Stripe, Adyen, PayPal)'],
         ['**Settlement**', 'The moment real money actually changes hands between institutions']
       ]
     }},
@@ -87,14 +87,14 @@ FQ.registerLevel({
          'because computers store decimals in binary and 0.1 has no exact binary form. Multiply that tiny error by ten million ' +
          'transactions and you have a reconciliation problem that a human has to chase.' },
     { code: '>>> 0.1 + 0.2\n0.30000000000000004\n\n>>> 0.1 + 0.2 == 0.3\nFalse', lang: 'python', label: 'the classic float trap' },
-    { p: 'Professional systems store money as **integers in the smallest unit** — cents, satoshi, dong — and only format to ' +
+    { p: 'Professional systems store money as **integers in the smallest unit** (cents, satoshi, dong) and only format to ' +
          'decimals for display. $10.45 is stored as `1045`. You will use floats for *rates and projections* (where a rounding ' +
          'error is harmless) and integers for *balances and ledgers* (where it is not). Level 4 builds a real ledger this way.' },
     { warn: 'If you remember one sentence from Level 1: **never store a balance as a float**.' },
 
     { h: 'Why you will not be installing VS Code today' },
     { p: 'The fastest way to quit programming is to spend your first evening on installers, PATH variables, and version errors ' +
-         'before writing a single line that does anything. So levels 1 to 8 of FinQuest run entirely in **Google Colab** — ' +
+         'before writing a single line that does anything. So levels 1 to 8 of FinQuest run entirely in **Google Colab**: ' +
          'Python in a browser tab, with pandas, matplotlib and scikit-learn already installed, free, on any laptop.' },
     { p: 'You will only set up a local editor in Level 9, when you have something worth deploying and the setup finally pays ' +
          'for itself. By then it will take ten minutes and make sense.' },
@@ -110,11 +110,11 @@ FQ.registerLevel({
 
     { h: 'How a FinQuest level works' },
     { ol: [
-      '**Learn** — the knowledge page you are reading now.',
-      '**Tutorial** — hands-on steps you follow in Colab, with every tool you will need for the project.',
-      '**Drill** — 15 questions. You need 12 correct to unlock the project. Every answer has an explanation.',
-      '**Build** — a project you can complete using *only* this level and the ones before it. Nothing new is required.',
-      '**Compare** — a full solution key waits in the GitHub repo. Write yours first, then read theirs.'
+      '**Learn**: the knowledge page you are reading now.',
+      '**Tutorial**: hands-on steps you follow in Colab, with every tool you will need for the project.',
+      '**Drill**: 15 questions. You need 12 correct to unlock the project. Every answer has an explanation.',
+      '**Build**: a project you can complete using *only* this level and the ones before it. Nothing new is required.',
+      '**Compare**: a full solution key waits in the GitHub repo. Write yours first, then read theirs.'
     ]},
     { tip: 'Stuck at any point, hit the **Tutor** button in the top right (or Ctrl+K). It knows which level you are on.' }
   ],
@@ -132,7 +132,7 @@ FQ.registerLevel({
           { p: 'A notebook is a stack of **cells**. A code cell runs Python and prints the result underneath it. ' +
                'Click the first cell, type this, and press **Shift + Enter** to run it.' },
           { code: 'print("FinQuest online")\n2 + 2', lang: 'python' },
-          { p: 'The last expression in a cell is displayed automatically — that is why `4` appears without a `print`.' }
+          { p: 'The last expression in a cell is displayed automatically. That is why `4` appears without a `print`.' }
         ],
         check: 'You see "FinQuest online" and 4 printed below the cell.'
       },
@@ -141,12 +141,12 @@ FQ.registerLevel({
         blocks: [
           { p: 'Click the title (*Untitled0.ipynb*) and rename it `finquest-level-01.ipynb`. Colab autosaves to your Google Drive.' },
           { ul: [
-            '**Shift + Enter** — run the cell and move to the next one',
-            '**Ctrl + Enter** — run the cell and stay where you are',
-            '**Ctrl + M, B** — insert a new cell below (or use the **+ Code** button)'
+            '**Shift + Enter**: run the cell and move to the next one',
+            '**Ctrl + Enter**: run the cell and stay where you are',
+            '**Ctrl + M, B**: insert a new cell below (or use the **+ Code** button)'
           ]},
           { tip: 'If anything ever behaves strangely, use **Runtime → Restart session** and run your cells again from the top. ' +
-                 'That fixes roughly 90% of notebook confusion, because cells remember everything you ran earlier — even code you deleted.' }
+                 'That fixes roughly 90% of notebook confusion, because cells remember everything you ran earlier, even code you deleted.' }
         ],
         check: 'Your notebook is renamed and you can add a new code cell without using the mouse.'
       },
@@ -174,7 +174,7 @@ FQ.registerLevel({
       {
         t: 'Read an error message instead of panicking',
         blocks: [
-          { p: 'Errors are the normal state of programming. Python tells you exactly what went wrong on the **last line** of the message — read that first.' },
+          { p: 'Errors are the normal state of programming. Python tells you exactly what went wrong on the **last line** of the message, read that first.' },
           { code: 'total = "100" + 50', lang: 'python' },
           { code: 'TypeError: can only concatenate str (not "int") to str', lang: 'text', label: 'output' },
           { p: 'Translation: you tried to glue a number onto a piece of text. The fix is `int("100") + 50`. ' +
@@ -183,26 +183,26 @@ FQ.registerLevel({
             head: ['Error', 'What it really means'],
             rows: [
               ['`NameError`', 'You used a variable you never created (or a typo in the name)'],
-              ['`TypeError`', 'Wrong kind of value — text where a number was needed'],
+              ['`TypeError`', 'Wrong kind of value, text where a number was needed'],
               ['`IndentationError`', 'Your spaces are inconsistent']
             ]
           }},
-          { tip: 'Paste any error into the FinQuest tutor and ask "what does this mean?" — that is what it is there for.' }
+          { tip: 'Paste any error into the FinQuest tutor and ask "what does this mean?" That is what it is there for.' }
         ],
         check: 'You caused an error on purpose, read the last line, and fixed it.'
       },
       {
         t: 'Create your GitHub account',
         blocks: [
-          { p: 'Go to [github.com/signup](https://github.com/signup). Pick a username you would put on a CV — ' +
-               'this becomes part of your portfolio URL. Verify your email; that is all the setup required.' },
+          { p: 'Go to [github.com/signup](https://github.com/signup). Pick a username you would put on a CV. ' +
+               'This becomes part of your portfolio URL. Verify your email; that is all the setup required.' },
           { p: 'Vocabulary you need and nothing more:' },
           { table: {
             head: ['Word', 'Meaning'],
             rows: [
               ['**Repository (repo)**', 'One folder for one project, stored on GitHub'],
               ['**Commit**', 'A saved snapshot of your files with a short message'],
-              ['**README**', 'The file GitHub shows on the repo\'s front page — your project\'s cover letter'],
+              ['**README**', 'The file GitHub shows on the repo\'s front page: your project\'s cover letter'],
               ['**Public / private**', 'Who can see it. Portfolio work should be public.']
             ]
           }},
@@ -212,7 +212,7 @@ FQ.registerLevel({
         check: 'You are logged in to github.com with a username you are happy to show people.'
       },
       {
-        t: 'Make your portfolio repo — no terminal, no git commands',
+        t: 'Make your portfolio repo: no terminal, no git commands',
         blocks: [
           { ol: [
             'On GitHub click **+ → New repository**.',
@@ -220,7 +220,7 @@ FQ.registerLevel({
             'Back in Colab, use **File → Save a copy in GitHub**. Authorise Colab the first time.',
             'Pick your `finquest-portfolio` repo, keep the filename, write the commit message `Level 1 notebook`, and click OK.'
           ]},
-          { p: 'Colab pushes the notebook straight into your repo and opens the GitHub link. That is a real commit — ' +
+          { p: 'Colab pushes the notebook straight into your repo and opens the GitHub link. That is a real commit: ' +
                'you just used version control without learning git.' },
           { tip: 'Alternative route if you ever need it: on GitHub click **Add file → Upload files** and drag any file in. ' +
                  'Same result, works for CSVs, images, anything.' }
@@ -232,11 +232,11 @@ FQ.registerLevel({
         blocks: [
           { p: 'Every project from Level 2 onward has a complete, commented solution in the FinQuest repo under `solutions/level-XX/`. ' +
                'Each folder holds the working code, a walkthrough README, and the quiz answer key.' },
-          { p: 'The keys exist so you are never permanently stuck — but reading code teaches you far less than writing it. ' +
+          { p: 'The keys exist so you are never permanently stuck, but reading code teaches you far less than writing it. ' +
                'Use this order every time:' },
           { ol: [
             'Attempt the requirement yourself for at least 15 minutes.',
-            'Ask the tutor for a **hint** — it is built to nudge, not to dump answers.',
+            'Ask the tutor for a **hint**: it is built to nudge, not to dump answers.',
             'Open the key, read only the part you are stuck on, close it.',
             'Type the fix yourself from memory. Never copy-paste a solution into your own project.'
           ]}
@@ -260,7 +260,7 @@ FQ.registerLevel({
     { t: 'APR', d: 'Annual Percentage Rate: the yearly cost of borrowing including fees.' },
     { t: 'Neobank', d: 'An app-only bank with no branches, often operating on a partner bank\'s licence.' },
     { t: 'Minor units', d: 'The smallest unit of a currency (cents). Money is stored as integers of these to avoid float errors.' },
-    { t: 'Notebook', d: 'A .ipynb file of runnable code cells and notes — the standard format for financial analysis in Python.' },
+    { t: 'Notebook', d: 'A .ipynb file of runnable code cells and notes: the standard format for financial analysis in Python.' },
     { t: 'Repository', d: 'A GitHub folder holding one project and its history.' }
   ],
 
@@ -274,7 +274,7 @@ FQ.registerLevel({
         "Any startup that has raised venture capital"
       ],
       answer: 0,
-      why: "Fintech is defined by what the technology does — serving a financial need — not by company size, funding, or a specific technology like blockchain." },
+      why: "Fintech is defined by what the technology does (serving a financial need) not by company size, funding, or a specific technology like blockchain." },
 
     { q: "A customer taps a card and the terminal says APPROVED. What has just happened?",
       options: [
@@ -284,7 +284,7 @@ FQ.registerLevel({
         "The shop's bank lent the shop the money"
       ],
       answer: 2,
-      why: "Approval is an authorization — the issuer reserves the funds and promises payment. Actual money movement happens at settlement, typically one to three days later." },
+      why: "Approval is an authorization: the issuer reserves the funds and promises payment. Actual money movement happens at settlement, typically one to three days later." },
 
     { q: "In a card payment, which party decides to approve or decline?",
       options: [
@@ -294,7 +294,7 @@ FQ.registerLevel({
         "The card network (Visa/Mastercard)"
       ],
       answer: 2,
-      why: "The issuer — the bank that gave the customer the card — checks the balance and fraud rules and returns the decision. The network only routes the message." },
+      why: "The issuer (the bank that gave the customer the card) checks the balance and fraud rules and returns the decision. The network only routes the message." },
 
     { q: "What is a \"rail\" in payments?",
       options: [
@@ -304,7 +304,7 @@ FQ.registerLevel({
         "A regulation limiting transaction size"
       ],
       answer: 1,
-      why: "Rails are the pipes money moves through. They differ in speed, cost, reversibility, and limits — picking between them is a genuine product decision." },
+      why: "Rails are the pipes money moves through. They differ in speed, cost, reversibility, and limits. Picking between them is a genuine product decision." },
 
     { q: "What makes a ledger different from simply storing a balance in a database column?",
       options: [
@@ -314,14 +314,14 @@ FQ.registerLevel({
         "A ledger is append-only, so the balance is the sum of entries and history stays auditable"
       ],
       answer: 3,
-      why: "Ledgers never overwrite. Corrections are new entries, so you can always reconstruct how a balance came to be — which is exactly what auditors and support teams need." },
+      why: "Ledgers never overwrite. Corrections are new entries, so you can always reconstruct how a balance came to be, which is exactly what auditors and support teams need." },
 
     { q: "KYC refers to:",
       options: [
-        "Keep Your Cash — a liquidity rule",
-        "Know Your Customer — verifying a user's identity as required by law",
-        "Key Yield Calculation — a pricing method",
-        "Known Yearly Cost — a lending disclosure"
+        "Keep Your Cash: a liquidity rule",
+        "Know Your Customer: verifying a user's identity as required by law",
+        "Key Yield Calculation: a pricing method",
+        "Known Yearly Cost: a lending disclosure"
       ],
       answer: 1,
       why: "KYC is the legally required identity verification done before a customer can hold or move money. It sits alongside AML monitoring." },
@@ -344,7 +344,7 @@ FQ.registerLevel({
         "False"
       ],
       answer: 3,
-      why: "It is False. 0.1 + 0.2 produces 0.30000000000000004 because of binary floating point — the reason money belongs in integers." },
+      why: "It is False. 0.1 + 0.2 produces 0.30000000000000004 because of binary floating point, the reason money belongs in integers." },
 
     { q: "Which tool lets you write and run Python with no installation at all?",
       options: [
@@ -394,7 +394,7 @@ FQ.registerLevel({
         "Uploading a .ipynb notebook through the GitHub web interface"
       ],
       answer: 0,
-      why: "Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables — covered in Level 5." },
+      why: "Bots scan public GitHub for leaked credentials within minutes of a push. Keys belong in environment variables: covered in Level 5." },
 
     { q: "APR stands for Annual Percentage Rate. What does it express?",
       options: [
@@ -443,12 +443,12 @@ FQ.registerLevel({
          'when you deploy a real web app and the setup finally earns its keep.' },
     { q: 'Colab asks me to sign in / my notebook will not save',
       a: 'Colab saves to Google Drive, so you need to be signed in to a Google account. If saving fails, use File → Save a copy ' +
-         'in Drive, or File → Download → .ipynb to keep a local copy.' },
+         'in Drive, or File → Download →.ipynb to keep a local copy.' },
     { q: 'My cell runs but nothing prints',
       a: 'Only the last expression in a cell is auto-displayed. If you assign a value (x = 5) nothing shows. Add print(x), ' +
          'or put the bare variable name on the last line.' },
     { q: 'What is the difference between authorization and settlement?',
-      a: 'Authorization is the issuer approving the payment and reserving funds — it is a promise. Settlement is the actual ' +
+      a: 'Authorization is the issuer approving the payment and reserving funds. It is a promise. Settlement is the actual ' +
          'movement of money between banks, usually one to three days later, in a batch.' },
     { q: 'Why can I not just use floats for money?',
       a: 'Binary floating point cannot represent most decimals exactly, so 0.1 + 0.2 is 0.30000000000000004. Across millions of ' +

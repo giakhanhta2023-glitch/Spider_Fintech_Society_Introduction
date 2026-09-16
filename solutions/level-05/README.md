@@ -1,4 +1,4 @@
-# Level 5 — Market Data & APIs
+# Level 5: Market Data & APIs
 
 > **Multi-Currency Portfolio Valuation Service** · build project · difficulty 5/10
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-Society members hold cash in four currencies and a little crypto, and nobody can say what the treasury is worth. Build the valuation service — and make it keep working on the conference wifi that blocks half the internet.
+Society members hold cash in four currencies and a little crypto, and nobody can say what the treasury is worth. Build the valuation service, and make it keep working on the conference wifi that blocks half the internet.
 
 **Scope:** Uses this level plus Level 3 (pandas) and Level 2 (formatting): requests with timeout, retries, JSON, file caching, try/except, and a DataFrame for the output. No API key is required anywhere.
 
@@ -29,11 +29,11 @@ python fx_portfolio.py    (add --offline to force the snapshot path)
 
 ## Why the solution is shaped this way
 
-- Three layers, tried in order: fresh cache, live call with backoff, bundled snapshot. The function never raises — there is always an answer, and it always says where the answer came from.
+- Three layers, tried in order: fresh cache, live call with backoff, bundled snapshot. The function never raises. There is always an answer, and it always says where the answer came from.
 - Every `requests.get` passes `timeout=`. Without one, a server that accepts a connection and never replies blocks forever.
 - `convert` adds `table[base] = 1.0` before looking anything up, so one code path handles base→x, x→base, x→y and x→x.
 - The live ECB feed quotes 29 currencies and **VND is not one of them**. Rather than dropping that holding, the solution falls back to the snapshot for that single currency and labels the row. Mixed provenance, stated openly, is how real treasury reports work.
-- Weights are stored at full precision and rounded only for display — rounding each one first makes the column sum to 1.000001.
+- Weights are stored at full precision and rounded only for display, rounding each one first makes the column sum to 1.000001.
 
 ## Where people get stuck
 
@@ -46,7 +46,7 @@ python fx_portfolio.py    (add --offline to force the snapshot path)
 ## Self-checks the solution satisfies
 
 - fetch_json against a 404 URL raises RuntimeError after its retries rather than hanging
-- Every requests.get call in your file passes a timeout — grep your own code to confirm
+- Every requests.get call in your file passes a timeout: grep your own code to confirm
 - get_rates returns source "live" first, then "cache" on an immediate second call
 - With the live URL broken, get_rates returns the snapshot and source says STALE
 - convert(100, "USD", "USD", rates) == 100 exactly

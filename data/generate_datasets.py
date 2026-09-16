@@ -1,5 +1,5 @@
 """
-FinQuest — synthetic dataset generator
+FinQuest: synthetic dataset generator
 ======================================
 Every CSV in this folder is SYNTHETIC. No real customer, account, or market
 data is used anywhere in this course. This script regenerates all of it
@@ -20,7 +20,7 @@ PRICE_SEED = 20250918   # chosen so the three-year paths show a realistic mix of
 
 
 # ---------------------------------------------------------------------------
-# LEVEL 3 — personal transaction history (6 months, one account)
+# LEVEL 3: personal transaction history (6 months, one account)
 # ---------------------------------------------------------------------------
 def gen_transactions():
     rng = random.Random(SEED)
@@ -96,12 +96,12 @@ def gen_transactions():
         w = csv.DictWriter(fh, fieldnames=["date", "description", "category", "amount", "account", "method"])
         w.writeheader()
         w.writerows(rows)
-    print(f"{path.name}: {len(rows)} rows, {start} .. {rows[-1]['date']}")
+    print(f"{path.name}: {len(rows)} rows, {start}. {rows[-1]['date']}")
     return rows
 
 
 # ---------------------------------------------------------------------------
-# LEVEL 7 — daily prices for four fictional assets (3 years, business days)
+# LEVEL 7: daily prices for four fictional assets (3 years, business days)
 # ---------------------------------------------------------------------------
 def gen_prices():
     rng = random.Random(PRICE_SEED)
@@ -147,7 +147,7 @@ def gen_prices():
 
 
 # ---------------------------------------------------------------------------
-# LEVEL 8 — labelled card transactions for fraud detection
+# LEVEL 8: labelled card transactions for fraud detection
 # ---------------------------------------------------------------------------
 def gen_fraud():
     rng = random.Random(SEED + 8)
@@ -213,7 +213,7 @@ def gen_fraud():
 
 
 # ---------------------------------------------------------------------------
-# LEVEL 5 — offline fallback snapshot of FX rates (so the level works offline)
+# LEVEL 5: offline fallback snapshot of FX rates (so the level works offline)
 # ---------------------------------------------------------------------------
 def gen_fx_snapshot():
     import json
@@ -236,4 +236,4 @@ if __name__ == "__main__":
     gen_prices()
     gen_fraud()
     gen_fx_snapshot()
-    print("done — all datasets are synthetic")
+    print("done, all datasets are synthetic")

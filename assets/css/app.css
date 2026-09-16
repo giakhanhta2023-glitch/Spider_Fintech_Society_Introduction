@@ -1,5 +1,5 @@
 /* =========================================================================
-   FinQuest — a thin layer on top of Radix Themes.
+   FinQuest: a thin layer on top of Radix Themes.
 
    Radix owns colour, spacing, radii and component behaviour. This file only
    adds what Radix does not ship: the typographic voice, the mission ladder,
@@ -7,7 +7,7 @@
    Everything below uses Radix tokens so light/dark and accent changes flow
    through automatically.
 
-   Palette roles — each colour has exactly one job:
+   Palette roles: each colour has exactly one job:
      blue    brand, links, buttons, progress, current position
      grass   a state the learner achieved: correct, passed, cleared, shipped
      red     wrong
@@ -153,8 +153,8 @@ body::before {
 .tick i { color: var(--amber-11); font-style: normal; }
 @keyframes scroll { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) {
-  .ticker-track { animation: none; }
-  .pulse { animation: none; }
+.ticker-track { animation: none; }
+.pulse { animation: none; }
 }
 
 /* ================================ HERO ================================ */
@@ -166,8 +166,8 @@ body::before {
     radial-gradient(700px 380px at 0% 0%, var(--blue-a3), transparent 60%),
     var(--color-panel-solid);
 }
-.hero-title { line-height: 1.08; max-width: 18ch; }
-.hero-title .accent {
+.hero-title { line-height: 1.08; max-width: 15ch; }   /* breaks after "by" */
+.hero-title.accent {
   background: linear-gradient(100deg, var(--blue-11), var(--cyan-11));
   -webkit-background-clip: text;
   background-clip: text;
@@ -202,14 +202,14 @@ body::before {
 }
 .rung { position: relative; margin-bottom: var(--space-3); }
 .rung-link { display: block; text-decoration: none; color: inherit; }
-.rung-card { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
-.rung-link:hover .rung-card {
+.rung-card { transition: transform.16s ease, box-shadow.16s ease, border-color.16s ease; }
+.rung-link:hover.rung-card {
   transform: translateX(3px);
   box-shadow: 0 8px 28px var(--black-a6);
   border-color: var(--blue-a7);
 }
-.rung.locked { opacity: .55; }
-.rung.locked .rung-card { filter: saturate(.4); }
+.rung.locked { opacity:.55; }
+.rung.locked.rung-card { filter: saturate(.4); }
 
 .medallion {
   flex: 0 0 auto;
@@ -256,7 +256,7 @@ body::before {
   background: var(--blue-9);
 }
 .prose-list { padding-left: 1.3em; margin: 0 0 var(--space-4); }
-.prose-list li { margin-bottom: .45em; }
+.prose-list li { margin-bottom:.45em; }
 .prose-list.ordered { counter-reset: none; }
 .prose p code,
 .prose li code,
@@ -277,7 +277,7 @@ body::before {
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: .85;
+  opacity:.85;
   margin-bottom: 4px;
 }
 
@@ -322,11 +322,11 @@ body::before {
   line-height: 1.65;
   color: var(--gray-12);
 }
-.codeblock-body .c { color: var(--gray-9); font-style: italic; }
-.codeblock-body .s { color: var(--blue-11); }
-.codeblock-body .k { color: var(--violet-11); }
-.codeblock-body .n { color: var(--amber-11); }
-.codeblock-body .f { color: var(--cyan-11); }
+.codeblock-body.c { color: var(--gray-9); font-style: italic; }
+.codeblock-body.s { color: var(--blue-11); }
+.codeblock-body.k { color: var(--violet-11); }
+.codeblock-body.n { color: var(--amber-11); }
+.codeblock-body.f { color: var(--cyan-11); }
 
 /* =============================== STEPS =============================== */
 .steps { list-style: none; margin: 0; padding: 0; }
@@ -378,7 +378,7 @@ body::before {
   font-size: var(--font-size-2);
   line-height: 1.5;
   cursor: pointer;
-  transition: border-color .14s ease, background .14s ease, color .14s ease;
+  transition: border-color.14s ease, background.14s ease, color.14s ease;
 }
 .q-option:hover:not(:disabled) {
   border-color: var(--blue-a8);
@@ -399,10 +399,10 @@ body::before {
   color: var(--gray-11);
 }
 .q-option.right { border-color: var(--grass-9); background: var(--grass-a3); color: var(--gray-12); }
-.q-option.right .q-key { background: var(--grass-9); color: var(--grass-contrast); }
+.q-option.right.q-key { background: var(--grass-9); color: var(--grass-contrast); }
 .q-option.wrong { border-color: var(--red-9); background: var(--red-a3); color: var(--gray-12); }
-.q-option.wrong .q-key { background: var(--red-9); color: #fff; }
-.q-option.muted { opacity: .55; }
+.q-option.wrong.q-key { background: var(--red-9); color: #fff; }
+.q-option.muted { opacity:.55; }
 
 .score-ring {
   --pct: 0;
@@ -444,7 +444,7 @@ body::before {
   background: var(--gray-a2);
   cursor: pointer;
   font: inherit;
-  transition: border-color .14s ease;
+  transition: border-color.14s ease;
 }
 .req:hover { border-color: var(--blue-a7); }
 .req-box {
@@ -459,7 +459,7 @@ body::before {
   color: transparent;
 }
 .req.checked { border-color: var(--grass-a7); }
-.req.checked .req-box {
+.req.checked.req-box {
   background: var(--grass-9);
   border-color: var(--grass-9);
   color: var(--grass-contrast);
@@ -474,7 +474,7 @@ body::before {
 }
 
 /* ============================== BADGES ============================== */
-.badge-card.locked { opacity: .4; filter: grayscale(1); }
+.badge-card.locked { opacity:.4; filter: grayscale(1); }
 .badge-ico { font-size: 26px; line-height: 1; }
 
 /* ============================== TUTOR ============================== */
@@ -534,11 +534,11 @@ body::before {
   color: var(--blue-contrast);
   border-bottom-right-radius: var(--radius-1);
 }
-.bubble-body p { margin: 0 0 .6em; }
+.bubble-body p { margin: 0 0.6em; }
 .bubble-body p:last-child { margin-bottom: 0; }
-.bubble-body ul { padding-left: 1.1em; margin: .4em 0; }
+.bubble-body ul { padding-left: 1.1em; margin:.4em 0; }
 .bubble-body blockquote {
-  margin: .5em 0;
+  margin:.5em 0;
   padding-left: 10px;
   border-left: 2px solid var(--violet-9);
   color: var(--gray-12);
@@ -551,7 +551,7 @@ body::before {
   overflow-x: auto;
   font-family: var(--code-font-family);
   font-size: 12px;
-  margin: .5em 0;
+  margin:.5em 0;
 }
 .bubble-body a { color: var(--blue-11); }
 .bubble-source {
@@ -569,9 +569,9 @@ body::before {
   background: var(--gray-9);
   animation: blink 1.2s infinite;
 }
-.typing i:nth-child(2) { animation-delay: .2s; }
-.typing i:nth-child(3) { animation-delay: .4s; }
-@keyframes blink { 0%, 60%, 100% { opacity: .25; } 30% { opacity: 1; } }
+.typing i:nth-child(2) { animation-delay:.2s; }
+.typing i:nth-child(3) { animation-delay:.4s; }
+@keyframes blink { 0%, 60%, 100% { opacity:.25; } 30% { opacity: 1; } }
 
 /* ============================== TOASTS ============================== */
 .toasts {
@@ -591,7 +591,7 @@ body::before {
 .toast {
   box-shadow: 0 10px 30px var(--black-a8);
   background: var(--color-panel-solid);
-  animation: rise .3s cubic-bezier(.2, .9, .2, 1);
+  animation: rise.3s cubic-bezier(.2,.9,.2, 1);
 }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
 

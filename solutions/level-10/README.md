@@ -1,6 +1,6 @@
-# Level 10 — Compliance, Architecture & the Capstone Build
+# Level 10: Compliance, Architecture & the Capstone Build
 
-> **NeoBank Analytics — Capstone** · build project · difficulty 10/10
+> **NeoBank Analytics: Capstone** · build project · difficulty 10/10
 
 ## Read this second
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt && python data/generate.py && pytest -q && strea
 
 ## Why the solution is shaped this way
 
-- Dependencies run one way only: `app.py` calls services, services call `loaders`, and nothing calls upward. Two greppable rules enforce it — no `streamlit` anywhere in `neobank/`, and no `read_csv` outside `loaders.py`. Both are asserted.
+- Dependencies run one way only: `app.py` calls services, services call `loaders`, and nothing calls upward. Two greppable rules enforce it: no `streamlit` anywhere in `neobank/`, and no `read_csv` outside `loaders.py`. Both are asserted.
 - `ledger.statement()` returns rows instead of printing them. That single change is the layer boundary made concrete: the service produces data, the interface decides how it looks.
 - `loaders.py` anchors paths to its own file location and validates the schema on load, so a malformed CSV fails immediately with a clear message rather than producing a wrong number ten functions later.
 - Reconciliation compares the ledger against an external statement and reports breaks without auto-adjusting anything. A break is a bug, a timing difference, or fraud, and silently "fixing" it destroys the evidence.
@@ -65,7 +65,7 @@ pip install -r requirements.txt && python data/generate.py && pytest -q && strea
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 20 | It runs for a stranger | Clone, install, test, run — all from the README, with no undocumented steps. |
+| 20 | It runs for a stranger | Clone, install, test, run: all from the README, with no undocumented steps. |
 | 20 | Architecture | Clean layers, no logic in the interface, all data access in one module, imports one-directional. |
 | 15 | Integration | All five domains genuinely present and working together, not five disconnected demos. |
 | 15 | Tests | 20+ meaningful tests across modules, covering invariants and refusals, all passing. |

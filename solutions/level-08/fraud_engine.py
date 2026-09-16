@@ -1,8 +1,8 @@
 """
-FinQuest Level 8 — Fraud Scoring Engine  (reference solution)
+FinQuest Level 8: Fraud Scoring Engine  (reference solution)
 =============================================================
-A transparent rule engine, a logistic-regression model, and — the part that
-actually decides what ships — a threshold tuned against money rather than F1.
+A transparent rule engine, a logistic-regression model, and (the part that
+actually decides what ships) a threshold tuned against money rather than F1.
 
 Run:  python fraud_engine.py
 """
@@ -44,7 +44,7 @@ def load_and_engineer(url=URL):
     try:
         df = pd.read_csv(url, parse_dates=["timestamp"])
     except Exception:
-        print(f"(network unavailable — reading {LOCAL.name} from the repo)")
+        print(f"(network unavailable: reading {LOCAL.name} from the repo)")
         df = pd.read_csv(LOCAL, parse_dates=["timestamp"])
 
     df["hour"] = df["timestamp"].dt.hour
@@ -79,7 +79,7 @@ def feature_comparison(df):
 
 # ---------------------------------------------------------------------------
 def score_row(row):
-    """Return (score, reasons) — the score always arrives with its explanation."""
+    """Return (score, reasons): the score always arrives with its explanation."""
     score, reasons = 0, []
     for name, test, points in RULES:
         if test(row):
@@ -197,26 +197,26 @@ def report():
     baseline(df)
 
     print("\n" + "-" * width)
-    print("FEATURE SEPARATION — legitimate vs fraud")
+    print("FEATURE SEPARATION: legitimate vs fraud")
     print(feature_comparison(df).round(2).to_string())
 
     df = apply_rules(df)
 
     print("\n" + "-" * width)
-    print("RULE ENGINE — precision and recall trade against each other")
+    print("RULE ENGINE: precision and recall trade against each other")
     sweep = threshold_sweep(df)
     best_f1 = max(sweep, key=lambda t: sweep[t]["f1"])
     print(f"\nF1-optimal threshold: {best_f1} (F1 {sweep[best_f1]['f1']:.3f})")
 
     print("\n" + "-" * width)
-    print(f"COST MODEL — missed fraud costs the amount, a review costs ${REVIEW_COST:,.0f}")
+    print(f"COST MODEL. Missed fraud costs the amount, a review costs ${REVIEW_COST:,.0f}")
     cheap = cost_curve(df)
     print("\nSensitivity: if an analyst review costs $20 instead of $4")
     cheap20 = cost_curve(df, review_cost=20.0)
     print(f"\nThe F1-optimal threshold is {best_f1}; the cost-optimal one is {cheap[0]} at $4 "
           f"and {cheap20[0]} at $20.")
     print("F1 treats both errors as equally bad. Your business does not, which is why the")
-    print("assumptions above ARE the model — state them whenever you quote a threshold.")
+    print("assumptions above ARE the model: state them whenever you quote a threshold.")
 
     print("\n" + "-" * width)
     print("LOGISTIC REGRESSION")
@@ -246,15 +246,15 @@ def report():
     print("works the queue. A score routes a case; it should not silently decide it.")
 
     print("\n" + "-" * width)
-    print("REVIEW QUEUE — top cases, with the money at stake and the reasons")
+    print("REVIEW QUEUE: top cases, with the money at stake and the reasons")
     queue = review_queue(df, fit["probabilities"], fit["X_test"].index, top=10)
     print(queue.to_string(index=False))
 
     print("\n" + "-" * width)
-    print(f"FAIRNESS CHECK — flag rate by country at threshold {cheap[0]}")
+    print(f"FAIRNESS CHECK: flag rate by country at threshold {cheap[0]}")
     print(fairness_check(df, cheap[0]).round(3).to_string())
     print("\nThe foreign flag rate is far higher than the home rate. Here that tracks a real")
-    print("difference in fraud rate, but country can proxy for nationality — so this belongs")
+    print("difference in fraud rate, but country can proxy for nationality, so this belongs")
     print("in a model card, needs a human review path, and would need a disparate-impact test")
     print("before it went anywhere near production.")
 
@@ -262,7 +262,7 @@ def report():
     print(f"RECOMMENDED: rules at threshold {cheap[0]}, model-ranked queue above p>=0.9.")
     weekly = cheap[1] / (len(df) / 6000) / 8.6     # the sample spans ~8.6 weeks
     print(f"Expected cost about ${weekly:,.0f} a week at a $4 review cost, assuming the mix")
-    print("of fraud stays as it is in this sample — which is exactly what an adversary changes.")
+    print("of fraud stays as it is in this sample, which is exactly what an adversary changes.")
     print("=" * width)
 
 

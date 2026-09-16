@@ -1,8 +1,8 @@
 """
-neobank.reconcile — compare the ledger against an external source of truth.
+neobank.reconcile: compare the ledger against an external source of truth.
 
 Every real money system does this daily. A difference nobody can explain is a
-bug, a timing difference, or fraud — and you cannot tell which until you look.
+bug, a timing difference, or fraud, and you cannot tell which until you look.
 """
 
 

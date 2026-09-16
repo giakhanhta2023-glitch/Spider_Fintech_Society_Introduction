@@ -1,5 +1,5 @@
 /* =========================================================================
-   FinQuest — core data layer.
+   FinQuest: core data layer.
 
    Deliberately a plain script with no imports: the ten curriculum files load
    straight after it and register themselves here, so the content is readable

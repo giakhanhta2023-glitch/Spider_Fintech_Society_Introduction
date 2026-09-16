@@ -1,5 +1,5 @@
 """
-FinQuest Level 3 — Personal Spending Analyzer  (reference solution)
+FinQuest Level 3: Personal Spending Analyzer  (reference solution)
 ===================================================================
 Uses only Level 3 material: pandas read_csv, boolean masks, groupby,
 sort_values, value_counts, the .dt accessor, matplotlib bar charts, and
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 URL = ("https://raw.githubusercontent.com/giakhanhta2023-glitch/"
        "Spider_Fintech_Society_Introduction/main/data/level-03-transactions.csv")
 
-# Transfers to your own savings are not spending — the money is still yours.
+# Transfers to your own savings are not spending: the money is still yours.
 NON_SPEND_CATEGORIES = {"savings"}
 # Recurring charges you cannot simply cancel this month.
 FIXED_CATEGORIES = {"housing", "utilities", "savings"}
@@ -32,13 +32,13 @@ def load_data(url=URL):
     """Read the CSV and add the helper columns the rest of the file needs.
 
     Falls back to the copy in this repository so the solution also runs with
-    no network — the same three-layer thinking Level 5 formalises.
+    no network: the same three-layer thinking Level 5 formalises.
     """
     try:
         df = pd.read_csv(url, parse_dates=["date"])
     except Exception:
         local = Path(__file__).resolve().parents[2] / "data" / "level-03-transactions.csv"
-        print(f"(network unavailable — reading {local.name} from the repo)")
+        print(f"(network unavailable: reading {local.name} from the repo)")
         df = pd.read_csv(local, parse_dates=["date"])
     df["abs_amount"] = df["amount"].abs()
     df["month"] = df["date"].dt.to_period("M")
@@ -55,7 +55,7 @@ def outgoing(df):
 # Headline numbers
 # ---------------------------------------------------------------------------
 def headline_numbers(df):
-    """Income is a CATEGORY, not a sign — refunds are positive but not income."""
+    """Income is a CATEGORY, not a sign: refunds are positive but not income."""
     spend = outgoing(df)
     income = df[df["category"] == "income"]["amount"].sum()
     spending = spend[~spend["category"].isin(NON_SPEND_CATEGORIES)]["abs_amount"].sum()
@@ -105,7 +105,7 @@ def weekday_pattern(df):
 # Recurring charges
 # ---------------------------------------------------------------------------
 def find_recurring(df, min_times=3):
-    """Same merchant, same amount, at least min_times — with a cancellable flag.
+    """Same merchant, same amount, at least min_times: with a cancellable flag.
 
     Rent and the savings transfer are perfectly recurring too, so the report
     has to separate "you could cancel this" from "you are committed to this".
@@ -131,7 +131,7 @@ def plot_categories(df, path=None):
     """Sorted horizontal bars. Savings transfers excluded on purpose."""
     chart = by_category(df, exclude_savings=True).sort_values()
     ax = chart.plot(kind="barh", figsize=(8, 4.5), color="#0090ff")
-    ax.set_title("Spending by category — Mar to Aug 2025 (savings transfers excluded)")
+    ax.set_title("Spending by category: Mar to Aug 2025 (savings transfers excluded)")
     ax.set_xlabel("USD")
     ax.set_ylabel("")
     plt.tight_layout()
@@ -152,7 +152,7 @@ def report(df):
     print(f"{str(df['date'].min().date()) + '  to  ' + str(df['date'].max().date()):^{width}}")
     print("=" * width)
     print(f"{'Income':<30}{n['income']:>28,.2f}")
-    print(f"{'Spending (excl. savings)':<30}{n['spend']:>28,.2f}")
+    print(f"{'Spending (excl. Savings)':<30}{n['spend']:>28,.2f}")
     print(f"{'Moved to savings':<30}{n['transferred_to_savings']:>28,.2f}")
     print(f"{'Net cash flow':<30}{n['net_cash_flow']:>28,.2f}")
     print(f"{'Savings rate':<30}{n['savings_rate']:>28.1%}")
@@ -209,19 +209,19 @@ def findings(df):
     cats = by_category(df, exclude_savings=True)
 
     print("\nFINDINGS")
-    print(f"1. The savings rate is {n['savings_rate']:.1%} — healthy, but only "
+    print(f"1. The savings rate is {n['savings_rate']:.1%}: healthy, but only "
           f"${n['transferred_to_savings']:,.0f} of the ${n['saved']:,.0f} kept back actually reached the "
           f"savings account. Automate a transfer for the rest so it is not spent by accident.")
     print(f"2. Subscriptions run ${subs['abs_amount'].sum():,.2f} a month "
           f"(${subs['yearly_cost'].sum():,.2f} a year) across {len(subs)} services. CLOUDSTREAM TV alone is "
-          f"$191.88 a year — cancel it if nobody can say what was last watched on it.")
+          f"$191.88 a year, cancel it if nobody can say what was last watched on it.")
     print(f"3. {cats.index[0].title()} is the largest controllable category at ${cats.iloc[0]:,.2f} "
           f"({cats.iloc[0] / cats.sum():.1%} of spending). A 20% trim there is worth more than cancelling "
           f"every subscription combined.")
 
 
 # ---------------------------------------------------------------------------
-# Self-checks — the numbers from the project brief
+# Self-checks: the numbers from the project brief
 # ---------------------------------------------------------------------------
 def tests(df):
     assert df.shape[0] == 233

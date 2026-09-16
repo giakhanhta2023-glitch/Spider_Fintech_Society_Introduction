@@ -1,7 +1,7 @@
-# Level 9 — Shipping a Fintech Service: quiz answer key
+# Level 9: Shipping a Fintech Service: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -48,7 +48,7 @@
 - C. Speeding up chart rendering
 - **D. Avoiding repeating slow work like file downloads on every re-run** ✅
 
-**Why:** Since the script re-runs constantly, uncached downloads or API calls would repeat on every slider move. Cache reads — never cache writes.
+**Why:** Since the script re-runs constantly, uncached downloads or API calls would repeat on every slider move. Cache reads, never cache writes.
 
 ### 4. Where should a deployed app get its API key?
 
@@ -75,7 +75,7 @@
 - C. To make Python run faster
 - D. To encrypt your source code
 
-**Why:** A per-project library folder means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore — it is rebuildable.
+**Why:** A per-project library folder means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable.
 
 ### 7. A user enters a loan of 0. What should happen?
 
@@ -120,7 +120,7 @@
 - C. That errors are logged
 - D. That ValueError is imported
 
-**Why:** It is how you test refusals. If the block completes without raising, the test fails — which is exactly what you want when checking validation.
+**Why:** It is how you test refusals. If the block completes without raising, the test fails, which is exactly what you want when checking validation.
 
 ### 12. Your app works locally but fails on Streamlit Cloud. What do you check first?
 

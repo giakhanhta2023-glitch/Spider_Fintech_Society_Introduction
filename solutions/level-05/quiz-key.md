@@ -1,7 +1,7 @@
-# Level 5 — Market Data & APIs: quiz answer key
+# Level 5: Market Data & APIs: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
-> Generated from `content/levels/` by `tools/build_quiz_keys.js` — do not edit by hand.
+> Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
@@ -39,14 +39,14 @@
 - C. A pandas DataFrame
 - D. The status code
 
-**Why:** It parses the body into native Python objects — JSON objects become dicts, arrays become lists — so you can index straight into it.
+**Why:** It parses the body into native Python objects (JSON objects become dicts, arrays become lists) so you can index straight into it.
 
 ### 3. You receive HTTP 429. What is the correct response?
 
 - A. Retry immediately in a tight loop
 - B. Fix your query parameters
 - C. Rotate your API key
-- **D. Back off — wait, then retry more slowly, because you have hit the rate limit** ✅
+- **D. Back off: wait, then retry more slowly, because you have hit the rate limit** ✅
 
 **Why:** 429 means too many requests. Retrying immediately makes it worse and can earn a temporary ban. Exponential backoff is the standard fix.
 
@@ -66,7 +66,7 @@
 - C. Because the API requires it
 - D. To avoid rate limits
 
-**Why:** A server that accepts a connection and never replies will block your thread forever. requests has no default timeout — you must set it.
+**Why:** A server that accepts a connection and never replies will block your thread forever. Requests has no default timeout. You must set it.
 
 ### 6. What does `raise_for_status()` do?
 
@@ -80,7 +80,7 @@
 ### 7. What is exponential backoff?
 
 - A. Reducing the timeout on each retry
-- **B. Waiting progressively longer between retries — 1s, 2s, 4s** ✅
+- **B. Waiting progressively longer between retries: 1s, 2s, 4s** ✅
 - C. Switching to a backup API immediately
 - D. Requesting more data with each attempt
 
@@ -93,7 +93,7 @@
 - C. Use rates of 1.0 for everything as a placeholder
 - D. Retry in a loop until it succeeds
 
-**Why:** Degrade, do not disappear — but never present old data as current. Every displayed rate should carry its source and age.
+**Why:** Degrade, do not disappear, but never present old data as current. Every displayed rate should carry its source and age.
 
 ### 9. Where should an API key live?
 
@@ -106,7 +106,7 @@
 
 ### 10. You accidentally committed a key to a public repo and deleted it in the next commit. What now?
 
-- A. Nothing — the deletion removed it
+- A. Nothing, the deletion removed it
 - B. Make the repository private and keep the key
 - C. Rename the variable
 - **D. Revoke and rotate the key immediately; it is still in the history** ✅

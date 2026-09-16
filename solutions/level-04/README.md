@@ -1,4 +1,4 @@
-# Level 4 — Payments & the Double-Entry Ledger
+# Level 4: Payments & the Double-Entry Ledger
 
 > **Mini Ledger & Payment Engine** · build project · difficulty 4/10
 
@@ -30,7 +30,7 @@ python ledger.py
 ## Why the solution is shaped this way
 
 - `_post` is the only method that appends, and it refuses anything that does not sum to zero. Every public method funnels through it, so the invariant cannot be bypassed by accident.
-- Validation happens **before** any write. A refused transfer leaves `len(entries)` unchanged — the tests assert exactly that, because a half-written transaction is worse than a rejected one.
+- Validation happens **before** any write. A refused transfer leaves `len(entries)` unchanged: the tests assert exactly that, because a half-written transaction is worse than a rejected one.
 - The idempotency key is stored **after** a successful post. Storing it first would make a failed attempt permanently "already done".
 - `reverse` writes the mirror image rather than deleting. The error and the correction both stay visible, which is what an audit needs.
 - `split_payment` uses `divmod` and hands the leftover cents to the first recipients in order. Dropping the remainder would silently break the invariant.

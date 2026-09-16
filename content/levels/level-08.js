@@ -1,5 +1,5 @@
 /* =========================================================================
-   LEVEL 8 — Fraud Detection
+   LEVEL 8: Fraud Detection
    ========================================================================= */
 FQ.registerLevel({
   id: 8,
@@ -23,7 +23,7 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'The shape of the problem' },
-    { p: 'In this level\'s 6,000 transactions, **108 are fraud — 1.8%**. That imbalance changes everything about how you ' +
+    { p: 'In this level\'s 6,000 transactions, **108 are fraud: 1.8%**. That imbalance changes everything about how you ' +
          'build and judge a detector.' },
     { code: 'always_predict_legit  ->  accuracy = 98.2%\n                          fraud caught = 0\n                          business value = negative', lang: 'text', label: 'why accuracy is a trap' },
     { warn: 'Any time someone reports a fraud model with 99% accuracy, your first question is the base rate. ' +
@@ -43,9 +43,9 @@ FQ.registerLevel({
         ['Travel / electronics / gaming', '38%', '76%', 'Moderate']
       ]
     }},
-    { p: 'None of these is proof. Plenty of honest people buy electronics abroad at 2am — that is exactly why a single rule ' +
+    { p: 'None of these is proof. Plenty of honest people buy electronics abroad at 2am. That is exactly why a single rule ' +
          'is a bad detector and a *combination* of weak signals is a good one.' },
-    { money: '**Velocity** — how many transactions happened in the last hour — is the highest-value feature in real card ' +
+    { money: '**Velocity** (how many transactions happened in the last hour) is the highest-value feature in real card ' +
              'fraud, because a stolen card gets tested fast: a small purchase to check it works, then rapid large ones. ' +
              'It also requires state your system must keep, which is why it is the feature junior implementations skip.' },
 
@@ -61,7 +61,7 @@ FQ.registerLevel({
       ]
     }},
     { p: 'The two errors are not symmetrical and never cost the same. A **false negative** is money out the door. ' +
-         'A **false positive** is a real customer whose card is declined in front of a queue — and studies of card issuers ' +
+         'A **false positive** is a real customer whose card is declined in front of a queue, and studies of card issuers ' +
          'consistently find false declines cost more in lost business than the fraud they prevent.' },
 
     { h: 'Precision and recall trade against each other' },
@@ -78,14 +78,14 @@ FQ.registerLevel({
       ]
     }},
     { p: 'At threshold 3 you catch nearly everything and block 1,454 innocent people. At threshold 9 you are never wrong ' +
-         'and you miss 71% of the fraud. **There is no setting that is good at both** — which means the choice is a ' +
+         'and you miss 71% of the fraud. **There is no setting that is good at both**, which means the choice is a ' +
          'business decision, not a technical one.' },
 
     { h: 'Tune against money, not F1' },
     { p: 'The right threshold falls out of a cost model. Say a missed fraud costs the transaction amount, and reviewing a ' +
          'flagged transaction costs $4 of an analyst\'s time:' },
     { code: 'total cost = sum(amount of missed fraud) + $4 x (false positives)\n\nthreshold 3:  missed $139    + review $5,816  = $5,955\nthreshold 4:  missed $288    + review $1,780  = $2,068   <- cheapest\nthreshold 6:  missed $1,798  + review $288    = $2,086\nthreshold 7:  missed $2,711  + review $56     = $2,767\nthreshold 9:  missed $8,580  + review $0      = $8,580', lang: 'text', label: 'cost curve' },
-    { p: 'The **F1-optimal** threshold here is 7. The **cost-optimal** threshold is 4 — which F1 would have told you was ' +
+    { p: 'The **F1-optimal** threshold here is 7. The **cost-optimal** threshold is 4, which F1 would have told you was ' +
          'mediocre. They disagree because F1 treats both errors as equally bad and your business does not. ' +
          'Always state the costs you assumed; they are the actual model.' },
     { tip: 'Change the review cost to $20 and the optimum moves. That sensitivity is worth showing to stakeholders: ' +
@@ -97,7 +97,7 @@ FQ.registerLevel({
          'says how much that feature moves the odds, which satisfies both a regulator and an angry customer.' },
     { code: 'from sklearn.linear_model import LogisticRegression\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train, y_train)\nprobabilities = model.predict_proba(X_test)[:, 1]     # column 1 = P(fraud)', lang: 'python' },
     { p: '`class_weight="balanced"` tells the model that the 1.8% class matters as much as the 98.2% one. Without it, ' +
-         'the fastest way to minimise error is to predict "legit" for everything — the same trap as accuracy, now inside the model.' },
+         'the fastest way to minimise error is to predict "legit" for everything: the same trap as accuracy, now inside the model.' },
     { warn: 'Always split into train and test **before** looking at anything. If you tune a threshold on data the model was ' +
             'trained on, your reported numbers are fiction. This is **leakage**, and it is the most common fatal flaw in ' +
             'student and production ML alike.' },
@@ -118,17 +118,17 @@ FQ.registerLevel({
     { p: 'Real fraud stacks: rules for the obvious and the legally required, a model for the rest, and a human queue for ' +
          'the ambiguous middle. The score your model produces usually routes a case rather than deciding it outright.' },
     { warn: 'A fraud model that declines more transactions from one nationality, postcode, or age group is a ' +
-            'discrimination problem, not just a modelling one — and "the model learned it from the data" is not a defence. ' +
+            'discrimination problem, not just a modelling one, and "the model learned it from the data" is not a defence. ' +
             'Check flag rates across groups before shipping, and keep a human review path.' },
 
     { h: 'A word on this dataset' },
-    { p: 'These 6,000 rows are **synthetic and deliberately separable** — a logistic regression reaches an AUC near 0.999 on ' +
+    { p: 'These 6,000 rows are **synthetic and deliberately separable**: a logistic regression reaches an AUC near 0.999 on ' +
          'them, which does not happen in reality. Real card fraud models live around 0.85 to 0.95 AUC against an adversary ' +
          'who changes tactics the moment you catch them. Treat the workflow as real and the score as flattering.' }
   ],
 
   tutorial: {
-    intro: 'New notebook: `finquest-level-08.ipynb`. pandas, numpy and scikit-learn are all preinstalled in Colab.',
+    intro: 'New notebook: `finquest-level-08.ipynb`. Pandas, numpy and scikit-learn are all preinstalled in Colab.',
     steps: [
       {
         t: 'Load and confront the imbalance',
@@ -151,7 +151,7 @@ FQ.registerLevel({
       {
         t: 'Write a transparent rule engine',
         blocks: [
-          { p: 'Each rule contributes points, and the reasons are collected as it goes — so the score arrives with its ' +
+          { p: 'Each rule contributes points, and the reasons are collected as it goes, so the score arrives with its ' +
                'own explanation attached.' },
           { code: 'RULES = [\n    ("large amount",        lambda r: r["amount"] > 150,        2),\n    ("card not present",    lambda r: r["card_not_present"] == 1, 2),\n    ("foreign country",     lambda r: r["is_foreign"] == 1,      3),\n    ("overnight",           lambda r: r["is_night"] == 1,        2),\n    ("high velocity",       lambda r: r["txns_last_1h"] >= 3,    2),\n    ("high-risk category",  lambda r: r["high_risk_cat"] == 1,   1),\n]\n\ndef score_row(row):\n    """Return (score, [reasons]) so every decision can be explained."""\n    score, reasons = 0, []\n    for name, test, points in RULES:\n        if test(row):\n            score += points\n            reasons.append(name)\n    return score, reasons\n\n\ndf["score"] = df.apply(lambda r: score_row(r)[0], axis=1)\ndf["reasons"] = df.apply(lambda r: ", ".join(score_row(r)[1]), axis=1)\nprint(df[["amount", "score", "reasons", "is_fraud"]].head())', lang: 'python' },
           { p: 'A `lambda` is a one-line anonymous function. Keeping the rules in a list like this means adding a rule is ' +
@@ -163,7 +163,7 @@ FQ.registerLevel({
         t: 'Evaluate honestly',
         blocks: [
           { code: 'from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score\n\ndef evaluate(y_true, y_pred, label=""):\n    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()\n    precision = precision_score(y_true, y_pred, zero_division=0)\n    recall = recall_score(y_true, y_pred)\n    print(f"{label:<14} flagged {y_pred.sum():>5}  TP {tp:>4}  FP {fp:>5}  FN {fn:>4}"\n          f"  precision {precision:>6.1%}  recall {recall:>6.1%}  F1 {f1_score(y_true, y_pred):>5.3f}")\n    return {"tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall}\n\n\nfor threshold in range(3, 11):\n    evaluate(df["is_fraud"], (df["score"] >= threshold).astype(int), f"threshold {threshold}")', lang: 'python' },
-          { p: '`.ravel()` flattens the 2x2 matrix into four numbers in the order tn, fp, fn, tp — memorise that order, ' +
+          { p: '`.ravel()` flattens the 2x2 matrix into four numbers in the order tn, fp, fn, tp: memorise that order, ' +
                'it is a classic source of silently inverted metrics.' }
         ],
         check: 'Threshold 7 gives 84.6% precision and 71.3% recall; threshold 3 flags 1,560 transactions.'
@@ -181,18 +181,18 @@ FQ.registerLevel({
         t: 'Train a model without leaking',
         blocks: [
           { code: 'from sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import roc_auc_score\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nX = df[FEATURES]\ny = df["is_fraud"]\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.3, random_state=42, stratify=y)\n\nscaler = StandardScaler().fit(X_train)          # fit on TRAIN ONLY\nX_train_s = scaler.transform(X_train)\nX_test_s = scaler.transform(X_test)\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train_s, y_train)\n\nprobabilities = model.predict_proba(X_test_s)[:, 1]\nprint(f"AUC: {roc_auc_score(y_test, probabilities):.3f}")', lang: 'python' },
-          { p: '`stratify=y` keeps the same 1.8% fraud rate in both halves — without it a random split can leave your test ' +
+          { p: '`stratify=y` keeps the same 1.8% fraud rate in both halves: without it a random split can leave your test ' +
                'set with almost no fraud, and every metric becomes noise. Fitting the scaler on the training set only is ' +
                'the other half of not leaking.' }
         ],
-        check: 'AUC is around 0.99 — high because this data is synthetic, as the knowledge page warns.'
+        check: 'AUC is around 0.99. High because this data is synthetic, as the knowledge page warns.'
       },
       {
         t: 'Read the coefficients out loud',
         blocks: [
           { code: 'coefs = pd.Series(model.coef_[0], index=FEATURES).sort_values(key=abs, ascending=False)\nprint(coefs.round(3))\n\nfor name, value in coefs.items():\n    direction = "increases" if value > 0 else "decreases"\n    print(f"A higher {name} {direction} the estimated fraud odds.")', lang: 'python' },
           { p: 'Because you standardised the features, these coefficients are comparable: the biggest absolute value is the ' +
-               'strongest driver. This paragraph — in English, from the model — is what makes logistic regression acceptable ' +
+               'strongest driver. This paragraph (in English, from the model) is what makes logistic regression acceptable ' +
                'in a regulated product.' }
         ],
         check: 'You can name the top three drivers and say which way each pushes the odds.'
@@ -211,7 +211,7 @@ FQ.registerLevel({
 
   glossary: [
     { t: 'Class imbalance', d: 'One outcome is far rarer than the other, making accuracy misleading.' },
-    { t: 'Base rate', d: 'The proportion of positives in the data — here 1.8% fraud.' },
+    { t: 'Base rate', d: 'The proportion of positives in the data: here 1.8% fraud.' },
     { t: 'Feature engineering', d: 'Creating columns that expose a signal the raw data only implies.' },
     { t: 'Velocity', d: 'How many transactions occurred in a recent window. The strongest card-fraud signal.' },
     { t: 'Card-not-present', d: 'A transaction without the physical card, such as online. Far higher fraud risk.' },
@@ -236,7 +236,7 @@ FQ.registerLevel({
         "It cannot be calculated"
       ],
       answer: 2,
-      why: "It is right on every legitimate transaction. That is why accuracy is meaningless under imbalance — it measures the base rate, not the model." },
+      why: "It is right on every legitimate transaction. That is why accuracy is meaningless under imbalance: it measures the base rate, not the model." },
 
     { q: "What does precision measure?",
       options: [
@@ -246,13 +246,13 @@ FQ.registerLevel({
         "How often a flagged transaction really is fraud"
       ],
       answer: 3,
-      why: "Precision is TP / (TP + FP) — the quality of your flags. Recall is the other question: what share of all fraud you caught." },
+      why: "Precision is TP / (TP + FP): the quality of your flags. Recall is the other question: what share of all fraud you caught." },
 
     { q: "At threshold 3 the rule engine catches 106 of 108 frauds but raises 1,454 false alarms. What is wrong with shipping it?",
       options: [
         "Precision is 6.8%: over 93% of flagged customers are innocent and would be blocked",
         "Recall is too low",
-        "Nothing — catching fraud is the goal",
+        "Nothing, catching fraud is the goal",
         "The model is overfitting"
       ],
       answer: 0,
@@ -276,12 +276,12 @@ FQ.registerLevel({
         "F1 is only valid for balanced data"
       ],
       answer: 2,
-      why: "F1 is symmetric by construction. Once a missed fraud costs the transaction amount and a review costs $4, the optimum moves — the cost assumptions are the real model." },
+      why: "F1 is symmetric by construction. Once a missed fraud costs the transaction amount and a review costs $4, the optimum moves. The cost assumptions are the real model." },
 
     { q: "Which feature is typically the strongest signal in card fraud?",
       options: [
         "The card issuer",
-        "Transaction velocity — how many transactions occurred in the last hour",
+        "Transaction velocity: how many transactions occurred in the last hour",
         "The merchant name",
         "The day of the week"
       ],
@@ -326,7 +326,7 @@ FQ.registerLevel({
         "tp, fp, fn, tn"
       ],
       answer: 0,
-      why: "tn, fp, fn, tp — reading across the rows of the matrix. Assuming the wrong order silently inverts precision and recall." },
+      why: "tn, fp, fn, tp: reading across the rows of the matrix. Assuming the wrong order silently inverts precision and recall." },
 
     { q: "Why is logistic regression the default first model in regulated financial services?",
       options: [
@@ -353,20 +353,20 @@ FQ.registerLevel({
         "Remove all country data and ship",
         "Investigate and fix it: disparate outcomes are a legal and ethical problem, and the data explanation is not a defence",
         "Raise the threshold for everyone",
-        "Ship it — the model learned it from the data"
+        "Ship it: the model learned it from the data"
       ],
       answer: 1,
       why: "Fair-lending and consumer-protection law looks at outcomes. Check flag rates across groups before shipping, keep a human review route, and document the decision." },
 
     { q: "What does an AUC of 0.999 on this dataset tell you?",
       options: [
-        "The data is synthetic and unusually separable — real fraud models sit far lower",
+        "The data is synthetic and unusually separable. Real fraud models sit far lower",
         "AUC is being computed incorrectly",
         "The model is production-ready",
         "The model has memorised the test set"
       ],
       answer: 0,
-      why: "Real card fraud models run around 0.85-0.95 against adversaries who adapt. Treat the workflow as realistic and the score as flattering — and say so in your report." },
+      why: "Real card fraud models run around 0.85-0.95 against adversaries who adapt. Treat the workflow as realistic and the score as flattering, and say so in your report." },
 
     { q: "What is the most useful output of a fraud system for an operations team?",
       options: [
@@ -407,10 +407,10 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 8 — Fraud Scoring Engine"""\n\nimport numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score\n\nURL = "{{RAW}}/data/level-08-transactions.csv"\nREVIEW_COST = 4.0\nHOME_COUNTRY = "VN"\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nRULES = [\n    # (name, test, points) — add rules here, one line each\n]\n\n\ndef load_and_engineer(url=URL):\n    """Load the CSV and build the model features."""\n    # TODO\n    pass\n\n\ndef baseline(df):\n    """Print base rate and do-nothing accuracy BEFORE modelling."""\n    # TODO\n    pass\n\n\ndef feature_comparison(df):\n    """Mean of each feature for fraud vs legitimate."""\n    # TODO\n    pass\n\n\ndef score_row(row):\n    """Return (score, reasons)."""\n    # TODO\n    pass\n\n\ndef apply_rules(df):\n    """Add score and reasons columns."""\n    # TODO\n    pass\n\n\ndef evaluate(y_true, y_pred, label=""):\n    """Print and return tp/fp/fn/precision/recall/f1."""\n    # TODO\n    pass\n\n\ndef threshold_sweep(df, low=3, high=12):\n    # TODO\n    pass\n\n\ndef total_cost(df, threshold, review_cost=REVIEW_COST):\n    """(total, missed_fraud_value, review_spend)"""\n    # TODO\n    pass\n\n\ndef cost_curve(df, review_cost=REVIEW_COST):\n    """Print the cost at each threshold and return the cheapest."""\n    # TODO\n    pass\n\n\ndef train_model(df):\n    """Stratified split, scale on train only, fit, return everything needed."""\n    # TODO\n    pass\n\n\ndef explain_coefficients(model, features):\n    """One plain English sentence per feature, strongest first."""\n    # TODO\n    pass\n\n\ndef review_queue(df, probabilities, index, top=20):\n    """Ranked cases with amount, probability and reasons."""\n    # TODO\n    pass\n\n\ndef fairness_check(df, threshold):\n    """Flag rate by country."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest Level 8: Fraud Scoring Engine"""\n\nimport numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score\n\nURL = "{{RAW}}/data/level-08-transactions.csv"\nREVIEW_COST = 4.0\nHOME_COUNTRY = "VN"\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nRULES = [\n    # (name, test, points): add rules here, one line each\n]\n\n\ndef load_and_engineer(url=URL):\n    """Load the CSV and build the model features."""\n    # TODO\n    pass\n\n\ndef baseline(df):\n    """Print base rate and do-nothing accuracy BEFORE modelling."""\n    # TODO\n    pass\n\n\ndef feature_comparison(df):\n    """Mean of each feature for fraud vs legitimate."""\n    # TODO\n    pass\n\n\ndef score_row(row):\n    """Return (score, reasons)."""\n    # TODO\n    pass\n\n\ndef apply_rules(df):\n    """Add score and reasons columns."""\n    # TODO\n    pass\n\n\ndef evaluate(y_true, y_pred, label=""):\n    """Print and return tp/fp/fn/precision/recall/f1."""\n    # TODO\n    pass\n\n\ndef threshold_sweep(df, low=3, high=12):\n    # TODO\n    pass\n\n\ndef total_cost(df, threshold, review_cost=REVIEW_COST):\n    """(total, missed_fraud_value, review_spend)"""\n    # TODO\n    pass\n\n\ndef cost_curve(df, review_cost=REVIEW_COST):\n    """Print the cost at each threshold and return the cheapest."""\n    # TODO\n    pass\n\n\ndef train_model(df):\n    """Stratified split, scale on train only, fit, return everything needed."""\n    # TODO\n    pass\n\n\ndef explain_coefficients(model, features):\n    """One plain English sentence per feature, strongest first."""\n    # TODO\n    pass\n\n\ndef review_queue(df, probabilities, index, top=20):\n    """Ranked cases with amount, probability and reasons."""\n    # TODO\n    pass\n\n\ndef fairness_check(df, threshold):\n    """Flag rate by country."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
-      'The dataset has 6,000 rows with 108 frauds — a base rate of 1.80%',
+      'The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%',
       'Do-nothing accuracy is 98.20% and appears in your output before any model',
       'Mean amount is about $31.85 for legitimate rows and $167.25 for fraud',
       'card_present is 61.1% of legitimate rows and 3.7% of fraud',
@@ -418,7 +418,7 @@ FQ.registerLevel({
       'Threshold 7 gives 77 TP, 14 FP, precision 84.6%, recall 71.3%',
       'Threshold 9 gives precision 100% and recall 28.7%',
       'The cost curve at $4 review cost is cheapest at threshold 4 (about $2,068), with threshold 6 close at about $2,086',
-      'Raising the review cost to $20 moves the cheapest threshold — report where it lands',
+      'Raising the review cost to $20 moves the cheapest threshold: report where it lands',
       'Test AUC is above 0.98 and your report notes why that is unrealistically high',
       'Every flagged row in the review queue carries a non-empty reasons string'
     ],
@@ -441,10 +441,10 @@ FQ.registerLevel({
   },
 
   faq: [
-    { q: 'My model has 98% accuracy — is that good?',
+    { q: 'My model has 98% accuracy. Is that good?',
       a: 'No. Flagging nothing at all scores 98.2% on this data. Judge it on precision and recall, and compare against that do-nothing baseline.' },
     { q: 'Precision is high but recall is terrible',
-      a: 'Your threshold is too strict. Lower it to catch more fraud and accept more false alarms — then use the cost model to decide how far to go.' },
+      a: 'Your threshold is too strict. Lower it to catch more fraud and accept more false alarms, then use the cost model to decide how far to go.' },
     { q: 'What threshold should I actually pick?',
       a: 'Whichever minimises your stated cost. At a $4 review cost the cheapest here is 4, with 6 almost identical; at $20 the optimum shifts. State the assumption alongside the number.' },
     { q: 'Should I use rules or the model?',
@@ -454,6 +454,6 @@ FQ.registerLevel({
     { q: 'My precision and recall look swapped',
       a: 'Check the order from confusion_matrix(...).ravel(): it is tn, fp, fn, tp. Getting that wrong inverts both metrics without any error appearing.' },
     { q: 'Why is my amount coefficient nearly zero?',
-      a: 'Unscaled features. amount ranges over hundreds while the flags are 0/1, so its coefficient is tiny per unit. Standardise before comparing coefficient magnitudes.' }
+      a: 'Unscaled features. Amount ranges over hundreds while the flags are 0/1, so its coefficient is tiny per unit. Standardise before comparing coefficient magnitudes.' }
   ]
 });

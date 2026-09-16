@@ -1,4 +1,4 @@
-# Level 3 — Reading the Money
+# Level 3: Reading the Money
 
 > **Personal Spending Analyzer** · build project · difficulty 3/10
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-A society member hands you six months of their bank export and one question: "where is my money going?" Build the analyzer that answers it — and finds them at least one thing worth cancelling.
+A society member hands you six months of their bank export and one question: "where is my money going?" Build the analyzer that answers it, and finds them at least one thing worth cancelling.
 
 **Scope:** Uses only this level plus Level 2: pandas (read_csv, masks, groupby, sort_values, value_counts, .dt, .abs), matplotlib bar charts, f-string formatting, and functions. No machine learning, no APIs, no classes.
 
@@ -29,7 +29,7 @@ python spending_analyzer.py
 
 ## Why the solution is shaped this way
 
-- Income is selected by **category**, never by sign. The dataset contains refunds — positive amounts that are not income — and filtering on `amount > 0` overstates income by exactly those.
+- Income is selected by **category**, never by sign. The dataset contains refunds (positive amounts that are not income) and filtering on `amount > 0` overstates income by exactly those.
 - Savings transfers are excluded from spending. Moving money to your own account changes its location, not your net worth; counting it as an expense is a real bug in shipped budgeting apps.
 - `find_recurring` groups by merchant **and** amount, then splits the result into cancellable subscriptions and fixed commitments. Rent is perfectly recurring too, and a report that tells you to cancel it is useless.
 - The chart drops savings transfers and sorts before plotting, because an unsorted bar chart with a misleading biggest bar is worse than no chart.
@@ -51,7 +51,7 @@ python spending_analyzer.py
 - Savings rate is 33.5% (to one decimal)
 - Housing is the top category at $6,900.00; subscriptions total $461.76 over six months
 - find_recurring finds 8 recurring charges at min_times=3, of which 5 are cancellable subscriptions
-- CLOUDSTREAM TV appears at $15.99 x 6 — an annual cost of $191.88
+- CLOUDSTREAM TV appears at $15.99 x 6. An annual cost of $191.88
 - Monthly subscription cost is $76.96
 
 ## How it is marked
