@@ -23,7 +23,7 @@
 
 ---
 
-### 1. What does KYC require of a money-handling product?
+### 1. What does KYC require of a product that handles money?
 
 - **A. Verifying a customer's identity before they can hold or move money** ✅
 - B. Reporting profits to regulators quarterly
@@ -57,7 +57,7 @@
 - C. Any layer may call any other
 - D. Services may import the interface
 
-**Why:** One-directional dependencies are what make the middle testable and the interface swappable. A service calling st.write is the classic violation.
+**Why:** Dependencies that point one way are what make the middle testable and the interface swappable. A service calling st.write is the classic violation.
 
 ### 5. What does "a test needs a browser" tell you about a codebase?
 
@@ -138,7 +138,7 @@
 - **C. Regulated API access to a customer's bank data with their explicit, scoped, revocable consent** ✅
 - D. Free banking for everyone
 
-**Why:** The consent model is the part worth internalising: explicit, limited in scope, time-limited, and revocable. Anything reading someone else's data should meet that bar.
+**Why:** The consent model is the part worth internalising: explicit, limited in scope, time limited, and revocable. Anything reading someone else's data should meet that bar.
 
 ### 14. Which question belongs in an ethics section for a fraud model?
 
@@ -149,7 +149,7 @@
 
 **Why:** A false flag can strand someone at a checkout with no other way to pay. If your explanation is "the model decided", you have built something you cannot defend.
 
-### 15. Which statement is the most honest in a capstone write-up?
+### 15. Which statement is the most honest in a capstone report?
 
 - A. "This is a production-ready banking platform."
 - B. "No known limitations."

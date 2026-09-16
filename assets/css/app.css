@@ -540,6 +540,46 @@ table.data tr:last-child td { border-bottom: 0; }
 /* Row labels are short by design, so they never break across two lines. */
 table.data td.mono { white-space: nowrap; }
 
+/* A question set into the lesson. It reads as a pause, not as a warning, so it
+   borrows the rule and the mono label but none of the alarm colours. */
+.check {
+  border: 1px solid var(--rule-mid);
+  border-left: 2px solid var(--accent);
+  padding: 20px 22px;
+  margin: 30px 0;
+  background: var(--ink-raised);
+}
+.check-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: var(--track-mono);
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.check-q { margin: 0; color: var(--bone); font-size: 1.02rem; line-height: 1.6; }
+.check-a {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  color: var(--ash);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+.check-btn {
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: var(--track-mono);
+  color: var(--ash);
+  background: transparent;
+  border: 1px solid var(--rule-mid);
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+.check-btn:hover { color: var(--accent); border-color: var(--accent); }
+
 /* ==========================================================================
    CODE
    ========================================================================== */

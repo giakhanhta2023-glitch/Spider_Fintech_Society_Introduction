@@ -62,6 +62,43 @@ built to support exactly that order and will refuse to dump a full solution.
   top of `assets/css/app.css` for the palette, plus the `accentColor` on the `<Theme>` in
   `assets/js/ui/main.js` so the focus ring matches.
 
+## How a knowledge section has to teach
+
+Level 1 is the worked example of this. Every other level is being brought up to
+the same standard, and new material should start here.
+
+A section is not finished when the idea has been stated. It is finished when a
+learner who has never met the idea can use it. That takes five moves, in order:
+
+1. **Start where the learner already is.** A coffee, a spreadsheet, a balance
+   that looks wrong. Not a definition.
+2. **Define it once, in one plain sentence.** No compressed modifiers: write
+   "a product that handles money", not "a money-handling product". The reader
+   should not have to unpack a phrase before they can read the sentence.
+3. **Work an example with real numbers or runnable code.** $10 tapped, $9.70
+   received, and the $0.30 accounted for line by line. Three ledger entries
+   where the balance is visibly the sum of the column. A `print` whose output is
+   in the block.
+4. **Show the failure.** What breaks if you get this wrong, and who has to clean
+   it up. Fintech makes this easy: a lost photo is a bug, a lost dollar is an
+   audit.
+5. **Ask them something.** A `{ check: { q, a } }` block: a question they answer
+   in their head, with the answer hidden behind a click. One per section, on the
+   thing they would most plausibly get wrong. The drill later measures; the
+   check teaches.
+
+A worked example is not decoration. If a claim in a knowledge block has no
+number, no code, and no consequence attached to it, it is being asserted rather
+than taught, and the learner will meet it again for the first time in the drill.
+
+### Hyphenated modifiers
+
+Terms of art keep their hyphens, because the learner has to recognise them in
+the wild: double-entry, append-only, risk-free, debt-to-income, loan-to-value,
+card-not-present, peak-to-trough, closed-form, anti-money-laundering,
+mid-market, scikit-learn. Everything else gets written out: a description that
+was squeezed into a modifier is one more thing to decode.
+
 ## Before the first session
 
 - [ ] Fork the repo and set `repo` in `assets/js/config.js` to your fork

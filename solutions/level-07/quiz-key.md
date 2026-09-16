@@ -104,7 +104,7 @@
 
 **Why:** Sharpe uses the whole distribution symmetrically. An -88.6% fall would have removed most real investors from the strategy long before the recovery.
 
-### 10. The four assets have an average individual volatility of 34.6%, and an equal-weight portfolio of them has 27.1%. Why?
+### 10. The four assets have an average individual volatility of 34.6%, and an equally weighted portfolio of them has 27.1%. Why?
 
 - A. Because equal weighting always reduces returns
 - B. A calculation error, the portfolio must equal the average
@@ -156,4 +156,4 @@
 - C. That all returns are positive
 - **D. That the weights sum to 1.0** ✅
 
-**Why:** Weights summing to 0.9 silently scale every result down by 10% without any error being raised. A one-line assert catches it immediately.
+**Why:** Weights summing to 0.9 silently scale every result down by 10% without any error being raised. A single assert line catches it immediately.

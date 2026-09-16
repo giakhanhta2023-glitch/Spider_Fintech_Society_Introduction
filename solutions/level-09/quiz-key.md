@@ -35,7 +35,7 @@
 ### 2. What happens when a user moves a slider in a Streamlit app?
 
 - A. The page reloads and state is lost
-- **B. The entire script re-runs from the top** ✅
+- **B. The entire script runs again from the top** ✅
 - C. A callback function fires and nothing else runs
 - D. Only the affected widget updates
 
@@ -75,7 +75,7 @@
 - C. To make Python run faster
 - D. To encrypt your source code
 
-**Why:** A per-project library folder means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable.
+**Why:** A library folder for each project means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable.
 
 ### 7. A user enters a loan of 0. What should happen?
 

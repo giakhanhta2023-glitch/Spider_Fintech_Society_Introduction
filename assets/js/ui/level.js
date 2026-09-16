@@ -294,7 +294,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
         <div class="col-9-12 stack stack-5">
           ${project ? html`
             <div>
-              <${SectionHead} title="Self-check" />
+              <${SectionHead} title="Check your numbers" />
               <p class="index-sub" style=${{ marginTop: 0, marginBottom: '16px' }}>
                 Your code should land on exactly these numbers. If one disagrees, that difference
                 is your bug, and it is usually a quick fix.
@@ -390,7 +390,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
                 </h3>
                 <p class="index-sub" style=${{ margin: 0, maxWidth: '56ch' }}>
                   ${project
-                    ? 'Mark it complete once your code runs, the self-checks pass, and it is safely in your portfolio repo. That opens the next level.'
+                    ? 'Mark it complete once your code runs, the checks below pass, and it is safely in your portfolio repo. That opens the next level.'
                     : 'Mark it complete once your notebook runs and your repository is live. That opens level 02.'}
                 </p>
                 <div class="btn-row">

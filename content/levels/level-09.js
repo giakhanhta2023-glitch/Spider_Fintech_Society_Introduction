@@ -103,7 +103,7 @@ FQ.registerLevel({
     { p: 'Note the fallback. An app that dies because an optional key is missing is worse than one that degrades and says so.' },
 
     { h: 'Caching, because the server is shared' },
-    { p: 'Streamlit re-runs your entire script on every interaction. That is a simple and surprising model: move a slider, ' +
+    { p: 'Streamlit runs your entire script again on every interaction. That is a simple and surprising model: move a slider, ' +
          'the whole file runs again. Anything slow (a CSV download, an API call) must be cached or your app will crawl.' },
     { code: '@st.cache_data(ttl=3600)      # remember for an hour\ndef load_prices(url):\n    return pd.read_csv(url, parse_dates=["date"])', lang: 'python' },
     { warn: 'Never cache anything that must be fresh per user, and never cache a function that writes to a database. ' +
@@ -173,7 +173,7 @@ FQ.registerLevel({
         blocks: [
           { code: '"""app.py: Streamlit interface."""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    principal = st.number_input("Amount borrowed", min_value=1000.0,\n                                max_value=5_000_000.0, value=250_000.0, step=1000.0)\n    rate_pct = st.slider("Interest rate (%)", 0.0, 25.0, 5.5, 0.1)\n    years = st.slider("Term (years)", 1, 40, 30)\n    extra = st.number_input("Extra monthly payment", min_value=0.0, value=0.0, step=50.0)\n\nrate = rate_pct / 100\n\nif extra > 0 and extra > monthly_payment(principal, rate, years) * 3:\n    st.warning("That extra payment is unusually large compared with the scheduled one.")\n\nbase = pd.DataFrame(schedule(principal, rate, years))\nfast = pd.DataFrame(schedule(principal, rate, years, extra=extra))\n\ncol1, col2, col3 = st.columns(3)\ncol1.metric("Monthly payment", f"${monthly_payment(principal, rate, years):,.2f}")\ncol2.metric("Total interest", f"${base[\'interest\'].sum():,.0f}")\ncol3.metric("Months to clear", len(fast),\n            delta=f"{len(fast) - len(base)} vs standard" if extra else None)\n\ntab1, tab2 = st.tabs(["Balance over time", "Full schedule"])\nwith tab1:\n    chart = pd.DataFrame({"standard": base["balance"]})\n    if extra > 0:\n        chart["with extra"] = fast["balance"]\n    st.line_chart(chart)\nwith tab2:\n    st.dataframe(fast, use_container_width=True, hide_index=True)\n    st.download_button("Download schedule (CSV)",\n                       fast.to_csv(index=False).encode("utf-8"),\n                       "schedule.csv", "text/csv")', lang: 'python' },
           { code: 'streamlit run app.py', lang: 'bash' },
-          { p: 'Your browser opens on localhost. Move a slider and the whole script re-runs. That is the Streamlit model, ' +
+          { p: 'Your browser opens on localhost. Move a slider and the whole script runs again. That is the Streamlit model, ' +
                'and it is why slow work belongs behind `@st.cache_data`.' }
         ],
         check: 'The app runs, the metrics update as you move the sliders, and the CSV downloads.'
@@ -211,10 +211,10 @@ FQ.registerLevel({
   glossary: [
     { t: 'Client / server', d: 'The browser sends requests; your Python runs on the server and responds.' },
     { t: 'Pure function', d: 'Takes arguments, returns a value, no side effects. Easy to test and reuse.' },
-    { t: 'Streamlit', d: 'A Python library that turns a script into a web app by re-running it on every interaction.' },
+    { t: 'Streamlit', d: 'A Python library that turns a script into a web app by running it again on every interaction.' },
     { t: 'Widget', d: 'An input control (slider, number box) whose value your script reads on each run.' },
     { t: 'requirements.txt', d: 'The pinned list of libraries a deployment platform installs.' },
-    { t: 'Virtual environment', d: 'A per-project library folder that isolates dependencies.' },
+    { t: 'Virtual environment', d: 'A library folder for each project, which isolates dependencies.' },
     { t: 'Validation', d: 'Rejecting bad input with a clear message before it reaches the calculation.' },
     { t: 'st.stop()', d: 'Halts the Streamlit script immediately, leaving the error visible.' },
     { t: 'Caching', d: 'Storing the result of slow work so repeated runs skip it.' },
@@ -238,7 +238,7 @@ FQ.registerLevel({
     { q: "What happens when a user moves a slider in a Streamlit app?",
       options: [
         "The page reloads and state is lost",
-        "The entire script re-runs from the top",
+        "The entire script runs again from the top",
         "A callback function fires and nothing else runs",
         "Only the affected widget updates"
       ],
@@ -283,7 +283,7 @@ FQ.registerLevel({
         "To encrypt your source code"
       ],
       answer: 1,
-      why: "A per-project library folder means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable." },
+      why: "A library folder for each project means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable." },
 
     { q: "A user enters a loan of 0. What should happen?",
       options: [

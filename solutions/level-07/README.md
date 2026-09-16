@@ -1,5 +1,7 @@
 # Level 7: Risk and return
 
+> **Portfolio risk dashboard** · build project · difficulty 7/10
+
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
@@ -50,7 +52,7 @@ python risk_dashboard.py
 - Sharpe at 3% risk-free: TECHX 0.26, BANKCO -0.04, GOLDF -0.03, CRYPTOZ 0.49
 - Max drawdowns: TECHX -60.2%, BANKCO -33.5%, GOLDF -33.8%, CRYPTOZ -88.6%
 - GOLDF correlates below 0.2 with every other asset
-- Equal-weight portfolio: about 12.9% annualized return, 27.1% volatility, Sharpe 0.36, max drawdown -56.9%
+- Equally weighted portfolio: about 12.9% annualized return, 27.1% volatility, Sharpe 0.36, max drawdown -56.9%
 - Average individual volatility is 34.6%, so the diversification benefit is roughly 7.5 percentage points
 - Equal-weight VaR95 is about -2.63% daily, VaR99 about -3.79%, and expected shortfall beyond VaR95 about -3.35%
 - portfolio_returns raises AssertionError when given weights that sum to 0.9

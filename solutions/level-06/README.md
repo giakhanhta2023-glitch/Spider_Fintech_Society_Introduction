@@ -1,5 +1,7 @@
 # Level 6: Credit, loans and amortization
 
+> **Loan amortization and early-payoff simulator** · build project · difficulty 6/10
+
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
@@ -61,7 +63,7 @@ python loan_simulator.py
 |--------|-----------|---------|
 | 30 | Schedule correctness | Row counts, interest totals, month-1 split, and a final balance of exactly zero all match. |
 | 20 | Scenario analysis | Term comparison, overpayment comparison, and the invest-instead question answered with numbers. |
-| 15 | APR by bisection | Converges to 7.85% and is robust to different fee and term inputs. |
+| 15 | APR by bisection | Converges to 7.85% and still finds the right rate when the fees or the term change. |
 | 15 | Charts | Two labelled charts: the interest/principal split with crossover, and the two balance curves. |
 | 10 | Risk ratios | DTI and LTV implemented with documented bands. |
 | 10 | Shipped | Runs clean from top to bottom and is committed to your portfolio repo. |

@@ -1,5 +1,7 @@
 # Level 8: Fraud detection and decision thresholds
 
+> **Fraud scoring engine** · build project · difficulty 8/10
+
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
@@ -45,7 +47,7 @@ python fraud_engine.py
 ## Self-checks the solution satisfies
 
 - The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%
-- Do-nothing accuracy is 98.20% and appears in your output before any model
+- Flagging nothing gives an accuracy is 98.20% and appears in your output before any model
 - Mean amount is about $31.85 for legitimate rows and $167.25 for fraud
 - card_present is 61.1% of legitimate rows and 3.7% of fraud
 - With the tutorial rule weights, threshold 6 gives 88 TP, 72 FP, precision 55.0%, recall 81.5%

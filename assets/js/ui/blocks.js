@@ -54,6 +54,25 @@ function Note({ kind, text }) {
     </aside>`;
 }
 
+/* ----------------------------------------------------------------- check */
+/* A question in the middle of the lesson. The learner answers it in their head
+   before the answer is revealed, which is the difference between reading an
+   explanation and knowing whether they followed it. */
+function Check({ q, a }) {
+  const [shown, setShown] = useState(false);
+  return html`
+    <aside class="check">
+      <span class="check-label">your turn</span>
+      <p class="check-q">${md(q)}</p>
+      ${shown
+        ? html`<p class="check-a">${md(a)}</p>`
+        : html`
+          <button type="button" class="check-btn" onClick=${() => setShown(true)}>
+            show the answer
+          </button>`}
+    </aside>`;
+}
+
 /* ----------------------------------------------------------------- table */
 function DataTable({ head, rows }) {
   return html`
@@ -92,6 +111,7 @@ export function Blocks({ blocks }) {
       if (b.warn) return html`<${Note} key=${i} kind="warn" text=${b.warn} />`;
       if (b.money) return html`<${Note} key=${i} kind="money" text=${b.money} />`;
       if (b.table) return html`<${DataTable} key=${i} head=${b.table.head} rows=${b.table.rows} />`;
+      if (b.check) return html`<${Check} key=${i} q=${b.check.q} a=${b.check.a} />`;
       return null;
     })}
   </div>`;

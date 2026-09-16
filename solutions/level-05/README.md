@@ -1,5 +1,7 @@
 # Level 5: Market data and APIs
 
+> **Multi-currency portfolio valuation service** · build project · difficulty 5/10
+
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.

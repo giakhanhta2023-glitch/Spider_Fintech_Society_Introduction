@@ -1,5 +1,7 @@
 # Level 4: Payments and the double-entry ledger
 
+> **Mini ledger and payment engine** · build project · difficulty 4/10
+
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.

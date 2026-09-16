@@ -2,8 +2,8 @@
 
 # FinQuest, a fintech training arcade
 
-A ten-level, project-based fintech course that runs in a browser tab. Each level teaches the
-knowledge, walks you through the tools hands-on, drills you with 15 questions, then hands you a
+A ten level fintech course built around projects that runs in a browser tab. Each level teaches the
+knowledge, walks you through the tools step by step, drills you with 15 questions, then hands you a
 build you can finish using **only what that level taught you**: with a complete, verified solution
 key waiting in this repository.
 
@@ -42,7 +42,7 @@ tutor endpoint if you set `ANTHROPIC_API_KEY` in the project's environment varia
 
 | # | Level | You build | New tools |
 |---|-------|-----------|-----------|
-| 1 | Fintech orientation and your zero-install toolkit | *(setup mission)* a working lab | Colab, GitHub |
+| 1 | Fintech orientation and a toolkit you do not install | *(setup mission)* a working lab | Colab, GitHub |
 | 2 | The time value of money | Compound growth engine | functions, loops, f-strings |
 | 3 | Reading the money | Personal spending analyzer | pandas, matplotlib |
 | 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |
@@ -59,11 +59,11 @@ build complete; that unlocks the next one.
 ## How a level works
 
 1. **Learn**: the concepts, with worked numbers and the reasoning behind them.
-2. **Tutorial**: hands-on steps. Every tool the build needs is introduced here and nowhere else.
+2. **Tutorial**: steps you follow along with. Every tool the build needs is introduced here and nowhere else.
 3. **Drill**: 15 questions, instant explanations, and the full answer key at the end (pass or fail).
    You need **12/15** to unlock the build.
 4. **Build**: a project scoped to exactly what you know, with requirements, a starter file,
-   self-check values, and a marking rubric.
+   check values, and a marking rubric.
 5. **Compare**: read the solution key in [`solutions/`](solutions/) *after* you have written yours.
 
 ## The AI tutor

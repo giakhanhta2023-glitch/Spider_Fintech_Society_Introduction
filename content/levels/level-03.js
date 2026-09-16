@@ -174,7 +174,7 @@ FQ.registerLevel({
         t: 'Format a report humans will read',
         blocks: [
           { code: 'income_total = df[df["category"] == "income"]["amount"].sum()\nspend_total = spend[spend["category"] != "savings"]["abs_amount"].sum()\nsaved = income_total - spend_total\nrate = saved / income_total\n\nprint("=" * 46)\nprint(f"{\'Six-month money report\':^46}")\nprint("=" * 46)\nprint(f"Income          ${income_total:>14,.2f}")\nprint(f"Spending        ${spend_total:>14,.2f}")\nprint(f"Saved           ${saved:>14,.2f}")\nprint(f"Savings rate    {rate:>14.1%}")', lang: 'python' },
-          { p: '`:^46` centres text in 46 characters, `:>14,.2f` right-aligns money. Plain text reports like this are what ' +
+          { p: '`:^46` centres text in 46 characters, `:>14,.2f` aligns money to the right. Plain text reports like this are what ' +
                'gets pasted into a chat channel, so make them tidy.' }
         ],
         check: 'Your report prints with aligned columns and a savings rate around 33.5%.'
@@ -341,11 +341,11 @@ FQ.registerLevel({
       options: [
         "Adds a greater-than sign to the output",
         "Rounds up to the next whole number",
-        "Right-aligns the value within 14 characters",
+        "Aligns the value to the right within 14 characters",
         "Compares total to 14"
       ],
       answer: 2,
-      why: "Alignment specifiers are < left, > right, ^ centre, followed by the width. Right-aligned money columns are what make a text report readable." }
+      why: "Alignment specifiers are < left, > right, ^ centre, followed by the width. Money columns aligned to the right are what make a text report readable." }
   ],
 
   project: {

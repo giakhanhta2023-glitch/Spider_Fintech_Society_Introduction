@@ -13,7 +13,7 @@ FQ.registerLevel({
            'awareness and architecture) then asks you to assemble everything you have built into a single coherent product.',
 
   objectives: [
-    'Describe the compliance obligations a money-handling product carries: KYC, AML, PII, retention',
+    'Describe the compliance obligations a product that handles money carries: KYC, AML, PII, retention',
     'Design a layered architecture and explain why the layers exist',
     'Structure a multi-module Python project that a stranger can run',
     'Write a README that gets your work taken seriously in thirty seconds',
@@ -54,12 +54,12 @@ FQ.registerLevel({
     { h: 'Open banking, in one paragraph' },
     { p: 'Regulation in the UK, EU, and a growing list of countries requires banks to expose customer data through APIs ' +
          '**when the customer consents**. That is what lets a budgeting app read your bank transactions without asking for ' +
-         'your password. The pattern that matters: **consent is explicit, scoped, time-limited, and revocable**. ' +
+         'your password. The pattern that matters: **consent is explicit, scoped, time limited, and revocable**. ' +
          'If your product reads someone else\'s data, that is the standard you design to.' },
 
     { h: 'Architecture: layers and why they exist' },
     { code: 'interface        Streamlit pages, CLI, API endpoints\n     |           (no business logic: just input and display)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. Pure where possible. Fully tested)\ndata             loaders, validators, synthetic generators\n     |           (everything that touches a file or a network)\nstorage          CSV / SQLite / append-only entry log', lang: 'text', label: 'four layers' },
-    { p: 'The rule is one-directional: **upper layers may call lower ones, never the reverse**. Your ledger must not know ' +
+    { p: 'The rule points one way: **upper layers may call lower ones, never the reverse**. Your ledger must not know ' +
          'a Streamlit page exists. Follow it and you can swap the interface, test the middle in isolation, and reason about ' +
          'one layer at a time. Break it and everything becomes one thing that can only be tested by clicking.' },
     { table: {
@@ -104,7 +104,7 @@ FQ.registerLevel({
 
     { h: 'Ethics is a design activity' },
     { p: 'You have now built things that decide who gets credit and whose card gets blocked. Three questions belong in ' +
-         'your capstone write-up, and in every design review you will ever attend:' },
+         'your capstone report, and in every design review you will ever attend:' },
     { ul: [
       '**Who is harmed if this is wrong?** A false fraud flag strands someone at a checkout with no other payment method.',
       '**Can the person affected find out why?** If your answer is "the model decided", you have built something you cannot defend.',
@@ -210,7 +210,7 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: "What does KYC require of a money-handling product?",
+    { q: "What does KYC require of a product that handles money?",
       options: [
         "Verifying a customer's identity before they can hold or move money",
         "Reporting profits to regulators quarterly",
@@ -248,7 +248,7 @@ FQ.registerLevel({
         "Services may import the interface"
       ],
       answer: 0,
-      why: "One-directional dependencies are what make the middle testable and the interface swappable. A service calling st.write is the classic violation." },
+      why: "Dependencies that point one way are what make the middle testable and the interface swappable. A service calling st.write is the classic violation." },
 
     { q: "What does \"a test needs a browser\" tell you about a codebase?",
       options: [
@@ -338,7 +338,7 @@ FQ.registerLevel({
         "Free banking for everyone"
       ],
       answer: 2,
-      why: "The consent model is the part worth internalising: explicit, limited in scope, time-limited, and revocable. Anything reading someone else's data should meet that bar." },
+      why: "The consent model is the part worth internalising: explicit, limited in scope, time limited, and revocable. Anything reading someone else's data should meet that bar." },
 
     { q: "Which question belongs in an ethics section for a fraud model?",
       options: [
@@ -350,7 +350,7 @@ FQ.registerLevel({
       answer: 2,
       why: "A false flag can strand someone at a checkout with no other way to pay. If your explanation is \"the model decided\", you have built something you cannot defend." },
 
-    { q: "Which statement is the most honest in a capstone write-up?",
+    { q: "Which statement is the most honest in a capstone report?",
       options: [
         "\"This is a production-ready banking platform.\"",
         "\"No known limitations.\"",
@@ -378,13 +378,13 @@ FQ.registerLevel({
       'Risk: returns, volatility, Sharpe, max drawdown, correlation matrix, and VaR for a chosen weighting',
       'Fraud: engineered features, a scored review queue with reasons, and a stated threshold with its cost justification',
       'A reconciliation view comparing ledger balances against an external balances file, listing any breaks',
-      'A Streamlit app with at least five navigable sections and a visible synthetic-data disclaimer',
+      'A Streamlit app with at least five navigable sections and a visible note that the data is synthetic',
       'A `tests/` suite of at least 20 tests across at least four modules, all passing with `pytest -q`',
       'Tests must include the ledger invariant, a refused overdraft that writes nothing, and an idempotent retry',
       '`data/generate.py` producing every dataset the app uses, so the repo is reproducible from scratch',
       'requirements.txt that works on a clean machine, and a .gitignore excluding .venv, __pycache__, and secrets',
       'Deployed to a public URL that loads and works on a phone',
-      'A README with: one-line description, live link, screenshot, features, architecture diagram, local run steps, test instructions, synthetic-data statement, and a limitations-and-next-steps section',
+      'A README with: a description in one line, live link, screenshot, features, architecture diagram, local run steps, test instructions, a statement that the data is synthetic, and a limitations-and-next-steps section',
       '`docs/architecture.md` explaining each layer and why the boundaries are where they are',
       'An ethics section answering: who is harmed when this is wrong, can they find out why, and who does it serve badly',
       'A three-minute demo script (written, or recorded) walking a stranger through the app'
@@ -408,7 +408,7 @@ FQ.registerLevel({
     ],
     rubric: [
       { pts: 20, t: 'It runs for a stranger', d: 'Clone, install, test, run: all from the README, with no undocumented steps.' },
-      { pts: 20, t: 'Architecture', d: 'Clean layers, no logic in the interface, all data access in one module, imports one-directional.' },
+      { pts: 20, t: 'Architecture', d: 'Clean layers, no logic in the interface, all data access in one module, imports pointing one way.' },
       { pts: 15, t: 'Integration', d: 'All five domains genuinely present and working together, not five disconnected demos.' },
       { pts: 15, t: 'Tests', d: '20+ meaningful tests across modules, covering invariants and refusals, all passing.' },
       { pts: 10, t: 'Deployed', d: 'A public URL that works on a phone.' },

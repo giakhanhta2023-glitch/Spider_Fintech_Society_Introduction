@@ -1,4 +1,6 @@
-# Level 1: Fintech orientation and your zero-install toolkit
+# Level 1: Fintech orientation and a toolkit you do not install
+
+> **Mission zero: get your lab running** · setup mission · difficulty 1/10
 
 ## Read this second
 

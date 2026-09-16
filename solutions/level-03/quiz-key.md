@@ -153,7 +153,7 @@
 
 - A. Adds a greater-than sign to the output
 - B. Rounds up to the next whole number
-- **C. Right-aligns the value within 14 characters** ✅
+- **C. Aligns the value to the right within 14 characters** ✅
 - D. Compares total to 14
 
-**Why:** Alignment specifiers are < left, > right, ^ centre, followed by the width. Right-aligned money columns are what make a text report readable.
+**Why:** Alignment specifiers are < left, > right, ^ centre, followed by the width. Money columns aligned to the right are what make a text report readable.

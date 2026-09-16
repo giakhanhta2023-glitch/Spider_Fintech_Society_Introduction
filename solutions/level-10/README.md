@@ -66,7 +66,7 @@ pip install -r requirements.txt && python data/generate.py && pytest -q && strea
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
 | 20 | It runs for a stranger | Clone, install, test, run: all from the README, with no undocumented steps. |
-| 20 | Architecture | Clean layers, no logic in the interface, all data access in one module, imports one-directional. |
+| 20 | Architecture | Clean layers, no logic in the interface, all data access in one module, imports pointing one way. |
 | 15 | Integration | All five domains genuinely present and working together, not five disconnected demos. |
 | 15 | Tests | 20+ meaningful tests across modules, covering invariants and refusals, all passing. |
 | 10 | Deployed | A public URL that works on a phone. |

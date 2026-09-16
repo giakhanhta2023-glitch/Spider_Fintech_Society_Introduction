@@ -137,7 +137,7 @@ FQ.registerLevel({
           { p: 'Write that last number at the top of your notebook. Every result you produce later gets compared to it, ' +
                'and any metric that cannot beat "do nothing" is not a result.' }
         ],
-        check: 'You can state the base rate (1.80%) and the do-nothing accuracy (98.20%).'
+        check: 'You can state the base rate (1.80%) and the accuracy of flagging nothing (98.20%).'
       },
       {
         t: 'Engineer the features',
@@ -154,7 +154,7 @@ FQ.registerLevel({
           { p: 'Each rule contributes points, and the reasons are collected as it goes, so the score arrives with its ' +
                'own explanation attached.' },
           { code: 'RULES = [\n    ("large amount",        lambda r: r["amount"] > 150,        2),\n    ("card not present",    lambda r: r["card_not_present"] == 1, 2),\n    ("foreign country",     lambda r: r["is_foreign"] == 1,      3),\n    ("overnight",           lambda r: r["is_night"] == 1,        2),\n    ("high velocity",       lambda r: r["txns_last_1h"] >= 3,    2),\n    ("high-risk category",  lambda r: r["high_risk_cat"] == 1,   1),\n]\n\ndef score_row(row):\n    """Return (score, [reasons]) so every decision can be explained."""\n    score, reasons = 0, []\n    for name, test, points in RULES:\n        if test(row):\n            score += points\n            reasons.append(name)\n    return score, reasons\n\n\ndf["score"] = df.apply(lambda r: score_row(r)[0], axis=1)\ndf["reasons"] = df.apply(lambda r: ", ".join(score_row(r)[1]), axis=1)\nprint(df[["amount", "score", "reasons", "is_fraud"]].head())', lang: 'python' },
-          { p: 'A `lambda` is a one-line anonymous function. Keeping the rules in a list like this means adding a rule is ' +
+          { p: 'A `lambda` is an anonymous function written on one line. Keeping the rules in a list like this means adding a rule is ' +
                'one line, and the rulebook can be printed for an auditor.' }
         ],
         check: 'Every row has a score between 0 and 12 and a human-readable reason string.'
@@ -412,7 +412,7 @@ FQ.registerLevel({
     },
     tests: [
       'The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%',
-      'Do-nothing accuracy is 98.20% and appears in your output before any model',
+      'Flagging nothing gives an accuracy is 98.20% and appears in your output before any model',
       'Mean amount is about $31.85 for legitimate rows and $167.25 for fraud',
       'card_present is 61.1% of legitimate rows and 3.7% of fraud',
       'With the tutorial rule weights, threshold 6 gives 88 TP, 72 FP, precision 55.0%, recall 81.5%',
@@ -443,7 +443,7 @@ FQ.registerLevel({
 
   faq: [
     { q: 'My model has 98% accuracy. Is that good?',
-      a: 'No. Flagging nothing at all scores 98.2% on this data. Judge it on precision and recall, and compare against that do-nothing baseline.' },
+      a: 'No. Flagging nothing at all scores 98.2% on this data. Judge it on precision and recall, and compare against that baseline of flagging nothing.' },
     { q: 'Precision is high but recall is terrible',
       a: 'Your threshold is too strict. Lower it to catch more fraud and accept more false alarms, then use the cost model to decide how far to go.' },
     { q: 'What threshold should I actually pick?',

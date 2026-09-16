@@ -155,7 +155,7 @@ FQ.registerLevel({
           { p: 'Underscores in numbers (`1_000_000`) are ignored by Python and make large amounts readable. ' +
                'The `.2%` format multiplies by 100 and adds the sign for you, never do that by hand.' }
         ],
-        check: 'apy(0.24, 12) prints 26.82% and the inflation-adjusted million is about $306,557.'
+        check: 'apy(0.24, 12) prints 26.82% and the million adjusted for inflation is about $306,557.'
       }
     ]
   },
@@ -344,7 +344,7 @@ FQ.registerLevel({
       'A function `years_to_target(...)` returning the first year the goal is reached, or None if it is not reachable within 100 years',
       'A function `apy(apr, compounds_per_year)` and a printed comparison of a 24% APR card vs its true APY',
       'A function `real_value(amount, inflation, years)` and a final line showing the goal in today\'s money',
-      'A `summary(...)` function that prints a readable report: inputs, final balance, interest share, year the goal is hit, inflation-adjusted value',
+      'A `summary(...)` function that prints a readable report: inputs, final balance, interest share, year the goal is hit, the value adjusted for inflation',
       'Every printed money amount formatted with thousands separators and 2 decimals; every rate with `.2%`',
       'At least three worked scenarios at the bottom of the notebook (conservative 4%, balanced 7%, aggressive 10%)',
       'A short markdown cell explaining, in your own words, why the interest column grows faster each year',

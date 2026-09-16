@@ -97,7 +97,7 @@ FQ.registerLevel({
     { p: 'Real trading quotes come in pairs: the **bid** (what a dealer pays you) and the **ask** (what they charge you). ' +
          'The gap is the **spread**, and it is how the dealer earns. A mid-market rate (the average) is what news sites show ' +
          'and is never what you actually get. Consumer apps quoting "the real exchange rate" mean mid-market plus a stated fee.' },
-    { tip: 'Sanity-check every conversion: if 1 USD buys 25,480 VND, then $10 should be about 254,800 VND. If your ' +
+    { tip: 'Sanity check every conversion: if 1 USD buys 25,480 VND, then $10 should be about 254,800 VND. If your ' +
            'answer is 0.0004, you divided when you should have multiplied.' },
 
     { h: 'No feed covers everything' },
@@ -426,7 +426,7 @@ FQ.registerLevel({
     { q: 'KeyError: "USD" inside convert',
       a: 'The API omits the base currency from its rates map. Add table[base] = 1.0 to your copy of the rates before looking anything up.' },
     { q: 'My converted amounts are tiny / enormous',
-      a: 'You multiplied where you should divide. With USD-based rates, going x -> USD divides by the rate, USD -> x multiplies. Sanity-check against a known pair.' },
+      a: 'You multiplied where you should divide. With USD-based rates, going x -> USD divides by the rate, USD -> x multiplies. Sanity check against a known pair.' },
     { q: 'How do I test the offline fallback?',
       a: 'Point the live URL at a nonsense path such as /nope for one run. Your retries should fail, the snapshot should load, and the report should say STALE.' },
     { q: 'CoinGecko returns 429',

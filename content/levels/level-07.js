@@ -105,7 +105,7 @@ FQ.registerLevel({
         ['**CRYPTOZ**', '0.51', '0.45', '0.16', '1.00']
       ]
     }},
-    { p: 'The average of the four individual volatilities is **34.6%**. An equal-weight portfolio of all four has a ' +
+    { p: 'The average of the four individual volatilities is **34.6%**. An equally weighted portfolio of all four has a ' +
          'volatility of **27.1%**: a fifth less risk for the same average exposure. `GOLDF` is doing most of that work: ' +
          'its correlations are near zero, so it moves when the others do not.' },
     { warn: 'Correlations rise in a crisis. Assets that looked independent for years fall together on the worst day, ' +
@@ -182,7 +182,7 @@ FQ.registerLevel({
           { warn: 'Weights must sum to 1.0. Assert it: `assert abs(weights.sum() - 1) < 1e-9`. A silent 0.9 makes every ' +
                   'number in the report 10% too small.' }
         ],
-        check: 'Your equal-weight portfolio shows about 12.9% return and 27.1% volatility.'
+        check: 'Your equally weighted portfolio shows about 12.9% return and 27.1% volatility.'
       },
       {
         t: 'VaR and expected shortfall',
@@ -315,7 +315,7 @@ FQ.registerLevel({
       answer: 2,
       why: "Sharpe uses the whole distribution symmetrically. An -88.6% fall would have removed most real investors from the strategy long before the recovery." },
 
-    { q: "The four assets have an average individual volatility of 34.6%, and an equal-weight portfolio of them has 27.1%. Why?",
+    { q: "The four assets have an average individual volatility of 34.6%, and an equally weighted portfolio of them has 27.1%. Why?",
       options: [
         "Because equal weighting always reduces returns",
         "A calculation error, the portfolio must equal the average",
@@ -373,7 +373,7 @@ FQ.registerLevel({
         "That the weights sum to 1.0"
       ],
       answer: 3,
-      why: "Weights summing to 0.9 silently scale every result down by 10% without any error being raised. A one-line assert catches it immediately." }
+      why: "Weights summing to 0.9 silently scale every result down by 10% without any error being raised. A single assert line catches it immediately." }
   ],
 
   project: {
@@ -414,7 +414,7 @@ FQ.registerLevel({
       'Sharpe at 3% risk-free: TECHX 0.26, BANKCO -0.04, GOLDF -0.03, CRYPTOZ 0.49',
       'Max drawdowns: TECHX -60.2%, BANKCO -33.5%, GOLDF -33.8%, CRYPTOZ -88.6%',
       'GOLDF correlates below 0.2 with every other asset',
-      'Equal-weight portfolio: about 12.9% annualized return, 27.1% volatility, Sharpe 0.36, max drawdown -56.9%',
+      'Equally weighted portfolio: about 12.9% annualized return, 27.1% volatility, Sharpe 0.36, max drawdown -56.9%',
       'Average individual volatility is 34.6%, so the diversification benefit is roughly 7.5 percentage points',
       'Equal-weight VaR95 is about -2.63% daily, VaR99 about -3.79%, and expected shortfall beyond VaR95 about -3.35%',
       'portfolio_returns raises AssertionError when given weights that sum to 0.9'
