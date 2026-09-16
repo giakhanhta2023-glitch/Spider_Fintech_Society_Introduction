@@ -1,5 +1,5 @@
 """
-FinQuest Level 6: Loan Amortization & Early-Payoff Simulator  (reference solution)
+FinQuest level 6: Loan amortization and early-payoff simulator  (reference solution)
 ===================================================================================
 Uses only Levels 2, 3 and 6: the payment formula, a bounded while loop,
 pandas DataFrames, matplotlib, bisection, and f-string formatting.
@@ -240,7 +240,7 @@ def report(principal=250_000, annual_rate=0.055, years=30, extra=200, fees=400,
     payment = df["payment"].iloc[0]
 
     print("=" * 58)
-    print(f"{'LOAN ADVISOR':^58}")
+    print(f"{'Loan advisor':^58}")
     print("=" * 58)
     print(f"{'Amount borrowed':<28}{principal:>30,.2f}")
     print(f"{'Interest rate':<28}{annual_rate:>30.2%}")
@@ -255,24 +255,24 @@ def report(principal=250_000, annual_rate=0.055, years=30, extra=200, fees=400,
     print(f"{'Final balance':<28}{s['final_balance']:>30,.2f}")
 
     print("\n" + "-" * 58)
-    print("TERM COMPARISON")
+    print("Term comparison")
     compare_terms(principal, annual_rate)
 
     print("\n" + "-" * 58)
-    print("OVERPAYMENT")
+    print("Overpayment")
     over = compare_overpayment(principal, annual_rate, years, extra)
 
     print("\n" + "-" * 58)
-    print("OVERPAY OR INVEST?")
+    print("Overpay or invest?")
     invest_instead(extra, 0.07, years, annual_rate)
 
     print("\n" + "-" * 58)
-    print("COST OF FEES")
+    print("Cost of fees")
     apr = true_apr(20_000, fees, 0.07, 5)
     print(f"A $20,000 loan at 7.00% with a ${fees:,.0f} fee has a true APR of {apr:.2%}")
 
     print("\n" + "-" * 58)
-    print("AFFORDABILITY")
+    print("Affordability")
     a = assess(payment, other_debts, income, principal, value)
     print(f"{'DTI':<28}{a['dti']:>24.1%}  {a['band']}")
     print(f"{'LTV':<28}{a['ltv']:>24.1%}")

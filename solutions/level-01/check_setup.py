@@ -1,5 +1,5 @@
 """
-FinQuest Level 1: lab check.
+FinQuest level 1: lab check.
 
 Paste this whole file into one Google Colab cell and press Shift + Enter.
 It confirms the environment the rest of the course assumes, and demonstrates
@@ -9,7 +9,7 @@ the one rule you need before Level 2: money is not a float.
 import sys
 
 print("=" * 52)
-print(f"{'FINQUEST LAB CHECK':^52}")
+print(f"{'FinQuest lab check':^52}")
 print("=" * 52)
 
 ok = True
@@ -49,6 +49,6 @@ print("Which is why balances are stored as integer cents, never floats.")
 print("Level 4 builds a ledger that way.")
 
 print("=" * 52)
-print("LAB READY, go and tick the checklist." if ok else
+print("Lab ready. Go and tick the checklist." if ok else
       "SOMETHING IS MISSING: ask the tutor, or use Colab where it is preinstalled.")
 print("=" * 52)

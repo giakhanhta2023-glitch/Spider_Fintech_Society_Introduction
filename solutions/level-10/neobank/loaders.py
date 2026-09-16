@@ -1,5 +1,5 @@
 """
-neobank.loaders: the ONLY module that touches a file or a network.
+neobank.loaders: the only module that touches a file or a network.
 
 Everything above this layer receives DataFrames and dicts and never learns
 where they came from. Paths are anchored to this file's own location rather

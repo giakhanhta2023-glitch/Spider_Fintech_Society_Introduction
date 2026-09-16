@@ -9,8 +9,8 @@ Each level is one plain object in `content/levels/level-XX.js`:
 ```js
 FQ.registerLevel({
   id: 4,
-  codename: 'LEDGER',
-  title: 'Payments & the Double-Entry Ledger',
+  codename: 'ledger',
+  title: 'Payments and the double-entry ledger',
   knowledge: [ { h: '...' }, { p: '...' }, { code: '...', lang: 'python' }, { warn: '...' } ],
   tutorial: { intro: '...', steps: [ { t: '...', blocks: [...], check: '...' } ] },
   glossary: [ { t: 'Idempotency key', d: '...' } ],

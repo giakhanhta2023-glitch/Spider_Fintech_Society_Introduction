@@ -1,4 +1,4 @@
-# FinQuest: a fintech training arcade
+# FinQuest, a fintech training arcade
 
 A ten-level, project-based fintech course that runs in a browser tab. Each level teaches the
 knowledge, walks you through the tools hands-on, drills you with 15 questions, then hands you a
@@ -18,11 +18,15 @@ Built for the Spider Fintech Society.
 **Option 1: open it** (any static host, or locally):
 
 ```bash
-python -m http.server 8000
+python serve.py
 ```
 
 Then visit <http://localhost:8000>. There is no build step and no `npm install`: the interface is
 React + Radix Themes loaded from a CDN import map, and the curriculum is plain JavaScript data files.
+
+`serve.py` is `http.server` with caching switched off. Use it while you are editing: browsers hold
+ES modules in memory, so with a normal static server your changes can appear to do nothing until you
+force a reload with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.
 
 **Option 2: GitHub Pages:** Settings → Pages → deploy from `main` / root. It works as-is.
 
@@ -35,16 +39,16 @@ tutor endpoint if you set `ANTHROPIC_API_KEY` in the project's environment varia
 
 | # | Level | You build | New tools |
 |---|-------|-----------|-----------|
-| 1 | Fintech Orientation & Your Zero-Install Toolkit | *(setup mission)* a working lab | Colab, GitHub |
-| 2 | The Time Value of Money | Compound Growth Engine | functions, loops, f-strings |
-| 3 | Reading the Money | Personal Spending Analyzer | pandas, matplotlib |
-| 4 | Payments & the Double-Entry Ledger | Mini Ledger & Payment Engine | classes, exceptions |
-| 5 | Market Data & APIs | Multi-Currency Portfolio Valuation | requests, JSON, caching |
-| 6 | Credit, Loans & Amortization | Loan & Early-Payoff Simulator | bisection, scenario modelling |
-| 7 | Risk & Return | Portfolio Risk Dashboard | numpy, volatility, drawdown |
-| 8 | Fraud Detection & Decision Thresholds | Fraud Scoring Engine | scikit-learn, precision/recall |
-| 9 | Shipping a Fintech Service | Deployed Loan Advisor | Streamlit, pytest, deployment |
-| 10 | Compliance, Architecture & the Capstone | NeoBank Analytics platform | packages, reconciliation |
+| 1 | Fintech orientation and your zero-install toolkit | *(setup mission)* a working lab | Colab, GitHub |
+| 2 | The time value of money | Compound growth engine | functions, loops, f-strings |
+| 3 | Reading the money | Personal spending analyzer | pandas, matplotlib |
+| 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |
+| 5 | Market data and APIs | Multi-currency portfolio valuation | requests, JSON, caching |
+| 6 | Credit, loans and amortization | Loan and early-payoff simulator | bisection, scenario modelling |
+| 7 | Risk and return | Portfolio risk dashboard | numpy, volatility, drawdown |
+| 8 | Fraud detection and decision thresholds | Fraud scoring engine | scikit-learn, precision/recall |
+| 9 | Shipping a fintech service | A loan advisor anyone can open | Streamlit, pytest, deployment |
+| 10 | Compliance, architecture and the capstone | NeoBank analytics platform | packages, reconciliation |
 
 Difficulty climbs from 1/10 to 10/10. A level is cleared when you pass its drill **and** mark its
 build complete; that unlocks the next one.

@@ -1,5 +1,5 @@
 """
-NeoBank Analytics: Streamlit interface.
+NeoBank analytics: Streamlit interface.
 
 Interface only. Every number on every page comes from a service module; this
 file loads (cached), calls, and displays. If you find a formula here, it is in
@@ -14,7 +14,7 @@ import streamlit as st
 from neobank import analytics, fraud, fx, lending, loaders, reconcile, risk
 from neobank.ledger import Ledger, money, to_cents
 
-st.set_page_config(page_title="NeoBank Analytics", page_icon="\U0001F3E6", layout="wide")
+st.set_page_config(page_title="NeoBank analytics", page_icon="\U0001F3E6", layout="wide")
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ def demo_ledger():
 
 
 # ---------------------------------------------------------------------------
-st.sidebar.title("NeoBank Analytics")
+st.sidebar.title("NeoBank analytics")
 section = st.sidebar.radio(
     "Section", ["Overview", "Spending", "Ledger", "Lending", "Portfolio risk", "Fraud queue"])
 st.sidebar.divider()

@@ -1,6 +1,6 @@
-# Level 2: The Time Value of Money
+# Level 2: The time value of money
 
-> **Compound Growth Engine** · build project · difficulty 2/10
+> **Compound growth engine** · build project · difficulty 2/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The Spider Fintech Society is building a savings coach. Members enter what they have, what they can add each month, and what they are aiming for. Your engine answers three questions: how much will I have, when do I hit my goal, and what is it actually worth after inflation.
+The society is putting together a savings coach, and you are writing the engine behind it. Members tell it what they have, what they can add each month, and what they are saving for. Your job is to answer three questions for them: how much will I have, when do I reach my goal, and what is that really worth once inflation has had its share.
 
 **Scope:** Everything you need is in this level: arithmetic with **, functions with defaults, for and while loops, if statements, f-string formatting. No libraries, no file reading, no classes.
 
@@ -60,7 +60,7 @@ python compound_growth.py
 | 30 | Correct math | All eight functions return the values in the test list, including the zero-rate and unreachable-goal edge cases. |
 | 20 | Readable output | Aligned table columns, consistent money and percentage formatting, a report a non-programmer could read. |
 | 20 | Structure | Small single-purpose functions with docstrings and sensible default arguments; no copy-pasted blocks. |
-| 15 | Scenarios & explanation | Three scenarios run, plus your own written explanation of accelerating interest. |
+| 15 | Scenarios and explanation | Three scenarios run, plus your own written explanation of accelerating interest. |
 | 15 | Shipped | Notebook committed to your GitHub portfolio repo with a clear filename. |
 
 ---

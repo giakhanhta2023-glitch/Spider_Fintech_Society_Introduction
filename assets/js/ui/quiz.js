@@ -70,13 +70,13 @@ function ScoreCard({ level, score, total, answers, onRetry, onRefresh }) {
           </div>
           <${Heading} size="6" align="center">
             ${passed
-              ? (score === total ? 'Flawless. Nothing left to teach you here.' : 'Cleared. The build is unlocked.')
+              ? (score === total ? 'Flawless. Nothing left to teach you here.' : 'Nicely done. The build is open.')
               : `Not yet. You need ${CFG.quiz.passMark} of ${total}.`}
           <//>
           <${Text} size="3" color="gray" align="center" style=${{ maxWidth: '52ch' }}>
             ${passed
-              ? 'Read the key below for anything you missed, then go and build.'
-              : 'Every question below shows the correct answer and why. Re-read the sections you slipped on, then run it again. Your best score is the one that counts.'}
+              ? 'Have a look at the key below for anything you missed, then go and build it.'
+              : 'No problem at all. Every question below shows the right answer and why, so re-read the bits you slipped on and run it again. Your best score is the one that counts.'}
           <//>
           <${Flex} gap="3" wrap="wrap" justify="center">
             <${Button} variant="soft" color="gray" onClick=${onRetry}>Run it again<//>

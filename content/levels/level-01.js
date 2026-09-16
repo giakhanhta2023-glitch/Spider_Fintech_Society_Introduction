@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 1: Orientation & Toolkit   (no build project: knowledge + setup)
+   Level 1: orientation and toolkit   (no build project: knowledge + setup)
    ========================================================================= */
 FQ.registerLevel({
   id: 1,
-  codename: 'ONBOARDING',
-  title: 'Fintech Orientation & Your Zero-Install Toolkit',
-  tagline: 'Learn what fintech actually is, then get a working lab in your browser in 20 minutes.',
+  codename: 'onboarding',
+  title: 'Fintech orientation and your zero-install toolkit',
+  tagline: 'Find out what fintech really means, then get your own lab running in a browser tab. Nothing to install, about twenty minutes.',
   difficulty: 1,
   minutes: 60,
   tags: ['fintech basics', 'vocabulary', 'setup'],
@@ -419,9 +419,9 @@ FQ.registerLevel({
 
   /* ==================== SETUP CHECKLIST (instead of a project) ==================== */
   setup: {
-    title: 'Mission Zero: Get Your Lab Running',
-    story: 'Level 1 has no build project on purpose. Your objective is a working environment and a vocabulary you can ' +
-           'use in a conversation. Tick every item below and Level 2 opens.',
+    title: 'Mission zero: get your lab running',
+    story: 'There is no build project this time, and that is on purpose. All you need by the end is a lab that works ' +
+           'and enough vocabulary to hold your own in a conversation. Tick everything below and level 2 opens.',
     checklist: [
       'Signed in to Google Colab and created a notebook called finquest-level-01.ipynb',
       'Ran a cell with print("FinQuest online") and saw the output',

@@ -1,5 +1,5 @@
 """
-FinQuest Level 4: Mini Ledger & Payment Engine  (reference solution)
+FinQuest level 4: Mini ledger and payment engine  (reference solution)
 =====================================================================
 A double-entry ledger that cannot lose money:
 
@@ -201,14 +201,14 @@ class Ledger:
         self._require(account_id)
         rows = [e for e in self.entries if e["account"] == account_id]
         running = 0
-        print(f"\nSTATEMENT: {account_id}  ({self.accounts[account_id].kind})")
+        print(f"\nStatement: {account_id}  ({self.accounts[account_id].kind})")
         print(f"{'txn':<10}{'memo':<26}{'amount':>13}{'balance':>15}")
         print("-" * 64)
         for e in rows:
             running += e["amount"]
             print(f"{e['txn_id']:<10}{e['memo'][:25]:<26}{money(e['amount']):>13}{money(running):>15}")
         print("-" * 64)
-        print(f"{'':<36}{'CLOSING':>13}{money(running):>15}")
+        print(f"{'':<36}{'Closing':>13}{money(running):>15}")
 
 
 # ---------------------------------------------------------------------------

@@ -88,7 +88,7 @@ def total_cost(df, threshold, review_cost=REVIEW_COST):
 
 
 def train_model(df, test_size=0.3, seed=42):
-    """Stratified split, scaler fitted on TRAIN only. That is the no-leakage rule."""
+    """Stratified split, scaler fitted on the training split only. That is the no-leakage rule."""
     X = df[FEATURES]
     y = df["is_fraud"]
     X_train, X_test, y_train, y_test = train_test_split(

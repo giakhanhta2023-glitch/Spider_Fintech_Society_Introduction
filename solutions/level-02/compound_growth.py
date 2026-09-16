@@ -1,5 +1,5 @@
 """
-FinQuest Level 2: Compound Growth Engine  (reference solution)
+FinQuest level 2: Compound growth engine  (reference solution)
 ===============================================================
 Everything here uses only Level 2 material: arithmetic with **, functions with
 default arguments, for/while loops, if statements, and f-string formatting.
@@ -86,7 +86,7 @@ def summary(principal, payment, annual_rate, years, target, inflation=0.03):
     hit = years_to_target(principal, payment, annual_rate, target)
 
     print("=" * 51)
-    print(f"{'SAVINGS PLAN':^51}")
+    print(f"{'Savings plan':^51}")
     print("=" * 51)
     print(f"{'Starting balance':<28}{principal:>23,.2f}")
     print(f"{'Monthly contribution':<28}{payment:>23,.2f}")

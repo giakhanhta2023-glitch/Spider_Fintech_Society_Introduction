@@ -1,6 +1,6 @@
-# Level 1: Fintech Orientation & Your Zero-Install Toolkit
+# Level 1: Fintech orientation and your zero-install toolkit
 
-> **Mission Zero: Get Your Lab Running** · setup mission · difficulty 1/10
+> **Mission zero: get your lab running** · setup mission · difficulty 1/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-Level 1 has no build project on purpose. Your objective is a working environment and a vocabulary you can use in a conversation. Tick every item below and Level 2 opens.
+There is no build project this time, and that is on purpose. All you need by the end is a lab that works and enough vocabulary to hold your own in a conversation. Tick everything below and level 2 opens.
 
 ## Files here
 

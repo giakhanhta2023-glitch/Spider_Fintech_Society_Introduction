@@ -1,4 +1,4 @@
-# Level 8: Fraud Detection & Decision Thresholds: quiz answer key
+# Level 8: Fraud detection and decision thresholds: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

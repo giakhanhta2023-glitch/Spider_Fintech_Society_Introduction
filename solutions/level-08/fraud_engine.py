@@ -1,5 +1,5 @@
 """
-FinQuest Level 8: Fraud Scoring Engine  (reference solution)
+FinQuest level 8: Fraud scoring engine  (reference solution)
 =============================================================
 A transparent rule engine, a logistic-regression model, and (the part that
 actually decides what ships) a threshold tuned against money rather than F1.
@@ -56,7 +56,7 @@ def load_and_engineer(url=URL):
 
 
 def baseline(df):
-    """Print this BEFORE any model. Everything later is measured against it."""
+    """Print this before any model. Everything later is measured against it."""
     base_rate = df["is_fraud"].mean()
     do_nothing = (df["is_fraud"] == 0).mean()
     print(f"{'rows':<34}{len(df):>12,}")
@@ -143,7 +143,7 @@ def cost_curve(df, review_cost=REVIEW_COST, low=3, high=12):
 
 # ---------------------------------------------------------------------------
 def train_model(df, test_size=0.3, seed=42):
-    """Stratified split, scaler fitted on TRAIN only. That is the no-leakage rule."""
+    """Stratified split, scaler fitted on the training split only. That is the no-leakage rule."""
     X = df[FEATURES]
     y = df["is_fraud"]
     X_train, X_test, y_train, y_test = train_test_split(
@@ -191,19 +191,19 @@ def report():
     df = load_and_engineer()
 
     print("=" * width)
-    print(f"{'FRAUD SCORING ENGINE':^{width}}")
+    print(f"{'Fraud scoring engine':^{width}}")
     print("=" * width)
-    print("\nBASELINE (before any modelling)")
+    print("\nBaseline (before any modelling)")
     baseline(df)
 
     print("\n" + "-" * width)
-    print("FEATURE SEPARATION: legitimate vs fraud")
+    print("Feature separation, legitimate vs fraud")
     print(feature_comparison(df).round(2).to_string())
 
     df = apply_rules(df)
 
     print("\n" + "-" * width)
-    print("RULE ENGINE: precision and recall trade against each other")
+    print("Rule engine, where precision and recall trade against each other")
     sweep = threshold_sweep(df)
     best_f1 = max(sweep, key=lambda t: sweep[t]["f1"])
     print(f"\nF1-optimal threshold: {best_f1} (F1 {sweep[best_f1]['f1']:.3f})")
@@ -219,7 +219,7 @@ def report():
     print("assumptions above ARE the model: state them whenever you quote a threshold.")
 
     print("\n" + "-" * width)
-    print("LOGISTIC REGRESSION")
+    print("Logistic regression")
     fit = train_model(df)
     print(f"test AUC: {fit['auc']:.3f}")
     print("This is unrealistically high because the data is synthetic and cleanly separable.")
@@ -227,7 +227,7 @@ def report():
     explain_coefficients(fit["model"])
 
     print("\n" + "-" * width)
-    print("RULES vs MODEL, compared at matched recall")
+    print("Rules vs model, compared at matched recall")
     rule_at_6 = evaluate(df["is_fraud"], (df["score"] >= 6).astype(int))
     target_recall = rule_at_6["recall"]
     probs = fit["probabilities"]
@@ -246,12 +246,12 @@ def report():
     print("works the queue. A score routes a case; it should not silently decide it.")
 
     print("\n" + "-" * width)
-    print("REVIEW QUEUE: top cases, with the money at stake and the reasons")
+    print("Review queue, top cases, with the money at stake and the reasons")
     queue = review_queue(df, fit["probabilities"], fit["X_test"].index, top=10)
     print(queue.to_string(index=False))
 
     print("\n" + "-" * width)
-    print(f"FAIRNESS CHECK: flag rate by country at threshold {cheap[0]}")
+    print(f"Fairness check, flag rate by country at threshold {cheap[0]}")
     print(fairness_check(df, cheap[0]).round(3).to_string())
     print("\nThe foreign flag rate is far higher than the home rate. Here that tracks a real")
     print("difference in fraud rate, but country can proxy for nationality, so this belongs")
@@ -259,7 +259,7 @@ def report():
     print("before it went anywhere near production.")
 
     print("\n" + "=" * width)
-    print(f"RECOMMENDED: rules at threshold {cheap[0]}, model-ranked queue above p>=0.9.")
+    print(f"Recommended: rules at threshold {cheap[0]}, model-ranked queue above p>=0.9.")
     weekly = cheap[1] / (len(df) / 6000) / 8.6     # the sample spans ~8.6 weeks
     print(f"Expected cost about ${weekly:,.0f} a week at a $4 review cost, assuming the mix")
     print("of fraud stays as it is in this sample, which is exactly what an adversary changes.")

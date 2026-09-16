@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 6: Credit & Lending
+   Level 6: credit and lending
    ========================================================================= */
 FQ.registerLevel({
   id: 6,
-  codename: 'UNDERWRITING',
-  title: 'Credit, Loans & Amortization',
-  tagline: 'Where the payment number comes from, and why the first year barely touches the debt.',
+  codename: 'underwriting',
+  title: 'Credit, loans and amortization',
+  tagline: 'Where that monthly payment comes from, and why the first year barely dents the debt.',
   difficulty: 6,
   minutes: 150,
   tags: ['amortization', 'APR', 'credit risk'],
@@ -341,9 +341,10 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Loan Amortization & Early-Payoff Simulator',
-    story: 'A member is choosing between a 25-year and a 30-year mortgage, and wants to know whether overpaying $200 a month ' +
-           'beats investing it. Build the tool that answers both questions with numbers instead of opinions.',
+    title: 'Loan amortization and early-payoff simulator',
+    story: 'A member is torn between a 25-year and a 30-year mortgage, and wonders whether overpaying $200 a month ' +
+           'beats investing it instead. Build the tool that answers both questions with numbers rather than ' +
+           'opinions.',
     scope: 'Uses this level plus Levels 2 and 3: the payment formula, a while loop, pandas DataFrames, matplotlib, ' +
            'bisection, and f-string formatting. No new libraries.',
     requirements: [
@@ -364,7 +365,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 6: Loan Amortization & Early-Payoff Simulator"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\n\ndef monthly_payment(principal, annual_rate, years, payments_per_year=12):\n    """Equal payment that amortizes the loan to zero. Handle rate == 0."""\n    # TODO\n    pass\n\n\ndef schedule(principal, annual_rate, years, extra=0, payments_per_year=12):\n    """DataFrame: month, payment, interest, principal, balance.\n    Interest on the CURRENT balance. Cap the final payment. Bound the loop.\n    """\n    # TODO\n    pass\n\n\ndef summarise(df):\n    """Total paid, total interest, interest share, crossover month."""\n    # TODO\n    pass\n\n\ndef compare_terms(principal, annual_rate, terms=(15, 25, 30)):\n    # TODO\n    pass\n\n\ndef compare_overpayment(principal, annual_rate, years, extra):\n    # TODO\n    pass\n\n\ndef present_value(payment, annual_rate, years, payments_per_year=12):\n    # TODO\n    pass\n\n\ndef true_apr(principal, fees, annual_rate, years):\n    """Bisection search for the fee-inclusive APR."""\n    # TODO\n    pass\n\n\ndef dti(monthly_debt_payments, gross_monthly_income):\n    pass\n\n\ndef ltv(loan_amount, asset_value):\n    pass\n\n\ndef assess(payment, other_debts, income, loan, value):\n    pass\n\n\ndef plot_split(df):\n    """Interest vs principal per month, crossover marked."""\n    pass\n\n\ndef plot_balances(principal, annual_rate, years, extra):\n    """Standard vs overpaid balance on one chart."""\n    pass\n\n\ndef invest_instead(extra, invest_rate, years):\n    """Future value of investing the overpayment instead (Level 2 annuity)."""\n    pass\n\n\ndef report(principal=250000, annual_rate=0.055, years=30, extra=200, fees=400):\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest level 6: Loan amortization and early-payoff simulator"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\n\ndef monthly_payment(principal, annual_rate, years, payments_per_year=12):\n    """Equal payment that amortizes the loan to zero. Handle rate == 0."""\n    # TODO\n    pass\n\n\ndef schedule(principal, annual_rate, years, extra=0, payments_per_year=12):\n    """DataFrame: month, payment, interest, principal, balance.\n    Interest on the current balance. Cap the final payment. Bound the loop.\n    """\n    # TODO\n    pass\n\n\ndef summarise(df):\n    """Total paid, total interest, interest share, crossover month."""\n    # TODO\n    pass\n\n\ndef compare_terms(principal, annual_rate, terms=(15, 25, 30)):\n    # TODO\n    pass\n\n\ndef compare_overpayment(principal, annual_rate, years, extra):\n    # TODO\n    pass\n\n\ndef present_value(payment, annual_rate, years, payments_per_year=12):\n    # TODO\n    pass\n\n\ndef true_apr(principal, fees, annual_rate, years):\n    """Bisection search for the fee-inclusive APR."""\n    # TODO\n    pass\n\n\ndef dti(monthly_debt_payments, gross_monthly_income):\n    pass\n\n\ndef ltv(loan_amount, asset_value):\n    pass\n\n\ndef assess(payment, other_debts, income, loan, value):\n    pass\n\n\ndef plot_split(df):\n    """Interest vs principal per month, crossover marked."""\n    pass\n\n\ndef plot_balances(principal, annual_rate, years, extra):\n    """Standard vs overpaid balance on one chart."""\n    pass\n\n\ndef invest_instead(extra, invest_rate, years):\n    """Future value of investing the overpayment instead (Level 2 annuity)."""\n    pass\n\n\ndef report(principal=250000, annual_rate=0.055, years=30, extra=200, fees=400):\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
       'monthly_payment(20000, 0.07, 5) == 396.02 (to 2dp)',

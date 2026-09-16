@@ -175,8 +175,8 @@ export function Tutor({ open, onOpenChange, levelId }) {
         ${showSettings ? html`
           <${Box} className="tutor-settings" mb="3">
             <${Text} as="p" size="2" color="gray" mb="3">
-              The tutor answers from the built-in course knowledge base with no setup.
-              Connect a model for free-form conversation.
+              The tutor already answers from the course material, with no setup at all.
+              Connect a model if you would like a free-form conversation.
             <//>
             <${Text} as="label" size="1" color="gray">Chat endpoint (recommended)<//>
             <${TextField.Root} mt="1" mb="2" size="2" placeholder="/api/chat"

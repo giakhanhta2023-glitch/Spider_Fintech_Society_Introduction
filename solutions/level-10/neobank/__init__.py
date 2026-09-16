@@ -1,5 +1,5 @@
 """
-NeoBank Analytics: the FinQuest capstone package.
+NeoBank analytics: the FinQuest capstone package.
 
 Layering, strictly one-directional:
 

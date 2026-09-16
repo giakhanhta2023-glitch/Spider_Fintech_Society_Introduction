@@ -28,20 +28,20 @@ function parseHash() {
 
 /* ----------------------------------------------------------------- ticker */
 const TICKER = [
-  ['AUTH', 'approve is not settle'],
-  ['LEDGER', 'entries must sum to zero'],
-  ['MONEY', 'integers, never floats'],
-  ['RETRY', 'idempotency keys or double charges'],
+  ['Auth', 'approve is not settle'],
+  ['Ledger', 'entries must sum to zero'],
+  ['Money', 'integers, never floats'],
+  ['Retry', 'idempotency keys or double charges'],
   ['APR', 'includes the fees'],
   ['APY', 'includes the compounding'],
-  ['VOL', 'scales with sqrt(252)'],
-  ['SHARPE', 'return per unit of risk'],
-  ['DRAWDOWN', 'the number people feel'],
-  ['FRAUD', '98.2% accurate = caught nothing'],
+  ['Vol', 'scales with sqrt(252)'],
+  ['Sharpe', 'return per unit of risk'],
+  ['Drawdown', 'the number people feel'],
+  ['Fraud', '98.2% accurate = caught nothing'],
   ['KYC', 'verify before you hold funds'],
-  ['SECRETS', 'never in the repo'],
+  ['Secrets', 'never in the repo'],
   ['README', 'link, screenshot, limitations'],
-  ['RULE 1', '0.1 + 0.2 is not 0.3']
+  ['Rule 1', '0.1 + 0.2 is not 0.3']
 ];
 
 function Ticker() {
@@ -134,7 +134,7 @@ function App() {
   useEffect(() => {
     document.title = route.name === 'level' && FQ.level(route.id)
       ? `Level ${route.id}: ${FQ.level(route.id).title} · FinQuest`
-      : 'FinQuest: Fintech Training Arcade';
+      : 'FinQuest: fintech training arcade';
   }, [route]);
 
   const toast = useCallback((text, color = 'blue') => {

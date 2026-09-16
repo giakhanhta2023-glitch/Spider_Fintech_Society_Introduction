@@ -20,7 +20,7 @@ def compute_returns(prices):
 def annualize(returns, trading_days=TRADING_DAYS):
     """(annual mean return, annual volatility).
 
-    Volatility scales with the SQUARE ROOT of time: variance is what adds.
+    Volatility scales with the square root of time: variance is what adds.
     """
     ann_return = (1 + returns.mean()) ** trading_days - 1
     ann_vol = returns.std() * np.sqrt(trading_days)

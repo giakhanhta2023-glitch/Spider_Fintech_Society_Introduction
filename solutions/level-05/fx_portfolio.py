@@ -1,5 +1,5 @@
 """
-FinQuest Level 5: Multi-Currency Portfolio Valuation  (reference solution)
+FinQuest level 5: Multi-currency portfolio valuation  (reference solution)
 ===========================================================================
 Three layers of defence, in order:
 
@@ -209,7 +209,7 @@ def report(holdings=PORTFOLIO, base="USD", offline=False):
 
     width = 82
     print("=" * width)
-    print(f"{'SOCIETY TREASURY: VALUATION':^{width}}")
+    print(f"{'Society treasury valuation':^{width}}")
     print("=" * width)
     print(f"{'asset':<18}{'ccy':<6}{'units':>16}{'unit value':>14}{'value ' + base:>16}{'weight':>9}  {'source':<10}")
     print("-" * width)
@@ -219,13 +219,13 @@ def report(holdings=PORTFOLIO, base="USD", offline=False):
     for _, r in df[df["note"] != ""].iterrows():
         print(f"  note: {r['asset']}: {r['note']}")
     print("-" * width)
-    print(f"{'TOTAL':<18}{'':<6}{'':>16}{'':>14}{total:>16,.2f}{df['weight'].sum():>9.1%}")
+    print(f"{'Total':<18}{'':<6}{'':>16}{'':>14}{total:>16,.2f}{df['weight'].sum():>9.1%}")
     print("=" * width)
     print(f"FX source: {source}   (as of {as_of})")
     print(f"Crypto source: {crypto_source}")
     print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     if source.startswith("STALE"):
-        print("WARNING: these rates are a bundled snapshot, not live market data.")
+        print("Warning: these rates are a bundled snapshot, not live market data.")
     return df
 
 

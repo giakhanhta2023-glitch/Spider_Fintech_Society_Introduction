@@ -218,7 +218,7 @@ def gen_fraud():
 def gen_fx_snapshot():
     import json
     snapshot = {
-        "_note": "SYNTHETIC offline fallback for FinQuest Level 5. Not live market data.",
+        "_note": "SYNTHETIC offline fallback for FinQuest level 5. Not live market data.",
         "base": "USD",
         "date": "2025-09-01",
         "rates": {

@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 5: Market Data & APIs
+   LEVEL 5: Market data and APIs
    ========================================================================= */
 FQ.registerLevel({
   id: 5,
-  codename: 'MARKET FEED',
-  title: 'Market Data & APIs',
-  tagline: 'Pull live rates off the internet without your app falling over when the internet says no.',
+  codename: 'market feed',
+  title: 'Market data and APIs',
+  tagline: 'Pull live rates off the internet, and keep your app calm on the day the internet says no.',
   difficulty: 5,
   minutes: 150,
   tags: ['REST', 'JSON', 'requests', 'resilience'],
@@ -359,9 +359,10 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Multi-Currency Portfolio Valuation Service',
-    story: 'Society members hold cash in four currencies and a little crypto, and nobody can say what the treasury is worth. ' +
-           'Build the valuation service, and make it keep working on the conference wifi that blocks half the internet.',
+    title: 'Multi-currency portfolio valuation service',
+    story: 'The society holds cash in four currencies plus a little crypto, and right now nobody can say what the ' +
+           'treasury is worth. Build the valuation service, and make sure it still works on the conference wifi that ' +
+           'blocks half the internet.',
     scope: 'Uses this level plus Level 3 (pandas) and Level 2 (formatting): requests with timeout, retries, JSON, ' +
            'file caching, try/except, and a DataFrame for the output. No API key is required anywhere.',
     dataset: '{{RAW}}/data/level-05-fx-snapshot.json',
@@ -384,7 +385,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 5: Multi-Currency Portfolio Valuation"""\n\nimport json\nimport os\nimport time\nfrom datetime import datetime, timedelta\n\nimport pandas as pd\nimport requests\n\nFX_URL = "https://api.frankfurter.app/latest"\nCRYPTO_URL = "https://api.coingecko.com/api/v3/simple/price"\nSNAPSHOT_URL = "{{RAW}}/data/level-05-fx-snapshot.json"\nCACHE_FILE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\nPORTFOLIO = [\n    {"asset": "Operating cash", "currency": "USD", "units": 4200},\n    {"asset": "Event float",    "currency": "EUR", "units": 1500},\n    {"asset": "Sponsor escrow", "currency": "GBP", "units": 800},\n    {"asset": "Travel fund",    "currency": "JPY", "units": 250000},\n    {"asset": "Local reserve",  "currency": "VND", "units": 12000000},\n    {"asset": "Bitcoin",        "currency": "BTC", "units": 0.05},\n]\n\n\ndef fetch_json(url, params=None, attempts=3, timeout=10):\n    """GET JSON with retries and exponential backoff. Raise on final failure."""\n    # TODO\n    pass\n\n\ndef load_cache():\n    """Return the cached payload if it is younger than MAX_AGE, else None."""\n    # TODO\n    pass\n\n\ndef save_cache(payload):\n    # TODO\n    pass\n\n\ndef get_rates(base="USD"):\n    """Return (rates, source, as_of). Try cache -> live -> snapshot."""\n    # TODO\n    pass\n\n\ndef get_crypto_prices(ids=("bitcoin",), vs="usd"):\n    """Return {id: price}. Must fail soft, never crash the valuation."""\n    # TODO\n    pass\n\n\ndef convert(amount, frm, to, rates, base="USD"):\n    """Convert through the base currency. Handle frm == to."""\n    # TODO\n    pass\n\n\ndef value_portfolio(holdings, rates, crypto, base="USD"):\n    """Return a DataFrame with value_base and weight columns."""\n    # TODO\n    pass\n\n\ndef report(holdings=PORTFOLIO, base="USD"):\n    """Print the table, the total, and the data-source stamp."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest level 5: Multi-currency portfolio valuation"""\n\nimport json\nimport os\nimport time\nfrom datetime import datetime, timedelta\n\nimport pandas as pd\nimport requests\n\nFX_URL = "https://api.frankfurter.app/latest"\nCRYPTO_URL = "https://api.coingecko.com/api/v3/simple/price"\nSNAPSHOT_URL = "{{RAW}}/data/level-05-fx-snapshot.json"\nCACHE_FILE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\nPORTFOLIO = [\n    {"asset": "Operating cash", "currency": "USD", "units": 4200},\n    {"asset": "Event float",    "currency": "EUR", "units": 1500},\n    {"asset": "Sponsor escrow", "currency": "GBP", "units": 800},\n    {"asset": "Travel fund",    "currency": "JPY", "units": 250000},\n    {"asset": "Local reserve",  "currency": "VND", "units": 12000000},\n    {"asset": "Bitcoin",        "currency": "BTC", "units": 0.05},\n]\n\n\ndef fetch_json(url, params=None, attempts=3, timeout=10):\n    """GET JSON with retries and exponential backoff. Raise on final failure."""\n    # TODO\n    pass\n\n\ndef load_cache():\n    """Return the cached payload if it is younger than MAX_AGE, else None."""\n    # TODO\n    pass\n\n\ndef save_cache(payload):\n    # TODO\n    pass\n\n\ndef get_rates(base="USD"):\n    """Return (rates, source, as_of). Try cache -> live -> snapshot."""\n    # TODO\n    pass\n\n\ndef get_crypto_prices(ids=("bitcoin",), vs="usd"):\n    """Return {id: price}. Must fail soft, never crash the valuation."""\n    # TODO\n    pass\n\n\ndef convert(amount, frm, to, rates, base="USD"):\n    """Convert through the base currency. Handle frm == to."""\n    # TODO\n    pass\n\n\ndef value_portfolio(holdings, rates, crypto, base="USD"):\n    """Return a DataFrame with value_base and weight columns."""\n    # TODO\n    pass\n\n\ndef report(holdings=PORTFOLIO, base="USD"):\n    """Print the table, the total, and the data-source stamp."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
       'fetch_json against a 404 URL raises RuntimeError after its retries rather than hanging',

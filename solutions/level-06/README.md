@@ -1,6 +1,6 @@
-# Level 6: Credit, Loans & Amortization
+# Level 6: Credit, loans and amortization
 
-> **Loan Amortization & Early-Payoff Simulator** · build project · difficulty 6/10
+> **Loan amortization and early-payoff simulator** · build project · difficulty 6/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-A member is choosing between a 25-year and a 30-year mortgage, and wants to know whether overpaying $200 a month beats investing it. Build the tool that answers both questions with numbers instead of opinions.
+A member is torn between a 25-year and a 30-year mortgage, and wonders whether overpaying $200 a month beats investing it instead. Build the tool that answers both questions with numbers rather than opinions.
 
 **Scope:** Uses this level plus Levels 2 and 3: the payment formula, a while loop, pandas DataFrames, matplotlib, bisection, and f-string formatting. No new libraries.
 

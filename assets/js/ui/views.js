@@ -75,8 +75,8 @@ export function Home({ onAskTutor }) {
           Learn fintech by <span className="accent">building</span> it.
         <//>
         <${Text} as="p" size=${{ initial: '3', sm: '4' }} color="gray" mb="5" style=${{ maxWidth: '64ch' }}>
-          Every level gives you the knowledge, a hands-on tutorial, a 15-question drill with a full
-          answer key, and a build you can finish with nothing but what that level taught you.
+          Every level hands you the knowledge, a walkthrough you can follow along with, a 15-question
+          drill with a full answer key, and something to build using only what you just learned.
         <//>
         <${Flex} gap="3" wrap="wrap">
           <${Button} size="3" onClick=${() => navigate(`#/level/${current}`)}>
@@ -105,7 +105,7 @@ export function Home({ onAskTutor }) {
         <${Flex} justify="between" align="end" gap="3" mb="4" wrap="wrap">
           <${Heading} size="6">Mission map<//>
           <${Text} size="2" color="gray">
-            Clear the drill and ship the build to unlock the next level.
+            Pass the drill, ship the build, and the next level opens up.
           <//>
         <//>
         <ol className="ladder">
@@ -117,10 +117,10 @@ export function Home({ onAskTutor }) {
         <${Heading} size="6" mb="4">How a level works<//>
         <${Grid} columns=${{ initial: '1', sm: '2', md: '4' }} gap="3">
           ${[
-            ['Learn', 'Concepts, worked numbers, and the reasons behind them. No filler.'],
-            ['Tutorial', 'Hands-on steps. Every tool the build needs is introduced here and nowhere else.'],
+            ['Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],
+            ['Tutorial', 'Follow along step by step. Everything the build needs is introduced right here.'],
             ['Drill', `15 questions with instant explanations. ${CFG.quiz.passMark}/15 unlocks the build.`],
-            ['Build', 'A project scoped to exactly what you know: with a full solution key in the repo.']
+            ['Build', 'Something to build using only what you know, with a full solution waiting if you get stuck.']
           ].map(([title, body], i) => html`
             <${Card} key=${i} size="3" variant="surface">
               <${Text} size="1" color="blue" className="figure">0${i + 1}<//>
@@ -154,7 +154,7 @@ export function Glossary() {
         <//>
         <${Heading} size=${{ initial: '6', sm: '8' }} mt="2" mb="2">Glossary<//>
         <${Text} as="p" size="3" color="gray">
-          Every term the course defines, in one place. ${terms.length} entries.
+          Every term the course explains, gathered in one place. ${terms.length} of them so far.
         <//>
       <//>
 
@@ -163,7 +163,7 @@ export function Glossary() {
 
       ${shown.length === 0
         ? html`<${Callout.Root} color="gray" variant="surface">
-            <${Callout.Text}>Nothing matches that. Try a shorter word, or ask the tutor.<//>
+            <${Callout.Text}>Nothing matches that one. Try a shorter word, or just ask the tutor.<//>
           <//>`
         : html`
           <${Grid} columns=${{ initial: '1', sm: '2' }} gap="3">
@@ -203,7 +203,7 @@ export function Dossier({ onReset }) {
         <${Heading} size=${{ initial: '6', sm: '8' }} mt="2" mb="2">Your dossier<//>
         <${Flex} gap="2" align="center" wrap="wrap">
           <${Badge} color="amber" variant="soft" radius="full" size="2">${store.rank()}<//>
-          <${Text} size="2" color="gray">stored in this browser only<//>
+          <${Text} size="2" color="gray">kept in this browser only, never uploaded<//>
         <//>
       <//>
 
@@ -280,8 +280,8 @@ export function Dossier({ onReset }) {
       <${Card} size="3" variant="surface">
         <${Heading} size="3" mb="1">Danger zone<//>
         <${Text} as="p" size="2" color="gray" mb="3">
-          Wipes XP, badges, scores and checklists on this device. Your notebooks and GitHub repos
-          are untouched.
+          This wipes your XP, badges, scores and checklists on this device. Your notebooks and GitHub
+          repos are left alone.
         <//>
         <${AlertDialog.Root} open=${confirming} onOpenChange=${setConfirming}>
           <${AlertDialog.Trigger}>

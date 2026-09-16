@@ -1,5 +1,5 @@
 """
-FinQuest Level 7: Portfolio Risk Dashboard  (reference solution)
+FinQuest level 7: Portfolio risk dashboard  (reference solution)
 =================================================================
 Returns, volatility, Sharpe, drawdown, correlation, VaR and expected
 shortfall over three years of daily prices for four fictional assets.
@@ -51,7 +51,7 @@ def compute_returns(prices):
 def annualize(returns, trading_days=TRADING_DAYS):
     """(annual mean return, annual volatility).
 
-    Volatility scales with the SQUARE ROOT of time: variance is what adds.
+    Volatility scales with the square root of time: variance is what adds.
     """
     ann_return = (1 + returns.mean()) ** trading_days - 1
     ann_vol = returns.std() * np.sqrt(trading_days)
@@ -170,11 +170,11 @@ def report():
     width = 92
 
     print("=" * width)
-    print(f"{'PORTFOLIO RISK DASHBOARD':^{width}}")
+    print(f"{'Portfolio risk dashboard':^{width}}")
     print(f"{str(prices.index.min().date()) + '  to  ' + str(prices.index.max().date()) + f'   ({len(prices)} trading days)':^{width}}")
     print("=" * width)
 
-    print("\nPER ASSET")
+    print("\nPer asset")
     table = asset_table(prices)
     print(f"{'asset':<10}{'total':>10}{'ann mean':>11}{'CAGR':>9}{'drag':>9}{'vol':>9}{'Sharpe':>9}{'max DD':>10}")
     print("-" * width)
@@ -194,7 +194,7 @@ def report():
     print(f"\n{least} has the lowest average correlation. It is doing most of the diversifying.")
 
     print("\n" + "-" * width)
-    print("WEIGHTINGS COMPARED")
+    print("Weightings compared")
     print(f"{'mix':<18}{'return':>10}{'vol':>10}{'Sharpe':>10}{'max DD':>10}{'VaR95':>10}{'ES95':>10}")
     print("-" * width)
     results = {}
@@ -205,14 +205,14 @@ def report():
               f"{s['max_dd']:>10.1%}{s['var95']:>10.2%}{s['shortfall95']:>10.2%}")
 
     print("\n" + "-" * width)
-    print("DIVERSIFICATION (equal weight)")
+    print("Diversification (equal weight)")
     d = diversification_check(returns, WEIGHTINGS["equal weight"])
     print(f"{'average of the four vols':<34}{d['weighted_average_vol']:>12.1%}")
     print(f"{'actual portfolio volatility':<34}{d['portfolio_vol']:>12.1%}")
     print(f"{'risk removed by mixing them':<34}{d['benefit']:>12.1%}")
 
     print("\n" + "-" * width)
-    print("CONCLUSION")
+    print("Conclusion")
     best = max(results.values(), key=lambda s: s["sharpe"])
     print(f"On Sharpe alone the {best['label']} mix wins ({best['sharpe']:.2f}), but it also carries a "
           f"{best['max_dd']:.0%} maximum drawdown.")

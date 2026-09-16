@@ -1,5 +1,5 @@
 """
-FinQuest Level 3: Personal Spending Analyzer  (reference solution)
+FinQuest level 3: Personal spending analyzer  (reference solution)
 ===================================================================
 Uses only Level 3 material: pandas read_csv, boolean masks, groupby,
 sort_values, value_counts, the .dt accessor, matplotlib bar charts, and
@@ -148,23 +148,23 @@ def report(df):
     width = 58
 
     print("=" * width)
-    print(f"{'SIX-MONTH MONEY REPORT':^{width}}")
+    print(f"{'Six-month money report':^{width}}")
     print(f"{str(df['date'].min().date()) + '  to  ' + str(df['date'].max().date()):^{width}}")
     print("=" * width)
     print(f"{'Income':<30}{n['income']:>28,.2f}")
-    print(f"{'Spending (excl. Savings)':<30}{n['spend']:>28,.2f}")
+    print(f"{'Spending (excl. savings)':<30}{n['spend']:>28,.2f}")
     print(f"{'Moved to savings':<30}{n['transferred_to_savings']:>28,.2f}")
     print(f"{'Net cash flow':<30}{n['net_cash_flow']:>28,.2f}")
     print(f"{'Savings rate':<30}{n['savings_rate']:>28.1%}")
 
     print("\n" + "-" * width)
-    print("SPENDING BY CATEGORY")
+    print("Spending by category")
     for name, value in by_category(df).items():
         share = value / by_category(df).sum()
         print(f"  {name:<26}{value:>14,.2f}{share:>12.1%}")
 
     print("\n" + "-" * width)
-    print("MONTH BY MONTH")
+    print("Month by month")
     monthly = by_month(df)
     print(f"  {'month':<10}{'income':>14}{'spend':>14}{'net':>14}")
     for month, row in monthly.iterrows():
@@ -172,12 +172,12 @@ def report(df):
         print(f"  {str(month):<10}{row['income']:>14,.2f}{row['spend']:>14,.2f}{row['net']:>14,.2f}{flag}")
 
     print("\n" + "-" * width)
-    print("TOP MERCHANTS")
+    print("Top merchants")
     for name, value in top_merchants(df, 8).items():
         print(f"  {name:<30}{value:>14,.2f}")
 
     print("\n" + "-" * width)
-    print("RECURRING CHARGES")
+    print("Recurring charges")
     rec = find_recurring(df)
     subs = rec[rec["cancellable"]]
     fixed = rec[~rec["cancellable"]]
@@ -185,14 +185,14 @@ def report(df):
     for _, r in subs.iterrows():
         print(f"    {r['description']:<24}{r['abs_amount']:>9,.2f} x{int(r['times'])}"
               f"{r['yearly_cost']:>12,.2f}/yr")
-    print(f"    {'TOTAL':<24}{subs['abs_amount'].sum():>9,.2f}/mo"
+    print(f"    {'Total':<24}{subs['abs_amount'].sum():>9,.2f}/mo"
           f"{subs['yearly_cost'].sum():>15,.2f}/yr")
     print("  Fixed commitments")
     for _, r in fixed.iterrows():
         print(f"    {r['description']:<24}{r['abs_amount']:>9,.2f} x{int(r['times'])}")
 
     print("\n" + "-" * width)
-    print("SPEND BY DAY OF WEEK")
+    print("Spend by day of week")
     week = weekday_pattern(df)
     for day, value in week.items():
         bar = "#" * int(value / 60)
@@ -208,7 +208,7 @@ def findings(df):
     subs = rec[rec["cancellable"]]
     cats = by_category(df, exclude_savings=True)
 
-    print("\nFINDINGS")
+    print("\nFindings")
     print(f"1. The savings rate is {n['savings_rate']:.1%}: healthy, but only "
           f"${n['transferred_to_savings']:,.0f} of the ${n['saved']:,.0f} kept back actually reached the "
           f"savings account. Automate a transfer for the rest so it is not spent by accident.")

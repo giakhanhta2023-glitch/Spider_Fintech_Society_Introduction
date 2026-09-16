@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 2: The Time Value of Money
+   LEVEL 2: The time value of money
    ========================================================================= */
 FQ.registerLevel({
   id: 2,
-  codename: 'COMPOUNDING',
-  title: 'The Time Value of Money',
-  tagline: 'Interest, compounding, and the single formula the whole industry is built on.',
+  codename: 'compounding',
+  title: 'The time value of money',
+  tagline: 'Interest, compounding, and the one formula the whole industry leans on. It is friendlier than it looks.',
   difficulty: 2,
   minutes: 90,
   tags: ['interest', 'compounding', 'python basics'],
@@ -329,10 +329,11 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Compound Growth Engine',
-    story: 'The Spider Fintech Society is building a savings coach. Members enter what they have, what they can add each ' +
-           'month, and what they are aiming for. Your engine answers three questions: how much will I have, when do I hit my ' +
-           'goal, and what is it actually worth after inflation.',
+    title: 'Compound growth engine',
+    story: 'The society is putting together a savings coach, and you are writing the engine behind it. Members tell ' +
+           'it what they have, what they can add each month, and what they are saving for. Your job is to answer ' +
+           'three questions for them: how much will I have, when do I reach my goal, and what is that really worth ' +
+           'once inflation has had its share.',
     scope: 'Everything you need is in this level: arithmetic with **, functions with defaults, for and while loops, ' +
            'if statements, f-string formatting. No libraries, no file reading, no classes.',
     requirements: [
@@ -351,7 +352,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 2: Compound Growth Engine\nAuthor: <your name>\n"""\n\ndef future_value(principal, annual_rate, years, compounds_per_year=12):\n    """Future value of a lump sum. FV = P(1 + r/n)^(nt)"""\n    # TODO\n    pass\n\n\ndef contributions_value(payment, annual_rate, years, compounds_per_year=12):\n    """Future value of regular end-of-period payments.\n    Remember the zero-rate case: with no interest the answer is payment * periods.\n    """\n    # TODO\n    pass\n\n\ndef plan_value(principal, payment, annual_rate, years, compounds_per_year=12):\n    """Starting balance + contributions."""\n    # TODO\n    pass\n\n\ndef growth_table(principal, payment, annual_rate, years):\n    """Print year | balance | deposited | interest, aligned."""\n    # TODO\n    pass\n\n\ndef years_to_target(principal, payment, annual_rate, target, max_years=100):\n    """First whole year the balance reaches target, else None."""\n    # TODO\n    pass\n\n\ndef apy(apr, compounds_per_year):\n    """Effective annual yield."""\n    # TODO\n    pass\n\n\ndef real_value(amount, inflation, years):\n    """Purchasing power of a future amount in today\'s money."""\n    # TODO\n    pass\n\n\ndef summary(principal, payment, annual_rate, years, target, inflation=0.03):\n    """Print the full report."""\n    # TODO\n    pass\n\n\n# --- scenarios -------------------------------------------------------------\nsummary(principal=2000, payment=200, annual_rate=0.07, years=20, target=50000)\n'
+      code: '"""FinQuest level 2: Compound growth engine\nAuthor: <your name>\n"""\n\ndef future_value(principal, annual_rate, years, compounds_per_year=12):\n    """Future value of a lump sum. FV = P(1 + r/n)^(nt)"""\n    # TODO\n    pass\n\n\ndef contributions_value(payment, annual_rate, years, compounds_per_year=12):\n    """Future value of regular end-of-period payments.\n    Remember the zero-rate case: with no interest the answer is payment * periods.\n    """\n    # TODO\n    pass\n\n\ndef plan_value(principal, payment, annual_rate, years, compounds_per_year=12):\n    """Starting balance + contributions."""\n    # TODO\n    pass\n\n\ndef growth_table(principal, payment, annual_rate, years):\n    """Print year | balance | deposited | interest, aligned."""\n    # TODO\n    pass\n\n\ndef years_to_target(principal, payment, annual_rate, target, max_years=100):\n    """First whole year the balance reaches target, else None."""\n    # TODO\n    pass\n\n\ndef apy(apr, compounds_per_year):\n    """Effective annual yield."""\n    # TODO\n    pass\n\n\ndef real_value(amount, inflation, years):\n    """Purchasing power of a future amount in today\'s money."""\n    # TODO\n    pass\n\n\ndef summary(principal, payment, annual_rate, years, target, inflation=0.03):\n    """Print the full report."""\n    # TODO\n    pass\n\n\n# --- scenarios -------------------------------------------------------------\nsummary(principal=2000, payment=200, annual_rate=0.07, years=20, target=50000)\n'
     },
     tests: [
       'future_value(1000, 0.08, 10, 1) is 2158.92 (to 2dp)',
@@ -367,7 +368,7 @@ FQ.registerLevel({
       { pts: 30, t: 'Correct math', d: 'All eight functions return the values in the test list, including the zero-rate and unreachable-goal edge cases.' },
       { pts: 20, t: 'Readable output', d: 'Aligned table columns, consistent money and percentage formatting, a report a non-programmer could read.' },
       { pts: 20, t: 'Structure', d: 'Small single-purpose functions with docstrings and sensible default arguments; no copy-pasted blocks.' },
-      { pts: 15, t: 'Scenarios & explanation', d: 'Three scenarios run, plus your own written explanation of accelerating interest.' },
+      { pts: 15, t: 'Scenarios and explanation', d: 'Three scenarios run, plus your own written explanation of accelerating interest.' },
       { pts: 15, t: 'Shipped', d: 'Notebook committed to your GitHub portfolio repo with a clear filename.' }
     ],
     stretch: [

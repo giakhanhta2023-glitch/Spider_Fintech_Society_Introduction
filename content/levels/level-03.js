@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 3: Reading the Money: transaction data with pandas
+   LEVEL 3: Reading the money: transaction data with pandas
    ========================================================================= */
 FQ.registerLevel({
   id: 3,
-  codename: 'TRANSACTIONS',
-  title: 'Reading the Money',
-  tagline: 'Turn 233 raw transaction rows into the five numbers a person actually needs.',
+  codename: 'transactions',
+  title: 'Reading the money',
+  tagline: 'Take 233 messy transaction rows and turn them into the five numbers someone actually wants to know.',
   difficulty: 3,
   minutes: 120,
   tags: ['pandas', 'data cleaning', 'analytics'],
@@ -123,7 +123,7 @@ FQ.registerLevel({
         t: 'Filter rows with boolean masks',
         blocks: [
           { p: 'A comparison on a column produces a True/False Series. Put it inside `df[...]` to keep only the True rows.' },
-          { code: 'spend = df[df["amount"] < 0].copy()          # money out only\nincome = df[df["category"] == "income"]      # NOT amount > 0: refunds!\n\nprint(len(spend), "outgoing rows")\nprint(f"Income:  ${income[\'amount\'].sum():,.2f}")\nprint(f"Outgoing: ${spend[\'amount\'].sum():,.2f}")', lang: 'python' },
+          { code: 'spend = df[df["amount"] < 0].copy()          # money out only\nincome = df[df["category"] == "income"]      # not amount > 0, because refunds are positive too\n\nprint(len(spend), "outgoing rows")\nprint(f"Income:  ${income[\'amount\'].sum():,.2f}")\nprint(f"Outgoing: ${spend[\'amount\'].sum():,.2f}")', lang: 'python' },
           { p: 'Combine conditions with `&` (and) / `|` (or), and wrap each condition in brackets: Python\'s operator ' +
                'precedence will bite you otherwise:' },
           { code: 'big_dining = df[(df["category"] == "dining") & (df["amount"] < -30)]\nprint(big_dining[["date", "description", "amount"]].to_string(index=False))', lang: 'python' }
@@ -173,7 +173,7 @@ FQ.registerLevel({
       {
         t: 'Format a report humans will read',
         blocks: [
-          { code: 'income_total = df[df["category"] == "income"]["amount"].sum()\nspend_total = spend[spend["category"] != "savings"]["abs_amount"].sum()\nsaved = income_total - spend_total\nrate = saved / income_total\n\nprint("=" * 46)\nprint(f"{\'SIX-MONTH MONEY REPORT\':^46}")\nprint("=" * 46)\nprint(f"Income          ${income_total:>14,.2f}")\nprint(f"Spending        ${spend_total:>14,.2f}")\nprint(f"Saved           ${saved:>14,.2f}")\nprint(f"Savings rate    {rate:>14.1%}")', lang: 'python' },
+          { code: 'income_total = df[df["category"] == "income"]["amount"].sum()\nspend_total = spend[spend["category"] != "savings"]["abs_amount"].sum()\nsaved = income_total - spend_total\nrate = saved / income_total\n\nprint("=" * 46)\nprint(f"{\'Six-month money report\':^46}")\nprint("=" * 46)\nprint(f"Income          ${income_total:>14,.2f}")\nprint(f"Spending        ${spend_total:>14,.2f}")\nprint(f"Saved           ${saved:>14,.2f}")\nprint(f"Savings rate    {rate:>14.1%}")', lang: 'python' },
           { p: '`:^46` centres text in 46 characters, `:>14,.2f` right-aligns money. Plain text reports like this are what ' +
                'gets pasted into a chat channel, so make them tidy.' }
         ],
@@ -349,9 +349,10 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Personal Spending Analyzer',
-    story: 'A society member hands you six months of their bank export and one question: "where is my money going?" ' +
-           'Build the analyzer that answers it, and finds them at least one thing worth cancelling.',
+    title: 'Personal spending analyzer',
+    story: 'A member drops six months of their bank export on your desk with one question: "where is my money ' +
+           'actually going?" Build the analyzer that answers it, and see if you can find them at least one thing ' +
+           'worth cancelling.',
     scope: 'Uses only this level plus Level 2: pandas (read_csv, masks, groupby, sort_values, value_counts, .dt, .abs), ' +
            'matplotlib bar charts, f-string formatting, and functions. No machine learning, no APIs, no classes.',
     dataset: '{{RAW}}/data/level-03-transactions.csv',
@@ -372,7 +373,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 3: Personal Spending Analyzer"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nURL = "{{RAW}}/data/level-03-transactions.csv"\n\n\ndef load_data(url=URL):\n    """Read the CSV and add abs_amount, month and weekday columns."""\n    # TODO: parse_dates, then build the helper columns\n    pass\n\n\ndef headline_numbers(df):\n    """Return a dict: income, spend (excl. Savings), net, savings_rate."""\n    # TODO\n    pass\n\n\ndef by_category(df):\n    """Spend per category, largest first."""\n    # TODO\n    pass\n\n\ndef by_month(df):\n    """Spend and income per month."""\n    # TODO\n    pass\n\n\ndef top_merchants(df, n=10):\n    """Biggest merchants by total spend."""\n    # TODO\n    pass\n\n\ndef find_recurring(df, min_times=3):\n    """Merchants charging an identical amount at least min_times.\n    Include a yearly_cost column and a flag for cancellable vs fixed.\n    """\n    # TODO\n    pass\n\n\ndef weekday_pattern(df):\n    """Total spend by day of week."""\n    # TODO\n    pass\n\n\ndef plot_categories(df):\n    """Sorted horizontal bar chart, savings transfers excluded."""\n    # TODO\n    pass\n\n\ndef report(df):\n    """Print the whole analysis as an aligned text report."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    data = load_data()\n    report(data)\n    plot_categories(data)\n'
+      code: '"""FinQuest level 3: Personal spending analyzer"""\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nURL = "{{RAW}}/data/level-03-transactions.csv"\n\n\ndef load_data(url=URL):\n    """Read the CSV and add abs_amount, month and weekday columns."""\n    # TODO: parse_dates, then build the helper columns\n    pass\n\n\ndef headline_numbers(df):\n    """Return a dict: income, spend (excl. savings), net, savings_rate."""\n    # TODO\n    pass\n\n\ndef by_category(df):\n    """Spend per category, largest first."""\n    # TODO\n    pass\n\n\ndef by_month(df):\n    """Spend and income per month."""\n    # TODO\n    pass\n\n\ndef top_merchants(df, n=10):\n    """Biggest merchants by total spend."""\n    # TODO\n    pass\n\n\ndef find_recurring(df, min_times=3):\n    """Merchants charging an identical amount at least min_times.\n    Include a yearly_cost column and a flag for cancellable vs fixed.\n    """\n    # TODO\n    pass\n\n\ndef weekday_pattern(df):\n    """Total spend by day of week."""\n    # TODO\n    pass\n\n\ndef plot_categories(df):\n    """Sorted horizontal bar chart, savings transfers excluded."""\n    # TODO\n    pass\n\n\ndef report(df):\n    """Print the whole analysis as an aligned text report."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    data = load_data()\n    report(data)\n    plot_categories(data)\n'
     },
     tests: [
       'The DataFrame has 233 rows and 6 original columns',
@@ -390,7 +391,7 @@ FQ.registerLevel({
       { pts: 20, t: 'Recurring detection', d: 'Finds all repeated identical charges and separates cancellable from fixed.' },
       { pts: 20, t: 'Clean pandas', d: 'Masks and groupby instead of loops, .copy() when filtering, no SettingWithCopyWarning, no hardcoded totals.' },
       { pts: 20, t: 'Communication', d: 'Readable text report, one honest labelled chart, three findings each backed by a number and a recommendation.' },
-      { pts: 15, t: 'Shipped', d: 'Notebook in your GitHub portfolio repo, runs top to bottom without errors after Restart & Run All.' }
+      { pts: 15, t: 'Shipped', d: 'Notebook in your GitHub portfolio repo, runs top to bottom without errors after Restart and Run All.' }
     ],
     stretch: [
       'Flag any month where spending exceeded income and print by how much',

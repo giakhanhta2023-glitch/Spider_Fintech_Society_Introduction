@@ -103,8 +103,8 @@ function Tutorial({ level }) {
         <${Callout.Root} color="blue" variant="surface" mt="3">
           <${Callout.Text}>
             <span className="note-label">Promise</span>
-            Everything the project needs is taught here. If the build asks for something this tutorial
-            did not cover, that is a bug in the course, not in you.
+            Everything the build needs is taught right here. If it ever asks for something this tutorial
+            did not cover, that is our bug, not yours.
           <//>
         <//>
       <//>
@@ -220,8 +220,8 @@ function SolutionKey({ path, level }) {
       <${Callout.Root} color="amber" variant="surface" mb="3">
         <${Callout.Text}>
           <span className="note-label">Use it properly</span>
-          Attempt it yourself, ask the tutor for a hint, then read only the part you are stuck on,
-          and retype the fix rather than pasting it.
+          Have a proper go first, ask the tutor for a hint, then read only the part you are stuck on.
+          Retype the fix rather than pasting it, it sticks much better that way.
         <//>
       <//>
       <${Flex} gap="3" wrap="wrap">
@@ -238,8 +238,8 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
     return html`
       <${Callout.Root} color="amber" variant="surface">
         <${Callout.Text}>
-          The build unlocks at <strong>${CFG.quiz.passMark}/${level.quiz.length}</strong> on the drill.
-          Best so far: ${state.quizBest}.
+          The build opens once you reach <strong>${CFG.quiz.passMark}/${level.quiz.length}</strong> on the drill.
+          Your best so far is ${state.quizBest}.
           ${' '}<${Link} href=${`#/level/${level.id}/drill`}>Go to the drill<//>
         <//>
       <//>`;
@@ -282,8 +282,8 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
         <${Card} size="3" variant="surface">
           <${Heading} size="3" mb="1">Starter file<//>
           <${Text} as="p" size="2" color="gray" mb="2">
-            Copy this into your notebook and fill in the TODOs. The structure is a suggestion,
-            not a cage.
+            Copy this into your notebook and fill in the TODOs. Treat the structure as a suggestion,
+            not a rule.
           <//>
           <${CodeBlock} code=${project.starter.code} lang=${project.starter.lang}
             label=${project.starter.lang === 'text' ? 'project layout' : 'starter'} />
@@ -292,8 +292,8 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
         <${Card} size="3" variant="surface">
           <${Heading} size="3" mb="1">Self-check<//>
           <${Text} as="p" size="2" color="gray" mb="3">
-            Your code should produce exactly these results. If a number disagrees,
-            the difference is the bug.
+            Your code should land on exactly these numbers. If one disagrees, that difference is your bug,
+            and it is usually a quick fix.
           <//>
           <${Flex} direction="column" gap="2">
             ${project.tests.map((t, i) => html`
@@ -346,10 +346,10 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
               <${Button} variant="soft" color="gray" onClick=${onReopen}>Reopen it<//>
             <//>`
                 : html`
-            <${Heading} size="4">Finished building?<//>
+            <${Heading} size="4">All done building?<//>
             <${Text} size="2" color="gray" align="center" style=${{ maxWidth: '52ch' }}>
-              Mark it complete once your code runs, the self-checks pass, and it is committed to
-              your portfolio repo. This unlocks the next level.
+              Mark it complete once your code runs, the self-checks pass, and it is safely in your portfolio
+              repo. That opens the next level.
             <//>
             <${Button} size="3" onClick=${onComplete}>
               Mark ${project ? 'project' : 'setup'} complete · +${CFG.xp.projectComplete} XP
@@ -382,9 +382,9 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
         <${Heading} size=${{ initial: '6', sm: '7' }}>${level.title}<//>
         <${Callout.Root} color="amber" variant="surface">
           <${Callout.Text}>
-            This level is locked. Clear
+            This one is still locked. Finish
             ${' '}<${Link} href=${`#/level/${level.id - 1}`}>level ${level.id - 1}<//>
-            ${' '} (pass its drill and mark its build complete) to open it.
+            ${' '} (pass its drill, mark its build complete) and it opens straight away.
           <//>
         <//>
       <//>`;
@@ -406,7 +406,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
       (res.badges || []).forEach((b, i) =>
         setTimeout(() => toast(`Badge unlocked: ${b.name}`, 'violet'), 700 * (i + 1)));
       if (level.id === 10) {
-        setTimeout(() => toast('Course complete. You are a Chief Fintech Officer.', 'grass'), 1400);
+        setTimeout(() => toast('Course complete. You are a Chief fintech officer.', 'grass'), 1400);
       }
     }
     refresh();

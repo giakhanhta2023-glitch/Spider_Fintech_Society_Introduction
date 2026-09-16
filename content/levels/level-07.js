@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 7: Risk & Return
+   LEVEL 7: Risk and return
    ========================================================================= */
 FQ.registerLevel({
   id: 7,
-  codename: 'RISK DESK',
-  title: 'Risk & Return',
-  tagline: 'The asset with the best return in this dataset also lost 89% of its value. Learn to say both things at once.',
+  codename: 'risk desk',
+  title: 'Risk and return',
+  tagline: 'The best performer here also lost 89% of its value along the way. Let us learn to say both things at once.',
   difficulty: 7,
   minutes: 180,
   tags: ['returns', 'volatility', 'Sharpe', 'drawdown'],
@@ -377,9 +377,10 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Portfolio Risk Dashboard',
-    story: 'The society investment club holds four assets and argues about them monthly with no data. Build the risk report ' +
-           'that settles it: what each asset returned, what it cost in risk, and whether the mix is better than its parts.',
+    title: 'Portfolio risk dashboard',
+    story: 'The investment club holds four assets and argues about them every month with no data to hand. Build the ' +
+           'risk report that settles it: what each one returned, what it cost in risk along the way, and whether the ' +
+           'mix beats its parts.',
     scope: 'Uses this level plus Level 3 (pandas) and Level 2 (formatting): pct_change, cumprod, cummax, std, corr, dot, ' +
            'quantile, and matplotlib. Numpy is used only for sqrt and arrays.',
     dataset: '{{RAW}}/data/level-07-prices.csv',
@@ -403,7 +404,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 7: Portfolio Risk Dashboard"""\n\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nURL = "{{RAW}}/data/level-07-prices.csv"\nTRADING_DAYS = 252\nRISK_FREE = 0.03          # state your assumption, always\n\n\ndef load_prices(url=URL):\n    """Date-indexed price DataFrame."""\n    # TODO\n    pass\n\n\ndef compute_returns(prices):\n    """Daily simple returns, first row dropped."""\n    # TODO\n    pass\n\n\ndef annualize(returns, trading_days=TRADING_DAYS):\n    """Return (ann_mean_return, ann_volatility). Remember sqrt for vol."""\n    # TODO\n    pass\n\n\ndef cagr(prices):\n    """Compounded annual growth rate from first to last price."""\n    # TODO\n    pass\n\n\ndef sharpe(ann_return, ann_vol, risk_free=RISK_FREE):\n    # TODO\n    pass\n\n\ndef drawdown_series(returns_series):\n    """Drawdown from the running peak, as a negative fraction."""\n    # TODO\n    pass\n\n\ndef max_drawdown(returns_series):\n    # TODO\n    pass\n\n\ndef asset_table(prices):\n    """One row per asset: total, ann_mean, cagr, vol, sharpe, max_dd."""\n    # TODO\n    pass\n\n\ndef correlation_matrix(returns):\n    # TODO\n    pass\n\n\ndef portfolio_returns(returns, weights):\n    """Weighted daily returns. Assert the weights sum to 1."""\n    # TODO\n    pass\n\n\ndef portfolio_stats(returns, weights, label="portfolio"):\n    """Return + vol + sharpe + max_dd + VaR95 + VaR99 + expected shortfall."""\n    # TODO\n    pass\n\n\ndef diversification_check(returns, weights):\n    """Portfolio vol vs weighted average of individual vols."""\n    # TODO\n    pass\n\n\ndef plot_dashboard(returns):\n    """Equity curves above, drawdowns below, shared x-axis."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest level 7: Portfolio risk dashboard"""\n\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nURL = "{{RAW}}/data/level-07-prices.csv"\nTRADING_DAYS = 252\nRISK_FREE = 0.03          # state your assumption, always\n\n\ndef load_prices(url=URL):\n    """Date-indexed price DataFrame."""\n    # TODO\n    pass\n\n\ndef compute_returns(prices):\n    """Daily simple returns, first row dropped."""\n    # TODO\n    pass\n\n\ndef annualize(returns, trading_days=TRADING_DAYS):\n    """Return (ann_mean_return, ann_volatility). Remember sqrt for vol."""\n    # TODO\n    pass\n\n\ndef cagr(prices):\n    """Compounded annual growth rate from first to last price."""\n    # TODO\n    pass\n\n\ndef sharpe(ann_return, ann_vol, risk_free=RISK_FREE):\n    # TODO\n    pass\n\n\ndef drawdown_series(returns_series):\n    """Drawdown from the running peak, as a negative fraction."""\n    # TODO\n    pass\n\n\ndef max_drawdown(returns_series):\n    # TODO\n    pass\n\n\ndef asset_table(prices):\n    """One row per asset: total, ann_mean, cagr, vol, sharpe, max_dd."""\n    # TODO\n    pass\n\n\ndef correlation_matrix(returns):\n    # TODO\n    pass\n\n\ndef portfolio_returns(returns, weights):\n    """Weighted daily returns. Assert the weights sum to 1."""\n    # TODO\n    pass\n\n\ndef portfolio_stats(returns, weights, label="portfolio"):\n    """Return + vol + sharpe + max_dd + VaR95 + VaR99 + expected shortfall."""\n    # TODO\n    pass\n\n\ndef diversification_check(returns, weights):\n    """Portfolio vol vs weighted average of individual vols."""\n    # TODO\n    pass\n\n\ndef plot_dashboard(returns):\n    """Equity curves above, drawdowns below, shared x-axis."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
       'prices.shape is (782, 4); returns.shape is (781, 4)',

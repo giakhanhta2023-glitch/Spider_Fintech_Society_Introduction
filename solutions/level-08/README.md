@@ -1,6 +1,6 @@
-# Level 8: Fraud Detection & Decision Thresholds
+# Level 8: Fraud detection and decision thresholds
 
-> **Fraud Scoring Engine** · build project · difficulty 8/10
+> **Fraud scoring engine** · build project · difficulty 8/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The society's partner fintech is losing money to card fraud and blocking too many real customers trying to stop it. Build the scoring engine, prove what it costs at each setting, and recommend a threshold you can defend in a meeting.
+A partner fintech is losing money to card fraud, and blocking far too many real customers while trying to stop it. Build the scoring engine, show what each setting actually costs, and recommend a threshold you would be happy to defend in a meeting.
 
 **Scope:** Uses this level plus Level 3 (pandas) and Level 7 (evaluation thinking): feature engineering, a rule engine, sklearn LogisticRegression, train_test_split, StandardScaler, and the metrics shown in the tutorial.
 

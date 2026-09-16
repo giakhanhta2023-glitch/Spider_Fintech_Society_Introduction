@@ -5,7 +5,7 @@
   "description": "FinQuest - a 10-level project-based fintech training game with an AI tutor",
   "type": "module",
   "scripts": {
-    "start": "python -m http.server 8000",
+    "start": "python serve.py",
     "data": "python data/generate_datasets.py"
   },
   "dependencies": {

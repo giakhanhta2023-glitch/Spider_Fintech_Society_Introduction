@@ -1,6 +1,6 @@
-# Level 4: Payments & the Double-Entry Ledger
+# Level 4: Payments and the double-entry ledger
 
-> **Mini Ledger & Payment Engine** · build project · difficulty 4/10
+> **Mini ledger and payment engine** · build project · difficulty 4/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The society is launching an internal wallet for event tickets and merch. You are writing the core it sits on: a ledger that cannot lose money, cannot double-charge on a retry, and can explain every cent to a treasurer.
+The society is launching a little wallet for event tickets and merch, and you are writing the piece it all rests on. It needs a ledger that cannot lose money, cannot charge twice when the phone retries, and can explain every last cent to a treasurer.
 
 **Scope:** Uses only this level: classes, dicts, lists, custom exceptions, integer arithmetic, f-strings. No pandas, no database, no external libraries beyond `datetime`.
 
@@ -62,8 +62,8 @@ python ledger.py
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
 | 25 | Invariant holds | Every path leaves the ledger summing to zero; check_invariant is asserted throughout the demo. |
-| 20 | Validation & errors | All four error types raised in the right situations, always with zero entries written. |
-| 20 | Idempotency & reversal | Duplicate keys post once and return the original id; reversals cancel without deleting. |
+| 20 | Validation and errors | All four error types raised in the right situations, always with zero entries written. |
+| 20 | Idempotency and reversal | Duplicate keys post once and return the original id; reversals cancel without deleting. |
 | 15 | Money discipline | Integers everywhere internally, formatting only at the edges, penny split allocated deterministically. |
 | 10 | Tests | At least eight asserts covering happy path and every failure mode. |
 | 10 | Readable output | Statement with a running balance; demo that tells a story a treasurer could follow. |

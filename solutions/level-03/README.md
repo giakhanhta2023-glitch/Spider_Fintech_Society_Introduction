@@ -1,6 +1,6 @@
-# Level 3: Reading the Money
+# Level 3: Reading the money
 
-> **Personal Spending Analyzer** · build project · difficulty 3/10
+> **Personal spending analyzer** · build project · difficulty 3/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-A society member hands you six months of their bank export and one question: "where is my money going?" Build the analyzer that answers it, and finds them at least one thing worth cancelling.
+A member drops six months of their bank export on your desk with one question: "where is my money actually going?" Build the analyzer that answers it, and see if you can find them at least one thing worth cancelling.
 
 **Scope:** Uses only this level plus Level 2: pandas (read_csv, masks, groupby, sort_values, value_counts, .dt, .abs), matplotlib bar charts, f-string formatting, and functions. No machine learning, no APIs, no classes.
 
@@ -62,7 +62,7 @@ python spending_analyzer.py
 | 20 | Recurring detection | Finds all repeated identical charges and separates cancellable from fixed. |
 | 20 | Clean pandas | Masks and groupby instead of loops, .copy() when filtering, no SettingWithCopyWarning, no hardcoded totals. |
 | 20 | Communication | Readable text report, one honest labelled chart, three findings each backed by a number and a recommendation. |
-| 15 | Shipped | Notebook in your GitHub portfolio repo, runs top to bottom without errors after Restart & Run All. |
+| 15 | Shipped | Notebook in your GitHub portfolio repo, runs top to bottom without errors after Restart and Run All. |
 
 ---
 

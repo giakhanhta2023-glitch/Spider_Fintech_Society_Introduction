@@ -1,6 +1,6 @@
-# Level 7: Risk & Return
+# Level 7: Risk and return
 
-> **Portfolio Risk Dashboard** · build project · difficulty 7/10
+> **Portfolio risk dashboard** · build project · difficulty 7/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The society investment club holds four assets and argues about them monthly with no data. Build the risk report that settles it: what each asset returned, what it cost in risk, and whether the mix is better than its parts.
+The investment club holds four assets and argues about them every month with no data to hand. Build the risk report that settles it: what each one returned, what it cost in risk along the way, and whether the mix beats its parts.
 
 **Scope:** Uses this level plus Level 3 (pandas) and Level 2 (formatting): pct_change, cumprod, cummax, std, corr, dot, quantile, and matplotlib. Numpy is used only for sqrt and arrays.
 

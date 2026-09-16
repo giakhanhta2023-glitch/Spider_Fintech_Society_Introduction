@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 9: Shipping a Fintech Service
+   LEVEL 9: Shipping a fintech service
    ========================================================================= */
 FQ.registerLevel({
   id: 9,
-  codename: 'DEPLOY',
-  title: 'Shipping a Fintech Service',
-  tagline: 'Turn a notebook into something with a URL that a stranger can use.',
+  codename: 'deploy',
+  title: 'Shipping a fintech service',
+  tagline: 'Turn your notebook into something with a real address, so anyone can open it and use it.',
   difficulty: 9,
   minutes: 210,
   tags: ['Streamlit', 'deployment', 'validation', 'testing'],
@@ -377,9 +377,9 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Loan Advisor: Deployed Web App',
-    story: 'Everything you built in Levels 2 and 6 lives in notebooks nobody else can run. Ship it: a public loan advisor ' +
-           'a society member can open on their phone, with your name on it.',
+    title: 'Loan advisor, a web app you can share',
+    story: 'Everything you built in levels 2 and 6 is sitting in notebooks nobody else can run. Time to ship it: a ' +
+           'loan advisor a member can open on their phone, with your name on it.',
     scope: 'Uses this level plus Levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, ' +
            'Streamlit for the interface, pytest for the tests. Nothing beyond that is required.',
     requirements: [
@@ -402,7 +402,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""app.py: FinQuest Level 9 starter.\nKeep every calculation in finance.py. This file is interface only.\n"""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule, summarise, affordability\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool built for the Spider Fintech Society. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    # TODO: number_input / slider for amount, rate, term, extra, income\n\n# TODO: validate inputs -> st.error(...) + st.stop()\n\n# TODO: build the schedules (standard and with extra)\n\n# TODO: three st.metric headline numbers\n\n# TODO: tabs -> balance chart, full schedule + download button\n\n# TODO: affordability panel with DTI banding\n'
+      code: '"""app.py: FinQuest level 9 starter.\nKeep every calculation in finance.py. This file is interface only.\n"""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule, summarise, affordability\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool built for the Spider Fintech Society. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    # TODO: number_input / slider for amount, rate, term, extra, income\n\n# TODO: validate inputs -> st.error(...) + st.stop()\n\n# TODO: build the schedules (standard and with extra)\n\n# TODO: three st.metric headline numbers\n\n# TODO: tabs -> balance chart, full schedule + download button\n\n# TODO: affordability panel with DTI banding\n'
     },
     tests: [
       'monthly_payment(250000, 0.055, 30) == 1419.47 to 2dp',

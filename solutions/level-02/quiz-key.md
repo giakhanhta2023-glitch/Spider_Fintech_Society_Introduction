@@ -1,4 +1,4 @@
-# Level 2: The Time Value of Money: quiz answer key
+# Level 2: The time value of money: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

@@ -1,6 +1,6 @@
-# Level 9: Shipping a Fintech Service
+# Level 9: Shipping a fintech service
 
-> **Loan Advisor: Deployed Web App** · build project · difficulty 9/10
+> **Loan advisor, a web app you can share** · build project · difficulty 9/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-Everything you built in Levels 2 and 6 lives in notebooks nobody else can run. Ship it: a public loan advisor a society member can open on their phone, with your name on it.
+Everything you built in levels 2 and 6 is sitting in notebooks nobody else can run. Time to ship it: a loan advisor a member can open on their phone, with your name on it.
 
 **Scope:** Uses this level plus Levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, Streamlit for the interface, pytest for the tests. Nothing beyond that is required.
 

@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 8: Fraud Detection
+   Level 8: fraud detection
    ========================================================================= */
 FQ.registerLevel({
   id: 8,
-  codename: 'FRAUD DESK',
-  title: 'Fraud Detection & Decision Thresholds',
-  tagline: 'Catching 98% of fraud is easy. Doing it without blocking 1,454 innocent customers is the job.',
+  codename: 'fraud desk',
+  title: 'Fraud detection and decision thresholds',
+  tagline: 'Catching 98% of fraud is the easy part. Doing it without blocking 1,454 honest customers is the real job.',
   difficulty: 8,
   minutes: 180,
   tags: ['features', 'precision/recall', 'thresholds', 'ML'],
@@ -180,7 +180,7 @@ FQ.registerLevel({
       {
         t: 'Train a model without leaking',
         blocks: [
-          { code: 'from sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import roc_auc_score\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nX = df[FEATURES]\ny = df["is_fraud"]\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.3, random_state=42, stratify=y)\n\nscaler = StandardScaler().fit(X_train)          # fit on TRAIN ONLY\nX_train_s = scaler.transform(X_train)\nX_test_s = scaler.transform(X_test)\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train_s, y_train)\n\nprobabilities = model.predict_proba(X_test_s)[:, 1]\nprint(f"AUC: {roc_auc_score(y_test, probabilities):.3f}")', lang: 'python' },
+          { code: 'from sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import roc_auc_score\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nX = df[FEATURES]\ny = df["is_fraud"]\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.3, random_state=42, stratify=y)\n\nscaler = StandardScaler().fit(X_train)          # fit on the training split only\nX_train_s = scaler.transform(X_train)\nX_test_s = scaler.transform(X_test)\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train_s, y_train)\n\nprobabilities = model.predict_proba(X_test_s)[:, 1]\nprint(f"AUC: {roc_auc_score(y_test, probabilities):.3f}")', lang: 'python' },
           { p: '`stratify=y` keeps the same 1.8% fraud rate in both halves: without it a random split can leave your test ' +
                'set with almost no fraud, and every metric becomes noise. Fitting the scaler on the training set only is ' +
                'the other half of not leaking.' }
@@ -380,9 +380,10 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Fraud Scoring Engine',
-    story: 'The society\'s partner fintech is losing money to card fraud and blocking too many real customers trying to stop it. ' +
-           'Build the scoring engine, prove what it costs at each setting, and recommend a threshold you can defend in a meeting.',
+    title: 'Fraud scoring engine',
+    story: 'A partner fintech is losing money to card fraud, and blocking far too many real customers while trying ' +
+           'to stop it. Build the scoring engine, show what each setting actually costs, and recommend a threshold ' +
+           'you would be happy to defend in a meeting.',
     scope: 'Uses this level plus Level 3 (pandas) and Level 7 (evaluation thinking): feature engineering, a rule engine, ' +
            'sklearn LogisticRegression, train_test_split, StandardScaler, and the metrics shown in the tutorial.',
     dataset: '{{RAW}}/data/level-08-transactions.csv',
@@ -407,7 +408,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 8: Fraud Scoring Engine"""\n\nimport numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score\n\nURL = "{{RAW}}/data/level-08-transactions.csv"\nREVIEW_COST = 4.0\nHOME_COUNTRY = "VN"\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nRULES = [\n    # (name, test, points): add rules here, one line each\n]\n\n\ndef load_and_engineer(url=URL):\n    """Load the CSV and build the model features."""\n    # TODO\n    pass\n\n\ndef baseline(df):\n    """Print base rate and do-nothing accuracy BEFORE modelling."""\n    # TODO\n    pass\n\n\ndef feature_comparison(df):\n    """Mean of each feature for fraud vs legitimate."""\n    # TODO\n    pass\n\n\ndef score_row(row):\n    """Return (score, reasons)."""\n    # TODO\n    pass\n\n\ndef apply_rules(df):\n    """Add score and reasons columns."""\n    # TODO\n    pass\n\n\ndef evaluate(y_true, y_pred, label=""):\n    """Print and return tp/fp/fn/precision/recall/f1."""\n    # TODO\n    pass\n\n\ndef threshold_sweep(df, low=3, high=12):\n    # TODO\n    pass\n\n\ndef total_cost(df, threshold, review_cost=REVIEW_COST):\n    """(total, missed_fraud_value, review_spend)"""\n    # TODO\n    pass\n\n\ndef cost_curve(df, review_cost=REVIEW_COST):\n    """Print the cost at each threshold and return the cheapest."""\n    # TODO\n    pass\n\n\ndef train_model(df):\n    """Stratified split, scale on train only, fit, return everything needed."""\n    # TODO\n    pass\n\n\ndef explain_coefficients(model, features):\n    """One plain English sentence per feature, strongest first."""\n    # TODO\n    pass\n\n\ndef review_queue(df, probabilities, index, top=20):\n    """Ranked cases with amount, probability and reasons."""\n    # TODO\n    pass\n\n\ndef fairness_check(df, threshold):\n    """Flag rate by country."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest level 8: Fraud scoring engine"""\n\nimport numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score\n\nURL = "{{RAW}}/data/level-08-transactions.csv"\nREVIEW_COST = 4.0\nHOME_COUNTRY = "VN"\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nRULES = [\n    # (name, test, points): add rules here, one line each\n]\n\n\ndef load_and_engineer(url=URL):\n    """Load the CSV and build the model features."""\n    # TODO\n    pass\n\n\ndef baseline(df):\n    """Print base rate and do-nothing accuracy before any modelling."""\n    # TODO\n    pass\n\n\ndef feature_comparison(df):\n    """Mean of each feature for fraud vs legitimate."""\n    # TODO\n    pass\n\n\ndef score_row(row):\n    """Return (score, reasons)."""\n    # TODO\n    pass\n\n\ndef apply_rules(df):\n    """Add score and reasons columns."""\n    # TODO\n    pass\n\n\ndef evaluate(y_true, y_pred, label=""):\n    """Print and return tp/fp/fn/precision/recall/f1."""\n    # TODO\n    pass\n\n\ndef threshold_sweep(df, low=3, high=12):\n    # TODO\n    pass\n\n\ndef total_cost(df, threshold, review_cost=REVIEW_COST):\n    """(total, missed_fraud_value, review_spend)"""\n    # TODO\n    pass\n\n\ndef cost_curve(df, review_cost=REVIEW_COST):\n    """Print the cost at each threshold and return the cheapest."""\n    # TODO\n    pass\n\n\ndef train_model(df):\n    """Stratified split, scale on train only, fit, return everything needed."""\n    # TODO\n    pass\n\n\ndef explain_coefficients(model, features):\n    """One plain English sentence per feature, strongest first."""\n    # TODO\n    pass\n\n\ndef review_queue(df, probabilities, index, top=20):\n    """Ranked cases with amount, probability and reasons."""\n    # TODO\n    pass\n\n\ndef fairness_check(df, threshold):\n    """Flag rate by country."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
     },
     tests: [
       'The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%',

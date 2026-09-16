@@ -13,7 +13,7 @@
       test: function (s) { return cleared(1, s); } },
     { id: 'toolsmith', ico: '🔧', name: 'Toolsmith', hint: 'Finish the setup checklist',
       test: function (s) { return lvl(1, s).projectDone; } },
-    { id: 'first-build', ico: '🛠️', name: 'First Build', hint: 'Ship any project',
+    { id: 'first-build', ico: '🛠️', name: 'First build', hint: 'Ship any project',
       test: function (s) { return anyLevel(s, function (l) { return l.projectDone; }, 2); } },
     { id: 'perfect', ico: '🎯', name: 'Flawless', hint: 'Score 15/15 on a quiz',
       test: function (s) { return anyLevel(s, function (l) { return l.quizBest === 15; }, 1); } },
@@ -23,7 +23,7 @@
       test: function (s) { return countWhere(s, function (l) { return l.quizPassed; }) >= 10; } },
     { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Ship 9 projects',
       test: function (s) { return countWhere(s, function (l) { return l.projectDone; }) >= 10; } },
-    { id: 'cfo', ico: '👑', name: 'Chief Fintech Officer', hint: 'Clear all 10 levels',
+    { id: 'cfo', ico: '👑', name: 'Chief fintech officer', hint: 'Clear all 10 levels',
       test: function (s) { return clearedCount(s) >= 10; } }
   ];
 

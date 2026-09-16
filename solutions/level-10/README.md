@@ -1,6 +1,6 @@
-# Level 10: Compliance, Architecture & the Capstone Build
+# Level 10: Compliance, architecture and the capstone build
 
-> **NeoBank Analytics: Capstone** · build project · difficulty 10/10
+> **NeoBank analytics, the capstone** · build project · difficulty 10/10
 
 ## Read this second
 
@@ -10,7 +10,7 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-One repository. One deployed application. Everything you have learned, assembled into a product you would be happy for an interviewer to open in front of you.
+One repository, one deployed application, and everything you have learned so far pulled together. Aim for something you would be glad to have an interviewer open in front of you.
 
 **Scope:** Uses everything from Levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX code, restructured into modules behind one Streamlit interface, with tests and documentation.
 

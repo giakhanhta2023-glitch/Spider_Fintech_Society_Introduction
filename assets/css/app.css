@@ -60,8 +60,7 @@ body::before {
 .crumb {
   font-family: var(--code-font-family);
   font-size: var(--font-size-1);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .mono-inline { font-family: var(--code-font-family); font-size: 0.86em; }
@@ -183,9 +182,8 @@ body::before {
   color: var(--blue-11);
 }
 .stat-label {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: var(--font-size-1);
+  letter-spacing: 0;
   color: var(--gray-10);
 }
 
@@ -276,7 +274,6 @@ body::before {
   font-family: var(--code-font-family);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   opacity:.85;
   margin-bottom: 4px;
 }
@@ -310,7 +307,6 @@ body::before {
   font-family: var(--code-font-family);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--gray-10);
 }
 .codeblock-body {

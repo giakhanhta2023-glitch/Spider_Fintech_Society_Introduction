@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 10: Capstone: the whole system
+   Level 10: capstone, the whole system
    ========================================================================= */
 FQ.registerLevel({
   id: 10,
-  codename: 'CAPSTONE',
-  title: 'Compliance, Architecture & the Capstone Build',
-  tagline: 'Nine levels of parts. One system, one README, one link you can put on a CV.',
+  codename: 'capstone',
+  title: 'Compliance, architecture and the capstone build',
+  tagline: 'Nine levels of parts. Now one system, one README, and a link worth putting on your CV.',
   difficulty: 10,
   minutes: 300,
   tags: ['architecture', 'RegTech', 'documentation', 'capstone'],
@@ -31,7 +31,7 @@ FQ.registerLevel({
         ['**KYC**', 'Verify identity before a user holds money', 'An onboarding state machine; no transactions until verified'],
         ['**AML**', 'Detect and report suspicious patterns', 'Monitoring rules, alerts, case records, retained evidence'],
         ['**Data protection**', 'Lawful, minimal, secure use of personal data', 'Store less, encrypt, restrict access, log who read what'],
-        ['**Audit & retention**', 'Reconstruct any decision years later', 'Append-only ledgers, immutable logs, versioned rules']
+        ['**Audit and retention**', 'Reconstruct any decision years later', 'Append-only ledgers, immutable logs, versioned rules']
       ]
     }},
     { p: 'Notice how much of this is *engineering*, not paperwork. Append-only storage, immutable audit logs, and ' +
@@ -165,7 +165,7 @@ FQ.registerLevel({
       {
         t: 'Wire the dashboard together',
         blocks: [
-          { code: '# app.py\nimport streamlit as st\n\nfrom neobank import analytics, fraud, lending, risk\nfrom neobank.loaders import load_transactions, load_prices\n\nst.set_page_config(page_title="NeoBank Analytics", page_icon="\\U0001F3E6", layout="wide")\n\nPAGES = {\n    "Overview": "overview",\n    "Spending": "spending",\n    "Lending": "lending",\n    "Portfolio risk": "risk",\n    "Fraud queue": "fraud",\n}\nchoice = st.sidebar.radio("Section", list(PAGES))\nst.sidebar.caption("Synthetic data. Educational project. Not financial advice.")\n\n\n@st.cache_data(ttl=3600)\ndef get_transactions():\n    return load_transactions()\n\n\nif choice == "Spending":\n    df = get_transactions()\n    st.header("Spending")\n    st.metric("Savings rate", f"{analytics.savings_rate(df):.1%}")\n    st.bar_chart(analytics.by_category(df))\n# ... one branch per section', lang: 'python' },
+          { code: '# app.py\nimport streamlit as st\n\nfrom neobank import analytics, fraud, lending, risk\nfrom neobank.loaders import load_transactions, load_prices\n\nst.set_page_config(page_title="NeoBank analytics", page_icon="\\U0001F3E6", layout="wide")\n\nPAGES = {\n    "Overview": "overview",\n    "Spending": "spending",\n    "Lending": "lending",\n    "Portfolio risk": "risk",\n    "Fraud queue": "fraud",\n}\nchoice = st.sidebar.radio("Section", list(PAGES))\nst.sidebar.caption("Synthetic data. Educational project. Not financial advice.")\n\n\n@st.cache_data(ttl=3600)\ndef get_transactions():\n    return load_transactions()\n\n\nif choice == "Spending":\n    df = get_transactions()\n    st.header("Spending")\n    st.metric("Savings rate", f"{analytics.savings_rate(df):.1%}")\n    st.bar_chart(analytics.by_category(df))\n# ... one branch per section', lang: 'python' },
           { p: 'Each branch does the same three things: load (cached), call a service, display. No branch contains a formula. ' +
                'If you find yourself computing something inside `app.py`, it belongs in a module.' }
         ],
@@ -183,7 +183,7 @@ FQ.registerLevel({
       {
         t: 'Write the README last, and properly',
         blocks: [
-          { code: '# NeoBank Analytics\n\nA personal-finance and risk platform built across the FinQuest fintech course:\nledger, spending analytics, loan pricing, portfolio risk, and fraud scoring\nin one Streamlit application.\n\n**Live demo:** https://your-app.streamlit.app\n\n![Dashboard](docs/screenshots/overview.png)\n\n## Features\n- Double-entry ledger with idempotent transfers and reversals\n- Spending analytics with recurring-charge detection\n- Loan pricing, amortization, and early-payoff comparison\n- Portfolio risk: volatility, Sharpe, drawdown, correlation, VaR\n- Fraud scoring with a cost-tuned threshold and an explained review queue\n- Daily reconciliation against an external balance file\n\n## Architecture\n    app.py         Streamlit interface, no business logic\n    neobank/       services: ledger, analytics, lending, risk, fraud, fx\n    neobank/loaders.py   all file and network access\n    data/          synthetic datasets (see data/generate.py)\n    tests/         pytest suite, 31 tests, all passing\n\n## Run locally\n    python -m venv.venv && source.venv/bin/activate\n    pip install -r requirements.txt\n    pytest -q\n    streamlit run app.py\n\n## Data\nAll data is synthetic and generated by `data/generate.py`. No real customer\ndata is used anywhere in this project.\n\n## Limitations and next steps\n- The ledger is single-process; concurrent writes would need row-level locking\n- Fraud thresholds are tuned on one static sample and would drift in production\n- Risk statistics assume the past resembles the future, which is the standard\n  weakness of every historical risk measure\n- Next: move storage to SQLite, add an authentication layer, schedule the\n  reconciliation job', lang: 'text', label: 'README.md' },
+          { code: '# NeoBank analytics\n\nA personal-finance and risk platform built across the FinQuest fintech course:\nledger, spending analytics, loan pricing, portfolio risk, and fraud scoring\nin one Streamlit application.\n\n**Live demo:** https://your-app.streamlit.app\n\n![Dashboard](docs/screenshots/overview.png)\n\n## Features\n- Double-entry ledger with idempotent transfers and reversals\n- Spending analytics with recurring-charge detection\n- Loan pricing, amortization, and early-payoff comparison\n- Portfolio risk: volatility, Sharpe, drawdown, correlation, VaR\n- Fraud scoring with a cost-tuned threshold and an explained review queue\n- Daily reconciliation against an external balance file\n\n## Architecture\n    app.py         Streamlit interface, no business logic\n    neobank/       services: ledger, analytics, lending, risk, fraud, fx\n    neobank/loaders.py   all file and network access\n    data/          synthetic datasets (see data/generate.py)\n    tests/         pytest suite, 31 tests, all passing\n\n## Run locally\n    python -m venv.venv && source.venv/bin/activate\n    pip install -r requirements.txt\n    pytest -q\n    streamlit run app.py\n\n## Data\nAll data is synthetic and generated by `data/generate.py`. No real customer\ndata is used anywhere in this project.\n\n## Limitations and next steps\n- The ledger is single-process; concurrent writes would need row-level locking\n- Fraud thresholds are tuned on one static sample and would drift in production\n- Risk statistics assume the past resembles the future, which is the standard\n  weakness of every historical risk measure\n- Next: move storage to SQLite, add an authentication layer, schedule the\n  reconciliation job', lang: 'text', label: 'README.md' },
           { tip: 'Take screenshots at a normal window size and commit them under `docs/screenshots/`. A README with a ' +
                  'picture gets read; one without usually does not.' }
         ],
@@ -362,9 +362,9 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'NeoBank Analytics: Capstone',
-    story: 'One repository. One deployed application. Everything you have learned, assembled into a product you would be ' +
-           'happy for an interviewer to open in front of you.',
+    title: 'NeoBank analytics, the capstone',
+    story: 'One repository, one deployed application, and everything you have learned so far pulled together. Aim ' +
+           'for something you would be glad to have an interviewer open in front of you.',
     scope: 'Uses everything from Levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX ' +
            'code, restructured into modules behind one Streamlit interface, with tests and documentation.',
     requirements: [
@@ -391,7 +391,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'text',
-      code: 'neobank-analytics/\n  README.md\n  requirements.txt\n  .gitignore\n  app.py                    # Streamlit entry point: interface only\n  neobank/\n    __init__.py\n    ledger.py               # Level 4\n    analytics.py            # Level 3\n    lending.py              # Levels 2 + 6\n    risk.py                 # Level 7\n    fraud.py                # Level 8\n    fx.py                   # Level 5   (optional but recommended)\n    reconcile.py            # Level 10\n    loaders.py              # ALL file and network access\n  data/\n    generate.py             # produces every CSV below\n    transactions.csv\n    prices.csv\n    card_transactions.csv\n    external_balances.csv\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_analytics.py\n    test_fraud.py\n  docs/\n    architecture.md\n    demo-script.md\n    screenshots/\n\n# Build order that works:\n#   1. Loaders.py + data/generate.py      (get data flowing)\n#   2. One service module + its tests     (prove the pattern)\n#   3. The remaining services + tests\n#   4. App.py, one section at a time\n#   5. Reconciliation, README, deploy\n'
+      code: 'neobank-analytics/\n  README.md\n  requirements.txt\n  .gitignore\n  app.py                    # Streamlit entry point: interface only\n  neobank/\n    __init__.py\n    ledger.py               # Level 4\n    analytics.py            # Level 3\n    lending.py              # Levels 2 + 6\n    risk.py                 # Level 7\n    fraud.py                # Level 8\n    fx.py                   # Level 5   (optional but recommended)\n    reconcile.py            # Level 10\n    loaders.py              # all file and network access\n  data/\n    generate.py             # produces every CSV below\n    transactions.csv\n    prices.csv\n    card_transactions.csv\n    external_balances.csv\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_analytics.py\n    test_fraud.py\n  docs/\n    architecture.md\n    demo-script.md\n    screenshots/\n\n# Build order that works:\n#   1. Loaders.py + data/generate.py      (get data flowing)\n#   2. One service module + its tests     (prove the pattern)\n#   3. The remaining services + tests\n#   4. App.py, one section at a time\n#   5. Reconciliation, README, deploy\n'
     },
     tests: [
       'A fresh clone plus `pip install -r requirements.txt` then `pytest -q` passes with 20 or more tests',

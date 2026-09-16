@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 4: Payments & Ledgers
+   Level 4: payments and ledgers
    ========================================================================= */
 FQ.registerLevel({
   id: 4,
-  codename: 'LEDGER',
-  title: 'Payments & the Double-Entry Ledger',
-  tagline: 'Build the thing every fintech has underneath: a ledger that always balances.',
+  codename: 'ledger',
+  title: 'Payments and the double-entry ledger',
+  tagline: 'Build the thing every fintech quietly runs on: a ledger that always balances, whatever happens.',
   difficulty: 4,
   minutes: 150,
   tags: ['double-entry', 'idempotency', 'classes'],
@@ -177,7 +177,7 @@ FQ.registerLevel({
       {
         t: 'Print a statement',
         blocks: [
-          { code: 'class Ledger(Ledger):\n\n    def statement(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        rows = [e for e in self.entries if e["account"] == account_id]\n        running = 0\n        print(f"STATEMENT: {account_id}")\n        print(f"{\'txn\':<10}{\'memo\':<22}{\'amount\':>12}{\'balance\':>14}")\n        for e in rows:\n            running += e["amount"]\n            print(f"{e[\'txn_id\']:<10}{e[\'memo\'][:21]:<22}{money(e[\'amount\']):>12}{money(running):>14}")\n        print(f"{\'\':<32}{\'CLOSING\':>12}{money(running):>14}")', lang: 'python' },
+          { code: 'class Ledger(Ledger):\n\n    def statement(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        rows = [e for e in self.entries if e["account"] == account_id]\n        running = 0\n        print(f"Statement: {account_id}")\n        print(f"{\'txn\':<10}{\'memo\':<22}{\'amount\':>12}{\'balance\':>14}")\n        for e in rows:\n            running += e["amount"]\n            print(f"{e[\'txn_id\']:<10}{e[\'memo\'][:21]:<22}{money(e[\'amount\']):>12}{money(running):>14}")\n        print(f"{\'\':<32}{\'CLOSING\':>12}{money(running):>14}")', lang: 'python' },
           { p: 'A running balance column is what makes a statement usable: it shows not just what happened but what the ' +
                'balance was after each event: the first thing support asks for.' }
         ],
@@ -354,9 +354,10 @@ FQ.registerLevel({
   ],
 
   project: {
-    title: 'Mini Ledger & Payment Engine',
-    story: 'The society is launching an internal wallet for event tickets and merch. You are writing the core it sits on: ' +
-           'a ledger that cannot lose money, cannot double-charge on a retry, and can explain every cent to a treasurer.',
+    title: 'Mini ledger and payment engine',
+    story: 'The society is launching a little wallet for event tickets and merch, and you are writing the piece it ' +
+           'all rests on. It needs a ledger that cannot lose money, cannot charge twice when the phone retries, and ' +
+           'can explain every last cent to a treasurer.',
     scope: 'Uses only this level: classes, dicts, lists, custom exceptions, integer arithmetic, f-strings. ' +
            'No pandas, no database, no external libraries beyond `datetime`.',
     requirements: [
@@ -380,7 +381,7 @@ FQ.registerLevel({
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest Level 4: Mini Ledger & Payment Engine"""\n\nfrom datetime import datetime\n\n\nclass LedgerError(Exception):\n    """Base class for every refusal this ledger makes."""\n\nclass UnknownAccount(LedgerError): pass\nclass InsufficientFunds(LedgerError): pass\nclass InvalidAmount(LedgerError): pass\nclass DuplicateAccount(LedgerError): pass\n\n\ndef to_cents(amount_text):\n    """\'25.00\' -> 2500. Round, never truncate."""\n    # TODO\n    pass\n\n\ndef money(cents):\n    """2500 -> \'$25.00\'  |  -2500 -> \'-$25.00\'"""\n    # TODO\n    pass\n\n\nclass Account:\n    def __init__(self, account_id, kind="customer", allow_negative=False):\n        # TODO\n        pass\n\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}\n        self.entries = []          # append-only. Never edit, never delete.\n        self._keys = {}            # idempotency key -> txn_id\n        self._next_id = 1\n\n    # --- internals ---------------------------------------------------\n    def _post(self, legs, memo):\n        """legs = [(account_id, signed_cents),...] and must sum to zero."""\n        # TODO\n        pass\n\n    # --- public API --------------------------------------------------\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        pass\n\n    def balance(self, account_id):\n        pass\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        pass\n\n    def withdraw(self, account_id, amount, memo="withdrawal"):\n        pass\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        pass\n\n    def split_payment(self, src, recipients, amount, memo="split"):\n        """Divide amount between recipients; leftover cents go to the first\n        recipients in order so the transaction still balances."""\n        pass\n\n    def reverse(self, txn_id, memo=None):\n        pass\n\n    def check_invariant(self):\n        pass\n\n    def statement(self, account_id):\n        pass\n\n\ndef demo():\n    """End-to-end story the treasurer could read."""\n    pass\n\n\nif __name__ == "__main__":\n    demo()\n'
+      code: '"""FinQuest level 4: Mini ledger and payment engine"""\n\nfrom datetime import datetime\n\n\nclass LedgerError(Exception):\n    """Base class for every refusal this ledger makes."""\n\nclass UnknownAccount(LedgerError): pass\nclass InsufficientFunds(LedgerError): pass\nclass InvalidAmount(LedgerError): pass\nclass DuplicateAccount(LedgerError): pass\n\n\ndef to_cents(amount_text):\n    """\'25.00\' -> 2500. Round, never truncate."""\n    # TODO\n    pass\n\n\ndef money(cents):\n    """2500 -> \'$25.00\'  |  -2500 -> \'-$25.00\'"""\n    # TODO\n    pass\n\n\nclass Account:\n    def __init__(self, account_id, kind="customer", allow_negative=False):\n        # TODO\n        pass\n\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}\n        self.entries = []          # append-only. Never edit, never delete.\n        self._keys = {}            # idempotency key -> txn_id\n        self._next_id = 1\n\n    # --- internals ---------------------------------------------------\n    def _post(self, legs, memo):\n        """legs = [(account_id, signed_cents),...] and must sum to zero."""\n        # TODO\n        pass\n\n    # --- public API --------------------------------------------------\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        pass\n\n    def balance(self, account_id):\n        pass\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        pass\n\n    def withdraw(self, account_id, amount, memo="withdrawal"):\n        pass\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        pass\n\n    def split_payment(self, src, recipients, amount, memo="split"):\n        """Divide amount between recipients; leftover cents go to the first\n        recipients in order so the transaction still balances."""\n        pass\n\n    def reverse(self, txn_id, memo=None):\n        pass\n\n    def check_invariant(self):\n        pass\n\n    def statement(self, account_id):\n        pass\n\n\ndef demo():\n    """End-to-end story the treasurer could read."""\n    pass\n\n\nif __name__ == "__main__":\n    demo()\n'
     },
     tests: [
       'to_cents("19.99") == 1999 and to_cents("0.1") + to_cents("0.2") == to_cents("0.3")',
@@ -397,8 +398,8 @@ FQ.registerLevel({
     ],
     rubric: [
       { pts: 25, t: 'Invariant holds', d: 'Every path leaves the ledger summing to zero; check_invariant is asserted throughout the demo.' },
-      { pts: 20, t: 'Validation & errors', d: 'All four error types raised in the right situations, always with zero entries written.' },
-      { pts: 20, t: 'Idempotency & reversal', d: 'Duplicate keys post once and return the original id; reversals cancel without deleting.' },
+      { pts: 20, t: 'Validation and errors', d: 'All four error types raised in the right situations, always with zero entries written.' },
+      { pts: 20, t: 'Idempotency and reversal', d: 'Duplicate keys post once and return the original id; reversals cancel without deleting.' },
       { pts: 15, t: 'Money discipline', d: 'Integers everywhere internally, formatting only at the edges, penny split allocated deterministically.' },
       { pts: 10, t: 'Tests', d: 'At least eight asserts covering happy path and every failure mode.' },
       { pts: 10, t: 'Readable output', d: 'Statement with a running balance; demo that tells a story a treasurer could follow.' }
