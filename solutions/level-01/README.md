@@ -1,7 +1,5 @@
 # Level 1: Fintech orientation and your zero-install toolkit
 
-> **Mission zero: get your lab running** · setup mission · difficulty 1/10
-
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
