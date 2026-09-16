@@ -732,6 +732,44 @@ table.data td.mono { white-space: nowrap; }
 .medal span { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 
 /* ==========================================================================
+   MOU: the pixel rabbit
+   ========================================================================== */
+.mou {
+  display: block;
+  flex: 0 0 auto;
+  image-rendering: pixelated;
+}
+/* A two pixel bob, slow enough to read as breathing rather than animation. */
+.mou.is-bobbing { animation: mou-bob 3.2s steps(1, end) infinite; }
+@keyframes mou-bob {
+  0%, 45%   { transform: translateY(0); }
+  50%, 95%  { transform: translateY(-2px); }
+  100%      { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .mou.is-bobbing { animation: none; } }
+
+.mou-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 12px 5px 6px;
+  border: 1px solid var(--rule-mid);
+  background: transparent;
+  color: var(--bone);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: var(--track-mono);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.mou-btn:hover { border-color: var(--accent); background: var(--accent-wash); }
+.mou-btn:hover .mou { transform: translateY(-2px); }
+.mou-btn .mou { transition: transform .18s ease; }
+.mou-btn-l { padding: 8px 18px 8px 10px; font-size: 0.86rem; gap: 12px; }
+
+/* Panel header: the sprite sits to the left of the name, baseline aligned. */
+
+/* ==========================================================================
    TUTOR
    ========================================================================== */
 .tutor-panel {
@@ -753,10 +791,10 @@ table.data td.mono { white-space: nowrap; }
 .tutor-head {
   padding: 20px 26px 16px;
   border-bottom: 1px solid var(--rule-mid);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
 }
 .tutor-log {
   flex: 1;
@@ -768,6 +806,21 @@ table.data td.mono { white-space: nowrap; }
   gap: 20px;
 }
 .tutor-foot { border-top: 1px solid var(--rule-mid); padding: 16px 26px 22px; }
+
+/* Panel header: sprite on the left, name and status beside it. */
+.tutor-id { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
+.tutor-id .mou { width: 56px; height: 56px; }
+.tutor-mode { display: block; margin-top: 7px; }
+/* Too narrow for one row: the controls take their own line above the name,
+   so no word ever has to wrap onto four lines. */
+@media (max-width: 560px) {
+  .tutor-head { grid-template-columns: minmax(0, 1fr); }
+  .tutor-tools { order: -1; justify-content: flex-end; }
+}
+@media (max-width: 430px) {
+  .tutor-id { gap: 10px; }
+  .tutor-id .mou { width: 44px; height: 44px; }
+}
 
 .tutor-head > div:first-child { min-width: 0; }
 .tutor-tools { display: flex; gap: 8px; flex: 0 0 auto; }

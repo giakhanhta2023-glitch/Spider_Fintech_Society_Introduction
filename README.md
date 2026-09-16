@@ -66,7 +66,8 @@ build complete; that unlocks the next one.
 
 ## The AI tutor
 
-Ada sits behind the **Tutor** button (or <kbd>Ctrl</kbd>+<kbd>K</kbd>) and knows which level you are on.
+Mou, a small pixel rabbit, sits behind the **mou** button (or <kbd>Ctrl</kbd>+<kbd>K</kbd>) and knows
+which level you are on.
 
 | Mode | Setup | What you get |
 |------|-------|--------------|

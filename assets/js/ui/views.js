@@ -5,6 +5,7 @@ import {
   html, useState, useMemo, FQ, CFG, store, md, navigate,
   Gauge, Btn, Tag, SectionHead, AlertDialog
 } from './lib.js';
+import { Mou } from './mou.js';
 
 /* =============================== HOME =============================== */
 function IndexRow({ level }) {
@@ -73,7 +74,10 @@ export function Home({ onAskTutor }) {
             <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
               ${cleared ? `continue level ${current}` : 'start level 01'}
             <//>
-            <${Btn} variant="quiet" onClick=${onAskTutor}>meet the tutor<//>
+            <button class="mou-btn mou-btn-l" type="button" onClick=${onAskTutor}>
+              <${Mou} mood="idle" size=${30} title="Mou" />
+              <span>meet Mou, your tutor</span>
+            </button>
           </div>
         </div>
       </section>

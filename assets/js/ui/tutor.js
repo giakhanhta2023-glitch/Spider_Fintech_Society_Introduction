@@ -1,10 +1,11 @@
 /* =========================================================================
-   Ada, the tutor. A panel pinned to the right edge, set like a margin note:
+   Mou, the tutor. A panel pinned to the right edge, set like a margin note:
    mono for the machinery, serif for the answers.
    ========================================================================= */
 import {
   html, useState, useEffect, useRef, FQ, store, rawHtml, Dialog, Btn, Tag
 } from './lib.js';
+import { Mou } from './mou.js';
 import {
   offlineAnswer, askModel, chatMarkdown, apiState, endpoint, userKey,
   LS_ENDPOINT, LS_KEY
@@ -41,8 +42,14 @@ export function Tutor({ open, onOpenChange, levelId }) {
   const [keyValue, setKeyValue] = useState('');
   const [status, setStatus] = useState('');
   const [mode, setMode] = useState('course knowledge base');
+  const [cheer, setCheer] = useState(false);
   const logRef = useRef(null);
   const historyRef = useRef([]);
+  const cheerRef = useRef(null);
+
+  /* Mou looks up while she is working and beams for a moment once the answer
+     has landed, then settles back. */
+  const mood = busy ? 'thinking' : cheer ? 'happy' : 'idle';
 
   const level = levelId ? FQ.level(levelId) : null;
 
@@ -66,7 +73,16 @@ export function Tutor({ open, onOpenChange, levelId }) {
 
   useEffect(() => { setMode(modeLabel()); }, [open, messages]);
 
-  function push(msg) { setMessages((prev) => prev.concat([msg])); }
+  useEffect(() => () => clearTimeout(cheerRef.current), []);
+
+  function push(msg) {
+    setMessages((prev) => prev.concat([msg]));
+    if (msg.role === 'bot') {
+      setCheer(true);
+      clearTimeout(cheerRef.current);
+      cheerRef.current = setTimeout(() => setCheer(false), 2400);
+    }
+  }
 
   function ask(text) {
     const question = String(text || '').trim();
@@ -157,17 +173,20 @@ export function Tutor({ open, onOpenChange, levelId }) {
       <${Dialog.Content} className="tutor-panel" aria-describedby=${undefined}>
 
         <div class="tutor-head">
-          <div>
-            <span class="kicker" style=${{ marginBottom: '6px' }}>your fintech tutor</span>
-            <${Dialog.Title} className="display display-s" style=${{ margin: '0 0 12px' }}>
-              Ada
-            <//>
-            <span class="tag-row">
-              <${Tag}>
-                ${level ? `level ${String(level.id).padStart(2, '0')}, ${level.codename}` : 'no level open'}
+          <div class="tutor-id">
+            <${Mou} mood=${mood} size=${58} bob />
+            <div style=${{ minWidth: 0 }}>
+              <span class="kicker" style=${{ marginBottom: '4px' }}>your fintech tutor</span>
+              <${Dialog.Title} className="display display-s" style=${{ margin: '0 0 10px' }}>
+                Mou
               <//>
-              <span class="mono-s">${mode}</span>
-            </span>
+              <span class="tag-row">
+                <${Tag}>
+                  ${level ? `level ${String(level.id).padStart(2, '0')}, ${level.codename}` : 'no level open'}
+                <//>
+              </span>
+              <span class="mono-s tutor-mode">${mode}</span>
+            </div>
           </div>
 
           <div class="tutor-tools">

@@ -1,5 +1,5 @@
 /* =========================================================================
-   Ada: the tutor's brain. No UI in this file.
+   Mou: the tutor's brain. No UI in this file.
 
    Offline mode (the default) answers by retrieval over the whole curriculum,
    so the tutor works with zero setup. If a chat endpoint or an API key is
@@ -174,8 +174,8 @@ export function offlineAnswer(question, ctx) {
       text: lv
         ? `Hello. You are on **level ${lv.id}, ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
           '\n\nAsk me about any concept here, paste an error message, or say **hint** if the build has you stuck.'
-        : 'Hello. I am Ada, your tutor for this course. Open a level and I will follow you into it, or ask me ' +
-          'anything about fintech, Python, or the tools.',
+        : 'Hello, I am Mou, your tutor for this course. Open a level and I will follow you into it, or ' +
+          'just ask me anything about fintech, Python, or the tools.',
       chips: lv
         ? ['What do I need for the project?', 'hint', 'Explain ' + (lv.glossary[0] ? lv.glossary[0].t : 'the basics')]
         : ['What is fintech?', 'Where do I start?', 'Do I need to install anything?']
@@ -274,7 +274,10 @@ export function offlineAnswer(question, ctx) {
   return {
     text: answer,
     source: `level ${best.lv}, ${best.kind}`,
-    chips: related.length ? related.map((r) => 'Explain ' + r) : ['Give me an example', 'hint']
+    /* Some section titles are already questions, so do not staple a verb onto them. */
+    chips: related.length
+      ? related.map((r) => (/\?$/.test(r) ? r : 'Explain ' + r))
+      : ['Give me an example', 'hint']
   };
 }
 
@@ -282,7 +285,8 @@ export function offlineAnswer(question, ctx) {
 export function systemPrompt(ctx) {
   const lv = ctx.levelId ? FQ.level(ctx.levelId) : null;
   const base =
-    'You are Ada, the tutor inside FinQuest, a 10-level project-based fintech course for university students. ' +
+    'You are Mou, a small rabbit who tutors inside FinQuest, a 10-level project-based fintech course for ' +
+    'university students. You are warm, patient and encouraging, and you explain things plainly. ' +
     'Teach in plain English, use small worked numbers, and keep answers under about 200 words unless asked for more. ' +
     'You help learners reason to their own answer: give the next step or a hint, never a complete project solution, ' +
     'even if asked directly: point them to the repo solution key instead and tell them to read only what they are stuck on. ' +

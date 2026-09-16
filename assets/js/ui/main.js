@@ -6,6 +6,7 @@ import {
   html, useState, useEffect, useCallback, FQ, CFG, store, navigate,
   Theme, Tooltip, Btn
 } from './lib.js';
+import { Mou } from './mou.js';
 import { createRoot } from 'react-dom/client';
 import { Home, Glossary, Dossier } from './views.js';
 import { LevelPage } from './level.js';
@@ -61,7 +62,11 @@ function Masthead({ route, onOpenTutor }) {
           <span class="xp-plate">
             <b>${store.xp().toLocaleString()}</b><span>XP</span>
           </span>
-          <${Btn} small onClick=${onOpenTutor} arrow>tutor<//>
+          <button class="mou-btn" type="button" onClick=${onOpenTutor}
+            title="Ask Mou, or press Ctrl and K">
+            <${Mou} mood="rest" size=${24} title="Mou" />
+            <span>mou</span>
+          </button>
         </div>
       </div>
     </header>`;

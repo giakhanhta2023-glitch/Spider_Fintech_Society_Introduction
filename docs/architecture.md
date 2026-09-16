@@ -94,8 +94,9 @@ main.js          routing, HUD, toasts, theme        <- knows about everything
   level.js       one level: brief/learn/tutorial/drill/build
     quiz.js      the drill and the answer key
     blocks.js    curriculum blocks -> editorial elements
-  tutor.js       the tutor panel (a dialog pinned to the right edge)
+  tutor.js       Mou's panel (a dialog pinned to the right edge)
     tutor-engine.js   retrieval, prompting, API calls: no UI in this file
+    mou.js       Mou herself: a 24 by 24 pixel rabbit, drawn as text
   lib.js         shared imports and small helpers
 ---------------------------------------------------------------
 core.js          registry, markdown subset, syntax highlighting
