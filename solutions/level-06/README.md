@@ -1,7 +1,5 @@
 # Level 6: Credit, loans and amortization
 
-> **Loan amortization and early-payoff simulator** · build project · difficulty 6/10
-
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
