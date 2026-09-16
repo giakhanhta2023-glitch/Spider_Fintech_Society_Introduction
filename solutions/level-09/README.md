@@ -1,7 +1,5 @@
 # Level 9: Shipping a fintech service
 
-> **Loan advisor, a web app you can share** · build project · difficulty 9/10
-
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
