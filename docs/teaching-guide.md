@@ -58,8 +58,9 @@ built to support exactly that order and will refuse to dump a full solution.
 - **Different region?** The currencies, categories and merchant names live in
   `data/generate_datasets.py`; regenerate and the briefs' expected values update with them
   (remember to refresh the numbers quoted in the level files too).
-- **Your own branding?** `assets/js/config.js` for the repo and XP economy; the `accentColor` on the
-  `<Theme>` in `assets/js/ui/main.js` for the palette.
+- **Your own branding?** `assets/js/config.js` for the repo and XP economy; the accent tokens at the
+  top of `assets/css/app.css` for the palette, plus the `accentColor` on the `<Theme>` in
+  `assets/js/ui/main.js` so the focus ring matches.
 
 ## Before the first session
 

@@ -2,8 +2,8 @@
    FinQuest: editorial system
 
    Rules this file is built to, in order of authority:
-     1. True black canvas, bone text. No charcoal-and-neon dark mode.
-     2. One accent (safety orange). Crimson and moss appear only where the
+     1. Near-black canvas with a blue cast, bone text. No charcoal grey.
+     2. One accent (a single blue). Crimson and moss appear only where the
         interface has to say right or wrong, and both are muted.
      3. Serif for display and reading. Mono for every label, figure and tag.
      4. Structure comes from rules and column spans, never from shadows,
@@ -16,22 +16,25 @@
 
 :root,
 .radix-themes {
-  /* ---- ink ------------------------------------------------------------ */
-  --ink:          #000000;
-  --ink-raised:   #0A0A09;   /* a panel that must separate from the canvas */
-  --bone:         #EDEAE3;   /* primary text            15.9:1 on ink      */
-  --ash:          #A9A396;   /* secondary text           8.6:1 on ink      */
-  --graphite:     #77726A;   /* tertiary, still legible  4.6:1 on ink      */
+  /* ---- ink: black with a blue cast, never charcoal grey ---------------- */
+  --ink:          #05070D;
+  --ink-raised:   #0A0E18;   /* a panel that must separate from the canvas */
+  --ink-deep:     #020306;   /* code wells and anything set into the page  */
+  --bone:         #E9ECF4;   /* primary text            17.0:1 on ink      */
+  --ash:          #9BA4B8;   /* secondary text           8.1:1 on ink      */
+  --graphite:     #78819A;   /* tertiary, still legible  5.2:1 on ink      */
 
   /* ---- rules ---------------------------------------------------------- */
-  --rule:         #232320;   /* hairline between rows                      */
-  --rule-mid:     #3A3833;   /* section divider                            */
+  --rule:         #171C29;   /* hairline between rows                      */
+  --rule-mid:     #2A3245;   /* section divider                            */
   --rule-heavy:   var(--bone);
 
-  /* ---- accent: used sparingly, never decoratively ---------------------- */
-  --orange:       #FF4D00;
-  --orange-deep:  #C23A00;
-  --orange-wash:  rgba(255, 77, 0, 0.10);
+  /* ---- accent: one blue, in two weights ------------------------------- */
+  --accent:       #5B8CFF;   /* blue as text or a mark   6.4:1 on ink      */
+  --accent-solid: #2563EB;   /* filled surface, white on it at 5.2:1       */
+  --accent-deep:  #1B49C4;   /* the pressed state                          */
+  --accent-wash:  rgba(91, 140, 255, 0.10);
+  --accent-glow:  rgba(37, 99, 235, 0.22);
 
   /* ---- semantics: only for right and wrong ----------------------------- */
   --moss:         #6E9C70;
@@ -64,7 +67,7 @@
   --color-background: var(--ink);
   --color-panel-solid: var(--ink-raised);
   --color-panel-translucent: var(--ink-raised);
-  --focus-8: var(--orange);
+  --focus-8: var(--accent);
 }
 
 * { box-sizing: border-box; }
@@ -81,9 +84,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--orange); color: var(--ink); }
+/* One ambient wash of blue behind the whole page. It is light enough to read
+   as a tint on the paper rather than a glowing container. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20vh -10vw auto -10vw;
+  height: 90vh;
+  background:
+    radial-gradient(60% 55% at 22% 0%, var(--accent-glow) 0%, transparent 68%),
+    radial-gradient(45% 45% at 88% 6%, rgba(37, 99, 235, 0.10) 0%, transparent 70%);
+  pointer-events: none;
+  /* Behind every element, without touching anyone's position: the masthead
+     has to stay sticky. */
+  z-index: -1;
+}
 
-:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+::selection { background: var(--accent-solid); color: #FFFFFF; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Nothing in this interface is allowed to bleed out of its column. */
 body, p, li, td, th, h1, h2, h3, h4, dd, dt, figcaption, blockquote, span, a {
@@ -146,7 +165,7 @@ a.link {
   padding-bottom: 1px;
   transition: border-color .15s ease, color .15s ease;
 }
-a.link:hover { color: var(--orange); border-color: var(--orange); }
+a.link:hover { color: var(--accent); border-color: var(--accent); }
 
 /* ==========================================================================
    PAGE FRAME
@@ -208,7 +227,7 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
   color: var(--bone);
   line-height: 1;
 }
-.wordmark-text i { font-style: italic; color: var(--orange); }
+.wordmark-text i { font-style: italic; color: var(--accent); }
 
 .mainnav { display: flex; align-items: stretch; }
 .mainnav a {
@@ -223,7 +242,7 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
   transition: color .15s ease, border-color .15s ease;
 }
 .mainnav a:hover { color: var(--bone); }
-.mainnav a[aria-current='page'] { color: var(--bone); border-bottom-color: var(--orange); }
+.mainnav a[aria-current='page'] { color: var(--bone); border-bottom-color: var(--accent); }
 
 .masthead-meta { margin-left: auto; display: flex; align-items: center; gap: clamp(12px, 2vw, 24px); }
 .rank-plate {
@@ -254,26 +273,14 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
   .mainnav::-webkit-scrollbar { display: none; }
   .mainnav a { padding: 11px 20px 11px 0; white-space: nowrap; }
 }
-
-/* ==========================================================================
-   TICKER: a market tape, not a decoration strip
-   ========================================================================== */
-.tape { overflow: hidden; border-bottom: 1px solid var(--rule); background: var(--ink); }
-.tape-track { display: flex; width: max-content; animation: tape 90s linear infinite; }
-.tape-item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 7px clamp(18px, 2.4vw, 34px);
-  border-right: 1px solid var(--rule);
-  font-family: var(--mono);
-  font-size: 0.76rem;
-  color: var(--graphite);
-  white-space: nowrap;
+/* Narrow phones: tighten the top row so the wordmark, the experience count
+   and the tutor button share one line, and all three links share the next. */
+@media (max-width: 520px) {
+  .masthead-inner { gap: 12px; }
+  .masthead-meta { gap: 12px; }
+  .xp-plate span { display: none; }
+  .mainnav a { padding-right: 16px; }
 }
-.tape-item b { color: var(--bone); font-weight: 500; }
-@keyframes tape { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .tape-track { animation: none; } }
 
 /* ==========================================================================
    BUTTONS: structural, square, mono-labelled
@@ -296,8 +303,8 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
 }
 .btn:hover { background: var(--bone); color: var(--ink); }
 
-.btn-accent { border-color: var(--orange); background: var(--orange); color: var(--ink); }
-.btn-accent:hover { background: transparent; color: var(--orange); }
+.btn-accent { border-color: var(--accent-solid); background: var(--accent-solid); color: #FFFFFF; }
+.btn-accent:hover { background: transparent; color: var(--accent); border-color: var(--accent); }
 
 .btn-quiet { border-color: var(--rule-mid); color: var(--ash); }
 .btn-quiet:hover { background: transparent; border-color: var(--bone); color: var(--bone); }
@@ -323,7 +330,7 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
   color: var(--ash);
   white-space: nowrap;
 }
-.tag-accent { border-color: var(--orange); color: var(--orange); }
+.tag-accent { border-color: var(--accent); color: var(--accent); }
 .tag-moss   { border-color: var(--moss); color: var(--moss); }
 .tag-solid  { background: var(--bone); border-color: var(--bone); color: var(--ink); }
 .tag-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -331,7 +338,7 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
 /* difficulty, drawn as a measured bar rather than dots */
 .gauge { display: inline-flex; gap: 2px; align-items: center; }
 .gauge i { width: 5px; height: 12px; background: var(--rule-mid); display: block; }
-.gauge i.on { background: var(--orange); }
+.gauge i.on { background: var(--accent); }
 
 /* ==========================================================================
    DATA STRIP: a broadsheet market table, not floating stat cards
@@ -374,11 +381,11 @@ a.link:hover { color: var(--orange); border-color: var(--orange); }
   transition: background .14s ease;
 }
 a.index-row:hover { background: #0B0B0A; }
-a.index-row:hover .index-title { color: var(--orange); }
+a.index-row:hover .index-title { color: var(--accent); }
 .index-row.is-locked .index-title { color: var(--graphite); }
 
 .index-num { font-family: var(--mono); font-size: 0.9rem; color: var(--graphite); font-variant-numeric: tabular-nums; }
-.index-row.is-current .index-num { color: var(--orange); }
+.index-row.is-current .index-num { color: var(--accent); }
 .index-row.is-done .index-num { color: var(--moss); }
 
 .index-title {
@@ -437,7 +444,7 @@ a.index-row:hover .index-title { color: var(--orange); }
 .section-head .mono { color: var(--graphite); }
 
 .kicker { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); display: block; margin-bottom: 10px; }
-.kicker b { color: var(--orange); font-weight: 500; }
+.kicker b { color: var(--accent); font-weight: 500; }
 
 /* ==========================================================================
    PANELS: bordered blocks, never floating cards
@@ -476,7 +483,7 @@ a.index-row:hover .index-title { color: var(--orange); }
   font-family: var(--mono);
   font-size: 0.82rem;
   letter-spacing: 0;
-  color: var(--orange);
+  color: var(--accent);
   margin: 1.8em 0 0;
   font-weight: 500;
 }
@@ -507,8 +514,8 @@ a.index-row:hover .index-title { color: var(--orange); }
 }
 .note-tip { border-left-color: var(--bone); }
 .note-tip .note-label { color: var(--bone); }
-.note-warn { border-left-color: var(--orange); }
-.note-warn .note-label { color: var(--orange); }
+.note-warn { border-left-color: var(--accent); }
+.note-warn .note-label { color: var(--accent); }
 .note-money { border-left-color: var(--moss); }
 .note-money .note-label { color: var(--moss); }
 
@@ -536,7 +543,7 @@ table.data td.mono { white-space: nowrap; }
 /* ==========================================================================
    CODE
    ========================================================================== */
-.codeblock { border: 1px solid var(--rule); background: #060605; }
+.codeblock { border: 1px solid var(--rule); background: var(--ink-deep); }
 .codeblock-bar {
   display: flex;
   align-items: center;
@@ -563,12 +570,12 @@ table.data td.mono { white-space: nowrap; }
   font-family: var(--mono);
   font-size: 0.82rem;
   line-height: 1.7;
-  color: #D6D2C8;
+  color: #D3D9E6;
 }
-.codeblock-body .c { color: #5F5B53; font-style: italic; }
+.codeblock-body .c { color: #5A6376; font-style: italic; }
 .codeblock-body .s { color: var(--moss); }
-.codeblock-body .k { color: var(--orange); }
-.codeblock-body .n { color: #C9B896; }
+.codeblock-body .k { color: var(--accent); }
+.codeblock-body .n { color: #9CC4FF; }
 .codeblock-body .f { color: var(--bone); }
 
 /* ==========================================================================
@@ -582,7 +589,7 @@ table.data td.mono { white-space: nowrap; }
   padding: clamp(24px, 3vw, 38px) 0;
   border-top: 1px solid var(--rule);
 }
-.step-num { font-family: var(--mono); font-size: 0.86rem; color: var(--orange); font-variant-numeric: tabular-nums; }
+.step-num { font-family: var(--mono); font-size: 0.86rem; color: var(--accent); font-variant-numeric: tabular-nums; }
 .step-check {
   margin-top: 18px;
   padding: 12px 0 0;
@@ -627,7 +634,7 @@ table.data td.mono { white-space: nowrap; }
 .q-option.is-muted { opacity: .45; }
 
 .meter { height: 2px; background: var(--rule); }
-.meter > span { display: block; height: 100%; background: var(--orange); transition: width .35s ease; }
+.meter > span { display: block; height: 100%; background: var(--accent); transition: width .35s ease; }
 
 .score {
   display: grid;
@@ -646,7 +653,7 @@ table.data td.mono { white-space: nowrap; }
 }
 .score-figure small { display: block; font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0; color: var(--graphite); margin-top: 14px; }
 .score.is-pass .score-figure { color: var(--moss); }
-.score.is-fail .score-figure { color: var(--orange); }
+.score.is-fail .score-figure { color: var(--accent); }
 @media (max-width: 800px) { .score { grid-template-columns: 1fr; row-gap: 22px; } }
 
 .key-item { border-top: 1px solid var(--rule); padding: 18px 0; }
@@ -715,7 +722,7 @@ table.data td.mono { white-space: nowrap; }
   font-size: 1rem;
 }
 .search::placeholder { color: var(--graphite); }
-.search:focus { outline: none; border-bottom-color: var(--orange); }
+.search:focus { outline: none; border-bottom-color: var(--accent); }
 
 .medal { border: 1px solid var(--rule); padding: 20px 18px; text-align: left; }
 .medal.is-locked { opacity: .38; }
@@ -762,6 +769,7 @@ table.data td.mono { white-space: nowrap; }
 }
 .tutor-foot { border-top: 1px solid var(--rule-mid); padding: 16px 26px 22px; }
 
+.tutor-head > div:first-child { min-width: 0; }
 .tutor-tools { display: flex; gap: 8px; flex: 0 0 auto; }
 .tutor-x {
   font-family: var(--mono);
@@ -806,10 +814,20 @@ table.data td.mono { white-space: nowrap; }
   background: transparent;
   border: 1px solid var(--rule);
   padding: 7px 11px;
+  text-align: left;
   cursor: pointer;
   transition: color .15s ease, border-color .15s ease;
 }
-.chip:hover { color: var(--orange); border-color: var(--orange); }
+.chip:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Narrow phones: the panel is the whole screen, so it trades padding for room. */
+@media (max-width: 430px) {
+  .tutor-head { padding: 16px 18px 14px; }
+  .tutor-log { padding: 18px; }
+  .tutor-foot { padding: 14px 18px 18px; }
+  .tutor-settings { padding: 16px 18px; }
+  .chip { padding: 7px 9px; }
+}
 
 .tutor-form { display: flex; align-items: flex-end; gap: 12px; }
 .tutor-form .tutor-input { flex: 1; min-width: 0; }
@@ -820,7 +838,7 @@ table.data td.mono { white-space: nowrap; }
   color: var(--bone);
   font-family: var(--mono);
   font-size: 0.86rem;
-  border-left: 2px solid var(--orange);
+  border-left: 2px solid var(--accent);
   padding-left: 16px;
 }
 .bubble-body p { margin: 0 0 .65em; }
@@ -828,7 +846,7 @@ table.data td.mono { white-space: nowrap; }
 .bubble-body ul { padding-left: 1.2em; margin: .5em 0; }
 .bubble-body blockquote { margin: .6em 0; padding-left: 14px; border-left: 2px solid var(--rule-mid); color: var(--bone); }
 .bubble-body pre {
-  background: #060605;
+  background: var(--ink-deep);
   border: 1px solid var(--rule);
   padding: 12px;
   overflow-x: auto;
@@ -836,7 +854,7 @@ table.data td.mono { white-space: nowrap; }
   font-size: 0.78rem;
   margin: .6em 0;
 }
-.bubble-body a { color: var(--orange); border-bottom: 1px solid var(--orange); }
+.bubble-body a { color: var(--accent); border-bottom: 1px solid var(--accent); }
 .bubble-source { display: block; margin-top: 10px; font-family: var(--mono); font-size: 0.7rem; color: var(--graphite); }
 
 .tutor-input {
@@ -850,7 +868,7 @@ table.data td.mono { white-space: nowrap; }
   font-size: 0.88rem;
 }
 .tutor-input::placeholder { color: var(--graphite); }
-.tutor-input:focus { outline: none; border-bottom-color: var(--orange); }
+.tutor-input:focus { outline: none; border-bottom-color: var(--accent); }
 
 .typing { display: inline-flex; gap: 5px; }
 .typing i { width: 5px; height: 5px; background: var(--graphite); animation: blink 1.2s infinite; }
@@ -864,7 +882,7 @@ table.data td.mono { white-space: nowrap; }
 .notice {
   border: 1px solid var(--rule-mid);
   border-left-width: 2px;
-  border-left-color: var(--orange);
+  border-left-color: var(--accent);
   padding: 16px 20px;
   color: var(--ash);
   font-size: 0.97rem;
@@ -888,7 +906,7 @@ table.data td.mono { white-space: nowrap; }
   font-family: var(--mono);
   font-size: 0.8rem;
   padding: 12px 16px;
-  border-left: 3px solid var(--orange);
+  border-left: 3px solid var(--accent);
   animation: slide .28s cubic-bezier(.2, .9, .2, 1);
 }
 .toast.is-moss { border-left-color: var(--moss); }
@@ -927,7 +945,7 @@ table.data td.mono { white-space: nowrap; }
   position: absolute;
   left: 0; right: 0; bottom: -1px;
   height: 2px;
-  background: var(--orange);
+  background: var(--accent);
 }
 .rt-TabsContent { outline: none; }
 

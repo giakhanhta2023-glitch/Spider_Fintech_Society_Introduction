@@ -88,7 +88,7 @@ export function Home({ onAskTutor }) {
 
       <!-- Contents page. -->
       <section class="section">
-        <${SectionHead} title="Contents"
+        <${SectionHead} title="The ten levels"
           note="pass the drill, ship the build, the next level opens" />
         <div class="index">
           ${FQ.levels.map((lv) => html`<${IndexRow} key=${lv.id} level=${lv} />`)}
@@ -119,43 +119,64 @@ export function Home({ onAskTutor }) {
 export function Glossary() {
   const [query, setQuery] = useState('');
 
-  const terms = useMemo(() => {
-    const all = [];
-    FQ.levels.forEach((lv) => (lv.glossary || []).forEach((g) =>
-      all.push({ ...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() })));
-    return all.sort((a, b) => (a.t.toLowerCase() < b.t.toLowerCase() ? -1 : 1));
-  }, []);
+  /* Ordered the way the course teaches it: level by level, and alphabetically
+     inside each level, so reading top to bottom follows your own progress. */
+  const groups = useMemo(() => FQ.levels.map((lv) => ({
+    id: lv.id,
+    title: lv.title,
+    terms: (lv.glossary || [])
+      .map((g) => ({ ...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() }))
+      .sort((a, b) => (a.t.toLowerCase() < b.t.toLowerCase() ? -1 : 1))
+  })), []);
 
+  const total = groups.reduce((n, g) => n + g.terms.length, 0);
   const q = query.trim().toLowerCase();
-  const shown = q ? terms.filter((t) => t.blob.indexOf(q) !== -1) : terms;
+  const shown = groups
+    .map((g) => (q ? { ...g, terms: g.terms.filter((t) => t.blob.indexOf(q) !== -1) } : g))
+    .filter((g) => g.terms.length);
+  const found = shown.reduce((n, g) => n + g.terms.length, 0);
 
   return html`
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
-          <span class="kicker">reference <b>/</b> ${terms.length} entries</span>
-          <h1 class="display display-l">Glossary</h1>
+          <span class="kicker">${total} words <b>/</b> in the order you meet them</span>
+          <h1 class="display display-l">Every word we use</h1>
         </div>
         <div class="col-9-12">
-          <p class="lede">Every term the course explains, gathered in one place.</p>
+          <p class="lede">
+            Every term the course explains, grouped by the level that teaches it. If a word ever
+            throws you mid-level, this is the page to come back to.
+          </p>
         </div>
       </section>
 
       <input class="search" type="search" value=${query} autoComplete="off"
-        placeholder="filter, try idempotency or drawdown"
+        placeholder="type a word, try idempotency or drawdown"
         onInput=${(e) => setQuery(e.target.value)} />
+
+      ${q ? html`
+        <p class="mono" style=${{ marginTop: '14px' }}>
+          ${found} ${found === 1 ? 'word' : 'words'} match that
+        </p>` : null}
 
       <section class="section-tight">
         ${shown.length === 0
           ? html`<p class="notice">Nothing matches that one. Try a shorter word, or just ask the tutor.</p>`
-          : html`
-            <dl class="deflist">
-              ${shown.map((g, i) => html`
-                <div class="defrow" key=${i}>
-                  <dt>${g.t} <a class="lv" href=${`#/level/${g.lv}`}>level ${String(g.lv).padStart(2, '0')}</a></dt>
-                  <dd>${md(g.d)}</dd>
-                </div>`)}
-            </dl>`}
+          : shown.map((g) => html`
+            <div key=${g.id} style=${{ marginBottom: '44px' }}>
+              <${SectionHead} title=${`Level ${String(g.id).padStart(2, '0')}, ${g.title}`}
+                note=${html`
+                  ${g.terms.length} ${g.terms.length === 1 ? 'word' : 'words'}
+                  ${' '}<a class="link" href=${`#/level/${g.id}`}>open the level →</a>`} />
+              <dl class="deflist" style=${{ borderTop: 0 }}>
+                ${g.terms.map((t, i) => html`
+                  <div class="defrow" key=${i}>
+                    <dt>${t.t}</dt>
+                    <dd>${md(t.d)}</dd>
+                  </div>`)}
+              </dl>
+            </div>`)}
       </section>
     </div>`;
 }
@@ -165,6 +186,8 @@ export function Dossier({ onReset }) {
   const [confirming, setConfirming] = useState(false);
   const all = store.all();
   const cleared = store.clearedCount();
+  const rank = store.rank();
+  const article = /^[aeiou]/i.test(rank) ? 'an' : 'a';
 
   let quizzes = 0, projects = 0, answered = 0, totalQ = 0;
   FQ.levels.forEach((lv) => {
@@ -179,12 +202,13 @@ export function Dossier({ onReset }) {
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
-          <span class="kicker">record <b>/</b> this browser only</span>
-          <h1 class="display display-l">Dossier</h1>
+          <span class="kicker">saved on this device <b>/</b> nothing is uploaded</span>
+          <h1 class="display display-l">How you are doing</h1>
         </div>
         <div class="col-9-12">
           <p class="lede">
-            Rank <strong>${store.rank()}</strong>. Nothing here leaves your device.
+            You are ${article} <strong>${rank}</strong> so far. Everything on this page is kept
+            in this browser, so it never leaves your device.
           </p>
         </div>
       </section>
@@ -213,7 +237,7 @@ export function Dossier({ onReset }) {
       </section>
 
       <section class="section-tight">
-        <${SectionHead} title="Level by level" />
+        <${SectionHead} title="Level by level" note="click a row to open it" />
         <div class="table-wrap">
           <table class="data">
             <thead>
@@ -241,12 +265,12 @@ export function Dossier({ onReset }) {
       </section>
 
       <section class="section-tight">
-        <${SectionHead} title="Danger zone" />
+        <${SectionHead} title="Starting over" />
         <div class="grid">
           <div class="col-1-7">
             <p class="index-sub" style=${{ maxWidth: '52ch' }}>
-              This wipes your experience, badges, scores and checklists on this device.
-              Your notebooks and GitHub repos are left alone.
+              This wipes your experience, badges, scores and ticked boxes on this device.
+              Your notebooks and GitHub repos are left exactly as they are.
             </p>
           </div>
           <div class="col-9-12">

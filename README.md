@@ -22,7 +22,8 @@ python serve.py
 ```
 
 Then visit <http://localhost:8000>. There is no build step and no `npm install`: the interface is
-React + Radix Themes loaded from a CDN import map, and the curriculum is plain JavaScript data files.
+React loaded from a CDN import map, styled by one hand-written stylesheet, and the curriculum is
+plain JavaScript data files.
 
 `serve.py` is `http.server` with caching switched off. Use it while you are editing: browsers hold
 ES modules in memory, so with a normal static server your changes can appear to do nothing until you
@@ -91,7 +92,7 @@ assets/js/
   config.js             repo, XP economy, pass mark, tutor endpoint: edit this first
   core.js               curriculum registry, markdown subset, syntax highlighting
   storage.js            progress, XP, badges (localStorage)
-  ui/                   React + Radix Themes interface
+  ui/                   the interface: React, htm and one stylesheet
 content/levels/         the curriculum: ten plain data files, no build step
 data/                   synthetic datasets + the generator that makes them
 solutions/              verified solution keys and quiz answer keys, one folder per level
@@ -171,7 +172,8 @@ Optional environment variables: `FINQUEST_MODEL` (default `claude-opus-5`), `FIN
 
 ## Built with
 
-- [Radix Themes](https://www.radix-ui.com/themes): the component system the whole interface uses
+- [Radix Themes](https://www.radix-ui.com/themes): used for behaviour only, so tabs, dialogs and
+  focus handling are accessible by default. Every visual decision lives in `assets/css/app.css`
 - React 19 and [htm](https://github.com/developit/htm), loaded from a CDN import map so there is no build step
 - pandas, numpy, scikit-learn, matplotlib and Streamlit in the curriculum itself
 
@@ -179,7 +181,7 @@ Optional environment variables: `FINQUEST_MODEL` (default `claude-opus-5`), `FIN
 
 Scores, XP, badges and checklists live in your browser's `localStorage` and never leave the device.
 There is no account, no tracking, and no server-side state. Clearing your browser data resets the
-course; the **Dossier** page has a deliberate reset button too.
+course; the **how you are doing** page has a deliberate reset button too.
 
 ## A note on scope
 

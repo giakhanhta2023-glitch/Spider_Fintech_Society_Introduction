@@ -1,6 +1,6 @@
 /* =========================================================================
    FinQuest: application root.
-   Masthead, market tape, routing, toasts, tutor.
+   Masthead, routing, toasts, tutor.
    ========================================================================= */
 import {
   html, useState, useEffect, useCallback, FQ, CFG, store, navigate,
@@ -22,33 +22,6 @@ function parseHash() {
   if (parts[0] === 'glossary') return { name: 'glossary' };
   if (parts[0] === 'progress') return { name: 'progress' };
   return { name: 'home' };
-}
-
-/* ------------------------------------------------------------------- tape */
-const TAPE = [
-  ['Auth', 'approve is not settle'],
-  ['Ledger', 'entries must sum to zero'],
-  ['Money', 'integers, never floats'],
-  ['Retry', 'idempotency keys or double charges'],
-  ['APR', 'includes the fees'],
-  ['APY', 'includes the compounding'],
-  ['Vol', 'scales with sqrt(252)'],
-  ['Sharpe', 'return per unit of risk'],
-  ['Drawdown', 'the number people feel'],
-  ['Fraud', '98.2% accurate = caught nothing'],
-  ['KYC', 'verify before you hold funds'],
-  ['Secrets', 'never in the repo'],
-  ['README', 'link, screenshot, limitations'],
-  ['Rule 1', '0.1 + 0.2 is not 0.3']
-];
-
-function Tape() {
-  const run = TAPE.map(([tag, text], i) => html`
-    <span class="tape-item" key=${i}><b>${tag}</b>${text}</span>`);
-  return html`
-    <div class="tape" aria-hidden="true">
-      <div class="tape-track">${run}${run}</div>
-    </div>`;
 }
 
 /* ------------------------------------------------------------------ toast */
@@ -76,9 +49,9 @@ function Masthead({ route, onOpenTutor }) {
         </a>
 
         <nav class="mainnav">
-          ${link('#/', 'index', route.name === 'home')}
-          ${link('#/glossary', 'glossary', route.name === 'glossary')}
-          ${link('#/progress', 'dossier', route.name === 'progress')}
+          ${link('#/', 'levels', route.name === 'home')}
+          ${link('#/glossary', 'words', route.name === 'glossary')}
+          ${link('#/progress', 'progress', route.name === 'progress')}
         </nav>
 
         <div class="masthead-meta">
@@ -154,10 +127,9 @@ function App() {
   }
 
   return html`
-    <${Theme} appearance="dark" accentColor="orange" grayColor="sand" radius="none"
+    <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="none"
       scaling="100%" hasBackground=${false}>
       <${Masthead} route=${route} onOpenTutor=${() => setTutorOpen(true)} />
-      <${Tape} />
       <main>${page}</main>
 
       <footer class="footer">

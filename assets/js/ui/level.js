@@ -346,7 +346,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
               <tbody>
                 ${project.rubric.map((r, i) => html`
                   <tr key=${i}>
-                    <td class="figure" style=${{ width: '4.5rem', color: 'var(--orange)' }}>${r.pts}</td>
+                    <td class="figure" style=${{ width: '4.5rem', color: 'var(--accent)' }}>${r.pts}</td>
                     <td>
                       <span class="title title-s" style=${{ display: 'block', marginBottom: '4px' }}>${r.t}</span>
                       <span class="index-sub" style=${{ display: 'block', margin: 0 }}>${md(r.d)}</span>
@@ -380,7 +380,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
                     ? html`<${Btn} variant="accent" arrow
                         onClick=${() => navigate(`#/level/${level.id + 1}`)}>next level<//>`
                     : html`<${Btn} variant="accent" arrow
-                        onClick=${() => navigate('#/progress')}>see your dossier<//>`}
+                        onClick=${() => navigate('#/progress')}>see how you did<//>`}
                   <${Btn} variant="quiet" onClick=${onReopen}>reopen it<//>
                 </div>
               </div>` : html`
@@ -417,7 +417,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
     return html`
       <div class="page section">
         <h1 class="display display-l">Level not found</h1>
-        <p><a class="link" href="#/">back to the index →</a></p>
+        <p><a class="link" href="#/">back to the levels →</a></p>
       </div>`;
   }
 
@@ -425,7 +425,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
     return html`
       <div class="page section">
         <span class="kicker">
-          <a class="link" href="#/">index</a> <b>/</b> level ${String(level.id).padStart(2, '0')}
+          <a class="link" href="#/">levels</a> <b>/</b> level ${String(level.id).padStart(2, '0')}
         </span>
         <h1 class="display display-l" style=${{ margin: '0 0 24px', maxWidth: '18ch' }}>${level.title}</h1>
         <p class="notice" style=${{ maxWidth: '60ch' }}>
@@ -471,7 +471,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
       <section class="section grid" style=${{ paddingBottom: '0' }}>
         <div class="col-1-7">
           <span class="kicker">
-            <a class="link" href="#/">index</a>
+            <a class="link" href="#/">levels</a>
             <b>/</b> level ${String(level.id).padStart(2, '0')}
             <b>/</b> ${level.codename}
           </span>

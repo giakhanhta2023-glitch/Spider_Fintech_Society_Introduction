@@ -50,41 +50,51 @@ html`<${Card} size="3" variant="surface">${body}<//>`
 The trade-off is a runtime dependency on a CDN. If you would rather vendor it, replace the import map
 in `index.html` with local copies: nothing else changes.
 
-## 3. Radix Themes owns the design system
+## 3. app.css owns the design system, Radix owns the behaviour
 
-Colour, spacing, radii, typography scales, focus rings, dialog behaviour and accessibility all come
-from Radix. `assets/css/app.css` only adds what Radix does not ship: the mission ladder, the prose
-styles for curriculum content, the code block, the score ring, and the tutor panel geometry, and it
-does so using Radix tokens (`--blue-9`, `--gray-a4`, `--space-3`, `--radius-3`) so the whole thing
-follows the theme rather than fighting it.
+`assets/css/app.css` holds every visual decision: the type scale, the twelve column grid, the rules
+that divide sections, the buttons, tags, tables, code wells, quiz options and the tutor panel. It is
+built on a small set of tokens declared once at the top of the file, and the Radix visual layer is
+deliberately overridden at the bottom so the component library cannot reintroduce its pill buttons
+and rounded panels.
 
-Changing `accentColor` on the `<Theme>` in `main.js` restyles the entire app. That one prop is how
-the interface went from jade to blue.
+Radix Themes is kept for the parts that are genuinely hard: tab semantics, dialog focus traps,
+tooltips and keyboard handling.
 
-One rule survives an accent change: **colour carries meaning, so the accent is not allowed to eat the
-semantics.** Each colour has exactly one job, and success stays green whatever the brand colour is:
+The rules the palette is built to:
 
-| Colour | Job |
-|--------|-----|
-| **blue** (accent) | brand, links, buttons, progress, where you currently are |
-| **grass** | a state the learner achieved: correct, passed, cleared, shipped |
-| **red** | wrong |
-| **amber** | warnings, rank, difficulty |
-| **violet** | editorial asides: "why it matters in fintech", build briefs |
+1. Near-black canvas with a blue cast, bone text. No charcoal grey, no neon.
+2. One accent, a single blue, in two weights: `--accent` when blue is text or a mark, and
+   `--accent-solid` when blue is a filled surface with white on top.
+3. Serif for display and reading, monospace for every label, figure and tag.
+4. Structure comes from rules and column spans, never from shadows, glows or rounded panels.
+5. Nothing below 12px, nothing under 4.5:1 contrast.
 
-If you switch the accent again, sweep `assets/css/app.css` and the `color=` props for tokens that
-should have stayed green: the quiz's correct answer, the cleared medallion, ticked requirements, and
-the passing score ring.
+**Colour carries meaning, so the accent is not allowed to eat the semantics.** Each colour has
+exactly one job, and success stays green whatever the brand colour becomes:
+
+| Token | Job |
+|-------|-----|
+| `--accent`, `--accent-solid` | brand, links, buttons, progress, where you currently are |
+| `--moss` | a state the learner achieved: correct, passed, cleared, shipped |
+| `--crimson` | wrong |
+| `--bone`, `--ash`, `--graphite` | the three weights of text, in that order |
+| `--rule`, `--rule-mid`, `--rule-heavy` | hairline, section divider, hard stop |
+
+To change the brand colour, edit the four accent tokens in `app.css` and the `accentColor` prop on
+the `<Theme>` in `main.js` so the Radix focus ring matches. Never repoint `--moss` or `--crimson`:
+the quiz's correct answer, the cleared badges, ticked requirements and the passing score all read
+as meaning, not decoration.
 
 ## Layers
 
 ```
 main.js          routing, HUD, toasts, theme        <- knows about everything
-  views.js       home, glossary, dossier
+  views.js       home, the word list, the progress page
   level.js       one level: brief/learn/tutorial/drill/build
     quiz.js      the drill and the answer key
-    blocks.js    curriculum blocks -> Radix components
-  tutor.js       the tutor panel (a Radix Dialog pinned right)
+    blocks.js    curriculum blocks -> editorial elements
+  tutor.js       the tutor panel (a dialog pinned to the right edge)
     tutor-engine.js   retrieval, prompting, API calls: no UI in this file
   lib.js         shared imports and small helpers
 ---------------------------------------------------------------
@@ -134,4 +144,4 @@ Rules worth knowing:
 4. Add its notes to `NOTES` in `tools/build_solution_readmes.js`, then run both generators.
 5. Extend `ranks` in `assets/js/config.js` if you want a new title at the top.
 
-The unlock logic, map, glossary, dossier and tutor index all pick it up automatically.
+The unlock logic, the level list, the word list, the progress page and the tutor index all pick it up automatically.

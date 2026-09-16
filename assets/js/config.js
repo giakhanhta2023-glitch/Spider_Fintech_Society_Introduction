@@ -27,9 +27,9 @@ window.FQ_CONFIG = {
 
   /* Rank ladder: index = number of levels cleared */
   ranks: [
-    'Intern', 'Junior analyst', 'Analyst', 'Data analyst', 'Quant apprentice',
-    'Credit engineer', 'Risk quant', 'Fraud engineer', 'Platform engineer',
-    'Lead engineer', 'Chief fintech officer'
+    'intern', 'junior analyst', 'analyst', 'data analyst', 'quant apprentice',
+    'credit engineer', 'risk quant', 'fraud engineer', 'platform engineer',
+    'lead engineer', 'chief fintech officer'
   ],
 
   /* AI tutor. The built-in offline tutor always works with zero setup.
