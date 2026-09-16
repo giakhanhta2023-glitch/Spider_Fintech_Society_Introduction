@@ -1,7 +1,5 @@
 # Level 2: The time value of money
 
-> **Compound growth engine** · build project · difficulty 2/10
-
 ## Read this second
 
 Attempt the build yourself first, then ask the FinQuest tutor for a hint, and only then open this folder.
