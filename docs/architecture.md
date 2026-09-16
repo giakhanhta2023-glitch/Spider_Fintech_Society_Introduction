@@ -55,10 +55,26 @@ in `index.html` with local copies — nothing else changes.
 Colour, spacing, radii, typography scales, focus rings, dialog behaviour and accessibility all come
 from Radix. `assets/css/app.css` only adds what Radix does not ship — the mission ladder, the prose
 styles for curriculum content, the code block, the score ring, and the tutor panel geometry — and it
-does so using Radix tokens (`--jade-9`, `--gray-a4`, `--space-3`, `--radius-3`) so the whole thing
+does so using Radix tokens (`--blue-9`, `--gray-a4`, `--space-3`, `--radius-3`) so the whole thing
 follows the theme rather than fighting it.
 
-Changing `accentColor` on the `<Theme>` in `main.js` restyles the entire app.
+Changing `accentColor` on the `<Theme>` in `main.js` restyles the entire app — that one prop is how
+the interface went from jade to blue.
+
+One rule survives an accent change: **colour carries meaning, so the accent is not allowed to eat the
+semantics.** Each colour has exactly one job, and success stays green whatever the brand colour is:
+
+| Colour | Job |
+|--------|-----|
+| **blue** (accent) | brand, links, buttons, progress, where you currently are |
+| **grass** | a state the learner achieved — correct, passed, cleared, shipped |
+| **red** | wrong |
+| **amber** | warnings, rank, difficulty |
+| **violet** | editorial asides: "why it matters in fintech", build briefs |
+
+If you switch the accent again, sweep `assets/css/app.css` and the `color=` props for tokens that
+should have stayed green: the quiz's correct answer, the cleared medallion, ticked requirements, and
+the passing score ring.
 
 ## Layers
 

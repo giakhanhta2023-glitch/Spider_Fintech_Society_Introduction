@@ -22,7 +22,7 @@ function Option({ index, text, state, disabled, onPick }) {
 
 function Explanation({ correct, letter, why }) {
   return html`
-    <${Callout.Root} mt="4" variant="surface" color=${correct ? 'jade' : 'violet'}>
+    <${Callout.Root} mt="4" variant="surface" color=${correct ? 'grass' : 'violet'}>
       <${Callout.Text}>
         <span className="note-label">${correct ? 'Correct' : 'Answer: ' + letter}</span>
         ${md(why)}
@@ -40,10 +40,10 @@ export function AnswerKey({ level, answers }) {
           <${Card} key=${i} variant="surface" className=${wrong ? 'key-card missed' : 'key-card'}>
             <${Flex} justify="between" align="start" gap="3" mb="1">
               <${Text} size="2" weight="medium">${i + 1}. ${md(q.q)}<//>
-              ${answers ? html`<${Badge} color=${wrong ? 'red' : 'jade'} variant="soft">
+              ${answers ? html`<${Badge} color=${wrong ? 'red' : 'grass'} variant="soft">
                 ${wrong ? 'missed' : 'correct'}<//>` : null}
             <//>
-            <${Text} as="p" size="2" color="jade" mb="1">
+            <${Text} as="p" size="2" color="grass" mb="1">
               ${LETTERS[q.answer]}. ${md(q.options[q.answer])}
             <//>
             <${Text} as="p" size="2" color="gray">${md(q.why)}<//>
@@ -155,7 +155,7 @@ export function Drill({ level, onFinish }) {
           Question <span className="figure">${idx + 1}</span> of ${total}
         <//>
         <${Box} style=${{ flex: 1, minWidth: '160px' }}>
-          <${Progress} value=${(answered / total) * 100} color="jade" size="2" />
+          <${Progress} value=${(answered / total) * 100} color="blue" size="2" />
         <//>
         <${Text} size="2" color="gray">
           <span className="figure">${correct}</span> correct · pass at ${CFG.quiz.passMark}
@@ -163,7 +163,7 @@ export function Drill({ level, onFinish }) {
       <//>
 
       <${Card} size="3" variant="surface">
-        <${Badge} color="jade" variant="soft" radius="full" mb="2">${level.codename} · drill<//>
+        <${Badge} color="blue" variant="soft" radius="full" mb="2">${level.codename} · drill<//>
         <${Heading} size="4" mt="2" mb="4" weight="medium">${md(q.q)}<//>
 
         <${Flex} direction="column" gap="2">

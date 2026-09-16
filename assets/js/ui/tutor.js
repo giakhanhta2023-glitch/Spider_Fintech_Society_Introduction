@@ -157,7 +157,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
               Ada <${Text} size="2" weight="regular" color="gray">your fintech tutor<//>
             <//>
             <${Flex} gap="2" align="center" wrap="wrap">
-              <${Badge} color="jade" variant="soft" radius="full">
+              <${Badge} color="blue" variant="soft" radius="full">
                 ${level ? `Level ${level.id} · ${level.codename}` : 'no level open'}
               <//>
               <${Text} size="1" color="gray" className="figure">${mode}<//>
@@ -199,7 +199,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
             <${Flex} gap="2" mt="3" align="center">
               <${Button} size="1" onClick=${saveSettings}>Save<//>
               <${Button} size="1" variant="soft" color="gray" onClick=${clearSettings}>Clear<//>
-              ${status ? html`<${Text} size="1" color="jade">${status}<//>` : null}
+              ${status ? html`<${Text} size="1" color="grass">${status}<//>` : null}
             <//>
           <//>` : null}
 

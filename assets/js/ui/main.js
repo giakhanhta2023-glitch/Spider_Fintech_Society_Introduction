@@ -94,7 +94,7 @@ function Header({ route, onOpenTutor, version }) {
             <${Tooltip} content=${`${progress.into} / ${progress.tier} XP to the next tier`}>
               <${Flex} align="center" gap="2" className="hud-xp">
                 <${Badge} color="amber" variant="surface" radius="full">${store.rank()}<//>
-                <${Box} className="hud-bar"><${Progress} value=${progress.pct} color="jade" size="1" /><//>
+                <${Box} className="hud-bar"><${Progress} value=${progress.pct} color="blue" size="1" /><//>
                 <${Text} size="1" color="gray" className="figure">${xp.toLocaleString()} XP<//>
               <//>
             <//>
@@ -137,7 +137,7 @@ function App() {
       : 'FinQuest — Fintech Training Arcade';
   }, [route]);
 
-  const toast = useCallback((text, color = 'jade') => {
+  const toast = useCallback((text, color = 'blue') => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => prev.concat([{ id, text, color }]));
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3600);
@@ -167,7 +167,7 @@ function App() {
   }
 
   return html`
-    <${Theme} appearance="dark" accentColor="jade" grayColor="slate" radius="medium" scaling="100%">
+    <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="medium" scaling="100%">
       <${Header} route=${route} onOpenTutor=${() => setTutorOpen(true)} version=${version} />
       <${Ticker} />
 

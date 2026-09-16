@@ -42,7 +42,7 @@ export function CodeBlock({ code, lang = 'python', label }) {
 
 /* ----------------------------------------------------------------- callout */
 const CALLOUTS = {
-  tip: { color: 'jade', label: 'Tip' },
+  tip: { color: 'blue', label: 'Tip' },
   warn: { color: 'amber', label: 'Watch out' },
   money: { color: 'violet', label: 'Why it matters in fintech' }
 };
@@ -104,7 +104,7 @@ export function Blocks({ blocks }) {
       }
       if (b.h4) {
         return html`
-          <${Heading} key=${i} as="h4" size="3" mt="5" mb="2" color="jade">${md(b.h4)}<//>`;
+          <${Heading} key=${i} as="h4" size="3" mt="5" mb="2" color="blue">${md(b.h4)}<//>`;
       }
       if (b.p) {
         return html`<${Text} key=${i} as="p" size="3" color="gray" mb="3">${md(b.p)}<//>`;

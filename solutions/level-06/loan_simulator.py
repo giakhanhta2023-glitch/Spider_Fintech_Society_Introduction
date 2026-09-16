@@ -198,8 +198,8 @@ def plot_split(df, path=None):
     path = path or Path(__file__).with_name("payment-split.png")
     s = summarise(df)
     fig, ax = plt.subplots(figsize=(9, 4))
-    ax.plot(df["month"], df["interest"], label="interest", color="#ff6b81")
-    ax.plot(df["month"], df["principal"], label="principal", color="#2ee6a8")
+    ax.plot(df["month"], df["interest"], label="interest", color="#e5484d")
+    ax.plot(df["month"], df["principal"], label="principal", color="#46a758")
     if s["crossover_month"]:
         ax.axvline(s["crossover_month"], linestyle="--", color="#8b7cff", linewidth=1)
         ax.annotate(f"crossover: month {s['crossover_month']}",
@@ -220,8 +220,8 @@ def plot_balances(principal, annual_rate, years, extra, path=None):
     base = schedule(principal, annual_rate, years)
     fast = schedule(principal, annual_rate, years, extra=extra)
     fig, ax = plt.subplots(figsize=(9, 4))
-    ax.plot(base["month"], base["balance"], label="standard", color="#54b8ff")
-    ax.plot(fast["month"], fast["balance"], label=f"+{extra:,.0f}/month", color="#2ee6a8")
+    ax.plot(base["month"], base["balance"], label="standard", color="#0090ff")
+    ax.plot(fast["month"], fast["balance"], label=f"+{extra:,.0f}/month", color="#46a758")
     ax.set_title("Outstanding balance")
     ax.set_xlabel("month")
     ax.set_ylabel("USD")

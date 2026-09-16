@@ -130,7 +130,7 @@ def plot_categories(df, path=None):
     path = path or Path(__file__).with_name("spending-by-category.png")
     """Sorted horizontal bars. Savings transfers excluded on purpose."""
     chart = by_category(df, exclude_savings=True).sort_values()
-    ax = chart.plot(kind="barh", figsize=(8, 4.5), color="#2ee6a8")
+    ax = chart.plot(kind="barh", figsize=(8, 4.5), color="#0090ff")
     ax.set_title("Spending by category — Mar to Aug 2025 (savings transfers excluded)")
     ax.set_xlabel("USD")
     ax.set_ylabel("")

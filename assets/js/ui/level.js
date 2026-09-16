@@ -37,7 +37,7 @@ function Brief({ level, state }) {
         <//>
         <${Card} size="3" variant="surface">
           <${Heading} size="3" mb="2">${level.project ? 'You will build' : 'Your mission'}<//>
-          <${Text} as="p" size="3" color="jade" weight="medium" mb="2">${brief.title}<//>
+          <${Text} as="p" size="3" color="blue" weight="medium" mb="2">${brief.title}<//>
           <${Text} as="p" size="2" color="gray">${md(brief.story)}<//>
           ${level.project ? html`
             <${Text} as="p" size="1" color="gray" mt="3">
@@ -81,7 +81,7 @@ function Learn({ level, onAskTutor }) {
         <${Grid} columns=${{ initial: '1', sm: '2' }} gap="2">
           ${level.glossary.map((g, i) => html`
             <${Box} key=${i} className="term">
-              <${Text} size="2" weight="medium" color="jade" className="figure">${g.t}<//>
+              <${Text} size="2" weight="medium" color="blue" className="figure">${g.t}<//>
               <${Text} as="p" size="2" color="gray" mt="1">${md(g.d)}<//>
             <//>`)}
         <//>
@@ -100,7 +100,7 @@ function Tutorial({ level }) {
       <${Card} size="3" variant="surface">
         <${Heading} size="4" mb="2">Hands-on tutorial<//>
         <${Text} as="p" size="3" color="gray">${md(level.tutorial.intro)}<//>
-        <${Callout.Root} color="jade" variant="surface" mt="3">
+        <${Callout.Root} color="blue" variant="surface" mt="3">
           <${Callout.Text}>
             <span className="note-label">Promise</span>
             Everything the project needs is taught here. If the build asks for something this tutorial
@@ -118,7 +118,7 @@ function Tutorial({ level }) {
               <${Blocks} blocks=${step.blocks} />
               ${step.check ? html`
                 <${Flex} gap="2" align="start" className="step-check" mt="3">
-                  <${Badge} color="jade" variant="soft" radius="full">Check<//>
+                  <${Badge} color="blue" variant="soft" radius="full">Check<//>
                   <${Text} size="2" color="gray">${md(step.check)}<//>
                 <//>` : null}
             <//>
@@ -152,7 +152,7 @@ function DrillTab({ level, state, onProgress }) {
           on a fail. Your best score is the one that sticks.
         <//>
         ${state.quizPassed ? html`
-          <${Callout.Root} color="jade" variant="surface" mt="3">
+          <${Callout.Root} color="grass" variant="surface" mt="3">
             <${Callout.Text}>
               <span className="note-label">Cleared</span>
               Best score ${state.quizBest}/${level.quiz.length} across
@@ -201,7 +201,7 @@ function Checklist({ levelId, items, onChange }) {
       <//>
       <${Flex} align="center" gap="3" mt="3">
         <${Box} style=${{ flex: 1, maxWidth: '260px' }}>
-          <${Progress} value=${(checked / items.length) * 100} color="jade" size="1" />
+          <${Progress} value=${(checked / items.length) * 100} color="blue" size="1" />
         <//>
         <${Text} size="1" color="gray" className="figure">${checked} / ${items.length} complete<//>
       <//>
@@ -335,7 +335,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
       <${Card} size="4" variant="surface">
         <${Flex} direction="column" align="center" gap="3" py="2">
           ${state.projectDone ? html`
-            <${Heading} size="4" color="jade">Shipped<//>
+            <${Heading} size="4" color="grass">Shipped<//>
             <${Text} size="2" color="gray">
               ${level.id < 10 ? `Level ${level.id + 1} is open.` : 'The course is complete.'}
             <//>
@@ -402,11 +402,11 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
     }
     const res = store.completeProject(level.id);
     if (!res.already) {
-      toast(`Build shipped · +${CFG.xp.projectComplete} XP`, 'jade');
+      toast(`Build shipped · +${CFG.xp.projectComplete} XP`, 'grass');
       (res.badges || []).forEach((b, i) =>
         setTimeout(() => toast(`Badge unlocked: ${b.name}`, 'violet'), 700 * (i + 1)));
       if (level.id === 10) {
-        setTimeout(() => toast('Course complete. You are a Chief Fintech Officer.', 'jade'), 1400);
+        setTimeout(() => toast('Course complete. You are a Chief Fintech Officer.', 'grass'), 1400);
       }
     }
     refresh();
@@ -432,7 +432,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
           <${Badge} variant="surface" color="gray">~${level.minutes} min<//>
           ${level.tags.map((t, i) => html`<${Badge} key=${i} variant="soft" color="gray">${t}<//>`)}
           ${store.isCleared(level.id)
-            ? html`<${Badge} color="jade" variant="soft">cleared</${Badge}>` : null}
+            ? html`<${Badge} color="grass" variant="soft">cleared</${Badge}>` : null}
         <//>
       <//>
 
@@ -443,11 +443,11 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
             <${Tabs.Trigger} key=${t.id} value=${t.id}>
               ${t.label}
               ${t.id === 'drill' ? html`
-                <${Badge} ml="2" size="1" variant="soft" color=${state.quizPassed ? 'jade' : 'gray'}>
+                <${Badge} ml="2" size="1" variant="soft" color=${state.quizPassed ? 'grass' : 'gray'}>
                   ${state.quizBest}/${level.quiz.length}
                 <//>` : null}
               ${t.id === 'build' && state.projectDone ? html`
-                <${Badge} ml="2" size="1" variant="soft" color="jade">done<//>` : null}
+                <${Badge} ml="2" size="1" variant="soft" color="grass">done<//>` : null}
               ${t.id === 'build' && !state.projectDone && !state.quizPassed ? html`
                 <${Badge} ml="2" size="1" variant="soft" color="gray">locked<//>` : null}
             <//>`)}
@@ -460,7 +460,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
           ${active === 'drill' ? html`
             <${DrillTab} level=${level} state=${state} onProgress=${(outcome, score) => {
               if (outcome.firstPass) {
-                toast(`Drill cleared · +${CFG.xp.quizPassBonus + score * CFG.xp.perCorrectAnswer} XP`, 'jade');
+                toast(`Drill cleared · +${CFG.xp.quizPassBonus + score * CFG.xp.perCorrectAnswer} XP`, 'grass');
               }
               (outcome.badges || []).forEach((b, i) =>
                 setTimeout(() => toast(`Badge unlocked: ${b.name}`, 'violet'), 700 * (i + 1)));

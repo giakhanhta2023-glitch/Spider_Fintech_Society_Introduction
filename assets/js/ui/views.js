@@ -31,16 +31,16 @@ function LadderRow({ level }) {
               ${md(level.tagline)}
             <//>
           <//>
-          ${current ? html`<${Badge} color="jade" variant="solid" radius="full">you are here<//>` : null}
+          ${current ? html`<${Badge} color="blue" variant="solid" radius="full">you are here<//>` : null}
         <//>
 
         <${Flex} gap="2" mt="3" wrap="wrap" align="center">
           <${Badge} variant="surface" color="gray"><${Pips} value=${level.difficulty} /><//>
           <${Badge} variant="surface" color="gray">~${level.minutes} min<//>
-          <${Badge} variant="soft" color=${state.quizPassed ? 'jade' : 'gray'}>
+          <${Badge} variant="soft" color=${state.quizPassed ? 'grass' : 'gray'}>
             drill ${state.quizBest}/${level.quiz.length}
           <//>
-          <${Badge} variant="soft" color=${state.projectDone ? 'jade' : 'amber'}>
+          <${Badge} variant="soft" color=${state.projectDone ? 'grass' : 'amber'}>
             ${level.project
               ? (state.projectDone ? 'project shipped' : 'project')
               : (state.projectDone ? 'setup done' : 'setup')}
@@ -68,7 +68,7 @@ export function Home({ onAskTutor }) {
   return html`
     <${Flex} direction="column" gap="6">
       <${Card} size="4" className="hero">
-        <${Badge} color="jade" variant="soft" radius="full" mb="3">
+        <${Badge} color="blue" variant="soft" radius="full" mb="3">
           Spider Fintech Society · training arcade
         <//>
         <${Heading} size=${{ initial: '7', sm: '8', md: '9' }} mb="3" className="hero-title">
@@ -124,7 +124,7 @@ export function Home({ onAskTutor }) {
             ['Build', 'A project scoped to exactly what you know — with a full solution key in the repo.']
           ].map(([title, body], i) => html`
             <${Card} key=${i} size="3" variant="surface">
-              <${Text} size="1" color="jade" className="figure">0${i + 1}<//>
+              <${Text} size="1" color="blue" className="figure">0${i + 1}<//>
               <${Heading} size="3" mt="1" mb="2">${title}<//>
               <${Text} as="p" size="2" color="gray">${body}<//>
             <//>`)}
@@ -171,7 +171,7 @@ export function Glossary() {
             ${shown.map((g, i) => html`
               <${Card} key=${i} size="2" variant="surface">
                 <${Flex} justify="between" align="start" gap="2" mb="1">
-                  <${Text} size="3" weight="medium" color="jade" className="figure">${g.t}<//>
+                  <${Text} size="3" weight="medium" color="blue" className="figure">${g.t}<//>
                   <${Link} size="1" color="gray" href=${`#/level/${g.lv}`}>level ${g.lv}<//>
                 <//>
                 <${Text} as="p" size="2" color="gray">${md(g.d)}<//>
@@ -258,7 +258,7 @@ export function Dossier({ onReset }) {
               ${FQ.levels.map((lv) => {
                 const st = store.level(lv.id);
                 const status = store.isCleared(lv.id)
-                  ? html`<${Badge} color="jade" variant="soft">cleared<//>`
+                  ? html`<${Badge} color="grass" variant="soft">cleared<//>`
                   : store.isUnlocked(lv.id)
                     ? html`<${Badge} color="amber" variant="soft">open<//>`
                     : html`<${Badge} color="gray" variant="soft">locked<//>`;
