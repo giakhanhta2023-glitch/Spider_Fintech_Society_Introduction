@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 7,
   codename: 'risk desk',
   title: 'Risk and return',
-  tagline: 'The best performer here also lost 89% of its value along the way. Let us learn to say both things at once.',
+  tagline: 'The best performer here also lost 89% of its value along the way. Your job is to report both numbers.',
   difficulty: 7,
   minutes: 180,
   tags: ['returns', 'volatility', 'Sharpe', 'drawdown'],

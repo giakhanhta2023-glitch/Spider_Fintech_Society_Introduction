@@ -63,7 +63,7 @@ FQ.registerLevel({
          'followed by a temporary ban. The polite and effective response is **exponential backoff**: wait 1 second, then 2, then 4.' },
     { code: 'for attempt in range(3):\n    try:\n        r = requests.get(url, timeout=10)\n        r.raise_for_status()\n        return r.json()\n    except requests.RequestException:\n        time.sleep(2 ** attempt)        # 1s, 2s, 4s\nraise RuntimeError("giving up after 3 attempts")', lang: 'python' },
     { money: 'A trading desk that hammers a rate-limited feed gets throttled precisely when markets are volatile: the ' +
-             'moment the data matters most. Backoff is not politeness, it is self-preservation.' },
+             'moment the data matters most. Backoff is self-preservation.' },
 
     { h: 'Never trust a single live call' },
     { p: 'An app that shows a blank screen when an API is slow is a broken app. Three layers of defence, in order:' },

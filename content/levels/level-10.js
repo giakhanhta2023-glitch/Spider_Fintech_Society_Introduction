@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 10,
   codename: 'capstone',
   title: 'Compliance, architecture and the capstone build',
-  tagline: 'Nine levels of parts. Now one system, one README, and a link worth putting on your CV.',
+  tagline: 'Nine levels of parts become one system, with one README and a link worth putting on your CV.',
   difficulty: 10,
   minutes: 300,
   tags: ['architecture', 'RegTech', 'documentation', 'capstone'],

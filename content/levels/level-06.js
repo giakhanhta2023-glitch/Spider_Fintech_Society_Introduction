@@ -383,7 +383,7 @@ FQ.registerLevel({
     rubric: [
       { pts: 30, t: 'Schedule correctness', d: 'Row counts, interest totals, month-1 split, and a final balance of exactly zero all match.' },
       { pts: 20, t: 'Scenario analysis', d: 'Term comparison, overpayment comparison, and the invest-instead question answered with numbers.' },
-      { pts: 15, t: 'APR by bisection', d: 'Converges to 7.85% and is robust to different fee and term inputs.' },
+      { pts: 15, t: 'APR by bisection', d: 'Converges to 7.85% and still finds the right rate when the fees or the term change.' },
       { pts: 15, t: 'Charts', d: 'Two labelled charts: the interest/principal split with crossover, and the two balance curves.' },
       { pts: 10, t: 'Risk ratios', d: 'DTI and LTV implemented with documented bands.' },
       { pts: 10, t: 'Shipped', d: 'Runs clean from top to bottom and is committed to your portfolio repo.' }

@@ -101,7 +101,7 @@ export function Home({ onAskTutor }) {
 
       <!-- How a level works, as four numbered columns under one rule. -->
       <section class="section-tight">
-        <${SectionHead} title="How a level works" note="four movements" />
+        <${SectionHead} title="How a level works" note="the same four, every level" />
         <div class="grid" style=${{ rowGap: '28px' }}>
           ${[
             ['01', 'Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],
