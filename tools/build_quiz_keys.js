@@ -15,8 +15,12 @@ const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 const levels = [];
 globalThis.FQ = { registerLevel: (lv) => levels.push(lv) };
 
-for (let i = 1; i <= 10; i++) {
-  const file = path.join(root, 'content', 'levels', `level-${String(i).padStart(2, '0')}.js`);
+/* Every level file in the folder, so a new level needs no edit here. */
+const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
+  .filter((f) => /^level-\d+\.js$/.test(f))
+  .sort();
+for (const name of levelFiles) {
+  const file = path.join(root, 'content', 'levels', name);
   // The curriculum files are plain scripts that call FQ.registerLevel(...).
   const src = fs.readFileSync(file, 'utf8');
   new Function('FQ', src)(globalThis.FQ);

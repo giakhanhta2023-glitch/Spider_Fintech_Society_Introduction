@@ -13,8 +13,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 
 const levels = [];
-for (let i = 1; i <= 10; i++) {
-  const file = path.join(root, 'content', 'levels', `level-${String(i).padStart(2, '0')}.js`);
+/* Every level file in the folder, so a new level needs no edit here. */
+const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
+  .filter((f) => /^level-\d+\.js$/.test(f))
+  .sort();
+for (const name of levelFiles) {
+  const file = path.join(root, 'content', 'levels', name);
   new Function('FQ', fs.readFileSync(file, 'utf8'))({ registerLevel: (lv) => levels.push(lv) });
 }
 levels.sort((a, b) => a.id - b.id);
@@ -186,6 +190,29 @@ const NOTES = {
       ['`ModuleNotFoundError: neobank`', 'Run from the project root, the folder containing `app.py`.'],
       ['Data file not found', '`python data/generate.py` first.'],
       ['A service needs a DataFrame it cannot get', 'It is asking for data. Add a loader and pass the result in; do not read the file from the service.']
+    ]
+  },
+
+  11: {
+    files: [
+      ['`schema.sql`', 'tables, constraints, the deferred balancing trigger, the balance trigger'],
+      ['`ledger/db.py`', 'connection and schema loading, nothing else'],
+      ['`ledger/core.py`', 'open_account, post, transfer, reverse, balance, statement'],
+      ['`ledger/audit.py`', 'reconcile, and the global sum that must be zero'],
+      ['`tests/test_concurrency.py`', 'two threads spending the same money, which fails without the lock']
+    ],
+    run: 'docker run --name fq-ledger -e POSTGRES_PASSWORD=ledger -e POSTGRES_DB=ledger -p 5432:5432 -d postgres:16 && pip install -r requirements.txt && pytest -q',
+    design: [
+      'The balancing rule lives in a deferred constraint trigger rather than in `post`. Python still checks, for a better error, but the guarantee is the one that holds for psql, a migration and the second service somebody writes next year.',
+      'Idempotency is a unique index and a caught `UniqueViolation`, not a select followed by an insert. The select version passes every test that runs one request at a time and double charges the first time two arrive together.',
+      '`transfer` locks the accounts it touches in account id order before it reads a balance. Consistent ordering is what stops two transfers deadlocking on each other.',
+      'Every public function takes a connection rather than making one, so the tests can run a whole scenario inside a transaction and roll it back, and so level 12 can hand it a pooled connection.',
+      'Nothing updates or deletes an entry. A wrong transfer is reversed, and the grants in `schema.sql` make that a property of the role rather than a habit of the author.'
+    ],
+    mistakes: [
+      ['Every transfer fails with "does not balance"', 'The trigger is not deferred. It needs `deferrable initially deferred`, so it runs at commit rather than after the first leg.'],
+      ['The concurrency test passes without the lock', 'The threads are not overlapping. Sleep between reading the balance and writing, and give each thread its own connection.'],
+      ['`current transaction is aborted`', 'An earlier statement in the same transaction failed. Use `conn.transaction()` blocks so the rollback happens for you.']
     ]
   }
 };

@@ -51,7 +51,7 @@ model backed tutor.
 
 ---
 
-## The ten levels
+## The levels
 
 | # | Level | You build | New tools |
 |---|-------|-----------|-----------|
@@ -65,9 +65,15 @@ model backed tutor.
 | 8 | Fraud detection and decision thresholds | Fraud scoring engine | scikit-learn, precision and recall |
 | 9 | Shipping a fintech service | A loan advisor anyone can open | Streamlit, pytest, deployment |
 | 10 | Compliance, architecture and the capstone | NeoBank analytics platform | packages, reconciliation |
+| 11 | The ledger that survives two writers | A ledger service on Postgres | SQL, transactions, row locks |
 
-Difficulty climbs from 1/10 to 10/10. A level is cleared when you pass its drill **and** mark its
-build complete; that unlocks the next one.
+A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
+one.
+
+Levels 1 to 10 take somebody from no Python to a deployed app, and they run in a browser tab.
+Level 11 starts the advanced track: harder builds, on a real machine, chosen for what they prove to
+somebody hiring. The plan for levels 11 to 20 is in
+[docs/advanced-track.md](docs/advanced-track.md).
 
 ## How a level works
 

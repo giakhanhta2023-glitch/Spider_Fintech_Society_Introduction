@@ -70,8 +70,14 @@ function serialiseQuiz(quiz) {
 
 const summary = [];
 
-for (let id = 1; id <= 10; id++) {
-  const name = `level-${String(id).padStart(2, '0')}.js`;
+/* Every level file there is, rather than a fixed ten: the advanced track adds
+   more, and a tool that quietly skipped them would be worse than useless. */
+const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
+  .filter((f) => /^level-\d+\.js$/.test(f))
+  .sort();
+
+for (const name of levelFiles) {
+  const id = parseInt(name.match(/\d+/)[0], 10);
   const file = path.join(root, 'content', 'levels', name);
   const src = fs.readFileSync(file, 'utf8');
 
