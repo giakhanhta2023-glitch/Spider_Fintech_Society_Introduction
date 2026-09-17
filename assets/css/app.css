@@ -178,6 +178,28 @@ p.lede {
 .mono-s { font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0; color: var(--graphite); }
 .figure { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
+/* The line of the day, under the two of them on the home page. Set in the
+   reading face rather than the mono one: it is a sentence to read, not a
+   label to scan. */
+.daily {
+  margin: 14px 0 0;
+  max-width: 34ch;
+  font-family: var(--text);
+  font-size: 1.02rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--ash);
+}
+.daily-label {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.72rem;
+  letter-spacing: var(--track-mono);
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
 a { color: inherit; text-decoration: none; }
 a.link {
   color: var(--bone);

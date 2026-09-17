@@ -65,8 +65,11 @@ export function Home({ onAskTutor }) {
           </h1>
           <div style=${{ marginTop: '30px' }}>
             <${Companions} size=${60} />
-            <p class="mono-s" style=${{ marginTop: '12px' }}>
-              Mou tutors. Khanh keeps her company.
+            <!-- One line, picked by the date rather than at random, so the
+                 whole society sees the same one on the same day. -->
+            <p class="daily">
+              <span class="daily-label">today</span>
+              ${FQ.quoteOfTheDay()}
             </p>
           </div>
         </div>

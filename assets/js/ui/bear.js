@@ -2,79 +2,83 @@
    Khanh: a 24 by 24 pixel bear who is fond of Mou.
 
    Same technique as mou.js: the sprite is text, one character per pixel, and
-   runs of a colour are merged into one rect. He is drawn slightly heavier than
-   Mou, with round ears and a broad muzzle, so the two read as different
-   animals at 24 pixels rather than the same shape in two colours.
+   runs of a colour are merged into one rect.
 
-     .  nothing        f  fur           e  eye
-     o  outline        p  inner ear     n  nose and mouth
-     b  blush          m  muzzle        h  the heart he is holding
+   He is drawn heavy on purpose. At this size the things that read as a big
+   male bear are a dark outline rather than a pale one, a brow ridge sitting
+   straight on the eyes, a square jaw that does not taper into the neck, and
+   shoulders wider than the head. No blush, and the inner ear is brown: pink
+   anywhere on the face undoes all of it.
+
+     .  nothing        f  fur           d  shaded fur: brow, jaw, arms
+     o  outline        p  inner ear     e  eye
+     m  muzzle         n  nose and mouth
+     h  the heart he carries for her
    ========================================================================= */
 import { html } from './lib.js';
 
 const W = 24;
 
 const PALETTE = {
-  o: '#D8B892',
-  f: '#C0854B',
-  p: '#F0A9B8',
-  m: '#F3E2C7',
-  e: '#232B3D',
-  n: '#5A3B26',
-  b: '#FF9BB6',
+  o: '#4A2F1B',
+  f: '#A06A38',
+  d: '#7C4E29',
+  p: '#8A5A3F',
+  m: '#D9C3A0',
+  e: '#1B2230',
+  n: '#3A2416',
   h: '#FF6B8A'
 };
 
 const FRAME = [
-  '.....ooo........ooo.....',  // 0
+  '....ooooo......ooooo....',  // 0  ears, small and set wide
   '....opppo......opppo....',  // 1
-  '....ofpfo......ofpfo....',  // 2
+  '....opppo......opppo....',  // 2
   '....offfo......offfo....',  // 3
   '...offffffffffffffffo...',  // 4
   '..offffffffffffffffffo..',  // 5
-  '..offffffffffffffffffo..',  // 6
-  '..offffffffffffffffffo..',  // 7
-  '..offffffffffffffffffo..',  // 8  face
-  '..offffffffffffffffffo..',  // 9  face
-  '..ofbbffmmmmmmmmffbbfo..',  // 10 face
-  '..offfffmmmnnmmmfffffo..',  // 11 face
-  '..offfffmmnmmnmmfffffo..',  // 12 face
-  '..offfffmmmmmmmmfffffo..',  // 13
-  '..offffffffffffffffffo..',  // 14
-  '...offffffffffffffffo...',  // 15
-  '....offffffffffffffo....',  // 16
-  '.....offffffffffffo.....',  // 17
-  '....offffffffffffffo....',  // 18
-  '....offfffhhhhfffffo....',  // 19 holding a heart
-  '....offffffhhffffffo....',  // 20
-  '....offffffffffffffo....',  // 21
-  '.....offffffffffffo.....',  // 22
-  '.....oooooooooooooo.....'   // 23
+  '..offdddddffffdddddffo..',  // 6  brow ridge
+  '..offfeeffffffffeefffo..',  // 7  eyes, straight under it
+  '..offfeeffffffffeefffo..',  // 8
+  '..offffffmmmmmmffffffo..',  // 9  muzzle
+  '..offfffmmnnnnmmfffffo..',  // 10 nose
+  '..offfffmmmnnmmmfffffo..',  // 11
+  '..offfffmnnnnnnmfffffo..',  // 12 mouth, flat
+  '..offffffmmmmmmffffffo..',  // 13
+  '..offffffffffffffffffo..',  // 14 jaw, square
+  '..oddddddddddddddddddo..',  // 15
+  '...offffffffffffffffo...',  // 16
+  '.offffffffffffffffffffo.',  // 17 shoulders, wider than the head
+  '.oddffffffffffffffffddo.',  // 18 arms
+  '.oddffffffhhhhffffffddo.',  // 19 the heart he carries
+  '.oddfffffffhhfffffffddo.',  // 20
+  '.oddffffffffffffffffddo.',  // 21
+  '..offffffffffffffffffo..',  // 22
+  '..oooooooooooooooooooo..'   // 23
 ];
 
 const MOODS = {
-  /* Resting face: eyes forward, mouth closed. He is not staring at anybody. */
-  idle: {
-    8:  '..offffeeffffffeeffffo..',
-    9:  '..offffeeffffffeeffffo..',
-    12: '..offfffmmnnnnmmfffffo..'
-  },
+  /* The resting face is the frame itself: eyes forward, mouth flat. He is not
+     staring at anybody. */
+  idle: {},
 
-  /* Eyes shut for a moment. Nothing else moves, which is what makes it read
-     as a blink rather than a mood. */
+  /* Eyes shut for a moment: one dark row, a little wider than the open eye,
+     which is how a closed eye reads at this size. Nothing else moves. */
   blink: {
-    9:  '..offffeeffffffeeffffo..',
-    12: '..offfffmmnnnnmmfffffo..'
+    7: '..offffffffffffffffffo..',
+    8: '..offeeeffffffffeeeffo..'
   },
 
-  /* The one moment he looks her way: eyes shut, cheeks up, a wide smile. It
-     lasts about two seconds and then he faces forward again. */
+  /* The one moment he looks her way. The brow lifts, the eyes close and the
+     mouth opens into a grin. It lasts about two seconds, and the mouth is
+     what carries it: two rows of it are visible at 24 pixels, an eyelid is
+     barely one. */
   love: {
-    8:  '..offffeeffffffeeffffo..',
-    9:  '..offfeffeffffeffefffo..',
-    11: '..offfffmmmnnmmmfffffo..',
-    12: '..offfffmnnnnnnmfffffo..',
-    13: '..offfffmmnnnnmmfffffo..'
+    6: '..ofdddddffffffdddddfo..',
+    7: '..offffffffffffffffffo..',
+    8: '..offeeeffffffffeeeffo..',
+    12: '..offfffnnnnnnnnfffffo..',
+    13: '..offffffmnnnnmffffffo..'
   }
 };
 
@@ -130,11 +134,14 @@ export function PixelHeart({ size = 16 }) {
     </svg>`;
 }
 
-/* Same check mou.js makes: a mistyped row skews the whole sprite silently. */
+/* Same check mou.js makes: a mistyped row skews the whole sprite silently, and
+   an asymmetric one gives him a crooked face nobody can quite explain. */
 Object.keys(MOODS).forEach((mood) => {
   rowsFor(mood).forEach((row, y) => {
     if (row.length !== W) {
       console.error(`Bear sprite: ${mood} row ${y} is ${row.length} pixels, expected ${W}`);
+    } else if (row.slice(0, W / 2) !== row.slice(W / 2).split('').reverse().join('')) {
+      console.error(`Bear sprite: ${mood} row ${y} is not symmetric`);
     }
   });
 });

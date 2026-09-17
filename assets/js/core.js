@@ -9,14 +9,30 @@
   'use strict';
 
   var LEVELS = [];
+  var QUOTES = [];
 
   var FQ = {
     levels: LEVELS,
+    quotes: QUOTES,
 
     /* ---------------------------- registry ---------------------------- */
     registerLevel: function (level) {
       LEVELS.push(level);
       LEVELS.sort(function (a, b) { return a.id - b.id; });
+    },
+
+    registerQuotes: function (lines) {
+      lines.forEach(function (line) { QUOTES.push(line); });
+    },
+
+    /* The line for a given day, the same one for everybody in the society,
+       changing at local midnight. A date rather than a random number, so
+       nobody gets three different quotes from three reloads. */
+    quoteOfTheDay: function (when) {
+      if (!QUOTES.length) return '';
+      var d = when || new Date();
+      var day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+      return QUOTES[((day % QUOTES.length) + QUOTES.length) % QUOTES.length];
     },
 
     level: function (id) {

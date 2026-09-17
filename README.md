@@ -89,8 +89,9 @@ questions across the course, each one worked on the same figures the level teach
 ## Mou and Khanh
 
 Mou is the tutor: a 24 by 24 pixel rabbit who sits behind the **mou** button, or
-<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Khanh is a bear who is fond of Mou
-and keeps her company on the front page. Both are drawn as text, one character per pixel, in
+<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Khanh is the heavy brown bear beside
+her on the front page, fond of her and not subtle about it. Both are drawn as text, one character
+per pixel, in
 [`assets/js/ui/mou.js`](assets/js/ui/mou.js) and [`bear.js`](assets/js/ui/bear.js), so a mood can be
 edited by eye:
 
@@ -100,7 +101,9 @@ edited by eye:
 ```
 
 They blink on their own timers and Khanh grins at Mou every few seconds, all of which stops if the
-reader has asked for reduced motion.
+reader has asked for reduced motion. Under the two of them the front page carries one line from
+[`content/quotes.js`](content/quotes.js), picked by the date rather than at random, so everybody in
+the society reads the same one on the same day and it changes at local midnight.
 
 | Tutor mode | Setup | What you get |
 |------|-------|--------------|
