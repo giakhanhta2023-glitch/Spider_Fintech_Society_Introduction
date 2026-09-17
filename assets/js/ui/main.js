@@ -138,8 +138,15 @@ function App({ user }) {
   return html`
     <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="none"
       scaling="100%" hasBackground=${false}>
+      <button class="skip" type="button" onClick=${() => {
+        /* Not an anchor: the router lives in the hash, so an href of
+           #content would read as a route and throw the reader back to
+           the home page. */
+        const target = document.getElementById('content');
+        if (target) { target.focus(); target.scrollIntoView(); }
+      }}>skip to the level</button>
       <${Masthead} route=${route} onOpenTutor=${() => setTutorOpen(true)} user=${user} />
-      <main>${page}</main>
+      <main id="content" tabindex="-1">${page}</main>
 
       <footer class="footer">
         <div class="page">

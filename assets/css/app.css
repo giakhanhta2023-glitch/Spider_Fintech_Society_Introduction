@@ -103,6 +103,26 @@ body::before {
 ::selection { background: var(--accent-solid); color: #FFFFFF; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main:focus { outline: none; }
+
+/* Off screen until a keyboard reaches it, then the first thing on the page.
+   A level puts a masthead, four nav links and five tabs between the top and
+   the lesson, and nobody should have to tab through all of that twice. */
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 60;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: var(--track-mono);
+  color: var(--bone);
+  background: var(--ink-raised);
+  border: 1px solid var(--rule-mid);
+  padding: 10px 16px;
+  text-decoration: none;
+}
+.skip:focus { left: var(--gutter); top: 10px; }
 
 /* Nothing in this interface is allowed to bleed out of its column. */
 body, p, li, td, th, h1, h2, h3, h4, dd, dt, figcaption, blockquote, span, a {
