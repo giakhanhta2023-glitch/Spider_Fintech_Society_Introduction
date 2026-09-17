@@ -424,9 +424,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
   if (!store.isUnlocked(level.id)) {
     return html`
       <div class="page section">
-        <span class="kicker">
-          <a class="link" href="#/">levels</a> <b>/</b> level ${String(level.id).padStart(2, '0')}
-        </span>
+        <span class="kicker">level ${String(level.id).padStart(2, '0')}</span>
         <h1 class="display display-l" style=${{ margin: '0 0 24px', maxWidth: '18ch' }}>${level.title}</h1>
         <p class="notice" style=${{ maxWidth: '60ch' }}>
           This one is still locked. Finish
@@ -470,13 +468,11 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
       <!-- Level masthead: title left, metadata right, divided by a rule. -->
       <section class="section grid" style=${{ paddingBottom: '0' }}>
         <div class="col-1-7">
-          <span class="kicker">
-            <a class="link" href="#/">levels</a>
-            <b>/</b> level ${String(level.id).padStart(2, '0')}
-            <b>/</b> ${level.codename}
-          </span>
-          <h1 class="display display-l" style=${{ margin: '0 0 22px' }}>${level.title}</h1>
-          <p class="lede" style=${{ color: 'var(--ash)' }}>${md(level.tagline)}</p>
+          <!-- The number and the name, and nothing else. The tagline and the
+               codename both belong on the level list, where you are choosing;
+               here you have already chosen. -->
+          <span class="kicker">level ${String(level.id).padStart(2, '0')}</span>
+          <h1 class="display display-l" style=${{ margin: '0' }}>${level.title}</h1>
         </div>
 
         <div class="col-9-12">

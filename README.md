@@ -55,7 +55,7 @@ model backed tutor.
 
 | # | Level | You build | New tools |
 |---|-------|-----------|-----------|
-| 1 | Fintech orientation and a toolkit you do not install | *(setup mission)* a working lab | Colab, GitHub |
+| 1 | Fintech orientation | *(setup mission)* a working lab | Colab, GitHub |
 | 2 | The time value of money | Compound growth engine | functions, loops, f-strings |
 | 3 | Reading the money | Personal spending analyzer | pandas, matplotlib |
 | 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |

@@ -1,4 +1,4 @@
-# Level 1: Fintech orientation and a toolkit you do not install: quiz answer key
+# Level 1: Fintech orientation: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

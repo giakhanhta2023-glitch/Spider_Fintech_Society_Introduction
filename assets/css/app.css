@@ -433,8 +433,11 @@ a.index-row:hover .index-title { color: var(--accent); }
 /* ==========================================================================
    SECTIONS
    ========================================================================== */
-.section { padding: clamp(46px, 6vw, 86px) 0; }
-.section-tight { padding: clamp(28px, 3.6vw, 48px) 0; }
+/* Vertical only, never the shorthand: these classes are sometimes worn by the
+   same element as .page, and a shorthand here would replace the page gutter
+   with zero and run the text into the edge of the screen. */
+.section { padding-block: clamp(46px, 6vw, 86px); }
+.section-tight { padding-block: clamp(28px, 3.6vw, 48px); }
 
 /* Four columns under one rule, the way a contents page sets its footnotes. */
 .how-col { border-top: 1px solid var(--rule); padding-top: 18px; }

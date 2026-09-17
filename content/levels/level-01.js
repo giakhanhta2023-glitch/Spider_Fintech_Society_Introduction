@@ -4,7 +4,7 @@
 FQ.registerLevel({
   id: 1,
   codename: 'onboarding',
-  title: 'Fintech orientation and a toolkit you do not install',
+  title: 'Fintech orientation',
   tagline: 'Find out what fintech really means, then get your own lab running in a browser tab. Nothing to install, about twenty minutes.',
   difficulty: 1,
   minutes: 60,
