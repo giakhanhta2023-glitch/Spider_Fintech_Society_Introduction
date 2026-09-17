@@ -156,6 +156,16 @@ FQ.registerLevel({
     { code: 'import streamlit as st\n\napi_key = st.secrets.get("MARKET_API_KEY")     # set in the platform UI\nif not api_key:\n    st.info("Running without a market feed: using bundled snapshot data.")', lang: 'python' },
     { p: 'Note the fallback. An app that dies because an optional key is missing is worse than one that degrades and says so.' },
 
+    { check: {
+      q: 'The market key is missing on the deployed app. Is it better to raise, so the problem is visible, or to fall back ' +
+         'to the bundled snapshot and carry on? Level 4 told you to fail loudly.',
+      a: 'Fall back, and put the reason on the page. Level 4 was about a write that decides where money goes, where a quiet ' +
+         'failure leaves the books wrong. This key is optional: without it the app still teaches, on data it labels as a ' +
+         'bundled snapshot, and every visitor can see what they are looking at. Change the situation and the answer changes ' +
+         'with it. If the key were what fetched somebody their own balance, degrading quietly would be the worse choice, ' +
+         'and the honest move would be to say the balance is unavailable rather than to show an old one.'
+    }},
+
     { h: 'Caching, because the server is shared' },
     { p: 'Streamlit runs your entire script again on every interaction. That is a simple and surprising model: move a slider, ' +
          'the whole file runs again. Anything slow (a CSV download, an API call) must be cached or your app will crawl.' },

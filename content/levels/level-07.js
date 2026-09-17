@@ -95,6 +95,15 @@ FQ.registerLevel({
          'past, and it badly underestimates the frequency of extreme days. Real markets have **fat tails**: crashes happen ' +
          'far more often than a normal distribution predicts.' },
 
+    { check: {
+      q: 'Two assets both show 20% annual volatility. One drifts upward with the occasional sharp fall, the other drifts ' +
+         'downward with the occasional sharp rise. What does the volatility figure say about them?',
+      a: 'That they are identical, because a standard deviation counts a move by its size and has no interest in which way ' +
+         'it went. That is the whole limitation in one example. The compounded return says which way the drift ran, the ' +
+         'maximum drawdown says how far the falls went, and the worst few days say how fat the tails are. Volatility ' +
+         'describes the middle of the distribution, and the part that takes people out of the market lives at the edges.'
+    }},
+
     { h: 'Sharpe ratio: return per unit of risk' },
     { code: 'Sharpe = (annual_return - risk_free_rate) / annual_volatility', lang: 'text' },
     { p: 'The Sharpe ratio asks: for every unit of volatility you endured, how much return above a risk-free government ' +

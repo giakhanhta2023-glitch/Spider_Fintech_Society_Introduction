@@ -108,6 +108,16 @@ FQ.registerLevel({
          'and you miss 71% of the fraud. **There is no setting that is good at both**, which means the choice is a ' +
          'business decision, not a technical one.' },
 
+    { check: {
+      q: 'At threshold 3 you catch 106 of the 108 and block 1,454 honest customers. At threshold 9 you are never wrong and ' +
+         'miss 77 frauds. Is there a setting of this engine that gives you high precision and high recall together?',
+      a: 'Not by moving the threshold. The knob slides you along one fixed curve, and every step that buys precision sells ' +
+         'recall at the going rate. What lifts both at once is better evidence: a feature that separates the classes more ' +
+         'sharply moves the whole curve up, so every threshold on it is better than it was. That is the difference between ' +
+         'tuning and improving. Tuning picks a point on the curve you have, and it is a business decision. Improving is ' +
+         'engineering work on the features, and it is where the real gains in fraud detection come from.'
+    }},
+
     { h: 'Tune against money, not F1' },
     { p: 'The right threshold falls out of a cost model. Say a missed fraud costs the transaction amount, and reviewing a ' +
          'flagged transaction costs $4 of an analyst\'s time:' },
@@ -187,7 +197,17 @@ FQ.registerLevel({
     { h: 'A word on this dataset' },
     { p: 'These 6,000 rows are **synthetic and deliberately separable**: a logistic regression reaches an AUC near 0.999 on ' +
          'them, which does not happen in reality. Real card fraud models live around 0.85 to 0.95 AUC against an adversary ' +
-         'who changes tactics the moment you catch them. Treat the workflow as real and the score as flattering.' }
+         'who changes tactics the moment you catch them. Treat the workflow as real and the score as flattering.' },
+    { check: {
+      q: 'Your first run on real data comes back at 0.999 AUC and you feel good about it. Why is that number a reason to go ' +
+         'and check your work?',
+      a: 'Because working fraud models sit around 0.85 to 0.95 against people who change tactics as soon as they are ' +
+         'caught, so 0.999 is saying something other than "this model is excellent". It is usually one of three things: the ' +
+         'data was generated with clean separations, which is the case here and is why this level says so out loud; a ' +
+         'feature leaked the answer, such as a column that only gets filled in once a case has been marked as fraud; or the ' +
+         'model was scored on rows it trained on. Read the coefficients and see which feature carries the result. If one of ' +
+         'them is doing nearly all the work, you have found your leak.'
+    }}
   ],
 
   tutorial: {

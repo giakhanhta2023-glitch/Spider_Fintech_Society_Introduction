@@ -41,6 +41,15 @@ FQ.registerLevel({
     { p: 'This level only uses `GET`, because reading market data is the safe half of the job. Note the pattern though: ' +
          '`GET` is naturally repeatable, `POST` is not, which is exactly why level 4 needed idempotency keys.' },
 
+    { check: {
+      q: 'From that response, write the expression that gets 0.7684. Then say what `data["rates"]["JPY"]` does, given that ' +
+         'JPY was never in `symbols`.',
+      a: '`data["rates"]["GBP"]`. The JSON object became a dict and each pair of brackets steps down one level. Asking for ' +
+         'JPY raises `KeyError`, and that is the correct failure: the alternative, a quiet zero, would value a Japanese ' +
+         'holding at nothing and print it as a number. Use `data["rates"].get("JPY")` when you would rather handle the ' +
+         'absence yourself, and either way decide what a missing rate means before you multiply by it.'
+    }},
+
     { h: 'Status codes tell you whose fault it is' },
     { table: {
       head: ['Code', 'Meaning', 'What you should do'],
@@ -84,6 +93,15 @@ FQ.registerLevel({
     { money: 'A trading desk that hammers a rate-limited feed gets throttled precisely when markets are volatile: the ' +
              'moment the data matters most. Backoff is self-preservation.' },
 
+    { check: {
+      q: 'Why wait 1, then 2, then 4 seconds rather than trying three times a second apart? And how long have you waited in ' +
+         'total if all three attempts fail?',
+      a: 'Seven seconds, which is 1 + 2 + 4. The doubling is the point. A `429` means too many requests are arriving too ' +
+         'fast, usually from more clients than just you, and a fixed one second retry sends everybody back at the same ' +
+         'moment to make the same problem again. Backing off gives the server room to recover and takes you further out of ' +
+         'the queue on each attempt. Retrying hard against a rate limit is the rate limit violation with extra steps.'
+    }},
+
     { h: 'Never trust a single live call' },
     { p: 'An app that shows a blank screen when an API is slow is a broken app. Three layers of defence, in order:' },
     { ol: [
@@ -116,6 +134,15 @@ FQ.registerLevel({
     }},
     { warn: 'Deleting a key from a file does **not** remove it from git history. If a key is ever committed, revoke it immediately. ' +
             'Bots scan public repositories continuously and will find it in minutes.' },
+
+    { check: {
+      q: 'You pasted a key into a notebook and pushed it. An hour later you notice, delete the line, and push again. Is the ' +
+         'key safe?',
+      a: 'No. The commit that carried it is still in the history and anybody can read it there, which is why a deleted line ' +
+         'proves nothing. Public repositories are scanned continuously by bots that do nothing else, and an hour is a long ' +
+         'time. The fix is to revoke the key at the provider and issue a new one, today, before anything else. Cleaning the ' +
+         'history afterwards is tidy, but the key is already spent and no amount of tidying makes it unspent.'
+    }},
 
     { h: 'FX: base, quote, cross rates, and the spread' },
     { p: 'A rate is always a pair. `EUR/USD = 1.0961` means one **base** unit (EUR) costs 1.0961 of the **quote** currency (USD). ' +

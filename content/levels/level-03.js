@@ -58,6 +58,14 @@ FQ.registerLevel({
     { p: 'A **Series** is a single column. A **boolean mask** is a Series of True/False used to select rows. ' +
          'Those three words (DataFrame, Series, mask) cover 80% of everything you will read in pandas code.' },
 
+    { check: {
+      q: 'Name what each of these is: `df`, `df["amount"]`, `df["amount"] < 0`, and `df[df["amount"] < 0]`.',
+      a: 'A DataFrame, a Series, a Series of True and False (a mask), and a DataFrame again. The third one is the piece ' +
+         'that surprises people: comparing a column to a number does not give you an answer, it gives you one answer per ' +
+         'row. The fourth line then reads as "keep the rows where the mask is True". Once you can name those four things ' +
+         'you can read most pandas code, because almost all of it is those four things in a row.'
+    }},
+
     { h: 'Types are the first thing to check' },
     { p: 'A CSV has no types: everything arrives as text and pandas guesses. Dates load as strings unless you say otherwise, ' +
          'and a single stray value like `"N/A"` in an amount column turns the whole column into text: at which point ' +

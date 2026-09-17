@@ -157,7 +157,16 @@ FQ.registerLevel({
     { h: 'Floats are fine here: with one rule' },
     { p: 'Level 1 said never store a *balance* as a float. Projections are different: you are modelling the future, ' +
          'not recording what happened, so tiny rounding is harmless. The rule is: **compute in full precision, round only when you print**.' },
-    { code: 'total = 1234.5678\nprint(f"${total:,.2f}")   # $1,234.57  <- rounded for display only', lang: 'python' }
+    { code: 'total = 1234.5678\nprint(f"${total:,.2f}")   # $1,234.57  <- rounded for display only', lang: 'python' },
+    { check: {
+      q: 'Level 1 told you never to hold a balance in a float, and this level projects forty years of growth in floats. ' +
+         'Which of the two is being careless?',
+      a: 'Neither, because they are doing different jobs. A balance records something that happened and has to agree with ' +
+         'the bank to the cent, so it is an integer number of cents. A projection models a future that has not happened, ' +
+         'and it is already wrong by far more than a cent the moment the real rate moves, so a float is the right tool. ' +
+         'The rule that keeps both honest is the same one: carry full precision through the calculation and round only ' +
+         'when you print. Round as you go and forty years of small errors compound along with the money.'
+    }}
   ],
 
   tutorial: {

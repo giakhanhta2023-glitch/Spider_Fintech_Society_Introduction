@@ -156,7 +156,16 @@ FQ.registerLevel({
     { h: 'Rounding the last payment' },
     { p: 'Payments are rounded to cents, so 359 identical payments will not clear the balance exactly. Real lenders make the ' +
          '**final payment different**: it is whatever is left. Your schedule should do the same, and finish with a balance of ' +
-         'exactly zero rather than $0.04 or -$0.17.' }
+         'exactly zero rather than $0.04 or -$0.17.' },
+    { check: {
+      q: 'Your schedule charges 360 payments of exactly $1,419.47 and ends at a balance of -$0.17. Say what the minus sign ' +
+         'means for the borrower, and what a real lender does instead.',
+      a: 'It means they paid 17 cents more than they owed, so the lender is holding money that is not theirs. Tiny, and ' +
+         'still the kind of thing that becomes a letter. A real lender sizes the last payment to whatever is left: that ' +
+         'month\'s interest plus the remaining balance, which makes the final row a few cents different from the other 359 ' +
+         'and lands the schedule on exactly zero. Assert that closing balance in your build. It is the cheapest test you ' +
+         'will ever write and it catches most of the ways a schedule goes wrong.'
+    }}
   ],
 
   tutorial: {
