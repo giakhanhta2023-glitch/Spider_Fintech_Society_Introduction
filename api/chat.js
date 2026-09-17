@@ -32,7 +32,11 @@ const MAX_TOKENS = Number(process.env.FINQUEST_MAX_TOKENS || 2000);
 const MAX_MESSAGES = 12;
 const MAX_CHARS_PER_MESSAGE = 4000;
 const MAX_TOTAL_CHARS = 20000;
-const MAX_CONTEXT_CHARS = 6000;
+/* The page sends the level's own material plus the passages its retrieval
+   found for this question, which runs to about 8,000 characters on the later
+   levels. The cap is here to stop an unbounded body, not to trim the course,
+   so it sits above that rather than through the middle of it. */
+const MAX_CONTEXT_CHARS = 12000;
 
 /* The tutor's actual instructions live here, server-side, where a caller
    cannot replace them. The page may only append course context. */

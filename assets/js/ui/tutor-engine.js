@@ -300,7 +300,30 @@ export function offlineAnswer(question, ctx) {
 }
 
 /* ============================ MODEL MODE ============================ */
-export function systemPrompt(ctx) {
+/* The passages the retrieval found for this question, handed to the model so
+   it answers with the course's own numbers rather than its own. A tutor that
+   says the mortgage costs "around $1,400 a month" while the page says
+   $1,419.47 teaches the learner to distrust one of them. */
+function grounding(question, levelId) {
+  const hits = search(question, levelId, 3);
+  if (!hits.length) return '';
+  const parts = hits.map((h) => {
+    const body = sentences(h.doc.text.join(' '), 6);
+    return `[level ${h.doc.lv}, ${h.doc.kind}] ${h.doc.title}\n${body}`;
+  });
+  let out = '';
+  for (const part of parts) {
+    if (out.length + part.length > 2400) break;
+    out += (out ? '\n\n' : '') + part;
+  }
+  return out
+    ? '\n\nCOURSE MATERIAL for this question. Every figure below is verified against the ' +
+      'course datasets, so use these numbers rather than any you would otherwise produce, and say ' +
+      'plainly when the question falls outside them:\n\n' + out
+    : '';
+}
+
+export function systemPrompt(ctx, question) {
   const lv = ctx.levelId ? FQ.level(ctx.levelId) : null;
   const base =
     'You are Mou, a small rabbit who tutors inside FinQuest, a 10-level project-based fintech course for ' +
@@ -312,7 +335,9 @@ export function systemPrompt(ctx) {
     'Money is stored as integer minor units, never floats. You are not a financial adviser: no investment recommendations. ' +
     'If something is outside the course, say so briefly and bring it back to the level they are on.';
 
-  if (!lv) return base;
+  const found = question ? grounding(question, ctx.levelId) : '';
+
+  if (!lv) return base + found;
 
   let ctxText = `\n\nThe learner is on LEVEL ${lv.id}: ${lv.title}.\n` +
     `Summary: ${lv.summary}\n` +
@@ -326,7 +351,7 @@ export function systemPrompt(ctx) {
       `\nSolution key path (mention, never reproduce): ${lv.project.solutionPath}`;
   }
   ctxText += "\nDo not introduce tools or libraries beyond this level's scope.";
-  return base + ctxText;
+  return base + ctxText + found;
 }
 
 export function endpoint() {
@@ -354,7 +379,7 @@ export function askModel(question, ctx, history) {
       body: JSON.stringify({
         model: CFG.tutor.model,
         max_tokens: CFG.tutor.maxTokens,
-        system: systemPrompt(ctx),
+        system: systemPrompt(ctx, question),
         messages: msgs
       })
     }).then((r) => {
@@ -375,7 +400,7 @@ export function askModel(question, ctx, history) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       messages: msgs,
-      system: systemPrompt(ctx),
+      system: systemPrompt(ctx, question),
       model: CFG.tutor.model,
       max_tokens: CFG.tutor.maxTokens,
       level: ctx.levelId || null
