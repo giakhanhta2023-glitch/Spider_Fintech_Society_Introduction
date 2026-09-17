@@ -691,6 +691,19 @@ table.data td.mono { white-space: nowrap; }
 .q-option.is-right .q-key { color: var(--moss); }
 .q-option.is-wrong { border-color: var(--crimson); background: var(--crimson-wash); color: var(--bone); position: relative; z-index: 2; }
 .q-option.is-wrong .q-key { color: var(--crimson); }
+/* Marked in words as well as in colour. Red against green is the one pair a
+   sizeable share of readers cannot separate, and a drill that answers only in
+   colour tells them nothing. The text sits under the letter, in the column
+   that is already there, so nothing moves. */
+.q-option.is-right .q-key::after,
+.q-option.is-wrong .q-key::after {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+.q-option.is-right .q-key::after { content: 'right'; }
+.q-option.is-wrong .q-key::after { content: 'yours'; }
 .q-option.is-muted { opacity: .45; }
 
 .meter { height: 2px; background: var(--rule); }
