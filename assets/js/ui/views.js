@@ -3,7 +3,7 @@
    ========================================================================= */
 import {
   html, useState, useEffect, useMemo, FQ, CFG, store, md, navigate,
-  Gauge, Btn, Tag, SectionHead, AlertDialog
+  Gauge, Btn, Tag, SectionHead
 } from './lib.js';
 import { Mou } from './mou.js';
 import { Companions } from './companions.js';
@@ -201,12 +201,9 @@ export function Glossary() {
 }
 
 /* ============================== DOSSIER ============================== */
-export function Dossier({ onReset, user }) {
-  const [confirming, setConfirming] = useState(false);
+export function Dossier() {
   const all = store.all();
   const cleared = store.clearedCount();
-  const rank = store.rank();
-  const article = /^[aeiou]/i.test(rank) ? 'an' : 'a';
 
   let quizzes = 0, projects = 0, answered = 0, totalQ = 0;
   FQ.levels.forEach((lv) => {
@@ -221,21 +218,7 @@ export function Dossier({ onReset, user }) {
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
-          <span class="kicker">
-            ${user ? html`saved to your account <b>/</b> and to the ranking`
-                   : html`saved on this device <b>/</b> nothing is uploaded`}
-          </span>
           <h1 class="display display-l">How you are doing</h1>
-        </div>
-        <div class="col-9-12">
-          <p class="lede">
-            You are ${article} <strong>${rank}</strong> so far.
-            ${user ? html`${' '}This is saved to your account, so it follows you to any device you
-              sign in on, and your name with these two numbers appears on the
-              ${' '}<a class="link" href="#/ranking">ranking</a>.`
-                   : html`${' '}Everything on this page is kept in this browser, so it never leaves
-              your device.`}
-          </p>
         </div>
       </section>
 
@@ -290,42 +273,6 @@ export function Dossier({ onReset, user }) {
         </div>
       </section>
 
-      <section class="section-tight">
-        <${SectionHead} title="Starting over" />
-        <div class="grid">
-          <div class="col-1-7">
-            <p class="index-sub" style=${{ maxWidth: '52ch' }}>
-              This wipes your experience, badges, scores and ticked boxes${user
-                ? ', here and in your account, which takes you back to the bottom of the ranking'
-                : ' on this device'}.
-              Your notebooks and GitHub repos are left exactly as they are.
-            </p>
-          </div>
-          <div class="col-9-12">
-            <${AlertDialog.Root} open=${confirming} onOpenChange=${setConfirming}>
-              <${AlertDialog.Trigger}>
-                <button class="btn btn-quiet">erase everything</button>
-              <//>
-              <${AlertDialog.Content} maxWidth="440px" class="panel">
-                <${AlertDialog.Title} class="title title-m">Erase all progress?<//>
-                <${AlertDialog.Description}>
-                  <p class="index-sub">
-                    This clears every score, badge and checklist${user
-                      ? ' in this browser and in your account'
-                      : ' stored in this browser'}. It cannot be undone.
-                  </p>
-                <//>
-                <div class="btn-row" style=${{ marginTop: '22px' }}>
-                  <${AlertDialog.Cancel}><button class="btn btn-quiet">keep it</button><//>
-                  <${AlertDialog.Action}>
-                    <button class="btn" onClick=${onReset}>erase everything</button>
-                  <//>
-                </div>
-              <//>
-            <//>
-          </div>
-        </div>
-      </section>
     </div>`;
 }
 
@@ -372,14 +319,7 @@ export function Ranking() {
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
-          <span class="kicker">everyone who has signed in</span>
           <h1 class="display display-l">The ranking</h1>
-        </div>
-        <div class="col-9-12">
-          <p class="lede">
-            Ordered by levels cleared first, then experience. A level counts once its drill is
-            passed and its build is marked done, which is the same rule your own page uses.
-          </p>
         </div>
       </section>
 
@@ -393,7 +333,7 @@ export function Ranking() {
           </div>
           <div>
             <span class="v">${state.you ? '#' + state.you.pos : '--'}</span>
-            <span class="k">where you sit</span>
+            <span class="k">rank</span>
           </div>
           <div>
             <span class="v">${state.you ? state.you.cleared : 0}/10</span>

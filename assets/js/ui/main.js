@@ -3,7 +3,7 @@
    Masthead, routing, toasts, tutor.
    ========================================================================= */
 import {
-  html, useState, useEffect, useCallback, FQ, CFG, store, navigate,
+  html, useState, useEffect, useCallback, FQ, CFG, store,
   Theme, Tooltip, Btn
 } from './lib.js';
 import { Mou } from './mou.js';
@@ -116,13 +116,6 @@ function App({ user }) {
 
   const refresh = useCallback(() => setVersion((n) => n + 1), []);
 
-  function reset() {
-    store.reset();
-    refresh();
-    navigate('#/');
-    toast('Progress reset.');
-  }
-
   let page;
   if (route.name === 'level') {
     /* Keyed by route only: a progress update must re-render the page, not
@@ -132,7 +125,7 @@ function App({ user }) {
   } else if (route.name === 'glossary') {
     page = html`<${Glossary} />`;
   } else if (route.name === 'progress') {
-    page = html`<${Dossier} key=${version} onReset=${reset} user=${user} />`;
+    page = html`<${Dossier} key=${version} />`;
   } else if (route.name === 'ranking') {
     page = html`<${Ranking} />`;
   } else {
