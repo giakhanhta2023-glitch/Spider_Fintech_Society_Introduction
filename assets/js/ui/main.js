@@ -7,6 +7,7 @@ import {
   Theme, Tooltip, Btn
 } from './lib.js';
 import { Mou } from './mou.js';
+import { AuthGate, signOut } from './auth.js';
 import { createRoot } from 'react-dom/client';
 import { Home, Glossary, Dossier } from './views.js';
 import { LevelPage } from './level.js';
@@ -36,7 +37,7 @@ function Toasts({ items }) {
 }
 
 /* --------------------------------------------------------------- masthead */
-function Masthead({ route, onOpenTutor }) {
+function Masthead({ route, onOpenTutor, user }) {
   const progress = store.xpProgress();
 
   const link = (href, label, active) => html`
@@ -67,13 +68,15 @@ function Masthead({ route, onOpenTutor }) {
             <${Mou} mood="rest" size=${24} title="Mou" />
             <span>mou</span>
           </button>
+          <button class="signout" type="button" onClick=${signOut}
+            title=${user ? `Signed in as ${user.email}` : 'Sign out'}>sign out</button>
         </div>
       </div>
     </header>`;
 }
 
 /* ------------------------------------------------------------------- app */
-function App() {
+function App({ user }) {
   const [route, setRoute] = useState(parseHash);
   const [tutorOpen, setTutorOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -134,7 +137,7 @@ function App() {
   return html`
     <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="none"
       scaling="100%" hasBackground=${false}>
-      <${Masthead} route=${route} onOpenTutor=${() => setTutorOpen(true)} />
+      <${Masthead} route=${route} onOpenTutor=${() => setTutorOpen(true)} user=${user} />
       <main>${page}</main>
 
       <footer class="footer">
@@ -171,5 +174,10 @@ if (!FQ || !FQ.levels || !FQ.levels.length) {
     '<h2>No curriculum loaded</h2><p>The level files did not load. If you opened this file ' +
     'directly from disk, serve the folder instead:</p><pre>python serve.py</pre></div>';
 } else {
-  createRoot(mount).render(html`<${App} />`);
+  /* Nothing of the course mounts until the gate has a signed in learner. */
+  createRoot(mount).render(html`
+    <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="none"
+      scaling="100%" hasBackground=${false}>
+      <${AuthGate}>${(user) => html`<${App} user=${user} />`}<//>
+    <//>`);
 }

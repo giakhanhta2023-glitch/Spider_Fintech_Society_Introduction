@@ -104,6 +104,40 @@
   var store = {
     BADGES: BADGES,
 
+    /* Fold a saved state from the server into this device's state, keeping the
+       better of the two everywhere. Signing in on a new laptop pulls your
+       progress down; signing in after playing while logged out pushes it up.
+       Neither direction can lose work. */
+    merge: function (remote) {
+      if (!remote || typeof remote !== 'object') return state;
+
+      state.xp = Math.max(state.xp || 0, remote.xp || 0);
+      state.tutorAsked = Math.max(state.tutorAsked || 0, remote.tutorAsked || 0);
+      state.started = Math.min(state.started || Date.now(), remote.started || Date.now());
+
+      (remote.badges || []).forEach(function (b) {
+        if (state.badges.indexOf(b) === -1) state.badges.push(b);
+      });
+
+      Object.keys(remote.levels || {}).forEach(function (k) {
+        var mine = lvl(k);
+        var theirs = remote.levels[k] || {};
+        /* The better attempt wins, and its answer sheet comes with it. */
+        if ((theirs.quizBest || 0) > (mine.quizBest || 0)) {
+          mine.quizBest = theirs.quizBest;
+          mine.answers = theirs.answers || null;
+        }
+        mine.attempts = Math.max(mine.attempts || 0, theirs.attempts || 0);
+        mine.quizPassed = !!(mine.quizPassed || theirs.quizPassed);
+        mine.projectDone = !!(mine.projectDone || theirs.projectDone);
+        Object.keys(theirs.reqs || {}).forEach(function (r) { mine.reqs[r] = true; });
+      });
+
+      checkBadges();
+      write();
+      return state;
+    },
+
     all: function () { return state; },
     level: function (id) { return lvl(id); },
     xp: function () { return state.xp; },

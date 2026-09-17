@@ -772,6 +772,38 @@ table.data td.mono { white-space: nowrap; }
 .medal span { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 
 /* ==========================================================================
+   THE GATE
+   ========================================================================== */
+.gate { padding-top: clamp(60px, 12vh, 140px); padding-bottom: 80px; }
+.gate .grid { row-gap: 44px; align-items: start; }
+.gate-card { border-color: var(--rule-mid); }
+
+/* Google renders its own button in here, to its own branding rules. All we
+   control is the space around it. */
+.gate-google {
+  margin-top: 24px;
+  min-height: 44px;
+  display: flex;
+  justify-content: flex-start;
+  color-scheme: light;
+}
+
+.signout {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: var(--track-mono);
+  color: var(--graphite);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+.signout:hover { color: var(--bone); border-bottom-color: var(--rule-mid); }
+@media (max-width: 520px) { .signout { display: none; } }
+
+/* ==========================================================================
    MOU: the pixel rabbit
    ========================================================================== */
 .mou {

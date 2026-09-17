@@ -32,6 +32,14 @@ window.FQ_CONFIG = {
     'lead engineer', 'chief fintech officer'
   ],
 
+  /* Accounts. The client id identifies this site to Google and is meant to be
+     public: it authorises nothing on its own. The secret half stays with
+     Google, and the server checks every sign in against it. Leave it empty and
+     the gate explains how to set it up rather than locking anyone out. */
+  auth: {
+    googleClientId: ''          // 1234567890-abc123.apps.googleusercontent.com
+  },
+
   /* AI tutor. The built-in offline tutor always works with zero setup.
      Set `endpoint` when you deploy the included serverless function. */
   tutor: {

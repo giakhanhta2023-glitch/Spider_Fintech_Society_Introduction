@@ -9,7 +9,9 @@
     "data": "python data/generate_datasets.py"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.126.0"
+    "@anthropic-ai/sdk": "^0.126.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "google-auth-library": "^9.15.0"
   },
   "engines": {
     "node": ">=20"

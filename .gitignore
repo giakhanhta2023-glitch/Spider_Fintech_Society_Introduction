@@ -20,3 +20,4 @@ fx_cache.json
 
 # test / tooling caches
 .pytest_cache/
+dev-stub.html
