@@ -10,15 +10,7 @@
  */
 
 import { db } from './_lib/db.js';
-
-/* Driver errors sometimes quote the connection string back at you, password
-   and all. Never let one reach the response. */
-function safe(message) {
-  return String(message || 'unknown')
-    .replace(/postgres(ql)?:\/\/\S*/gi, '[connection string]')
-    .replace(/password[^,\s]*/gi, '[redacted]')
-    .slice(0, 200);
-}
+import { redact } from './_lib/redact.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
@@ -45,7 +37,7 @@ export default async function handler(req, res) {
     out.tables = rows.map((r) => r.table_name);
     out.ready = out.tables.includes('users') && out.tables.includes('progress');
   } catch (err) {
-    out.database = 'failed: ' + safe(err.message);
+    out.database = 'failed: ' + redact(err.message, 200);
     out.ready = false;
   }
 

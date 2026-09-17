@@ -53,31 +53,28 @@ const FRAME = [
 ];
 
 const MOODS = {
-  /* Looking straight ahead, small smile. */
+  /* Resting face: eyes forward, mouth closed. He is not staring at anybody. */
   idle: {
     8:  '..offffeeffffffeeffffo..',
-    9:  '..offffeeffffffeeffffo..'
+    9:  '..offffeeffffffeeffffo..',
+    12: '..offfffmmnnnnmmfffffo..'
   },
 
   /* Eyes shut for a moment. Nothing else moves, which is what makes it read
      as a blink rather than a mood. */
   blink: {
-    9:  '..offffeeffffffeeffffo..'
+    9:  '..offffeeffffffeeffffo..',
+    12: '..offfffmmnnnnmmfffffo..'
   },
 
-  /* Eyes squeezed shut, mouth open: this is the face he makes at Mou. */
+  /* The one moment he looks her way: eyes shut, cheeks up, a wide smile. It
+     lasts about two seconds and then he faces forward again. */
   love: {
     8:  '..offffeeffffffeeffffo..',
     9:  '..offfeffeffffeffefffo..',
     11: '..offfffmmmnnmmmfffffo..',
     12: '..offfffmnnnnnnmfffffo..',
     13: '..offfffmmnnnnmmfffffo..'
-  },
-
-  /* Looking sideways, at her. */
-  glance: {
-    8:  '..offfffeeffffffeefffo..',
-    9:  '..offfffeeffffffeefffo..'
   }
 };
 

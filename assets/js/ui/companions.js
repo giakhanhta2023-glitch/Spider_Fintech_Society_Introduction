@@ -3,8 +3,9 @@
 
    Two things make a sprite look alive rather than pasted on: it blinks on its
    own clock, and it reacts to something. So each of them blinks on a randomised
-   timer, and every so often Bruno glances at Mou, goes pink, and a heart floats
-   up between them. Mou beams back, because being looked at fondly is nice.
+   timer, and every so often Bruno breaks into a grin, a heart floats up between
+   them, and Mou beams back. He faces forward the rest of the time: a held stare
+   reads as awkward, a brief one reads as fond.
 
    All of it stops dead if the reader asked for reduced motion: then they simply
    stand there, eyes open.
@@ -81,8 +82,10 @@ export function Companions({ size = 56, className = '' }) {
     };
   }, []);
 
-  /* A blink while he is mid swoon would cancel the expression, so the swoon wins. */
-  const bearMood = smitten ? 'love' : bearBlink ? 'blink' : 'glance';
+  /* A blink while he is mid swoon would cancel the expression, so the swoon wins.
+     The rest of the time he faces forward: a sprite locked in a sideways stare
+     reads as awkward rather than fond. */
+  const bearMood = smitten ? 'love' : bearBlink ? 'blink' : 'idle';
   const mouMood = smitten ? 'happy' : mouBlink ? 'rest' : 'idle';
 
   return html`

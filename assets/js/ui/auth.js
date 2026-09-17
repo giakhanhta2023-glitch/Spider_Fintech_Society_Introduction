@@ -135,7 +135,7 @@ function SignIn({ onSignedIn }) {
           <div>
             <${Companions} size=${64} />
             <p class="mono-s" style=${{ marginTop: '12px' }}>
-              Mou tutors. Bruno mostly watches Mou.
+              Mou tutors. Bruno keeps her company.
             </p>
           </div>
         </div>

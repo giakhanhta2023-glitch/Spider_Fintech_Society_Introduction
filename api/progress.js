@@ -10,6 +10,7 @@
 
 import { loadProgress, saveProgress } from './_lib/db.js';
 import { read } from './_lib/session.js';
+import { redact } from './_lib/redact.js';
 
 /* Progress for all ten levels is a few kilobytes. Anything far past that is
    either a bug or somebody using the table as free storage. */
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'GET or PUT' });
   } catch (err) {
-    console.error('progress failed:', err.message);
+    console.error('progress failed:', redact(err.message));
     return res.status(500).json({ error: 'Could not reach the progress database' });
   }
 }

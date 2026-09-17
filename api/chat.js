@@ -21,6 +21,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { redact } from './_lib/redact.js';
 
 const MODEL = process.env.FINQUEST_MODEL || 'claude-opus-5';
 const EFFORT = process.env.FINQUEST_EFFORT || 'low';
@@ -201,7 +202,7 @@ export default async function handler(req, res) {
     /* Log every failure, not just 5xx: a 400 from the model API carries the
        reason (a rejected parameter, a beta the org is not enabled for) and the
        caller is deliberately never told it. */
-    console.error('tutor endpoint failed:', status, err && err.message);
+    console.error('tutor endpoint failed:', status, redact(err && err.message));
     return res.status(status).json(body);
   }
 }

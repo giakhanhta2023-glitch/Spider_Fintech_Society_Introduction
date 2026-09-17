@@ -18,6 +18,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import { upsertUser } from '../_lib/db.js';
 import { sign, setCookie } from '../_lib/session.js';
+import { redact } from '../_lib/redact.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
@@ -67,7 +68,7 @@ export default async function handler(req, res) {
       user: { email: user.email, name: user.name, picture: user.picture }
     });
   } catch (err) {
-    console.error('sign in failed:', err.message);
+    console.error('sign in failed:', redact(err.message));
     return res.status(500).json({ error: 'Could not finish signing you in. Try again in a moment.' });
   }
 }
