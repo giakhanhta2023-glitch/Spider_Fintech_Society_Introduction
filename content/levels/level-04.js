@@ -33,18 +33,44 @@ FQ.registerLevel({
          'That is the model you will build, and it is exactly equivalent.' },
     { money: 'This invariant is the reason a bank can survive a crashed server mid-payment. Either both entries were written, ' +
              'or the transaction never happened. There is no valid state in between.' },
+    { check: {
+      q: 'Your code writes `alice -2500`, and the process dies before it writes `bob +2500`. Someone asks what the ledger ' +
+         'now says. What do you tell them?',
+      a: 'That $25.00 has left the world. Alice is poorer, nobody is richer, and the whole file now fails the sum to zero ' +
+         'test, not just that one transaction. This is why the write takes every leg at once: `_post` receives the complete ' +
+         'list, checks the sum, and only then appends. A half written transaction is not a small error you can patch up ' +
+         'later, it is a ledger that has stopped meaning anything until somebody works out what was supposed to happen.'
+    }},
 
     { h: 'Three or more sides: fees' },
     { p: 'Nothing says a transaction has only two entries. It needs only to **balance**. A $25 payment with a 50-cent platform fee is three entries:' },
     { code: '  customer   -2500\n  merchant   +2450\n  fee_income   +50\n  --------------------\n  sum            0', lang: 'text', label: 'a payment with a fee' },
     { p: 'This is how every payment processor records revenue. The customer\'s view ("I paid $25") and the merchant\'s view ' +
          '("I received $24.50") are both true, on the same balanced transaction.' },
+    { check: {
+      q: 'The merchant calls to say their statement shows $24.50 for a sale the customer swears was $25.00, and asks which ' +
+         'of you is wrong. Answer them with the transaction.',
+      a: 'Neither. Read them the three legs: customer -2500, merchant +2450, fee income +50, summing to zero. The customer ' +
+         'paid $25.00, the merchant received $24.50, and the 50 cents in between is the platform fee, 2% of the sale, which ' +
+         'is on their pricing page. Nothing is missing, because a balanced transaction has nowhere to hide money. The reason ' +
+         'you can answer in ten seconds is that the fee is a leg on the same transaction rather than a separate record ' +
+         'somewhere else.'
+    }},
 
     { h: 'The balance is derived, never stored' },
     { p: 'An account\'s balance is the **sum of its entries**, not a column you update. If you store a balance and also store ' +
          'entries, the day will come when they disagree, and you will not know which one is lying.' },
     { code: 'def balance(account_id):\n    return sum(e.amount for e in entries if e.account == account_id)', lang: 'python' },
     { p: 'Production systems cache balances for speed, but the cache is always rebuildable from entries. The entries are the truth.' },
+    { check: {
+      q: 'You added a `balance` column to each account and update it on every write, for speed. This morning Alice\'s column ' +
+         'says $80.00 and the sum of her entries says $75.00. Which number do you show her?',
+      a: 'The $75.00, because the entries are the ledger and the column is a copy of them. A copy that disagrees is simply ' +
+         'wrong, whichever direction it is wrong in. So you rebuild the column from the entries, then go and find the write ' +
+         'that updated one and not the other, because it will do it again. A cached balance is allowed to exist only on one ' +
+         'condition: it can be rebuilt from the entries at any moment, and something rebuilds it often enough that a drift ' +
+         'of $5.00 is caught by you rather than by Alice.'
+    }},
     { warn: 'Never `UPDATE` or `DELETE` a posted entry. If a payment was wrong, post a **reversing entry** that cancels it. ' +
             'The original stays visible forever. That is what makes the history auditable, and in most jurisdictions, legal.' },
 
@@ -60,6 +86,14 @@ FQ.registerLevel({
         ['Never divide without deciding rounding', 'splitting 100 cents three ways needs a rule for the leftover cent']
       ]
     }},
+    { check: {
+      q: 'Split $10.00 evenly between three people. Work it out in cents, then say what your code does with what is left.',
+      a: '1000 / 3 is 333 cents each, and 333 x 3 is 999, so one cent is left over. Somebody has to get 334, and your code ' +
+         'has to decide who in a way you can explain: first payee takes the remainder, or the largest share does, or the ' +
+         'remainder rotates between them across payouts. What you cannot do is drop it. Legs of -1000, 333, 333 and 333 sum ' +
+         'to -1, `_post` refuses the transaction, and that refusal is the ledger catching a cent that would otherwise have ' +
+         'gone missing on every split you ever ran.'
+    }},
     { p: 'That last one has a name: the **penny-splitting problem**. If you split $10.00 between three people you cannot give ' +
          'each $3.333... Someone must get the extra cent, and your code must decide who: deterministically. Silently dropping ' +
          'it means your transaction no longer sums to zero.' },
@@ -71,6 +105,15 @@ FQ.registerLevel({
          'The server records the key with the resulting transaction. If a request arrives with a key it has already seen, ' +
          'it returns the *original* result instead of doing the work again.' },
     { code: 'if key in self._keys:\n    return self._keys[key]        # same answer, no second charge\n\ntxn = self._post(...)\nself._keys[key] = txn\nreturn txn', lang: 'python' },
+    { check: {
+      q: 'Two pay requests for $25.00 arrive a second apart. One is a retry after a lost response, the other is a customer ' +
+         'who really does want to send $25.00 twice. What separates them, and whose job is it to say so?',
+      a: 'Only the key separates them. The amounts, the accounts and the timestamps look identical, so the server cannot ' +
+         'tell by inspection. The client generates one key per intent, not per request: a retry of the same intent carries ' +
+         'the same key and gets the first transaction back, while a second deliberate payment is a new intent with a new key ' +
+         'and goes through. That is why the key comes from the client. It is the only party that knows how many times the ' +
+         'user meant to pay.'
+    }},
     { money: 'Stripe, Adyen, and every serious payments API require an idempotency key on writes. It is the single most ' +
              'important pattern in payment engineering, and a favourite interview question.' },
 
@@ -85,6 +128,15 @@ FQ.registerLevel({
         ['`failed`', 'Rejected before any entry was written', 'No']
       ]
     }},
+    { check: {
+      q: 'A customer sees a $60.00 hold from a hotel they never checked into and wants to know why it is on their statement ' +
+         'but not in your ledger. Which state is it, and what ends it?',
+      a: 'It is `pending`: the issuer reserved $60.00 of their available balance when the hotel authorized the card, and no ' +
+         'entry was written anywhere in your books because no money moved. It ends one of two ways. The hotel captures it, ' +
+         'the payment posts, and entries appear. Or the authorization expires, typically within a week, the hold falls off, ' +
+         'and there is nothing to record because nothing happened. Your ledger stays empty in the second case, which is ' +
+         'exactly right and also the hardest part to explain to the customer.'
+    }},
     { p: 'Refunds, chargebacks and disputes are all reversals with different reasons and different deadlines. ' +
          'Your ledger does not need to know which. It only needs to record a balanced, reasoned entry.' },
 
@@ -94,7 +146,16 @@ FQ.registerLevel({
          'silently skips a write is worse than one that crashes.' },
     { code: 'class InsufficientFunds(Exception):\n    """Raised when an account cannot cover a debit."""\n\nif self.balance(src) < amount:\n    raise InsufficientFunds(f"{src} has {self.balance(src)}, needs {amount}")', lang: 'python' },
     { tip: 'Custom exception classes let a caller handle *this* failure differently from a bug in your code. ' +
-           '`except InsufficientFunds:` reads better than checking a return value, and cannot be forgotten.' }
+           '`except InsufficientFunds:` reads better than checking a return value, and cannot be forgotten.' },
+    { check: {
+      q: 'A teammate changes `transfer` to return `False` instead of raising `InsufficientFunds`, because raising felt harsh. ' +
+         'Two weeks later the app is showing transfers that never happened. Explain how that follows.',
+      a: 'Every caller that wrote `ledger.transfer(src, dst, amount)` on its own line still runs the next line, which says ' +
+         '"sent!" and emails a receipt. The `False` went nowhere, because nothing was looking at it. An exception cannot be ' +
+         'ignored by accident: the caller either handles it or the request fails visibly, which is the outcome you want when ' +
+         'the alternative is a receipt for money that is still in the sender\'s account. Raising is the kinder behaviour ' +
+         'here, not the harsher one.'
+    }}
   ],
 
   tutorial: {
