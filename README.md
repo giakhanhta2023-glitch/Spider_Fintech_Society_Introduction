@@ -134,6 +134,7 @@ GET  /api/auth/me         who is signed in
 POST /api/auth/logout     clear the cookie
 GET  /api/progress        the signed in learner's saved state
 PUT  /api/progress        replace it
+GET  /api/leaderboard     the ranking: a name and two numbers per member
 POST /api/chat            the tutor
 ```
 
@@ -164,7 +165,7 @@ assets/js/
     tutor-engine.js     retrieval, prompting, API calls: no UI in this file
     mou.js  bear.js  companions.js     the two sprites and the life in them
 content/levels/         the curriculum: ten plain data files, no build step
-api/                    serverless functions: auth, progress, tutor, health
+api/                    serverless functions: auth, progress, ranking, tutor, health
   _lib/                 database, session cookies, log redaction
 sql/schema.sql          the two tables, users and progress
 data/                   synthetic datasets and the generator that makes them

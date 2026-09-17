@@ -1,8 +1,8 @@
 /* =========================================================================
-   Home (masthead and contents index), glossary, dossier.
+   Home (masthead and contents index), glossary, dossier, ranking.
    ========================================================================= */
 import {
-  html, useState, useMemo, FQ, CFG, store, md, navigate,
+  html, useState, useEffect, useMemo, FQ, CFG, store, md, navigate,
   Gauge, Btn, Tag, SectionHead, AlertDialog
 } from './lib.js';
 import { Mou } from './mou.js';
@@ -193,7 +193,7 @@ export function Glossary() {
 }
 
 /* ============================== DOSSIER ============================== */
-export function Dossier({ onReset }) {
+export function Dossier({ onReset, user }) {
   const [confirming, setConfirming] = useState(false);
   const all = store.all();
   const cleared = store.clearedCount();
@@ -213,13 +213,20 @@ export function Dossier({ onReset }) {
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
-          <span class="kicker">saved on this device <b>/</b> nothing is uploaded</span>
+          <span class="kicker">
+            ${user ? html`saved to your account <b>/</b> and to the ranking`
+                   : html`saved on this device <b>/</b> nothing is uploaded`}
+          </span>
           <h1 class="display display-l">How you are doing</h1>
         </div>
         <div class="col-9-12">
           <p class="lede">
-            You are ${article} <strong>${rank}</strong> so far. Everything on this page is kept
-            in this browser, so it never leaves your device.
+            You are ${article} <strong>${rank}</strong> so far.
+            ${user ? html`${' '}This is saved to your account, so it follows you to any device you
+              sign in on, and your name with these two numbers appears on the
+              ${' '}<a class="link" href="#/ranking">ranking</a>.`
+                   : html`${' '}Everything on this page is kept in this browser, so it never leaves
+              your device.`}
           </p>
         </div>
       </section>
@@ -280,7 +287,9 @@ export function Dossier({ onReset }) {
         <div class="grid">
           <div class="col-1-7">
             <p class="index-sub" style=${{ maxWidth: '52ch' }}>
-              This wipes your experience, badges, scores and ticked boxes on this device.
+              This wipes your experience, badges, scores and ticked boxes${user
+                ? ', here and in your account, which takes you back to the bottom of the ranking'
+                : ' on this device'}.
               Your notebooks and GitHub repos are left exactly as they are.
             </p>
           </div>
@@ -293,8 +302,9 @@ export function Dossier({ onReset }) {
                 <${AlertDialog.Title} class="title title-m">Erase all progress?<//>
                 <${AlertDialog.Description}>
                   <p class="index-sub">
-                    This clears every score, badge and checklist stored in this browser.
-                    It cannot be undone.
+                    This clears every score, badge and checklist${user
+                      ? ' in this browser and in your account'
+                      : ' stored in this browser'}. It cannot be undone.
                   </p>
                 <//>
                 <div class="btn-row" style=${{ marginTop: '22px' }}>
@@ -308,5 +318,118 @@ export function Dossier({ onReset }) {
           </div>
         </div>
       </section>
+    </div>`;
+}
+
+/* ============================== RANKING ==============================
+   The one page that shows other people. It reads /api/leaderboard, which
+   returns a name, two numbers and a position for each member and nothing
+   else, so there is no email or photo here to leak or to look at. */
+export function Ranking() {
+  const [state, setState] = useState({ status: 'loading', board: [], you: null, total: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/leaderboard', { credentials: 'same-origin' })
+      .then(async (r) => {
+        /* No functions behind `python serve.py`, so the board is a deployment
+           only feature and says so rather than looking broken. */
+        if (r.status === 404) return { status: 'no-backend' };
+        if (r.status === 401) return { status: 'signed-out' };
+        if (!r.ok) return { status: 'error' };
+        const data = await r.json();
+        return {
+          status: 'ready',
+          board: data.board || [],
+          you: data.you || null,
+          total: data.total || 0
+        };
+      })
+      .catch(() => ({ status: 'error' }))
+      .then((next) => { if (!cancelled) setState(next); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const rankOf = (cleared) => CFG.ranks[Math.min(cleared, CFG.ranks.length - 1)];
+
+  const notice = {
+    loading: 'Reading the board...',
+    'no-backend': 'The ranking lives on the deployed site, because it needs the database. ' +
+                  'Running the course locally shows you everything else.',
+    'signed-out': 'Sign in again to see the ranking.',
+    error: 'The board could not be reached. Try again in a moment.'
+  }[state.status];
+
+  return html`
+    <div class="page">
+      <section class="section grid">
+        <div class="col-1-7">
+          <span class="kicker">everyone who has signed in</span>
+          <h1 class="display display-l">The ranking</h1>
+        </div>
+        <div class="col-9-12">
+          <p class="lede">
+            Ordered by levels cleared first, then experience. A level counts once its drill is
+            passed and its build is marked done, which is the same rule your own page uses.
+          </p>
+        </div>
+      </section>
+
+      ${notice ? html`<p class="notice" style=${{ maxWidth: '58ch' }}>${notice}</p>` : null}
+
+      ${state.status === 'ready' ? html`
+        <div class="datastrip">
+          <div>
+            <span class="v">${state.total}</span>
+            <span class="k">${state.total === 1 ? 'member' : 'members'}</span>
+          </div>
+          <div>
+            <span class="v">${state.you ? '#' + state.you.pos : '--'}</span>
+            <span class="k">where you sit</span>
+          </div>
+          <div>
+            <span class="v">${state.you ? state.you.cleared : 0}/10</span>
+            <span class="k">your levels</span>
+          </div>
+          <div>
+            <span class="v">${(state.you ? state.you.xp : 0).toLocaleString()}</span>
+            <span class="k">your experience</span>
+          </div>
+        </div>
+
+        <section class="section-tight">
+          <${SectionHead} title="Member by member"
+            note=${state.total === 1 ? 'nobody else yet' : 'you are highlighted'} />
+          <div class="table-wrap">
+            <table class="data board">
+              <thead>
+                <tr>
+                  <th>#</th><th>member</th><th class="col-wide">rank</th>
+                  <th>levels</th><th>xp</th><th class="col-wide">last seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${state.board.map((row) => html`
+                  <tr key=${row.pos} class=${row.you ? 'is-you' : ''}>
+                    <td><span class="figure">${row.pos}</span></td>
+                    <td>
+                      ${row.name}
+                      ${row.you ? html`${' '}<${Tag} variant="accent">you<//>` : null}
+                    </td>
+                    <td class="col-wide"><span class="mono-s">${rankOf(row.cleared)}</span></td>
+                    <td><span class="figure">${row.cleared}/10</span></td>
+                    <td><span class="figure">${row.xp.toLocaleString()}</span></td>
+                    <td class="col-wide"><span class="mono-s">${row.active || 'not yet'}</span></td>
+                  </tr>`)}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <p class="index-sub" style=${{ maxWidth: '58ch' }}>
+          Your name is here because you signed in with Google; the board shows it to other
+          signed in members and nothing else about you. Progress syncs a moment after you earn
+          it, so a fresh score can take a few seconds to appear.
+        </p>` : null}
     </div>`;
 }

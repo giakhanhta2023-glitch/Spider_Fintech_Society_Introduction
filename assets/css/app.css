@@ -563,6 +563,26 @@ table.data tr:last-child td { border-bottom: 0; }
 /* Row labels are short by design, so they never break across two lines. */
 table.data td.mono { white-space: nowrap; }
 
+/* The ranking. One accented row, because the first thing anybody looks for on
+   a board is themselves. The number column is set in the figure face so the
+   positions line up under each other. */
+table.board td:first-child { color: var(--graphite); width: 3.5rem; }
+table.board tr.is-you td { color: var(--bone); background: var(--accent-wash); }
+table.board tr.is-you td:first-child {
+  color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+  padding-left: 12px;
+}
+/* Numbers stay on one line: a position and a score that wrap stop being
+   comparable down a column, which is the only reason the column is there. */
+table.board td .figure, table.board td .mono-s { white-space: nowrap; }
+/* A phone gets the four columns that answer the question. The rank title and
+   the date are the first things to go, rather than squeezing six columns into
+   a screen that fits four. */
+@media (max-width: 620px) {
+  table.board .col-wide { display: none; }
+}
+
 /* A question set into the lesson. It reads as a pause, not as a warning, so it
    borrows the rule and the mono label but none of the alarm colours. */
 .check {

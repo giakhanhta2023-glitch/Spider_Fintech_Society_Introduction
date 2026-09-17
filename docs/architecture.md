@@ -90,7 +90,7 @@ as meaning, not decoration.
 
 ```
 main.js          routing, HUD, toasts, theme        <- knows about everything
-  views.js       home, the word list, the progress page
+  views.js       home, the word list, the progress page, the ranking
   level.js       one level: brief/learn/tutorial/drill/build
     quiz.js      the drill and the answer key
     blocks.js    curriculum blocks -> editorial elements
@@ -128,6 +128,18 @@ question, capped at 2,400 characters and labelled as the verified figures: a tut
 "around $1,400 a month" where the page says $1,419.47 teaches a learner to trust neither. Any
 failure (network, timeout, bad key, no credit) falls back to the offline path, so the tutor cannot
 leave a learner stuck.
+
+## The ranking
+
+`api/leaderboard.js` orders every member who has a progress row, by levels cleared and then by
+experience, and returns a display name, those two numbers and a position. No email, no photo, no
+internal id: the caller's own row is marked `you` by the server rather than by handing the browser
+an id to compare. The counting happens in SQL, over `jsonb`, so a board of a hundred members costs
+one query and no state blobs over the wire.
+
+Every read of that JSON is written to survive a malformed state, because `/api/progress` accepts
+whatever object the browser sends it. A string where the experience should be, or a level map that
+is not a map, scores zero for that member instead of failing the query for everybody.
 
 ## Progress model
 

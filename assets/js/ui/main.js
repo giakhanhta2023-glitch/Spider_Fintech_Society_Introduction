@@ -9,7 +9,7 @@ import {
 import { Mou } from './mou.js';
 import { AuthGate, signOut } from './auth.js';
 import { createRoot } from 'react-dom/client';
-import { Home, Glossary, Dossier } from './views.js';
+import { Home, Glossary, Dossier, Ranking } from './views.js';
 import { LevelPage } from './level.js';
 import { Tutor } from './tutor.js';
 
@@ -23,6 +23,7 @@ function parseHash() {
   }
   if (parts[0] === 'glossary') return { name: 'glossary' };
   if (parts[0] === 'progress') return { name: 'progress' };
+  if (parts[0] === 'ranking') return { name: 'ranking' };
   return { name: 'home' };
 }
 
@@ -54,6 +55,7 @@ function Masthead({ route, onOpenTutor, user }) {
           ${link('#/', 'levels', route.name === 'home')}
           ${link('#/glossary', 'words', route.name === 'glossary')}
           ${link('#/progress', 'progress', route.name === 'progress')}
+          ${link('#/ranking', 'ranking', route.name === 'ranking')}
         </nav>
 
         <div class="masthead-meta">
@@ -130,7 +132,9 @@ function App({ user }) {
   } else if (route.name === 'glossary') {
     page = html`<${Glossary} />`;
   } else if (route.name === 'progress') {
-    page = html`<${Dossier} key=${version} onReset=${reset} />`;
+    page = html`<${Dossier} key=${version} onReset=${reset} user=${user} />`;
+  } else if (route.name === 'ranking') {
+    page = html`<${Ranking} />`;
   } else {
     page = html`<${Home} key=${version} onAskTutor=${() => setTutorOpen(true)} />`;
   }
