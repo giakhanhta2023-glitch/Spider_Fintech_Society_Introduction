@@ -34,6 +34,15 @@ FQ.registerLevel({
          'reconstruct value over time.' },
     { code: 'equity_curve = (1 + returns).cumprod()      # 1.0 = your starting money', lang: 'python' },
 
+    { check: {
+      q: 'An asset rises 50% one day and falls 50% the next, so the average daily return is zero. A member put in $10,000. ' +
+         'What do they hold, and what does the asset have to do next to make them whole?',
+      a: '$7,500. The rise took $10,000 to $15,000 and the fall took half of the larger number away, which is $7,500 rather ' +
+         'than the $5,000 the gain added. Getting back to $10,000 from $7,500 needs +33.3%, and if the asset had halved ' +
+         'first it would need +100%. The average says flat, the member is down a quarter, and neither number is lying: they ' +
+         'answer different questions. This is why you compound returns rather than adding them.'
+    }},
+
     { h: 'Volatility drag: why the mean lies' },
     { p: 'Take the four assets in this level\'s dataset. `CRYPTOZ` has by far the best **average** daily return: annualized, ' +
          'it looks like 39% a year. Over the actual three years it returned **21.3% in total**, about 6.4% a year compounded.' },
@@ -49,6 +58,15 @@ FQ.registerLevel({
     { p: 'The gap between 39.1% and 6.4% is **volatility drag**. A 50% loss needs a 100% gain to recover; the bigger the ' +
          'swings, the further the compounded result falls behind the average. This is not a quirk of the dataset. It is ' +
          'arithmetic, and it is why professionals quote CAGR and why "average annual return" in an advert deserves suspicion.' },
+    { check: {
+      q: 'A colleague sees 39.1% next to 6.4% for CRYPTOZ and says your code must have a bug. Use the other three rows of ' +
+         'the table to show that it does not.',
+      a: 'Line the gap up against the volatility. GOLDF swings 14.1% a year and its mean sits 1.0 point above its CAGR. ' +
+         'BANKCO at 19.6% is 1.9 points apart. TECHX at 31.4% is 5.4 points apart. CRYPTOZ at 73.4% is 32.6 points apart. ' +
+         'The gap grows with the swings every time, in the same order, which is not what a bug looks like. It is the ' +
+         'previous answer at scale: each loss is taken off a larger base than the matching gain was added to, and averaging ' +
+         'the daily numbers throws that away.'
+    }},
     { money: 'Two products can advertise the same "average return" and deliver completely different outcomes. ' +
              'The one that swings more delivers less. Always compute the compounded result yourself.' },
 
@@ -58,6 +76,16 @@ FQ.registerLevel({
     { code: 'annual_return = (1 + daily.mean()) ** 252 - 1\nannual_vol    = daily.std() * (252 ** 0.5)      # about 15.87 x', lang: 'python' },
     { warn: 'Multiplying volatility by 252 instead of sqrt(252) overstates risk by a factor of ~16. It is the most common ' +
             'error in first-time risk code, and it produces Sharpe ratios that look absurdly small.' },
+
+    { check: {
+      q: 'You annualize volatility with x252 instead of xsqrt(252). GOLDF\'s daily standard deviation is 0.889%. What does ' +
+         'your report say about it, and would you notice?',
+      a: 'It says GOLDF has 224.0% annual volatility, against the correct 14.1%. Its Sharpe collapses from -0.03 to about ' +
+         '0.00, and every asset in the table does the same, so the ranking survives and nothing looks broken internally. ' +
+         'You notice by reading the number out loud: 224% volatility means a fund of government bonds swinging three times ' +
+         'as hard as the crypto row. Sanity checking a figure against the thing it describes catches errors that no unit ' +
+         'test you thought to write would have caught.'
+    }},
 
     { h: 'Volatility is risk, but only one kind of it' },
     { p: '**Volatility** is the standard deviation of returns: how widely they scatter around the average. High volatility ' +
@@ -85,6 +113,15 @@ FQ.registerLevel({
          'contradiction: it shows that one ratio never captures risk on its own. A drawdown that deep would have ' +
          'forced most real investors to sell at the bottom, and no Sharpe ratio tells you that.' },
 
+    { check: {
+      q: 'A member is about to put their deposit into CRYPTOZ because it has the best Sharpe in the table. Which number do ' +
+         'you put in front of them first, and in what units?',
+      a: 'The drawdown, in their own money: $10,000 became about $1,138 at the trough, and needed a gain of 779% to get back ' +
+         'to where it started. Sharpe is a score per unit of volatility, calculated as though the holder sat perfectly still ' +
+         'for three years. The drawdown is the reason almost nobody does. Show the ratio second, and say plainly that it ' +
+         'rewards an asset for going up violently as much as for going up steadily.'
+    }},
+
     { h: 'Maximum drawdown: the number people actually feel' },
     { p: 'Drawdown is the drop from the highest point reached so far. Maximum drawdown is the worst of them: how much of ' +
          'your money disappeared between a peak and the following trough.' },
@@ -108,6 +145,15 @@ FQ.registerLevel({
     { p: 'The average of the four individual volatilities is **34.6%**. An equally weighted portfolio of all four has a ' +
          'volatility of **27.1%**: a fifth less risk for the same average exposure. `GOLDF` is doing most of that work: ' +
          'its correlations are near zero, so it moves when the others do not.' },
+    { check: {
+      q: 'The four volatilities average 34.6%, and holding all four equally gives 27.1%. Nobody sold anything and nothing ' +
+         'was hedged. Where did 7.5 points of risk go?',
+      a: 'Into the days the assets disagreed. On a day when TECHX falls 2% and GOLDF rises 1%, the portfolio moves less ' +
+         'than either, and with a correlation of 0.13 between them that happens often. Adding the sizes of the moves ' +
+         'overstates what the portfolio actually did, and the difference is the 7.5 points. GOLDF does most of the work here ' +
+         'because it is the least correlated with everything else. Notice what did not change: the expected return is still ' +
+         'the weighted average of the parts. Less risk for the same return is why this is called the free lunch.'
+    }},
     { warn: 'Correlations rise in a crisis. Assets that looked independent for years fall together on the worst day, ' +
             'which is precisely when you needed the diversification. Never treat a historical correlation as a guarantee.' },
 
@@ -117,6 +163,15 @@ FQ.registerLevel({
     { p: 'The limitation is what it refuses to say: VaR tells you the *threshold*, never how bad it gets **beyond** it. ' +
          'A day at -3% and a day at -40% are both simply "worse than VaR". The fix is **Expected Shortfall** (or CVaR): ' +
          'the average loss on the days that breach VaR.' },
+    { check: {
+      q: 'The equal weight portfolio has a 95% VaR of -2.63% and an expected shortfall of -3.35%, and its worst day in the ' +
+         'sample was -5.00%. A draft risk report says "we cannot lose more than 2.63% in a day". Correct it.',
+      a: 'Everything after "cannot" is wrong. VaR is a threshold, not a maximum: on 95% of days the loss is smaller than ' +
+         '2.63%, and about one day in twenty is worse, by an amount VaR has no opinion about. On this sample those days ' +
+         'average -3.35% and the worst was -5.00%, roughly double the figure the report called a limit. Write it as three ' +
+         'numbers: the threshold, the average breach, and the worst breach seen. The last two are the ones that tell you ' +
+         'what a bad day costs.'
+    }},
     { money: 'VaR was central to risk management going into 2008, and its blindness past the threshold is a documented ' +
              'part of why so many institutions were surprised. Report it, but never report it alone.' }
   ],
