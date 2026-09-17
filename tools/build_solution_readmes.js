@@ -306,6 +306,29 @@ const NOTES = {
       ['Great offline, useless live', 'Recompute the features offline for transactions already decided live and compare field by field. Skew names itself.'],
       ['Velocity counts the current transaction', 'The window must end strictly before the event being scored, or the signal inflates in training and vanishes in production.']
     ]
+  },
+
+  16: {
+    files: [
+      ['`engine/core.py`', 'run, metrics and break_even_cost'],
+      ['`engine/strategies.py`', 'buy and hold, crossover, momentum, all behind one interface'],
+      ['`engine/search.py`', 'the parameter grid and walk_forward'],
+      ['`engine/report.py`', 'the same nine lines for every result'],
+      ['`tests/test_lookahead.py`', 'the shifted and unshifted comparison, asserted']
+    ],
+    run: 'pip install -r requirements.txt && pytest -q && python -m engine.report',
+    design: [
+      'The shift lives in `run` rather than in each strategy, so no strategy can forget it. The test that proves it asserts that a signal of 1 on day t produces a position of 1 on day t+1 and nothing on day t.',
+      'Costs are applied to turnover rather than to returns, which is what makes the fast and slow strategies react so differently to the same rate: 248 turns a year against 5.5.',
+      '`break_even_cost` is reported instead of defending an assumed cost. One number a reader can compare with reality beats a paragraph of justification.',
+      'The grid search reports the out of sample result and the correlation across the grid, not the winner. On this data the correlation is negative, which is the whole lesson in one figure.',
+      'Walk forward returns the joined test windows and the parameters chosen per fold. Unstable choices between folds are reported as a finding rather than smoothed over.'
+    ],
+    mistakes: [
+      ['Sharpe above 3', 'Look for the future: a rolling window including the current bar, a backward fill, or a merge that aligned the wrong rows.'],
+      ['Costs barely matter', 'Check the turnover calculation. A position that never changes pays nothing, and a diff on a constant series is zero everywhere.'],
+      ['Walk forward beats the single split', 'Suspect leakage between folds: the fit window and the test window must not overlap, including any rolling feature that spans the boundary.']
+    ]
   }
 };
 

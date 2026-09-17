@@ -70,6 +70,7 @@ model backed tutor.
 | 13 | The log is the truth, the balance is an opinion | An event sourced account service | event sourcing, CQRS, replay |
 | 14 | The scorecard a regulator can read | An application scorecard with reason codes | WOE, information value, model docs |
 | 15 | Fraud detection with a stopwatch running | A fraud decision service under 100ms | serving, feature stores, drift |
+| 16 | The backtest that does not lie to you | A backtest engine with walk forward | costs, overfitting, bias |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.
