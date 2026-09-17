@@ -14,14 +14,15 @@
  *   ANTHROPIC_API_KEY   required: https://console.anthropic.com/settings/keys
  *   FINQUEST_MODEL      optional (defaults to claude-opus-5
  *   FINQUEST_EFFORT     optional) low | medium | high   (default: low)
- *   FINQUEST_MAX_TOKENS optional: default 900
+ *   FINQUEST_MAX_TOKENS optional: default 2000. Thinking is on by default on
+ *                       this model and its tokens come out of this budget.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 
 const MODEL = process.env.FINQUEST_MODEL || 'claude-opus-5';
 const EFFORT = process.env.FINQUEST_EFFORT || 'low';
-const MAX_TOKENS = Number(process.env.FINQUEST_MAX_TOKENS || 900);
+const MAX_TOKENS = Number(process.env.FINQUEST_MAX_TOKENS || 2000);
 
 /* Hard limits. This endpoint is public, so the request body is untrusted:
    the caller may not choose the model, and cannot send unbounded input. */
@@ -79,6 +80,27 @@ function clean(messages) {
   /* The Messages API requires the conversation to start with a user turn. */
   while (out.length && out[0].role !== 'user') out.shift();
   return out;
+}
+
+/* Most specific first. APIConnectionError is a subclass of APIError in this
+   SDK, so it has to be checked before it. There is no APIStatusError in the
+   JavaScript SDK (that one is Python only): reaching for it is what used to
+   throw "Right-hand side of 'instanceof' is not an object" and turn every
+   model error into a crash. */
+export function classify(err) {
+  if (err instanceof Anthropic.AuthenticationError) {
+    return { status: 500, body: { error: 'The server API key was rejected. Check ANTHROPIC_API_KEY.' } };
+  }
+  if (err instanceof Anthropic.RateLimitError) {
+    return { status: 429, body: { error: 'The model is rate limited right now. Try again shortly.' } };
+  }
+  if (err instanceof Anthropic.APIConnectionError) {
+    return { status: 504, body: { error: 'Could not reach the model API.' } };
+  }
+  if (err instanceof Anthropic.APIError) {
+    return { status: 502, body: { error: `Model API error (${err.status || 'unknown'}).` } };
+  }
+  return { status: 500, body: { error: 'Unexpected server error.' } };
 }
 
 export default async function handler(req, res) {
@@ -167,21 +189,8 @@ export default async function handler(req, res) {
       }
     });
   } catch (err) {
-    /* Most-specific first: the browser shows a useful message and the tutor
-       falls back to its offline knowledge base either way. */
-    if (err instanceof Anthropic.AuthenticationError) {
-      return res.status(500).json({ error: 'The server API key was rejected. Check ANTHROPIC_API_KEY.' });
-    }
-    if (err instanceof Anthropic.RateLimitError) {
-      return res.status(429).json({ error: 'The model is rate limited right now. Try again shortly.' });
-    }
-    if (err instanceof Anthropic.APIStatusError) {
-      return res.status(502).json({ error: `Model API error (${err.status}).` });
-    }
-    if (err instanceof Anthropic.APIConnectionError) {
-      return res.status(504).json({ error: 'Could not reach the model API.' });
-    }
-    console.error('tutor endpoint failed:', err);
-    return res.status(500).json({ error: 'Unexpected server error.' });
+    const { status, body } = classify(err);
+    if (status >= 500) console.error('tutor endpoint failed:', err && err.message);
+    return res.status(status).json(body);
   }
 }
