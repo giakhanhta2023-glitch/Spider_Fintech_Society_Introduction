@@ -59,7 +59,7 @@ export function Home({ onAskTutor }) {
            entry point sit in the right four. Deliberately off-centre. -->
       <section class="section grid">
         <div class="col-1-7">
-          <span class="kicker">Spider Fintech Society <b>/</b> ten levels</span>
+          <span class="kicker">Spider Fintech Society</span>
           <h1 class="display display-xl">
             Learn fintech<br />by building it
           </h1>
@@ -116,7 +116,7 @@ export function Home({ onAskTutor }) {
 
       <!-- How a level works, as four numbered columns under one rule. -->
       <section class="section-tight">
-        <${SectionHead} title="How a level works" note="the same four, every level" />
+        <${SectionHead} title="How a level works" />
         <div class="grid" style=${{ rowGap: '28px' }}>
           ${[
             ['01', 'Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],

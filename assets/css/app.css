@@ -431,11 +431,11 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 .datastrip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid var(--rule-mid);
-  border-bottom: 1px solid var(--rule-mid);
+  padding: 6px 0;
 }
-.datastrip > div { padding: 18px var(--col-gap) 18px 0; border-right: 1px solid var(--rule); }
-.datastrip > div:last-child { border-right: 0; }
+/* No rules around or between the figures: at four columns of mono numerals
+   the alignment already does the dividing. */
+.datastrip > div { padding: 18px var(--col-gap) 18px 0; }
 .datastrip .v {
   display: block;
   font-family: var(--mono);
@@ -448,8 +448,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 .datastrip .k { display: block; margin-top: 6px; font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 @media (max-width: 700px) {
   .datastrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .datastrip > div { padding-right: 20px; border-bottom: 1px solid var(--rule); }
-  .datastrip > div:nth-child(2n) { border-right: 0; }
+  .datastrip > div { padding-right: 20px; }
 }
 
 /* ==========================================================================

@@ -157,15 +157,14 @@ function App({ user }) {
           <div class="grid">
             <div class="col-1-7">
               <span class="mono">
-                FinQuest, built for the Spider Fintech Society.
-                ${' '}<a class="link" href=${CFG.repoUrl} target="_blank" rel="noopener">solution keys on GitHub →</a>
+                <a class="link" href=${CFG.repoUrl} target="_blank" rel="noopener">solution keys on GitHub →</a>
               </span>
             </div>
+            <!-- What this course is and is not now lives on the terms page,
+                 one click away, rather than being restated on every screen. -->
             <div class="col-9-12">
               <span class="mono-s">
-                Educational material only. Every dataset is synthetic.
-                Nothing here is financial advice.
-                ${' '}<a class="link" href="/privacy">privacy</a>
+                <a class="link" href="/privacy">privacy</a>
                 ${' '}<a class="link" href="/terms">terms</a>
               </span>
             </div>
