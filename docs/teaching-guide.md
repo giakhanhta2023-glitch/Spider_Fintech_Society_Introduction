@@ -64,8 +64,8 @@ built to support exactly that order and will refuse to dump a full solution.
 
 ## How a knowledge section has to teach
 
-Level 1 is the worked example of this. Every other level is being brought up to
-the same standard, and new material should start here.
+All ten levels are written to this standard, and new material should start here.
+Level 1 is the shortest worked example of it if you want one to read.
 
 A section is not finished when the idea has been stated. It is finished when a
 learner who has never met the idea can use it. That takes five moves, in order:
