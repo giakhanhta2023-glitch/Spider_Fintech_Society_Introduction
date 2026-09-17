@@ -2,7 +2,12 @@
   "name": "finquest",
   "version": "1.0.0",
   "private": true,
-  "description": "FinQuest - a 10-level project-based fintech training game with an AI tutor",
+  "description": "FinQuest: a ten level fintech course built around projects, with an AI tutor",
+  "homepage": "https://finquest-rank-nullity.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giakhanhta2023-glitch/Spider_Fintech_Society_Introduction"
+  },
   "type": "module",
   "scripts": {
     "start": "python serve.py",

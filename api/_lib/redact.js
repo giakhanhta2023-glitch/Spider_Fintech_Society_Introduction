@@ -1,9 +1,8 @@
 /**
  * Never log a credential.
  *
- * Postgres drivers quote the connection string back at you when they cannot
- * parse it, password and all, and function logs are kept for days. Every catch
- * block that logs an error message puts it through here first.
+ * Library errors quote their inputs back at you, and function logs are kept for
+ * days, so every catch block that logs a message puts it through here first.
  */
 
 const PATTERNS = [

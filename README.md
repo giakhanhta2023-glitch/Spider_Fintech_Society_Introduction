@@ -7,8 +7,11 @@ knowledge, walks you through the tools step by step, drills you with 15 question
 build you can finish using **only what that level taught you**: with a complete, verified solution
 key waiting in this repository.
 
-Built for the Spider Fintech Society. Live at
-[finquest-rank-nullity.vercel.app](https://finquest-rank-nullity.vercel.app).
+### **[Open the course →](https://finquest-rank-nullity.vercel.app)**
+
+Built for the Spider Fintech Society. Sign in with Google and your progress follows you to any
+device. The address above is the only one to share: Vercel also keeps a private URL per deployment,
+and those are snapshots of older builds rather than the live site.
 
 > **Level 1 installs nothing.** No VS Code, no PATH variables, no `pip`. You will be running Python
 > in a browser tab about ten minutes after you start. A local editor only appears in level 9, when
@@ -16,29 +19,35 @@ Built for the Spider Fintech Society. Live at
 
 ---
 
-## Run it
+## Where it lives
 
-**Locally**, for editing the course:
+| | Address | For |
+|---|---|---|
+| **The site** | [finquest-rank-nullity.vercel.app](https://finquest-rank-nullity.vercel.app) | your members. Share this one |
+| Per deployment | `finquest-<hash>-rank-nullity.vercel.app` | a snapshot of one build, kept private |
+| Your machine | `http://localhost:8000` | editing the course, after `python serve.py` |
+
+## Run it locally
 
 ```bash
 python serve.py
 ```
 
-Then visit <http://localhost:8000>. There is no build step and no `npm install` for the site itself:
-the interface is React loaded from a CDN import map, styled by one hand written stylesheet, and the
-curriculum is plain JavaScript data files.
+There is no build step and no `npm install` for the site itself: the interface is React loaded from a
+CDN import map, styled by one hand written stylesheet, and the curriculum is plain JavaScript data
+files.
 
 `serve.py` is `http.server` with caching switched off. Use it while you are editing: browsers hold
 ES modules in memory, so with a normal static server your changes can appear to do nothing until you
 force a reload with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.
 
-With no database configured, the sign in screen says so and the course still runs, keeping progress
-in `localStorage` as it did before accounts existed.
+Locally there is no backend, so the course skips the sign in and keeps progress in `localStorage`, as
+it did before accounts existed. Nothing syncs, because there is nowhere to sync to.
 
-**Deployed**, for your members: Vercel, because the accounts and the tutor need `api/*.js` to run as
-functions. Import the repo, then set the environment variables listed under
-[Accounts](docs/accounts-setup.md). A purely static host such as GitHub Pages will serve the course
-but cannot run sign in, saved progress, or the model backed tutor.
+**Deploying it** needs Vercel, because accounts and the tutor run as `api/*.js` functions. Import the
+repo, then set the environment variables listed under [Accounts](docs/accounts-setup.md). A purely
+static host such as GitHub Pages will serve the course but cannot run sign in, saved progress, or the
+model backed tutor.
 
 ---
 
