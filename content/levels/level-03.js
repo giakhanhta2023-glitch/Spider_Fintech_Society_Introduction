@@ -39,8 +39,16 @@ FQ.registerLevel({
     { p: 'In this course **money out is negative and money in is positive**, from the account holder\'s point of view. ' +
          'Banks differ: some send all amounts positive plus a separate `debit/credit` flag. Get this wrong and every ' +
          'number downstream is wrong, so it is the first thing you check.' },
-    { warn: 'A **refund** is a positive amount that is not income. If you compute income as `amount > 0` you will report ' +
-            'a $70 clothing refund as salary. Filter by *category*, not by sign, when you mean income.' },
+    { warn: 'A **refund** is a positive amount that is not income. This file holds four of them, $29.75 to $44.47 of ' +
+            'clothing and electronics coming back. Filter by *category*, not by sign, when you mean income.' },
+    { check: {
+      q: 'Those four refunds are $29.75, $23.62, $33.20 and $44.47. If you take income to be every row where `amount > 0`, ' +
+         'what do you report, and how much does it matter?',
+      a: 'You report $20,231.04 instead of $20,100.00, because the refunds add $131.04. That is 0.65% high, and the size is ' +
+         'the problem: it is far too small to look wrong. It then feeds the savings rate, which reads 34.0% instead of 33.5%, ' +
+         'so the number you show the user is flattering and you cannot explain where it came from. Filter on ' +
+         '`category == "income"` and the refunds stay where they belong, as money back on shopping.'
+    }},
 
     { h: 'Why pandas' },
     { p: '**pandas** is the spreadsheet-shaped library Python uses for tabular data. Its core object is the ' +
@@ -57,11 +65,45 @@ FQ.registerLevel({
     { code: 'df.info()          # types and non-null counts for every column\ndf.dtypes          # just the types\ndf.head()          # first five rows\ndf.shape           # (rows, columns)', lang: 'python' },
     { tip: '`object` in `dtypes` means "text or mixed". Seeing `object` on a column you expect to be numeric is the ' +
            'single most common data bug in analytics.' },
+    { check: {
+      q: 'A colleague sends you the same file with the rent typed as `"1,150.00"`, comma and all. You call ' +
+         '`df["amount"].sum()`, nothing raises, and a very long line of digits prints. What happened?',
+      a: 'The comma made that one value non numeric, so pandas typed the whole column as `object`, meaning text. `sum()` on ' +
+         'text is concatenation: it glued 233 strings end to end instead of adding them. No error, no warning, just an answer ' +
+         'wrong by an amount you could never guess. That is the case `df.info()` before any arithmetic is there to catch. ' +
+         'The repair is `pd.to_numeric(df["amount"].str.replace(",", ""), errors="coerce")`, then count the `NaN` values it ' +
+         'produced to see what else was hiding in the column.'
+    }},
 
     { h: 'Split, apply, combine' },
     { p: 'Almost every analytics question is the same shape: **split** the rows into groups, **apply** a calculation to each, ' +
-         '**combine** the answers into a table. In pandas that is `groupby`.' },
+         '**combine** the answers into a table. In pandas that is `groupby`. Do it once by hand and the method stops being ' +
+         'magic. Here are five real rows from the file you are about to load:' },
+    { table: {
+      head: ['Date', 'Description', 'Category', 'Amount'],
+      rows: [
+        ['2025-03-02', 'IRONWORKS GYM', 'subscriptions', '-35.00'],
+        ['2025-03-02', 'THE CURRY POT', 'dining', '-40.40'],
+        ['2025-03-05', 'NETFLIX', 'subscriptions', '-12.99'],
+        ['2025-03-06', 'BEAN THERE', 'dining', '-3.66'],
+        ['2025-03-06', 'CORNER MARKET', 'groceries', '-49.84']
+      ]
+    }},
+    { p: '**Split** on category and you hold three piles: dining has two rows, subscriptions has two, groceries has one. ' +
+         '**Apply** a sum to each pile: dining is 40.40 + 3.66 = $44.06, subscriptions is 35.00 + 12.99 = $47.99, groceries ' +
+         'is $49.84. **Combine** those three answers and you have a table with one row per category, totalling $141.89: the ' +
+         'same money as the five rows you started with, each counted once. That last sentence is the check worth running on ' +
+         'any aggregation you ever write.' },
     { code: '# how much did I spend in each category?\nspend = df[df["amount"] < 0].copy()\nspend["abs_amount"] = spend["amount"].abs()\nby_cat = spend.groupby("category")["abs_amount"].sum().sort_values(ascending=False)', lang: 'python' },
+    { check: {
+      q: 'Run `spend.groupby("category")["abs_amount"].sum()` on those five rows and three numbers come back, labelled ' +
+         'dining, groceries and subscriptions. Is that a DataFrame, and where did the dates and descriptions go?',
+      a: 'It is a Series: one column of numbers with the category names as its index, because you asked for one column ' +
+         '(`["abs_amount"]`) and collapsed it to one value per group. The dates and descriptions are gone on purpose. Each ' +
+         'group held several of them and a sum has room for none, so pandas drops every column you did not aggregate. If you ' +
+         'want more back, aggregate more: `.agg(["sum", "count"])` returns the total and how many rows made it.'
+    }},
+
     { p: 'To group by month you need a month column first. Pandas gives you date parts through the `.dt` accessor ' +
          'once the column is a real datetime:' },
     { code: 'df["month"] = df["date"].dt.to_period("M")      # 2025-03, 2025-04,...\ndf["weekday"] = df["date"].dt.day_name()        # Monday, Tuesday,...\nmonthly = df.groupby("month")["amount"].sum()', lang: 'python' },
@@ -72,6 +114,15 @@ FQ.registerLevel({
     { p: 'A subscription is a merchant that bills an **identical amount** on a **regular cadence**. You do not need machine ' +
          'learning for this: grouping by merchant *and* amount and counting occurrences finds them immediately.' },
     { code: 'counts = (spend.groupby(["description", "abs_amount"])\n                .size()\n                .reset_index(name="times"))\nrecurring = counts[counts["times"] >= 3]', lang: 'python' },
+    { check: {
+      q: 'On this file the rule finds eight merchants billing the same amount six times each. Three of them do not belong in ' +
+         'a list headed "things you could cancel". Which three, and what separates them from the rest?',
+      a: 'Rent at $1,150.00, the $300.00 standing transfer to savings, and $45.00 of internet. The transfer is not spending ' +
+         'at all, the money only changed pocket. Rent and internet are spending, but they are commitments: cancelling them ' +
+         'means moving house or going offline, which is not a tip. The five that remain are the gym at $35.00, streaming at ' +
+         '$15.99, Netflix at $12.99, Spotify at $9.99 and iCloud at $2.99, which come to $76.96 a month and $923.52 a year. ' +
+         'The rule found all eight. Deciding which five to show is your job, not the rule.'
+    }},
     { money: 'Every serious money app ships this feature, because forgotten subscriptions are the fastest saving a user can ' +
              'make. In this dataset one of the five recurring charges is a streaming service the user clearly never watches, ' +
              'finding it is worth more to them than any chart you draw.' },
@@ -84,6 +135,14 @@ FQ.registerLevel({
       '**Savings rate**: `(income - spend) / income`, the one number that predicts financial health',
       '**Fixed vs variable split**: rent, utilities and subscriptions versus everything you choose each day'
     ]},
+    { check: {
+      q: 'Income is $20,100.00 and spending, transfers excluded, is $13,358.30, so the savings rate is 33.5%. A reviewer says ' +
+         'the $1,800.00 moved into savings should come off as well. Work out their number and say why it is wrong.',
+      a: 'Theirs is (20,100.00 - 13,358.30 - 1,800.00) / 20,100.00 = 24.6%. It is wrong because the transfer is the saving. ' +
+         'It already sits inside the $6,741.70 that did not get spent, so subtracting it counts the same money twice, once as ' +
+         'saved and once as spent. Their version also rewards doing nothing: someone who left the $1,800.00 in checking would ' +
+         'score 33.5%, while the one who actually moved it scores 24.6%.'
+    }},
     { p: 'A transfer to your own savings account is **not spending**: the money is still yours. Counting it as an expense ' +
          'makes users look poorer than they are, and is a genuine bug in several shipped budgeting apps.' },
 
@@ -91,7 +150,16 @@ FQ.registerLevel({
     { p: 'Charts are for comparison, not decoration. For "which category is biggest" use a **horizontal bar chart sorted by size**: ' +
          'bars share a baseline so the eye compares lengths accurately. Pie charts ask people to compare angles, which they cannot do. ' +
          'For "how did this change over time" use a **line**.' },
-    { code: 'import matplotlib.pyplot as plt\n\nby_cat.sort_values().plot(kind="barh", figsize=(8, 4))\nplt.title("Spending by category: Mar to Aug 2025")\nplt.xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' }
+    { code: 'import matplotlib.pyplot as plt\n\nby_cat.sort_values().plot(kind="barh", figsize=(8, 4))\nplt.title("Spending by category: Mar to Aug 2025")\nplt.xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' },
+    { check: {
+      q: 'On that chart housing is $6,900.00 and subscriptions is $461.76, a stub about a fifteenth as long. Does the length ' +
+         'of the bar tell you what to put in your findings?',
+      a: 'No, and this is where analysts lose people. The chart answers one question, where the money goes, and on that ' +
+         'question housing wins and nothing is close. What to do about it is a different question with a different answer: ' +
+         'the user cannot move house this month, but they can cancel $76.96 a month of subscriptions, which is $923.52 over ' +
+         'a year. Report the long bar because it is true, and lead the recommendation with the short one because it is ' +
+         'something they can act on.'
+    }}
   ],
 
   tutorial: {
@@ -162,7 +230,7 @@ FQ.registerLevel({
       {
         t: 'Draw one honest chart',
         blocks: [
-          { code: 'import matplotlib.pyplot as plt\n\nchart = by_cat.drop("savings", errors="ignore").sort_values()\nax = chart.plot(kind="barh", figsize=(8, 4), color="#2ee6a8")\nax.set_title("Spending by category: Mar to Aug 2025")\nax.set_xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' },
+          { code: 'import matplotlib.pyplot as plt\n\nchart = by_cat.drop("savings", errors="ignore").sort_values()\nax = chart.plot(kind="barh", figsize=(8, 4), color="#5B8CFF")\nax.set_title("Spending by category: Mar to Aug 2025")\nax.set_xlabel("USD")\nplt.tight_layout()\nplt.show()', lang: 'python' },
           { p: 'Dropping `savings` is a deliberate analytical choice, not a trick: transfers to yourself are not consumption, ' +
                'and leaving them in the chart makes the biggest bar a lie. Say so in a comment.' },
           { tip: 'Save a chart with `plt.savefig("spending.png", dpi=150, bbox_inches="tight")` and upload the PNG to your ' +
