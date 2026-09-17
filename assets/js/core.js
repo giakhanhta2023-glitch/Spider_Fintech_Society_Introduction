@@ -21,6 +21,7 @@
       LEVELS.sort(function (a, b) { return a.id - b.id; });
     },
 
+    /* Each line is { q: what was said, who: who said it }. */
     registerQuotes: function (lines) {
       lines.forEach(function (line) { QUOTES.push(line); });
     },
@@ -29,7 +30,7 @@
        changing at local midnight. A date rather than a random number, so
        nobody gets three different quotes from three reloads. */
     quoteOfTheDay: function (when) {
-      if (!QUOTES.length) return '';
+      if (!QUOTES.length) return null;
       var d = when || new Date();
       var day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
       return QUOTES[((day % QUOTES.length) + QUOTES.length) % QUOTES.length];

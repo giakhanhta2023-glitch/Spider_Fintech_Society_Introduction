@@ -102,8 +102,10 @@ edited by eye:
 
 They blink on their own timers and Khanh grins at Mou every few seconds, all of which stops if the
 reader has asked for reduced motion. Under the two of them the front page carries one line from
-[`content/quotes.js`](content/quotes.js), picked by the date rather than at random, so everybody in
-the society reads the same one on the same day and it changes at local midnight.
+[`content/quotes.js`](content/quotes.js): engineers who built the tools, investors who explain their
+reasoning, athletes who are honest about the work, each one named. The date picks it rather than a
+random number, so everybody in the society reads the same line on the same day and it changes at
+local midnight. Add your own, keep them short, and only add what you can source.
 
 | Tutor mode | Setup | What you get |
 |------|-------|--------------|

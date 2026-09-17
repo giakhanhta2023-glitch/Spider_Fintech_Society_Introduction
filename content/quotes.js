@@ -1,47 +1,71 @@
 /* =========================================================================
    One line a day, under the two of them on the home page.
 
-   Written for this course rather than collected from elsewhere, so they can
-   say something a member here will actually use, and so nothing needs quoting
-   or attributing. Keep them short enough to read without meaning to.
+   People the members might actually want to be: engineers who built the
+   things, investors who explain their reasoning, athletes who are honest
+   about the work. Two rules for anything added here.
+
+   Keep it short, one sentence where possible, and always name who said it.
+   And only add a line you can source: half the quotations on the internet
+   are attached to the wrong person, and a course that teaches people to
+   check their numbers cannot be careless about this.
 
    The day picks the line, not a random number, so everybody in the society
-   sees the same one on the same day and it changes at local midnight. Add as
-   many as you like: the list can be any length.
+   sees the same one on the same day and it changes at local midnight.
    ========================================================================= */
 FQ.registerQuotes([
-  'Start the level you have been avoiding. It is the one that changes what you can build.',
-  'A number you cannot explain is a number you do not have.',
-  'Read the error message. It is the only part of the program trying to help you.',
-  'Everything in finance is arithmetic somebody can check. Be the one who checks it.',
-  'Ship the rough version. You can only improve something that exists.',
-  'You do not need a better idea today. You need the next twenty minutes.',
-  'Copying the answer feels like progress for about a day.',
-  'Write the test that would have caught it, then carry on.',
-  'Money that cannot be traced is money somebody will argue about later.',
-  'If the code runs and you cannot say why, you are halfway there at best.',
-  'Small and correct travels further than large and hopeful.',
-  'Nobody remembers the build that went smoothly. You will remember this one.',
-  'A cent is a rounding error until there are a million of them.',
-  'Ask the question early. The price of asking goes up every hour you wait.',
-  'Two hours of reading beats two days of guessing, and it is the harder habit.',
-  'The drill measures. The build is where you find out.',
-  'Understand the formula once and you will never look it up in a panic.',
-  'Being stuck is information. Write down exactly where.',
-  'Your first ledger will not balance. That is the lesson arriving, on time.',
-  'Slow is fine. Stopping is the only thing that costs you the level.',
-  'Every system you admire started as something worse than what you have now.',
-  'Explain it to somebody. The gaps turn up in your own sentences.',
-  'A model you cannot explain is a decision you cannot defend.',
-  'Do the boring validation. It is the part that runs at three in the morning.',
-  'You learn a tool by needing it, never by reading about it.',
-  'Write it down while you still remember what confused you.',
-  'Interest is patient. So is practice.',
-  'Build for the person who opens your repository knowing nothing.',
-  'One level a week is ten weeks. That is the whole course.',
-  'The answer key is worth something afterwards and nothing before.',
-  'What you can do next month is decided by what you open today.',
-  'Rent, groceries, a coffee: every fintech product is somebody\'s Tuesday.',
-  'Precision is a kindness. Somebody has to trust this number.',
-  'The gap between knowing and having built it is the whole job.'
+  /* ---- the people who built the tools ---- */
+  { q: 'Talk is cheap. Show me the code.', who: 'Linus Torvalds' },
+  { q: 'Premature optimization is the root of all evil.', who: 'Donald Knuth' },
+  { q: 'Simplicity is prerequisite for reliability.', who: 'Edsger Dijkstra' },
+  { q: 'Debugging is twice as hard as writing the code in the first place.', who: 'Brian Kernighan' },
+  { q: 'Adding manpower to a late software project makes it later.', who: 'Fred Brooks' },
+  { q: 'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.',
+    who: 'Martin Fowler' },
+  { q: 'The most dangerous phrase in the language is: we have always done it this way.',
+    who: 'Grace Hopper' },
+  { q: 'A ship in port is safe, but that is not what ships are built for.', who: 'Grace Hopper' },
+  { q: 'The best way to predict the future is to invent it.', who: 'Alan Kay' },
+  { q: 'Data dominates. If you have chosen the right data structures, the algorithms will almost always be self evident.',
+    who: 'Rob Pike' },
+  { q: 'There are only two kinds of languages: the ones people complain about and the ones nobody uses.',
+    who: 'Bjarne Stroustrup' },
+  { q: 'Everything fails all the time.', who: 'Werner Vogels' },
+  { q: 'Make it work, make it right, make it fast.', who: 'Kent Beck' },
+  { q: 'When in doubt, use brute force.', who: 'Ken Thompson' },
+  { q: 'Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away.',
+    who: 'Antoine de Saint-Exupéry' },
+  { q: 'There was no choice but to be pioneers.', who: 'Margaret Hamilton' },
+  { q: 'That brain of mine is something more than merely mortal, as time will show.', who: 'Ada Lovelace' },
+
+  /* ---- the people who do the work anyway ---- */
+  { q: 'Motivation is crap. Motivation comes and goes.', who: 'David Goggins' },
+  { q: 'You have to build calluses on your brain just like how you build calluses on your hands.',
+    who: 'David Goggins' },
+  { q: 'I have failed over and over and over again in my life, and that is why I succeed.',
+    who: 'Michael Jordan' },
+  { q: 'Great things come from hard work and perseverance. No excuses.', who: 'Kobe Bryant' },
+  { q: 'No human is limited.', who: 'Eliud Kipchoge' },
+  { q: 'Service to others is the rent you pay for your room here on earth.', who: 'Muhammad Ali' },
+  { q: 'A champion is defined not by their wins but by how they can recover when they fall.',
+    who: 'Serena Williams' },
+  { q: 'It always seems impossible until it is done.', who: 'Nelson Mandela' },
+  { q: 'Không có việc gì khó, chỉ sợ lòng không bền. Nothing is difficult, only the will can fail.',
+    who: 'Hồ Chí Minh' },
+
+  /* ---- the people who move the money ---- */
+  { q: 'Risk comes from not knowing what you are doing.', who: 'Warren Buffett' },
+  { q: 'Price is what you pay. Value is what you get.', who: 'Warren Buffett' },
+  { q: 'Knowing what you do not know is more useful than being brilliant.', who: 'Charlie Munger' },
+  { q: 'The investor\'s chief problem, and even his worst enemy, is likely to be himself.',
+    who: 'Benjamin Graham' },
+  { q: 'Pain plus reflection equals progress.', who: 'Ray Dalio' },
+  { q: 'Your margin is my opportunity.', who: 'Jeff Bezos' },
+  { q: 'Innovation distinguishes between a leader and a follower.', who: 'Steve Jobs' },
+
+  /* ---- the people who checked their work ---- */
+  { q: 'The first principle is that you must not fool yourself, and you are the easiest person to fool.',
+    who: 'Richard Feynman' },
+  { q: 'Nothing in life is to be feared, it is only to be understood.', who: 'Marie Curie' },
+  { q: 'An investment in knowledge pays the best interest.', who: 'Benjamin Franklin' }
 ]);

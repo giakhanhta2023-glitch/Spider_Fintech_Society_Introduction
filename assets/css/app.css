@@ -178,26 +178,33 @@ p.lede {
 .mono-s { font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0; color: var(--graphite); }
 .figure { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
-/* The line of the day, under the two of them on the home page. Set in the
-   reading face rather than the mono one: it is a sentence to read, not a
-   label to scan. */
-.daily {
-  margin: 14px 0 0;
-  max-width: 34ch;
+/* The line of the day, under the two of them on the home page. The quotation
+   is set in the reading face because it is a sentence to read; the name is in
+   the mono one because it is a label, and because a name on its own line
+   needs no dash in front of it. */
+.daily { margin: 14px 0 0; max-width: 34ch; }
+.daily-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: var(--track-mono);
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.daily-quote {
+  margin: 0;
   font-family: var(--text);
   font-size: 1.02rem;
   font-style: italic;
   line-height: 1.5;
   color: var(--ash);
 }
-.daily-label {
-  display: block;
+.daily-who {
+  margin-top: 6px;
   font-family: var(--mono);
-  font-style: normal;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   letter-spacing: var(--track-mono);
-  color: var(--accent);
-  margin-bottom: 6px;
+  color: var(--graphite);
 }
 
 a { color: inherit; text-decoration: none; }

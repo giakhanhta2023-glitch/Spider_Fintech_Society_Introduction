@@ -67,10 +67,15 @@ export function Home({ onAskTutor }) {
             <${Companions} size=${76} />
             <!-- One line, picked by the date rather than at random, so the
                  whole society sees the same one on the same day. -->
-            <p class="daily">
-              <span class="daily-label">today</span>
-              ${FQ.quoteOfTheDay()}
-            </p>
+            ${(() => {
+              const said = FQ.quoteOfTheDay();
+              return said ? html`
+                <figure class="daily">
+                  <span class="daily-label">today</span>
+                  <blockquote class="daily-quote">${said.q}</blockquote>
+                  <figcaption class="daily-who">${said.who}</figcaption>
+                </figure>` : null;
+            })()}
           </div>
         </div>
 
