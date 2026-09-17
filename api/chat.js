@@ -190,7 +190,10 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     const { status, body } = classify(err);
-    if (status >= 500) console.error('tutor endpoint failed:', err && err.message);
+    /* Log every failure, not just 5xx: a 400 from the model API carries the
+       reason (a rejected parameter, a beta the org is not enabled for) and the
+       caller is deliberately never told it. */
+    console.error('tutor endpoint failed:', status, err && err.message);
     return res.status(status).json(body);
   }
 }
