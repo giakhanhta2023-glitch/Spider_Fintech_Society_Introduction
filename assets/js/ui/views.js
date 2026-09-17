@@ -432,12 +432,6 @@ export function Ranking() {
               </tbody>
             </table>
           </div>
-        </section>
-
-        <p class="index-sub" style=${{ maxWidth: '58ch' }}>
-          Your name is here because you signed in with Google; the board shows it to other
-          signed in members and nothing else about you. Progress syncs a moment after you earn
-          it, so a fresh score can take a few seconds to appear.
-        </p>` : null}
+        </section>` : null}
     </div>`;
 }
