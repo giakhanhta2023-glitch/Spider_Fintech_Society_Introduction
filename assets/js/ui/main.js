@@ -68,8 +68,9 @@ function Masthead({ route, onOpenTutor, user }) {
             <${Mou} mood="rest" size=${24} title="Mou" />
             <span>mou</span>
           </button>
-          <button class="signout" type="button" onClick=${signOut}
-            title=${user ? `Signed in as ${user.email}` : 'Sign out'}>sign out</button>
+          ${user ? html`
+            <button class="signout" type="button" onClick=${signOut}
+              title=${`Signed in as ${user.email}`}>sign out</button>` : null}
         </div>
       </div>
     </header>`;

@@ -57,7 +57,7 @@ python compound_growth.py
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 30 | Correct math | All eight functions return the values in the test list, including the zero-rate and unreachable-goal edge cases. |
+| 30 | Correct math | All eight functions return the values in the test list, including a rate of zero and a goal that cannot be reached, edge cases. |
 | 20 | Readable output | Aligned table columns, consistent money and percentage formatting, a report a non-programmer could read. |
 | 20 | Structure | Small single-purpose functions with docstrings and sensible default arguments; no copy-pasted blocks. |
 | 15 | Scenarios and explanation | Three scenarios run, plus your own written explanation of accelerating interest. |

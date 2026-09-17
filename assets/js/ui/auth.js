@@ -18,14 +18,23 @@ import { Companions } from './companions.js';
 const GSI = 'https://accounts.google.com/gsi/client';
 
 /* ------------------------------------------------------------- server calls */
+/* Three outcomes, not two: signed in, signed out, and no backend at all.
+   `python serve.py` serves the course with no functions behind it, so every
+   auth route 404s. Treating that as signed out would lock the author out of
+   their own course while editing it, so on localhost it means guest instead.
+   Anywhere else a missing route is a broken deployment, and the gate holds. */
+const LOCAL = typeof window !== 'undefined'
+  && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+
 async function getSession() {
   try {
     const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    if (r.status === 404 && LOCAL) return 'no-backend';
     if (!r.ok) return null;
     const data = await r.json();
     return data.user || null;
   } catch {
-    return null;
+    return LOCAL ? 'no-backend' : null;
   }
 }
 
@@ -197,8 +206,16 @@ export function AuthGate({ children }) {
     let cancelled = false;
     getSession().then((user) => {
       if (cancelled) return;
-      if (user) adopt(user);
-      else setState({ status: 'out', user: null });
+      if (user === 'no-backend') {
+        /* Local editing: the course runs on localStorage, as it did before
+           accounts existed. Nothing is synced because there is nowhere to
+           sync to. */
+        setState({ status: 'in', user: null });
+      } else if (user) {
+        adopt(user);
+      } else {
+        setState({ status: 'out', user: null });
+      }
     });
     return () => { cancelled = true; };
   }, []);

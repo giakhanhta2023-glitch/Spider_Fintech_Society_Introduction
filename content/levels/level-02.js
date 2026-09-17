@@ -14,7 +14,7 @@ FQ.registerLevel({
 
   objectives: [
     'Separate simple interest from compound interest and explain why the gap explodes over time',
-    'Apply the future-value formula with any compounding frequency',
+    'Apply the future value formula with any compounding frequency',
     'Add regular contributions using the annuity formula',
     'Convert between APR, periodic rate, and APY/EAR, and say why banks quote each one',
     'Discount a future amount back to present value and adjust returns for inflation',
@@ -27,8 +27,26 @@ FQ.registerLevel({
          'charge for those two costs. Everything else in this level is bookkeeping on top of that idea.' },
     { p: '**Simple interest** is charged only on the original amount (the *principal*):' },
     { code: 'Interest = P x r x t\nFV      = P x (1 + r x t)', lang: 'text', label: 'simple interest' },
-    { p: '**Compound interest** is charged on the principal *plus all interest accumulated so far*. Your interest earns interest:' },
+    { p: '**Compound interest** is charged on the principal *plus all interest accumulated so far*. Before the formula, watch ' +
+         'it happen. Here is $1,000 at 8%, one year at a time, with nothing clever going on: each year you work out 8% of ' +
+         'whatever is in the account, and add it.' },
+    { table: {
+      head: ['Year', '8% of the balance', 'Balance after'],
+      rows: [
+        ['1', '8% of $1,000.00 = **$80.00**', '$1,080.00'],
+        ['2', '8% of $1,080.00 = **$86.40**', '$1,166.40'],
+        ['3', '8% of $1,166.40 = **$93.31**', '$1,259.71']
+      ]
+    }},
+    { p: 'The interest column grows every year, and nobody changed the rate. It grows because the balance it is charged on ' +
+         'grew, and the balance grew because last year\'s interest joined it. That is the entire idea. Doing that multiplication ' +
+         '`t` times in a row is what the exponent in the formula means:' },
     { code: 'FV = P x (1 + r/n) ** (n x t)\n\nP = principal        r = annual rate (0.05 = 5%)\nn = compounds/year   t = years', lang: 'text', label: 'compound interest' },
+    { check: {
+      q: 'In year 2 the account earned $86.40, not $80.00, and the rate never moved. Where did the extra $6.40 come from?',
+      a: 'It is 8% of the $80.00 earned in year 1. Last year\'s interest became this year\'s principal, so it earns too. ' +
+         'Every later year adds another layer of the same thing, which is why the gap widens rather than staying at $6.40.'
+    }},
     { table: {
       head: ['$1,000 at 8%', 'After 10 yrs', 'After 30 yrs', 'After 45 yrs'],
       rows: [
@@ -37,7 +55,7 @@ FQ.registerLevel({
         ['Gap', '+$359', '+$6,663', '**+$27,320**']
       ]
     }},
-    { money: 'This table is why pension products, student loans, and credit-card debt all behave so differently from what ' +
+    { money: 'This table is why pension products, student loans, and credit card debt all behave so differently from what ' +
              'people expect. Compounding is not a small correction. Over decades it is the whole result.' },
 
     { h: 'Compounding frequency: n matters, but less than you think' },
@@ -55,30 +73,73 @@ FQ.registerLevel({
     }},
     { p: 'Notice the jump from annual to monthly is worth $3.00, and going from monthly all the way to continuous is worth ' +
          '29 cents. Frequency matters most at high rates and long horizons.' },
+    { check: {
+      q: 'A member is choosing between two savings accounts. One pays 8% compounded monthly, the other 8% compounded daily. ' +
+         'On $1,000 for a year, what is the difference worth, and what should you tell them to look at instead?',
+      a: '28 cents: $1,083.28 against $1,083.00. Tell them to compare the rate and any fees, because either of those moves ' +
+         'the answer by pounds while the compounding frequency moves it by pennies. Frequency is the detail that sounds ' +
+         'important and almost never is.'
+    }},
 
     { h: 'APR vs APY: the same money, two quotes' },
     { p: 'The **APR** (also called the nominal rate) is just the periodic rate multiplied out: 1% a month is quoted as a 12% APR. ' +
          'It ignores the fact that you compound along the way. The **APY** (savings) or **EAR** (loans) folds compounding in:' },
     { code: 'periodic rate = APR / n\nAPY = (1 + APR/n) ** n - 1', lang: 'text', label: 'converting between quotes' },
     { p: 'A credit card at 24% APR compounding monthly has a periodic rate of 2% a month and an **APY of 26.82%**. ' +
-         'That 2.82-point gap is real money you owe that the headline number never showed you.' },
+         'That 2.82 point gap is real money you owe that the headline number never showed you.' },
     { warn: 'Rule of thumb for reading any product: **lenders advertise APR (looks smaller), savers are shown APY (looks bigger)**. ' +
             'When comparing two offers, always convert both to the same basis first.' },
+    { check: {
+      q: 'A card advertises 24% APR. A savings account advertises 24% APY. Both compound monthly. Which of those two numbers ' +
+         'already has the compounding baked into it, and what is the other one really?',
+      a: 'The savings account: APY is the number after compounding. The card\'s 24% is before it, so the card actually costs ' +
+         '26.82% a year. This is not an accident of arithmetic: each product is quoted in whichever basis makes it look better.'
+    }},
 
     { h: 'Adding regular contributions' },
-    { p: 'Real savings are not one lump sum. They are $200 every month. Each contribution compounds for a different length of time, ' +
-         'and summing that series gives the **future value of an annuity**:' },
-    { code: 'FV_contributions = C x [ ((1 + i) ** N - 1) / i ]\n\nC = payment per period   i = rate per period (r/n)\nN = total periods (n x t)', lang: 'text', label: 'annuity (end of period)' },
-    { p: 'The total for a plan with both a starting balance and monthly deposits is simply the two formulas added together. ' +
-         'When `i` is 0 the formula divides by zero: with no interest the answer is just `C x N`, and your code has to handle that case.' },
+    { p: 'Real savings are not one lump sum. They are $200 every month. Each deposit compounds for a different length of time, ' +
+         'because each one arrives later than the last. Take three deposits of $200 at 6% a year, which is 0.5% a month:' },
+    { table: {
+      head: ['Deposit', 'Months it earns for', 'Worth at the end'],
+      rows: [
+        ['First', '2', '$200 x 1.005 x 1.005 = **$202.01**'],
+        ['Second', '1', '$200 x 1.005 = **$201.00**'],
+        ['Third', '0', '**$200.00**'],
+        ['**Total**', '', '**$603.01**']
+      ]
+    }},
+    { p: 'Nobody wants to write that sum out for 360 deposits, and they do not have to: adding up a series where each term is ' +
+         'the previous one times `(1 + i)` has a closed form. It gives exactly the $603.01 above, which is the only reason to ' +
+         'trust it:' },
+    { code: 'FV_contributions = C x [ ((1 + i) ** N - 1) / i ]\n\nC = payment per period   i = rate per period (r/n)\nN = total periods (n x t)', lang: 'text', label: 'annuity, deposits at the end of each period' },
+    { p: 'The total for a plan with both a starting balance and monthly deposits is the two formulas added together: the lump ' +
+         'sum grows on its own, and the deposits grow as a series.' },
+    { p: 'There is one input that breaks it. If the rate is zero, the formula divides by zero, even though the answer is ' +
+         'obvious to a human:' },
+    { code: '>>> C, i, N = 200, 0.0, 12\n>>> C * (((1 + i) ** N - 1) / i)\nZeroDivisionError: float division by zero\n\n>>> # the answer a person would give\n>>> C * N\n2400', lang: 'python', label: 'the case your code has to handle' },
+    { check: {
+      q: 'With a rate of zero, twelve deposits of $200 are obviously $2,400. Why does the formula fail, and what do you write ' +
+         'in your function to deal with it?',
+      a: 'The formula divides by `i`, so a rate of zero divides by zero. It is summing a series where each term grows by ' +
+         '`(1 + i)`; when nothing grows, the sum is simply `C x N`. Start the function with `if i == 0: return C * N`, and ' +
+         'your code survives the day someone models a 0% account.'
+    }},
     { tip: '**Rule of 72**: money doubles in roughly `72 / rate%` years. At 8%, about 9 years. It is accurate enough for ' +
            'mental math in a meeting and it impresses people.' },
 
     { h: 'Running the formula backwards: present value' },
-    { p: 'If $10,000 lands in your account in 5 years, what is that promise worth today at a 6% discount rate?' },
+    { p: 'If $10,000 lands in your account in 5 years, what is that promise worth today at a 6% discount rate? This is the ' +
+         'compound interest formula rearranged: instead of growing money forwards, you shrink a future amount back.' },
     { code: 'PV = FV / (1 + r) ** t\n\n10000 / 1.06 ** 5 = $7,472.58', lang: 'text', label: 'discounting' },
     { p: 'This operation (**discounting**) is how bonds, company valuations, lease accounting and insurance reserves are priced. ' +
          'The rate you discount at expresses how risky and how delayed the money is.' },
+    { check: {
+      q: 'You value that same $10,000 promise at $7,472.58 using 6%. Then you learn the payer might not be good for it. ' +
+         'Which number do you change, which way, and what happens to the value?',
+      a: 'You raise the discount rate, because the rate is where risk lives in this formula. Say 12% instead of 6%: the ' +
+         'value falls to about $5,674. A riskier promise is worth less today, and in a valuation that is the whole argument, ' +
+         'expressed as one number.'
+    }},
 
     { h: 'Inflation: the return you actually keep' },
     { p: 'Earning 6% while inflation runs at 4% does not leave you 2% better off in a naive sense, the exact relationship is:' },
@@ -86,6 +147,12 @@ FQ.registerLevel({
     { p: 'Subtracting (6% - 4% = 2%) is a decent approximation at low rates and badly wrong at high ones. Any savings ' +
          'projection that ignores inflation is selling an illusion: a "$1,000,000 retirement" in 40 years at 3% inflation ' +
          'buys about $306,000 of today\'s shopping.' },
+    { check: {
+      q: 'Your calculator tells a member they will have $1,000,000 in 40 years. Inflation has averaged 3%. What do you put ' +
+         'on the screen so the number is honest?',
+      a: 'Both figures, side by side: $1,000,000 in 40 years, which buys about $306,557 of today\'s shopping. One number ' +
+         'without the other is either a fantasy or a scare. The build in this level prints them together for that reason.'
+    }},
 
     { h: 'Floats are fine here: with one rule' },
     { p: 'Level 1 said never store a *balance* as a float. Projections are different: you are modelling the future, ' +
@@ -100,7 +167,7 @@ FQ.registerLevel({
       {
         t: 'Arithmetic and the power operator',
         blocks: [
-          { p: 'Python uses `**` for exponents, not `^`. This is the single most common first-day mistake in financial code.' },
+          { p: 'Python uses `**` for exponents, not `^`. This is the mistake people make most often on their first day of financial code.' },
           { code: 'principal = 1000\nrate = 0.08\nyears = 10\n\nsimple = principal * (1 + rate * years)\ncompound = principal * (1 + rate) ** years\n\nprint(f"Simple:   ${simple:,.2f}")\nprint(f"Compound: ${compound:,.2f}")\nprint(f"Gap:      ${compound - simple:,.2f}")', lang: 'python' },
           { warn: '`^` is **not** a power operator in Python. It is bitwise XOR. With a float rate you get ' +
                   '`TypeError: unsupported operand type(s) for ^`, and with whole numbers it is worse: `2 ^ 10` quietly ' +
@@ -109,7 +176,7 @@ FQ.registerLevel({
         check: 'You printed the simple and compound results and the gap between them.'
       },
       {
-        t: 'Write a reusable future-value function',
+        t: 'Write a reusable future value function',
         blocks: [
           { p: 'Arguments with an `=` are **defaults**: callers may leave them out. Put required arguments first.' },
           { code: 'def future_value(principal, annual_rate, years, compounds_per_year=1):\n    """Future value of a lump sum with periodic compounding."""\n    i = annual_rate / compounds_per_year        # rate per period\n    n = compounds_per_year * years              # number of periods\n    return principal * (1 + i) ** n\n\nprint(future_value(1000, 0.08, 10))            # annual  -> 2158.92\nprint(future_value(1000, 0.08, 10, 12))        # monthly -> 2219.64\nprint(future_value(1000, 0.08, 10, compounds_per_year=365))', lang: 'python' },
@@ -120,18 +187,18 @@ FQ.registerLevel({
       {
         t: 'Add contributions with the annuity formula',
         blocks: [
-          { p: 'Guard the zero-rate case before you divide. This is the kind of edge case that crashes a real calculator ' +
+          { p: 'Guard the case where the rate is zero before you divide. This is the kind of edge case that crashes a real calculator ' +
                'the first time a user types 0.' },
           { code: 'def contributions_value(payment, annual_rate, years, compounds_per_year=12):\n    """Future value of a regular payment made at the end of each period."""\n    i = annual_rate / compounds_per_year\n    n = compounds_per_year * years\n    if i == 0:\n        return payment * n            # no interest: just the deposits\n    return payment * (((1 + i) ** n - 1) / i)\n\nplan = future_value(2000, 0.07, 20, 12) + contributions_value(200, 0.07, 20, 12)\nprint(f"20-year plan: ${plan:,.2f}")', lang: 'python' }
         ],
         check: 'A $2,000 start plus $200/month at 7% for 20 years gives $112,262.81.'
       },
       {
-        t: 'Build a year-by-year table with a loop',
+        t: 'Build a table with a loop, one row per year',
         blocks: [
           { p: 'A single number tells a user nothing. A schedule shows them where the growth comes from. ' +
                '`range(1, years + 1)` counts 1..years inclusive.' },
-          { code: 'def growth_table(principal, rate, years, monthly=0):\n    """Print a year-by-year breakdown."""\n    print(f"{\'Year\':<6}{\'Balance\':>14}{\'Deposited\':>14}{\'Interest\':>14}")\n    for year in range(1, years + 1):\n        balance = (future_value(principal, rate, year, 12)\n                   + contributions_value(monthly, rate, year, 12))\n        deposited = principal + monthly * 12 * year\n        interest = balance - deposited\n        print(f"{year:<6}{balance:>14,.2f}{deposited:>14,.2f}{interest:>14,.2f}")\n\ngrowth_table(2000, 0.07, 10, monthly=200)', lang: 'python' },
+          { code: 'def growth_table(principal, rate, years, monthly=0):\n    """Print one row per year."""\n    print(f"{\'Year\':<6}{\'Balance\':>14}{\'Deposited\':>14}{\'Interest\':>14}")\n    for year in range(1, years + 1):\n        balance = (future_value(principal, rate, year, 12)\n                   + contributions_value(monthly, rate, year, 12))\n        deposited = principal + monthly * 12 * year\n        interest = balance - deposited\n        print(f"{year:<6}{balance:>14,.2f}{deposited:>14,.2f}{interest:>14,.2f}")\n\ngrowth_table(2000, 0.07, 10, monthly=200)', lang: 'python' },
           { p: 'In an f-string, `:<6` left-aligns in 6 characters and `:>14,.2f` right-aligns in 14 with thousands separators. ' +
                'Aligned columns are how you make a plain text table readable.' }
         ],
@@ -365,7 +432,7 @@ FQ.registerLevel({
       'real_value(1_000_000, 0.03, 40) is 306,556.84 (to 2dp)'
     ],
     rubric: [
-      { pts: 30, t: 'Correct math', d: 'All eight functions return the values in the test list, including the zero-rate and unreachable-goal edge cases.' },
+      { pts: 30, t: 'Correct math', d: 'All eight functions return the values in the test list, including a rate of zero and a goal that cannot be reached, edge cases.' },
       { pts: 20, t: 'Readable output', d: 'Aligned table columns, consistent money and percentage formatting, a report a non-programmer could read.' },
       { pts: 20, t: 'Structure', d: 'Small single-purpose functions with docstrings and sensible default arguments; no copy-pasted blocks.' },
       { pts: 15, t: 'Scenarios and explanation', d: 'Three scenarios run, plus your own written explanation of accelerating interest.' },
