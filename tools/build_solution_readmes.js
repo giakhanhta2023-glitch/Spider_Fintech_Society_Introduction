@@ -260,6 +260,29 @@ const NOTES = {
       ['Replay does not match the live model', 'Trust the log and rebuild. Then find the write path that changed the projection without an event.'],
       ['A version 1 event crashes the projection', 'The upcast is missing or runs after the apply. Upcast on read, before anything folds it.']
     ]
+  },
+
+  14: {
+    files: [
+      ['`scorecard/binning.py`', 'woe_table, fit_binning, transform, and the unseen value counter'],
+      ['`scorecard/model.py`', 'fit, evaluate, scale_to_points, build_card'],
+      ['`scorecard/reasons.py`', 'reason codes in words, ranked by points lost'],
+      ['`scorecard/fairness.py`', 'approval rate and bad rate of the approved, by group'],
+      ['`MODEL.md`', 'the document a validator reads before the code']
+    ],
+    run: 'pip install -r requirements.txt && python -m scorecard.build && pytest -q',
+    design: [
+      'Everything is learned on the training half: the bin edges, the WOE maps, the coefficients and the cut off. The test half is read once, at the end, which is the only way the reported Gini means anything.',
+      'Thin bins are merged before fitting. A bin holding ninety of eight thousand applications gives a WOE that will swing at the next refit, and coarse classing exists to trade separation for stability.',
+      'Age and region are dropped whatever their information value. One is protected in most jurisdictions and the other reconstructs it, and the fairness test is on outcomes rather than on which columns were fed in.',
+      'The card is additive by construction, so a reason code is arithmetic: compare each variable against the best achievable bin and rank the gaps. That is what makes an adverse action notice possible at all.',
+      'MODEL.md is a deliverable, not documentation of a deliverable. Definitions, the card, both Ginis, the fairness numbers and the PSI thresholds, because the model has to be defensible when its author has left.'
+    ],
+    mistakes: [
+      ['Gini above 0.9 on an application model', 'Something in the features was not knowable at decision time. Look for a variable that only exists because the account already went bad.'],
+      ['A coefficient with the wrong sign', 'Two correlated variables fighting. Drop one rather than shipping a card that says more income raises risk.'],
+      ['Infinite WOE', 'A bin with no bads or no goods. Merge it with a neighbour rather than adding a constant to hide it.']
+    ]
   }
 };
 

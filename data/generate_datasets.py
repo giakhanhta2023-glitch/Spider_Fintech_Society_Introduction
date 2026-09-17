@@ -213,6 +213,79 @@ def gen_fraud():
 
 
 # ---------------------------------------------------------------------------
+# LEVEL 14: loan applications with a twelve month default outcome
+# ---------------------------------------------------------------------------
+def gen_applications():
+    """8,000 applications, each with the outcome twelve months later.
+
+    The relationships are deliberate and mild: debt to income and prior
+    arrears carry most of the signal, income and employment carry some, and
+    region carries none at all, so the level has an honest example of a
+    variable that looks useful and is not. Nothing here is a real person.
+    """
+    rng = random.Random(SEED + 14)
+    n = 8000
+    purposes = ["debt_consolidation", "home_improvement", "car", "education", "medical", "other"]
+    regions = ["north", "south", "central", "east"]
+    rows = []
+
+    for i in range(n):
+        age = max(21, min(72, int(rng.gauss(38, 11))))
+        employment_years = round(max(0.0, min(30.0, rng.gammavariate(2.0, 2.4))), 1)
+        income = int(max(9_000, min(240_000, rng.lognormvariate(10.85, 0.52))))
+        loan_amount = int(max(1_000, min(60_000, rng.lognormvariate(9.1, 0.65))))
+        term_months = rng.choice([12, 24, 36, 48, 60])
+        existing_debt = int(max(0, rng.lognormvariate(8.6, 1.1)))
+        monthly_debt = existing_debt / 24 + loan_amount / term_months
+        dti = round(min(1.2, monthly_debt / (income / 12)), 4)
+        prior_defaults = rng.choices([0, 1, 2, 3], weights=[84, 11, 4, 1])[0]
+        inquiries_6m = rng.choices([0, 1, 2, 3, 4, 5], weights=[38, 27, 17, 9, 6, 3])[0]
+        purpose = rng.choices(purposes, weights=[30, 18, 20, 12, 8, 12])[0]
+        region = rng.choice(regions)
+
+        # log odds of default: the relationships the scorecard has to find
+        z = (-3.05
+             + 3.4 * dti
+             + 0.85 * prior_defaults
+             + 0.17 * inquiries_6m
+             - 0.045 * employment_years
+             - 0.0000085 * income
+             + (0.42 if purpose == "debt_consolidation" else 0.0)
+             + (0.25 if purpose == "medical" else 0.0)
+             - (0.30 if purpose == "car" else 0.0)
+             + 0.012 * (35 - age))
+        p = 1 / (1 + math.exp(-z))
+        defaulted = 1 if rng.random() < p else 0
+
+        rows.append({
+            "application_id": f"A{200000 + i}",
+            "age": age,
+            "income": income,
+            "employment_years": employment_years,
+            "loan_amount": loan_amount,
+            "term_months": term_months,
+            "existing_debt": existing_debt,
+            "dti": dti,
+            "prior_defaults": prior_defaults,
+            "inquiries_6m": inquiries_6m,
+            "purpose": purpose,
+            "region": region,
+            "defaulted_12m": defaulted,
+        })
+
+    path = OUT / "level-14-applications.csv"
+    fields = ["application_id", "age", "income", "employment_years", "loan_amount",
+              "term_months", "existing_debt", "dti", "prior_defaults", "inquiries_6m",
+              "purpose", "region", "defaulted_12m"]
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=fields)
+        w.writeheader()
+        w.writerows(rows)
+    bad = sum(r["defaulted_12m"] for r in rows)
+    print(f"{path.name}: {len(rows)} rows, {bad} defaults ({bad / len(rows):.2%})")
+
+
+# ---------------------------------------------------------------------------
 # LEVEL 5: offline fallback snapshot of FX rates (so the level works offline)
 # ---------------------------------------------------------------------------
 def gen_fx_snapshot():
@@ -235,5 +308,6 @@ if __name__ == "__main__":
     gen_transactions()
     gen_prices()
     gen_fraud()
+    gen_applications()
     gen_fx_snapshot()
     print("done, all datasets are synthetic")
