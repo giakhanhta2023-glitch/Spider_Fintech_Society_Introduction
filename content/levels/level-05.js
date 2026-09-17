@@ -55,8 +55,27 @@ FQ.registerLevel({
     }},
     { p: 'The rule of thumb: **4xx means you are wrong, 5xx means they are wrong**. Retrying a 400 forever just burns ' +
          'your rate limit; retrying a 503 a few times usually works.' },
+    { check: {
+      q: 'Your job retries every failed call five times with backoff. Overnight it meets a `400` and a `503`, and retries ' +
+         'both the same way. Which one is your code making worse?',
+      a: 'The `400`. The server has told you the request itself is malformed, so the sixth identical request gets the ' +
+         'identical answer: you are spending your rate limit to be told off five extra times, and starving the `503` retries ' +
+         'that might actually have worked. Retry what can change on its own, meaning `5xx` and connection errors. Fix what ' +
+         'cannot, meaning `4xx`, in the code. The exception is `429`, which is a `4xx` that means slow down rather than stop, ' +
+         'and it is the one case where waiting longer is the whole fix.'
+    }},
     { warn: '`requests.get(url)` with no `timeout` can hang **forever** if the server accepts the connection and never answers. ' +
             'Every request in production code has a timeout. No exceptions.' },
+
+    { check: {
+      q: 'A rate feed accepts your connection and then answers nothing at all, for hours. You called `requests.get(url)` ' +
+         'with no timeout. Describe what your app is doing.',
+      a: 'Waiting, and it will wait as long as the socket stays open, because requests has no default timeout. In a notebook ' +
+         'that is one stuck cell. In a web app it is one worker thread gone from the pool, then another on the next request, ' +
+         'until the pool is empty and the site stops answering every user for a reason that has nothing to do with them. ' +
+         '`timeout=10` converts a silent hang into a `requests.Timeout` you can catch, log and fall back from. That is the ' +
+         'whole argument for the rule having no exceptions.'
+    }},
 
     { h: 'Rate limits and backoff' },
     { p: 'Free APIs cap how often you may call them: perhaps 30 requests a minute. Exceed it and you get `429`, sometimes ' +
@@ -74,6 +93,14 @@ FQ.registerLevel({
     ]},
     { p: 'The last part matters more than the code: a rate shown without its age is a lie waiting to happen. ' +
          'Every number you display from an external source should carry where it came from and when.' },
+    { check: {
+      q: 'The feed goes down, your fallback works exactly as designed, nothing crashes, and a member converts $5,000 on the ' +
+         'rate you showed. Your code behaved correctly. What went wrong?',
+      a: 'The screen said nothing about the number being from yesterday, so the member read a stale rate as a live one and ' +
+         'made a real decision on it. Not crashing was the easy half. The half that matters is one line of text next to the ' +
+         'figure: the source and the timestamp, for example "ECB reference rate, 2025-09-01, 19 hours old". A user who sees ' +
+         'that can decide to wait. A user who sees a bare number cannot, and they will be right to blame you.'
+    }},
 
     { h: 'Secrets do not go in code' },
     { p: 'Many APIs need a key. It identifies you and often bills you, so treat it like a password.' },
@@ -94,20 +121,58 @@ FQ.registerLevel({
     { p: 'A rate is always a pair. `EUR/USD = 1.0961` means one **base** unit (EUR) costs 1.0961 of the **quote** currency (USD). ' +
          'Reading it backwards is the single most common FX bug.' },
     { code: '# Given rates quoted against USD:\n#   EUR = 0.9123   (1 USD buys 0.9123 EUR)\n#   GBP = 0.7684\n\nusd_to_eur = 250 * 0.9123           # 228.08 EUR\neur_to_usd = 250 / 0.9123           # 274.03 USD   <- divide to go back\n\n# cross rate EUR -> GBP, via the common base\neur_to_gbp = 0.7684 / 0.9123        # 0.8423', lang: 'python' },
+    { check: {
+      q: 'USD is the base and 1 USD buys 0.9123 EUR. A member holds 250 EUR and asks what it is worth in dollars. Work it ' +
+         'out, and say how you would catch yourself getting it backwards.',
+      a: '250 / 0.9123 = $274.03. You divide because the rate is quoted per dollar and you are going the other way. The check ' +
+         'needs no formula at all: a euro is worth more than a dollar here, so the dollar figure has to be the bigger one. ' +
+         'Multiplying instead gives about $228.08, roughly $46 short, and it looks perfectly reasonable on screen, which is ' +
+         'exactly why this bug reaches production. Every conversion gets the does this number point the right way glance ' +
+         'before it ships.'
+    }},
     { p: 'Real trading quotes come in pairs: the **bid** (what a dealer pays you) and the **ask** (what they charge you). ' +
          'The gap is the **spread**, and it is how the dealer earns. A mid-market rate (the average) is what news sites show ' +
          'and is never what you actually get. Consumer apps quoting "the real exchange rate" mean mid-market plus a stated fee.' },
     { tip: 'Sanity check every conversion: if 1 USD buys 25,480 VND, then $10 should be about 254,800 VND. If your ' +
            'answer is 0.0004, you divided when you should have multiplied.' },
+    { check: {
+      q: 'You hold only USD quotes: EUR 0.9123 and GBP 0.7684. Convert 1,000 EUR to GBP two ways, through dollars and ' +
+         'through the cross rate, and account for any difference.',
+      a: 'Through dollars: 1,000 / 0.9123 = $1,096.13, then x 0.7684 = £842.27. Through the cross rate: 0.7684 / 0.9123 = ' +
+         '0.842267 per euro, so 1,000 x 0.842267 = £842.27. The same answer, because the cross rate is that pair of steps ' +
+         'with the dollars cancelled. Round the cross rate to 0.8423 first and you get £842.30, three pence out, and on a ' +
+         'million euro transfer the same rounding is off by £33. Keep full precision through the calculation and round once, ' +
+         'at the end, when you show it.'
+    }},
+
+    { check: {
+      q: 'A news site says EUR/USD is 1.0961. An app advertises "the real exchange rate" and the member ends up with less ' +
+         'than 1.0961 dollars per euro. Who is lying?',
+      a: 'Nobody, necessarily. 1.0961 is the mid-market rate, the midpoint between what dealers pay and what they charge, ' +
+         'and it is a price at which nobody actually transacts. The member bought at the ask, and the gap to the mid is the ' +
+         'dealer\'s income. An honest app quotes mid-market and shows its own fee as a separate line, so the two numbers add ' +
+         'up to what lands in the account. A dishonest one buries the fee inside a worse rate and calls the result "no ' +
+         'fees". What you owe the member is the amount they will receive, not a rate that compares well.'
+    }},
 
     { h: 'No feed covers everything' },
     { p: 'The free FX API in this level publishes the **European Central Bank reference set**: 29 currencies. ' +
          'USD, EUR, GBP, JPY, SGD and INR are in it. **VND is not**, and neither are most African, Middle Eastern, ' +
          'and smaller Asian currencies.' },
     { p: 'This is normal, and it is a design question rather than a bug. When a source does not quote a currency you hold, ' +
-         'you have three options: drop the holding (wrong (it understates the total), value it at zero (worse) it lies ' +
-         'quietly), or **fall back to another source for that one currency and label the row**. The third is what real ' +
-         'systems do, and it is why professional valuation tables carry a source column rather than a single footnote.' },
+         'you have three options. Drop the holding, which understates the total. Value it at zero, which is worse, because ' +
+         'it puts a number on screen that says the money is gone. Or **fall back to another source for that one currency and ' +
+         'label the row**. The third is what real systems do, and it is why professional valuation tables carry a source ' +
+         'column rather than a single footnote.' },
+    { check: {
+      q: 'A member holds 5,000,000 VND and your feed does not quote it. Take each of the three options in turn and say what ' +
+         'the portfolio total reads.',
+      a: 'Drop the holding and the total is short by roughly $196, with nothing on screen to say so. Value it at zero and ' +
+         'the total is short by the same amount, except now a row says the member\'s money is worth nothing, which they will ' +
+         'notice and disbelieve. Take a second source for that one row, label it, and the total is right while the reader ' +
+         'can see where the odd figure came from. The first two options are quiet, and quiet is the property you do not ' +
+         'want: the third is the only one that survives somebody checking your work.'
+    }},
     { money: 'Mixed provenance is the normal state of financial data: a treasury report routinely blends a live feed, ' +
              'a broker file, and a manually entered rate. The discipline is not avoiding the mix. It is labelling it.' }
   ],
