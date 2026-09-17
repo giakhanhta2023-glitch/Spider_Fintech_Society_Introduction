@@ -783,25 +783,40 @@ table.data td.mono { white-space: nowrap; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 0 60px;
+  /* The page gutter has to be restated: this shorthand replaces the one
+     .page sets, and without it the card runs into the edge of a phone. */
+  padding: 40px var(--gutter) 60px;
 }
+/* One card, a hairline border and a short rule under the name. That is the
+   whole decoration: enough that the page looks made rather than unfinished,
+   and little enough that it never competes with the button. */
 .gate-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 28px;
-  max-width: 24rem;
+  gap: 26px;
+  width: 100%;
+  max-width: 23rem;
+  padding: clamp(34px, 5vw, 46px) clamp(26px, 4vw, 38px);
+  border: 1px solid var(--rule-mid);
+  background: var(--ink-raised);
 }
 .gate-mark {
   font-family: var(--display);
-  font-size: 2.8rem;
+  font-size: 2.9rem;
   letter-spacing: var(--track-title);
   line-height: 1;
   margin: 0;
   color: var(--bone);
 }
-.gate-mark i { font-style: normal; color: inherit; }
+.gate-mark i { font-style: italic; color: var(--accent); }
+.gate-rule {
+  width: 54px;
+  margin: -8px 0 0;
+  border: 0;
+  border-top: 1px solid var(--rule-mid);
+}
 .gate .notice { max-width: 24rem; text-align: left; }
 .gate .duo { justify-content: center; }
 /* Flat behind the sign in: the ambient wash belongs to the course, not to the

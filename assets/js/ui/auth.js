@@ -136,6 +136,7 @@ function SignIn({ onSignedIn }) {
     <div class="page gate">
       <div class="gate-stack">
         <h1 class="gate-mark">Fin<i>Quest</i></h1>
+        <hr class="gate-rule" />
 
         <${Companions} size=${72} />
 
