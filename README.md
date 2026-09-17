@@ -69,6 +69,7 @@ model backed tutor.
 | 12 | The payment API other people depend on | A payments service with webhooks | FastAPI, HMAC, state machines |
 | 13 | The log is the truth, the balance is an opinion | An event sourced account service | event sourcing, CQRS, replay |
 | 14 | The scorecard a regulator can read | An application scorecard with reason codes | WOE, information value, model docs |
+| 15 | Fraud detection with a stopwatch running | A fraud decision service under 100ms | serving, feature stores, drift |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.

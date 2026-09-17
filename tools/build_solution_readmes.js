@@ -283,6 +283,29 @@ const NOTES = {
       ['A coefficient with the wrong sign', 'Two correlated variables fighting. Drop one rather than shipping a card that says more income raises risk.'],
       ['Infinite WOE', 'A bin with no bads or no goods. Merge it with a neighbour rather than adding a constant to hide it.']
     ]
+  },
+
+  15: {
+    files: [
+      ['`fraud/features.py`', 'one definition per feature, called by training and by serving'],
+      ['`fraud/train.py`', 'the only file that imports sklearn; writes model.json'],
+      ['`fraud/score.py`', 'dot product and sigmoid, no dependencies'],
+      ['`fraud/policy.py`', 'the three bands, the hard rules, and the queue capacity rule'],
+      ['`bench.py`', 'p50, p95, p99 and max over two thousand decisions']
+    ],
+    run: 'pip install -r requirements.txt && python -m fraud.train && pytest -q && python bench.py',
+    design: [
+      'Training and serving call the same feature function. The equality test between the two vectors is the most valuable test in the suite, because skew produces a model that is fine, data that is fine, and predictions that are quietly wrong.',
+      'The model ships as JSON coefficients with a version. A pickle executes whatever is inside it, cannot be diffed in review, and drags scikit-learn into the request path for about thirty times the scoring cost.',
+      'Velocity is an interface. Tests run over a dictionary with no container, production swaps in Redis with one constructor argument, and the service never knows which it has.',
+      'The policy names review capacity out loud. A threshold that sends more cases to the queue than the team can clear is a threshold that auto approves the backlog, and that decision should be made by a person rather than by a Tuesday.',
+      'Every decision logs the feature vector, the score and the model version, because the question three weeks later is why this transaction was declined, and the honest answer without those three is that nobody knows.'
+    ],
+    mistakes: [
+      ['p50 fast, p99 terrible', 'It is waiting, not computing. Look for a pool, a cache miss falling through to a full scan, or a call without a timeout.'],
+      ['Great offline, useless live', 'Recompute the features offline for transactions already decided live and compare field by field. Skew names itself.'],
+      ['Velocity counts the current transaction', 'The window must end strictly before the event being scored, or the signal inflates in training and vanishes in production.']
+    ]
   }
 };
 
