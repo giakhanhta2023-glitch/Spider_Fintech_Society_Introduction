@@ -129,54 +129,27 @@ function SignIn({ onSignedIn }) {
     document.head.appendChild(tag);
   }, [clientId]);
 
+  /* Four things and nothing else: the name, the two of them, the button. The
+     only additions are states that would otherwise leave a visitor stuck with
+     no idea why nothing happened. */
   return html`
     <div class="page gate">
-      <div class="grid">
-        <div class="col-1-7 stack stack-5">
-          <div>
-            <span class="kicker">Spider Fintech Society <b>/</b> ten levels</span>
-            <h1 class="display display-xl">Learn fintech<br />by building it</h1>
-          </div>
-          <p class="lede">
-            Ten levels, 150 drill questions and nine things to build, with a tutor who knows which
-            level you are on. Sign in to start, and your progress follows you to any device.
-          </p>
-          <div>
-            <${Companions} size=${64} />
-            <p class="mono-s" style=${{ marginTop: '12px' }}>
-              Mou tutors. Bruno keeps her company.
-            </p>
-          </div>
-        </div>
+      <div class="gate-stack">
+        <h1 class="gate-mark">Fin<i>Quest</i></h1>
 
-        <div class="col-9-12">
-          <div class="panel gate-card">
-            <span class="kicker">sign in to continue</span>
-            <h2 class="display display-m" style=${{ marginBottom: '18px' }}>Welcome</h2>
-            <p class="index-sub" style=${{ marginTop: 0 }}>
-              We use your Google account, so there is no password to invent and none for us to keep.
-              We store your name, your email and your progress. Nothing else.
-            </p>
+        <${Companions} size=${96} />
 
-            ${clientId ? html`
-              <div class="gate-google" ref=${slot} />
-              ${busy ? html`<p class="mono-s">signing you in...</p>` : null}` : html`
-              <p class="notice" style=${{ marginTop: '18px' }}>
-                Sign in is not configured yet. Add your Google client id to
-                ${' '}<code>assets/js/config.js</code> and set the matching environment variables
-                on the deployment. The setup is written down in
-                ${' '}<code>docs/accounts-setup.md</code>.
-              </p>`}
+        ${clientId ? html`
+          <div class="gate-google" ref=${slot} />
+          ${busy ? html`<p class="mono-s">signing you in...</p>` : null}` : html`
+          <p class="notice">
+            Sign in is not configured yet. Add your Google client id to
+            ${' '}<code>assets/js/config.js</code> and set the matching environment variables
+            on the deployment. The setup is written down in
+            ${' '}<code>docs/accounts-setup.md</code>.
+          </p>`}
 
-            ${error ? html`<p class="notice" style=${{ marginTop: '18px' }}>${error}</p>` : null}
-
-            <p class="mono-s" style=${{ marginTop: '22px', lineHeight: 1.7 }}>
-              Educational material only. Every dataset in the course is synthetic.
-              ${' '}<a class="link" href="/privacy">privacy</a>
-              ${' '}<a class="link" href="/terms">terms</a>
-            </p>
-          </div>
-        </div>
+        ${error ? html`<p class="notice">${error}</p>` : null}
       </div>
     </div>`;
 }

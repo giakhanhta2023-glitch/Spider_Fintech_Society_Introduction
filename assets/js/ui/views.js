@@ -66,7 +66,7 @@ export function Home({ onAskTutor }) {
           <div style=${{ marginTop: '30px' }}>
             <${Companions} size=${60} />
             <p class="mono-s" style=${{ marginTop: '12px' }}>
-              Mou tutors. Bruno keeps her company.
+              Mou tutors. Khanh keeps her company.
             </p>
           </div>
         </div>

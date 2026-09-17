@@ -1,5 +1,5 @@
 /* =========================================================================
-   Bruno: a 24 by 24 pixel bear who is fond of Mou.
+   Khanh: a 24 by 24 pixel bear who is fond of Mou.
 
    Same technique as mou.js: the sprite is text, one character per pixel, and
    runs of a colour are merged into one rect. He is drawn slightly heavier than
@@ -101,7 +101,7 @@ function rects(rows) {
   return out;
 }
 
-export function Bear({ mood = 'idle', size = 40, title = 'Bruno', bob = false }) {
+export function Bear({ mood = 'idle', size = 40, title = 'Khanh', bob = false }) {
   return html`
     <svg class=${'mou bear' + (bob ? ' is-bobbing' : '')} width=${size} height=${size}
       viewBox=${`0 0 ${W} ${W}`} shape-rendering="crispEdges"

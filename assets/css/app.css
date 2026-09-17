@@ -774,14 +774,37 @@ table.data td.mono { white-space: nowrap; }
 /* ==========================================================================
    THE GATE
    ========================================================================== */
-.gate { padding-top: clamp(60px, 12vh, 140px); padding-bottom: 80px; }
-.gate .grid { row-gap: 44px; align-items: start; }
-.gate-card { border-color: var(--rule-mid); }
+/* The sign in page carries four things: the name, the two of them, the button.
+   With that little on it, a grid would be scaffolding holding up nothing, so it
+   is one quiet column sitting just above centre. */
+.gate {
+  min-height: 84vh;
+  display: flex;
+  align-items: center;
+  padding-top: clamp(40px, 8vh, 90px);
+  padding-bottom: 60px;
+}
+.gate-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(26px, 4vh, 40px);
+  max-width: 34rem;
+}
+.gate-mark {
+  font-family: var(--display);
+  font-size: clamp(3.4rem, 9vw, 5.6rem);
+  letter-spacing: var(--track-display);
+  line-height: 1;
+  margin: 0;
+  color: var(--bone);
+}
+.gate-mark i { font-style: italic; color: var(--accent); }
+.gate .notice { max-width: 34rem; }
 
 /* Google renders its own button in here, to its own branding rules. All we
    control is the space around it. */
 .gate-google {
-  margin-top: 24px;
   min-height: 44px;
   display: flex;
   justify-content: flex-start;

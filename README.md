@@ -86,10 +86,10 @@ What a knowledge section has to do, and the five moves it makes, is written down
 [docs/teaching-guide.md](docs/teaching-guide.md). Level 1 is the worked example; the rest are being
 brought up to it.
 
-## Mou and Bruno
+## Mou and Khanh
 
 Mou is the tutor: a 24 by 24 pixel rabbit who sits behind the **mou** button, or
-<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Bruno is a bear who is fond of Mou
+<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Khanh is a bear who is fond of Mou
 and keeps her company on the front page. Both are drawn as text, one character per pixel, in
 [`assets/js/ui/mou.js`](assets/js/ui/mou.js) and [`bear.js`](assets/js/ui/bear.js), so a mood can be
 edited by eye:
@@ -99,7 +99,7 @@ edited by eye:
 '....owwwwwwwwwwwwwwo....'
 ```
 
-They blink on their own timers and Bruno grins at Mou every few seconds, all of which stops if the
+They blink on their own timers and Khanh grins at Mou every few seconds, all of which stops if the
 reader has asked for reduced motion.
 
 | Tutor mode | Setup | What you get |

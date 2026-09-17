@@ -1,9 +1,9 @@
 /* =========================================================================
-   Mou and Bruno, alive.
+   Mou and Khanh, alive.
 
    Two things make a sprite look alive rather than pasted on: it blinks on its
    own clock, and it reacts to something. So each of them blinks on a randomised
-   timer, and every so often Bruno breaks into a grin, a heart floats up between
+   timer, and every so often Khanh breaks into a grin, a heart floats up between
    them, and Mou beams back. He faces forward the rest of the time: a held stare
    reads as awkward, a brief one reads as fond.
 
@@ -89,8 +89,8 @@ export function Companions({ size = 56, className = '' }) {
   const mouMood = smitten ? 'happy' : mouBlink ? 'rest' : 'idle';
 
   return html`
-    <div class=${'duo ' + className} aria-label="Mou and Bruno">
-      <${Bear} mood=${bearMood} size=${size} bob=${!CALM} title="Bruno" />
+    <div class=${'duo ' + className} aria-label="Mou and Khanh">
+      <${Bear} mood=${bearMood} size=${size} bob=${!CALM} title="Khanh" />
       <span class=${'duo-heart' + (smitten ? ' is-showing' : '')} aria-hidden="true">
         <${PixelHeart} size=${Math.round(size * 0.3)} />
       </span>
