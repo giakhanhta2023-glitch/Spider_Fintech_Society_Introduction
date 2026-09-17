@@ -37,17 +37,41 @@ FQ.registerLevel({
         ['$5,000 card debt', '24.0%', '2 yrs', '$264.36', '$1,344.53']
       ]
     }},
+    { check: {
+      q: 'The car loan is $20,000 at 7% for five years, and 60 payments of $396.02 come to $23,761.20. A member expects the ' +
+         'interest to be 7% of $20,000 for five years, which is $7,000. It is $3,761. Where did the other half go?',
+      a: 'It was never owed. You hold the full $20,000 for one month only. After the first payment you owe about $19,720, ' +
+         'and by the final year you owe a few hundred dollars, so the interest each month is charged on a balance that is ' +
+         'falling the whole time. Average roughly half the loan over the term and you land near half the naive figure, which ' +
+         'is what happened here. The same reasoning tells you why an interest only loan costs so much more: nothing shrinks.'
+    }},
     { money: 'On that mortgage the borrower repays $511,010 for a $250,000 house. The interest is not a rounding detail. ' +
              'It is the second house. Showing this clearly is the single most useful feature a lending product can ship.' },
 
     { h: 'Why the first payment barely dents the debt' },
     { p: 'On the $250,000 mortgage the first payment of $1,419.47 splits like this:' },
     { code: 'interest  = 250,000 x (0.055 / 12) = $1,145.83\nprincipal = 1,419.47 - 1,145.83    =   $273.64', lang: 'text', label: 'month 1' },
+    { check: {
+      q: 'Work out the month 2 split without building a schedule, then say what it tells you about month 3.',
+      a: 'The balance is now 250,000.00 - 273.64 = $249,726.36. Interest is 249,726.36 x 0.055 / 12 = $1,144.58, so principal ' +
+         'is 1,419.47 - 1,144.58 = $274.89: $1.25 more than last month. Month 3 will move a little more than that, because ' +
+         'the balance fell a little further. That widening step is the entire mechanism of amortization, and it is why the ' +
+         'crossover happens two thirds of the way in rather than halfway.'
+    }},
     { p: 'Only **19%** of the first payment reduces the debt. By month 210 the split has crossed over and most of the payment ' +
          'is principal. This is not a trick by the bank (it falls out of charging interest on the outstanding balance) ' +
          'but borrowers are consistently shocked by it, which makes it worth showing on screen.' },
     { warn: 'Recomputing interest on the *original* amount each month instead of the *current balance* is the most common ' +
             'bug in a first amortization schedule. Your final balance will not land on zero, which is how you catch it.' },
+
+    { check: {
+      q: 'A schedule charges interest on the original $250,000 every month instead of the current balance. The payment is ' +
+         'right and the term is right, so nothing looks wrong. How does the bug announce itself?',
+      a: 'The closing balance. Interest is stuck at $1,145.83, so principal is stuck at $273.64, and 360 x 273.64 = ' +
+         '$98,510.40. After thirty years of paying on time the borrower would still owe $151,489.60. The schedule ends ' +
+         'nowhere near zero, which is why the last line of your build is an assertion that the final balance is exactly ' +
+         'zero: it is the one check that catches most of the ways this can go wrong.'
+    }},
 
     { h: 'Interest rate vs APR' },
     { p: 'The **interest rate** prices the borrowed money. The **APR** is a legally-defined disclosure that also folds in ' +
@@ -56,6 +80,15 @@ FQ.registerLevel({
     { code: 'Rate stated:  7.00%\nCash received: $19,600  (after the $400 fee)\nPayment:       $396.02 x 60 months\n\nTrue APR:      7.85%   <- the rate that makes the payments worth $19,600 today', lang: 'text', label: 'fees change the real cost' },
     { p: 'There is no closed-form solution for that APR: you find it by **searching**: try a rate, compute the present value ' +
          'of the payments, and adjust. Halving the search range each time (bisection) converges in a handful of steps.' },
+
+    { check: {
+      q: 'Two lenders quote 7% on $20,000 over five years. The payment is $396.02 either way, but one deducts a $400 ' +
+         'origination fee from the cash it hands over. Which is cheaper, and which number says so?',
+      a: 'The one without the fee, and the number is the APR. The borrower with the fee repays the same $23,761.20 having ' +
+         'received $19,600, so the rate that makes those payments worth $19,600 today is 7.85%, not 7.00%. The stated rate ' +
+         'cannot show the difference, because it is identical in both offers. That gap is exactly what APR disclosure rules ' +
+         'exist to close, and it is why a loan comparison screen that shows rate rather than APR is not a comparison.'
+    }},
 
     { h: 'Overpayment: the highest-return move most borrowers never make' },
     { p: 'An extra payment goes **entirely to principal**. Every dollar of principal removed also removes all the future ' +
@@ -66,12 +99,20 @@ FQ.registerLevel({
         ['Monthly payment', '$1,419.47', '$1,619.47'],
         ['Months to clear', '360', '**269**'],
         ['Total interest', '$261,010', '$185,394'],
-        ['Interest saved', ': ', '**$75,616**']
+        ['Interest saved', '', '**$75,616**']
       ]
     }},
     { p: 'An extra $200 a month ($54,000 of deposits over 22 years) removes about $75,616 of interest and ends the loan ' +
          'seven and a half years early. Comparing that against an investment returning the same rate is a genuinely ' +
          'useful thing for a product to do.' },
+    { check: {
+      q: 'The extra deposits add up to $53,800, yet the interest bill falls by $75,616. Explain how paying in $53,800 takes ' +
+         'out $75,616.',
+      a: 'Because a dollar of principal repaid early takes every future month of interest on that dollar with it. The $200 ' +
+         'paid in month one comes off the balance and carries 359 months of its own interest away with it. Then the loan ' +
+         'finishes 91 months early, so 91 payments of $1,419.47, another $129,171, are never made at all. The deposits are ' +
+         'small and early; what they cancel is large and spread over decades.'
+    }},
     { tip: 'Not all lenders treat overpayments the same way. Some reduce the term (best for the borrower), others reduce ' +
            'the future payment, and some charge an early repayment penalty. Read the contract before writing the feature.' },
 
@@ -87,12 +128,30 @@ FQ.registerLevel({
       ]
     }},
     { code: 'DTI = monthly debt payments / gross monthly income\n      $1,250 / $4,000 = 31.3%     (under ~36% is comfortable)\n\nLTV = loan / asset value\n      $200,000 / $250,000 = 80%   (higher LTV = higher risk = higher rate)', lang: 'text', label: 'the two ratios you will meet everywhere' },
+    { check: {
+      q: 'An applicant grosses $4,000 a month, already pays $1,250 a month on other debt, and wants the $250,000 mortgage at ' +
+         '$1,419.47. Work out the ratio a lender will look at, and say which of the five Cs just decided this.',
+      a: '(1,250.00 + 1,419.47) / 4,000.00 = 66.7% debt to income, against a comfort line around 36%. That is capacity, and ' +
+         'it fails on its own: character, capital, collateral and conditions do not get a vote, because the payments do not ' +
+         'fit in the income whatever else is true. A well built product says this before the application, not after, since ' +
+         'the applicant can act on a number they can see.'
+    }},
     { p: 'A lender\'s price is a risk price. Expected loss is roughly **probability of default x loss given default x exposure**, ' +
          'and the interest rate must cover that expected loss, the cost of funds, operating cost, and profit. When you see a ' +
          '29% APR product, you are usually looking at a population where many borrowers do not repay.' },
     { warn: 'Credit models decide who gets a loan, so they are heavily regulated. Using a variable that proxies for race, ' +
             'gender, or postcode can be illegal discrimination even when the intent is innocent, and "the model said so" ' +
             'is not a defence. Level 8 returns to this with fraud scoring.' },
+
+    { check: {
+      q: 'Your credit model never sees race or gender, and it is measurably more accurate with postcode included. Is it safe ' +
+         'to ship?',
+      a: 'Not on that reasoning alone. Where people live correlates strongly with race in most countries, so postcode can ' +
+         'carry the protected attribute into the model without anyone having to intend it, and the law in the US, the UK and ' +
+         'the EU looks at the outcome rather than the intent. What you owe is measurement: approval and pricing rates ' +
+         'compared across protected groups, a reason you can give for every decline, and a willingness to give up some ' +
+         'accuracy when the test fails. "The model is more accurate this way" is a description of the problem, not a defence.'
+    }},
 
     { h: 'Rounding the last payment' },
     { p: 'Payments are rounded to cents, so 359 identical payments will not clear the balance exactly. Real lenders make the ' +
