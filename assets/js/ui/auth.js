@@ -137,7 +137,7 @@ function SignIn({ onSignedIn }) {
       <div class="gate-stack">
         <h1 class="gate-mark">Fin<i>Quest</i></h1>
 
-        <${Companions} size=${96} />
+        <${Companions} size=${72} />
 
         ${clientId ? html`
           <div class="gate-google" ref=${slot} />
@@ -192,6 +192,14 @@ export function AuthGate({ children }) {
     });
     return () => { cancelled = true; };
   }, []);
+
+  /* The body carries the flag, because the ambient wash is painted on the body
+     and a page cannot switch off something it does not own. */
+  useEffect(() => {
+    const gated = state.status !== 'in';
+    document.body.classList.toggle('is-gate', gated);
+    return () => document.body.classList.remove('is-gate');
+  }, [state.status]);
 
   if (state.status === 'checking') return html`<${Loading} />`;
   if (state.status === 'out') return html`<${SignIn} onSignedIn=${adopt} />`;
