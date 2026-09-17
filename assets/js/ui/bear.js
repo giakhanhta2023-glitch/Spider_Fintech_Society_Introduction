@@ -1,96 +1,86 @@
 /* =========================================================================
-   Khanh: a standing grizzly, 24 pixels wide and 32 tall.
+   Khanh: a black bear sitting down, 24 pixels wide and 26 tall.
 
    Same technique as mou.js, one character per pixel, with two differences.
-   He is a full figure rather than a face, so he needs the height; and the
-   silhouette is outlined on every edge, which is what stops a pixel figure
-   reading as a stack of boxes.
+   He is a whole animal rather than a face, so he needs the extra height; and
+   every edge of the silhouette carries the outline, which is what stops a
+   pixel figure reading as a stack of boxes.
 
-   What makes him a grizzly rather than a bear cub: the shoulder hump is the
-   widest part of him, the head is narrow next to it, the jaw hangs open with
-   the teeth showing, and the arms hang clear of the body with the claws down.
-   Light falls from the upper left, so the hump and the top of the skull carry
-   the lit tone and everything below the ribs is in shadow.
+   A black bear is a problem on a near black page: painted in true black he is
+   a hole in the screen. So he is painted the way illustrators paint them, in
+   dark blues, with a colder blue along the lit edge. The two things that read
+   at this size are the tan muzzle and the light in his eyes, and both are
+   drawn brighter than they would be on paper.
 
-     .  nothing        f  fur           l  lit fur        d  shaded fur
-     o  outline        k  deep shadow   m  muzzle         n  nose
-     e  eye            w  tooth         t  inside the mouth
-     c  claw
+     .  nothing        f  fur           b  fur catching the light
+     o  outline        k  fur in shadow l  the blue rim down his left side
+     m  muzzle         n  nose          p  the sole of a foot
+     e  eye            w  the light in it
+     h  the heart that floats up when he looks at her
    ========================================================================= */
 import { html } from './lib.js';
 
 const W = 24;
-const H = 32;
+const H = 26;
 
 const PALETTE = {
-  k: '#26170C',
-  o: '#3A2312',
-  d: '#633D1E',
-  f: '#88592D',
-  l: '#AD7940',
-  m: '#C6A170',
-  n: '#160E06',
-  e: '#0E0904',
-  w: '#F6ECD8',
-  t: '#70262F',
-  c: '#EEE3CA',
+  o: '#04060A',
+  k: '#0A0E1A',
+  f: '#1A2338',
+  b: '#2B3A5C',
+  l: '#3F5280',
+  m: '#B49C82',
+  p: '#8B7A67',
+  n: '#07090F',
+  e: '#05070C',
+  w: '#DCE4F4',
   h: '#FF6B8A'
 };
 
 const FRAME = [
-  '........llllllll........',  // 0  skull
-  '.....ddollllllllodd.....',  // 1  ears, on the sides of the head
-  '.....offllllllllffo.....',  // 2
-  '.....offllllllllffo.....',  // 3
-  '......kkkkkkkkkkkk......',  // 4  brow ridge
-  '......leelllllleel......',  // 5  eyes under it
-  '......offmnnnnmffo......',  // 6  muzzle and nose
-  '......offmnnnnmffo......',  // 7
-  '......offwtwwtwffo......',  // 8  the jaw opens, upper teeth
-  '.......ofttttttfo.......',  // 9
-  '.......ofttttttfo.......',  // 10
-  '........otttttto........',  // 11
-  '........owtwwtwo........',  // 12 lower teeth
-  '........dmmmmmmd........',  // 13 chin and throat
-  '.....llllffffffllll.....',  // 14 shoulders
-  '...olllllfffffflllllo...',  // 15
-  '.ooflllllfffffflllllfoo.',  // 16 the hump, widest part of him
-  '.offo.ollllffllllo.offo.',  // 17 arms hang clear of the chest
-  '.offo.ollllffllllo.offo.',  // 18
-  '.offo.ollllffllllo.offo.',  // 19
-  '.oddo.offffffffffo.oddo.',  // 20
-  '.oddo.offffffffffo.oddo.',  // 21
-  '.oddo.offffffffffo.oddo.',  // 22
-  '.okko.offffffffffo.okko.',  // 23 forearms in shadow
-  '.okko.oddddddddddo.okko.',  // 24
-  '.ccco.oddddddddddo.occc.',  // 25 claws
-  '......oddddddddddo......',  // 26 hips
-  '.....offfff..fffffo.....',  // 27 legs, planted apart
-  '.....offfff..fffffo.....',  // 28
-  '.....oddddd..dddddo.....',  // 29
-  '.....oddddd..dddddo.....',  // 30
-  '....cccdddd..ddddccc....'   // 31 feet
+  '...oooo..........oooo...',  // 0  ears, round, on the corners
+  '...obbb..........bbbo...',  // 1
+  '...obbboooooooooobbbo...',  // 2
+  '....olfffffffffffflo....',  // 3  head
+  '....olbbffffffffbblo....',  // 4
+  '....olewffffffffwelo....',  // 5  eyes: the glint is most of it
+  '....olfffffffffffflo....',  // 6
+  '....olfffmnnnnmffflo....',  // 7  nose across the top of the muzzle
+  '....olffmmmmmmmmfflo....',  // 8
+  '.....olfmmmnnmmmflo.....',  // 9  mouth
+  '.....olffmmmmmmfflo.....',  // 10
+  '......olfffffffflo......',  // 11 what passes for a neck
+  '...oooffffffffffffooo...',  // 12 shoulders
+  '..obffffffffffffffffbo..',  // 13
+  '.obffffffffffffffffffbo.',  // 14
+  '.okkkffffffffffffffkkko.',  // 15 front legs down the sides
+  'obkkkbffffffffffffbkkkbo',  // 16 widest, sitting
+  'obkkkbffffffffffffbkkkbo',  // 17
+  'obkkkbffffffffffffbkkkbo',  // 18
+  'obkkkbffffffffffffbkkkbo',  // 19
+  'okppkfkkkkkkkkkkkkfkppko',  // 20 soles turned towards you
+  'oppppfkkkkkkkkkkkkfppppo',  // 21
+  'oppppfkkkkkkkkkkkkfppppo',  // 22
+  '.kppkfkkkkkkkkkkkkfkppk.',  // 23
+  '..ooffkkkkkkkkkkkkffoo..',  // 24
+  '....ookkkkkkkkkkkkoo....'   // 25
 ];
 
 const MOODS = {
-  /* Mid roar, which is the pose he stands in. */
+  /* Sitting, looking straight out. */
   idle: {},
 
-  /* Eyes shut: the brow drops onto them, so they merge into the ridge above.
-     One row is all there is at this size, and merging reads as closing. */
+  /* Eyes shut for a moment: the glint goes and the fur closes over it. One
+     row is all there is at this size, and losing the light reads as closing. */
   blink: {
-    5: '......lkkllllllkkl......'
+    5: '....olbbffffffffbblo....'
   },
 
-  /* The one moment he is not roaring. The jaw shuts, the teeth go away and
-     the muzzle settles into a closed mouth line: he is looking at her. */
+  /* The one moment he turns to her: eyes shut, mouth wider. He is a calm
+     animal, so the tell is small on purpose. */
   love: {
-    8: '......offmmmmmmffo......',
-    9: '.......ofmnnnnmfo.......',
-    10: '.......ofmmmmmmfo.......',
-    11: '........offffffo........',
-    12: '........offffffo........',
-    13: '........dffffffd........'
+    5: '....olbbffffffffbblo....',
+    9: '.....olfmmnnnnmmflo.....'
   }
 };
 
@@ -120,9 +110,9 @@ function rects(rows) {
   return out;
 }
 
-/* `size` is his width. He is taller than he is wide, and taller than Mou, so
-   the height follows from the grid rather than from the caller: square pixels
-   on both sprites are what makes them belong to the same world. */
+/* `size` is his width. He is a little taller than he is wide, so the height
+   follows from the grid rather than from the caller: square pixels on both
+   sprites are what makes them belong to the same world. */
 export function Bear({ mood = 'idle', size = 40, title = 'Khanh', bob = false }) {
   return html`
     <svg class=${'mou bear' + (bob ? ' is-bobbing' : '')}
