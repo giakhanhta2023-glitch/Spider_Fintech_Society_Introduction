@@ -156,6 +156,8 @@ function SignIn({ onSignedIn }) {
 
             <p class="mono-s" style=${{ marginTop: '22px', lineHeight: 1.7 }}>
               Educational material only. Every dataset in the course is synthetic.
+              ${' '}<a class="link" href="/privacy">privacy</a>
+              ${' '}<a class="link" href="/terms">terms</a>
             </p>
           </div>
         </div>

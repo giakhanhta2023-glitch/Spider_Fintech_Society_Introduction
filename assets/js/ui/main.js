@@ -153,6 +153,8 @@ function App({ user }) {
               <span class="mono-s">
                 Educational material only. Every dataset is synthetic.
                 Nothing here is financial advice.
+                ${' '}<a class="link" href="/privacy">privacy</a>
+                ${' '}<a class="link" href="/terms">terms</a>
               </span>
             </div>
           </div>
