@@ -37,6 +37,15 @@ FQ.registerLevel({
       ]
     }},
 
+    { check: {
+      q: 'Your notebook has computed the right payment a hundred times. The deployed app shows a stranger a traceback the ' +
+         'first afternoon, because they typed a term of 0 years. Which piece of code was wrong?',
+      a: 'Neither, in the sense that the arithmetic never changed. A term of zero makes n zero, so `(1 + i) ** -n` is 1, the ' +
+         'denominator is 0, and Python raises. In a notebook that input never arrives, because you are the only user and you ' +
+         'know what the function expects. The app is the same function with the audience widened to everyone, and the work ' +
+         'the notebook let you skip is exactly the work that failed: deciding what happens when the input is impossible.'
+    }},
+
     { h: 'Client and server' },
     { p: 'A **client** (the browser) sends a request; a **server** runs your Python and sends back a response. Your code ' +
          'never runs on the user\'s machine, which is why secrets can live on the server and why the server has to cope ' +
@@ -53,12 +62,29 @@ FQ.registerLevel({
     { p: 'This level builds a **web app**, because seeing a stranger use your loan calculator is a better first experience ' +
          'than reading a JSON response. The architecture lesson is identical.' },
 
+    { check: {
+      q: 'A member says the app is slow and asks whether a faster laptop would fix it. Answer them, and say what the answer ' +
+         'implies about where you can keep an API key.',
+      a: 'A faster laptop will not help. Their browser sends a request and draws the page that comes back; every line of ' +
+         'your Python runs on the server, so the delay is in your code, your data sources, or the network in between. What ' +
+         'would help is caching the slow load, making fewer calls, or a closer region. The same fact is why a key read on ' +
+         'the server is safe and a key in browser JavaScript is published: whatever reaches the client belongs to the client.'
+    }},
+
     { h: 'Separate the maths from the buttons' },
     { p: 'The single most important structural decision: **pure functions in one file, interface in another**.' },
     { code: 'finance.py     <- pure functions. No printing, no widgets, no I/O\napp.py         <- Streamlit UI. Imports finance, calls it, displays results\ntest_finance.py <- tests. Imports finance only, needs no browser', lang: 'text', label: 'project layout' },
     { p: 'A **pure function** takes arguments and returns a value, with no side effects. It can be tested in one line, ' +
          'reused in an API tomorrow, and reasoned about without running the app. The moment a calculation contains ' +
          '`st.write()`, it is welded to the interface forever.' },
+    { check: {
+      q: 'Someone adds an `st.write()` inside `monthly_payment` so the working shows on screen. Name two things that ' +
+         'function can no longer do.',
+      a: 'It can no longer be tested without Streamlit running, because importing it drags the UI framework in and calling ' +
+         'it outside a session misbehaves. And it can no longer be called in a loop: build a 360 row schedule and you have ' +
+         'printed 360 times into the page. A third one follows for free: it cannot be reused behind an API tomorrow, which ' +
+         'is usually the next thing anyone asks for. A calculation that writes to a screen has chosen one screen forever.'
+    }},
     { money: 'In regulated fintech this separation is not just tidiness. The calculation engine is the part that gets ' +
              'audited, version-pinned, and tested to death. It must be readable on its own, without a UI framework in the way.' },
 
@@ -79,6 +105,15 @@ FQ.registerLevel({
     { warn: 'Widget constraints (`min_value`, `max_value`) are a convenience, not a security control. Validate in your ' +
             'functions too: the same code may later be called by an API where no widget exists.' },
 
+    { check: {
+      q: 'Your loan amount widget is `st.number_input("Loan", min_value=1000.0, max_value=2000000.0)`. Is the loan amount ' +
+         'validated?',
+      a: 'On that one screen, yes. In your program, no. The rule lives in the widget, so every other caller of ' +
+         '`monthly_payment` has no rule at all: a test, a scheduled job, an API endpoint next month, or the same app after ' +
+         'somebody removes a minimum they did not understand. Put the check in the function, where it raises `ValueError`, ' +
+         'and leave the widget as a convenience that stops most people from having to see the error at all.'
+    }},
+
     { h: 'Dependencies and environments' },
     { p: 'Your app needs specific libraries at specific versions. `requirements.txt` lists them; the deployment platform ' +
          'installs exactly that list. Without it, your app works locally and dies on the server.' },
@@ -86,6 +121,15 @@ FQ.registerLevel({
     { p: 'A **virtual environment** is a private library folder per project, so one project\'s pandas upgrade cannot break ' +
          'another. Create it once and forget about it:' },
     { code: 'python -m venv .venv\n\n# Windows\n.venv\\Scripts\\activate\n# macOS / Linux\nsource .venv/bin/activate\n\npip install -r requirements.txt', lang: 'bash' },
+    { check: {
+      q: 'The app runs locally and the deployment log says `ModuleNotFoundError: No module named pandas`. You definitely ' +
+         'have pandas installed. What is going on, and what does that say about pinning versions?',
+      a: 'Installed on your laptop, where nobody else is running the app. The server built a clean environment and installed ' +
+         'exactly what `requirements.txt` listed, and pandas is not on the list, so it is not there. Local installs are ' +
+         'invisible to the deployment. The same reasoning argues for pinning: `pandas` with no version installs whatever is ' +
+         'newest on build day, so an app that was never edited can break on a Tuesday. `pandas==2.2.2` builds the same ' +
+         'environment in six months as it does today.'
+    }},
     { tip: 'Add `.venv/` to your `.gitignore`. It is hundreds of megabytes of files that anyone can rebuild from ' +
            'requirements.txt in thirty seconds.' },
 
@@ -95,6 +139,16 @@ FQ.registerLevel({
     { code: 'from finance import monthly_payment\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\ndef test_zero_rate():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\ndef test_rejects_negative():\n    try:\n        monthly_payment(-100, 0.05, 10)\n    except ValueError:\n        return\n    raise AssertionError("should have raised")', lang: 'python' },
     { p: 'Run them with `pytest` (or just call each function at the bottom of the file). The habit that matters: ' +
          '**every bug you fix gets a test** so it cannot come back quietly.' },
+
+    { check: {
+      q: '`test_zero_rate` says $12,000 over four years at 0% must be $250.00 a month. Why is that test worth more than the ' +
+         'one at 5.5%?',
+      a: 'Because you can check it without trusting the formula: $12,000 over 48 months with no interest is $250.00, and ' +
+         'anyone can see that. The 5.5% test tells you the code still does what it did, which is worth having, but it was ' +
+         'written by running the code. The zero rate case is also the branch the formula cannot handle, since the ' +
+         'denominator becomes 0, so it is both the easiest test to verify and the most likely thing to be broken. Those two ' +
+         'properties together are what make a test worth writing.'
+    }},
 
     { h: 'Secrets in a deployed app' },
     { p: 'Level 5\'s rule still holds, with one addition: deployment platforms give you a secrets store. Streamlit Cloud ' +
@@ -106,6 +160,14 @@ FQ.registerLevel({
     { p: 'Streamlit runs your entire script again on every interaction. That is a simple and surprising model: move a slider, ' +
          'the whole file runs again. Anything slow (a CSV download, an API call) must be cached or your app will crawl.' },
     { code: '@st.cache_data(ttl=3600)      # remember for an hour\ndef load_prices(url):\n    return pd.read_csv(url, parse_dates=["date"])', lang: 'python' },
+    { check: {
+      q: 'You decorate a function with `@st.cache_data` and, inside it, record the member\'s calculation in a table. The ' +
+         'member runs the same calculation twice. How many rows land in the table?',
+      a: 'One. The second call matches the cached arguments, so Streamlit returns the stored return value without running ' +
+         'the body at all, and the insert never happens. The app looks perfect, because the number on screen is right both ' +
+         'times: the only symptom is a table that is quietly missing rows, which you will discover weeks later when the ' +
+         'counts do not reconcile. Cache the read that fetches the prices, never the write that records what happened.'
+    }},
     { warn: 'Never cache anything that must be fresh per user, and never cache a function that writes to a database. ' +
             'Cache reads, not writes.' }
   ],
