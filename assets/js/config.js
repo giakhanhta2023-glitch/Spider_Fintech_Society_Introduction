@@ -37,7 +37,7 @@ window.FQ_CONFIG = {
      Google, and the server checks every sign in against it. Leave it empty and
      the gate explains how to set it up rather than locking anyone out. */
   auth: {
-    googleClientId: ''          // 1234567890-abc123.apps.googleusercontent.com
+    googleClientId: '180407502818-k48k1hvm3vv1rk3b7hf0gk06sbdd2atq.apps.googleusercontent.com'
   },
 
   /* AI tutor. The built-in offline tutor always works with zero setup.
