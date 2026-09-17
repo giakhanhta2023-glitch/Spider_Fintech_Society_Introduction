@@ -83,8 +83,8 @@ build complete; that unlocks the next one.
 5. **Compare**: read the solution key in [`solutions/`](solutions/) *after* you have written yours.
 
 What a knowledge section has to do, and the five moves it makes, is written down in
-[docs/teaching-guide.md](docs/teaching-guide.md). Level 1 is the worked example; the rest are being
-brought up to it.
+[docs/teaching-guide.md](docs/teaching-guide.md). All ten levels are written to it: 76 **your turn**
+questions across the course, each one worked on the same figures the level teaches.
 
 ## Mou and Khanh
 

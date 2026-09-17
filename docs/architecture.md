@@ -109,18 +109,25 @@ its retrieval can be tested from a console without rendering anything.
 
 ## The tutor's two modes
 
-`tutor-engine.js` builds an index over every knowledge section, glossary entry, FAQ, tutorial step
-and project brief in the course. A question is tokenised, scored against that index (title matches
-weigh heaviest, the learner's current level is boosted, later levels are penalised so answers do not
-spoil them), and the best section is summarised back with a link.
+`tutor-engine.js` builds an index over every knowledge section, understanding check, glossary entry,
+FAQ, tutorial step and project brief in the course. A question is tokenised, scored against that
+index (title matches weigh heaviest, the learner's current level is boosted, later levels are
+penalised so answers do not spoil them), and the best section is summarised back with a link.
+
+The checks are indexed one per block and ranked just under the FAQ, because a check is already a
+learner's question with a full answer written under it. When one wins, it is rendered the way it
+reads on the page: the scenario quoted, the answer below it.
 
 Specific intents are handled before retrieval: greetings, "where do I start", Python error names,
 requests for the whole solution (declined, with the reason), and `hint`, which looks up the
 learner's first unticked requirement and points at the tutorial step covering it.
 
-If an endpoint or API key is configured, the question goes to Claude instead, with the current
-level's material in the system prompt. Any failure (network, timeout, bad key) falls back to the
-offline path, so the tutor cannot leave a learner stuck.
+If an endpoint or API key is configured, the question goes to Claude instead. The system prompt
+carries the current level's material and, beneath it, the passages the same retrieval found for this
+question, capped at 2,400 characters and labelled as the verified figures: a tutor that answers
+"around $1,400 a month" where the page says $1,419.47 teaches a learner to trust neither. Any
+failure (network, timeout, bad key, no credit) falls back to the offline path, so the tutor cannot
+leave a learner stuck.
 
 ## Progress model
 
