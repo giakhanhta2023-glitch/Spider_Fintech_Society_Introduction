@@ -49,7 +49,7 @@ export default async function handler(req, res) {
                    then p.state->'levels'
                    else '{}'::jsonb end
             ) as lv(key, value)
-            where lv.key ~ '^([1-9]|10)$'
+            where lv.key ~ '^[1-9][0-9]?$'
               and lv.value->'quizPassed' = 'true'::jsonb
               and lv.value->'projectDone' = 'true'::jsonb
           ) as cleared,

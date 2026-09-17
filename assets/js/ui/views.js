@@ -99,7 +99,7 @@ export function Home({ onAskTutor }) {
 
       <!-- The numbers, set as a ruled table rather than four glowing cards. -->
       <div class="datastrip">
-        <div><span class="v">${cleared}/10</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${cleared}/${FQ.levels.length}</span><span class="k">levels cleared</span></div>
         <div><span class="v">${questions}</span><span class="k">drill questions</span></div>
         <div><span class="v">${projects}</span><span class="k">things to build</span></div>
         <div><span class="v">${store.xp().toLocaleString()}</span><span class="k">experience</span></div>
@@ -107,7 +107,7 @@ export function Home({ onAskTutor }) {
 
       <!-- Contents page. -->
       <section class="section">
-        <${SectionHead} title="The ten levels"
+        <${SectionHead} title=${`The ${FQ.levels.length} levels`}
           note="pass the drill, ship the build, the next level opens" />
         <div class="index">
           ${FQ.levels.map((lv) => html`<${IndexRow} key=${lv.id} level=${lv} />`)}
@@ -224,8 +224,8 @@ export function Dossier() {
 
       <div class="datastrip">
         <div><span class="v">${all.xp.toLocaleString()}</span><span class="k">experience</span></div>
-        <div><span class="v">${cleared}/10</span><span class="k">levels cleared</span></div>
-        <div><span class="v">${quizzes}/10</span><span class="k">drills passed</span></div>
+        <div><span class="v">${cleared}/${FQ.levels.length}</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${quizzes}/${FQ.levels.length}</span><span class="k">drills passed</span></div>
         <div><span class="v">${answered}/${totalQ}</span><span class="k">best answers</span></div>
       </div>
 
@@ -336,7 +336,7 @@ export function Ranking() {
             <span class="k">rank</span>
           </div>
           <div>
-            <span class="v">${state.you ? state.you.cleared : 0}/10</span>
+            <span class="v">${state.you ? state.you.cleared : 0}/${FQ.levels.length}</span>
             <span class="k">your levels</span>
           </div>
           <div>
@@ -365,7 +365,7 @@ export function Ranking() {
                       ${row.you ? html`${' '}<${Tag} variant="accent">you<//>` : null}
                     </td>
                     <td class="col-wide"><span class="mono-s">${rankOf(row.cleared)}</span></td>
-                    <td><span class="figure">${row.cleared}/10</span></td>
+                    <td><span class="figure">${row.cleared}/${FQ.levels.length}</span></td>
                     <td><span class="figure">${row.xp.toLocaleString()}</span></td>
                     <td class="col-wide"><span class="mono-s">${row.active || 'not yet'}</span></td>
                   </tr>`)}

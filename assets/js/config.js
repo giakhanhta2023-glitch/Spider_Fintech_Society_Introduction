@@ -26,10 +26,15 @@ window.FQ_CONFIG = {
   },
 
   /* Rank ladder: index = number of levels cleared */
+  /* One title per level cleared, so index 0 is where everybody starts and the
+     last entry is the whole course. Add a level, add a title. */
   ranks: [
     'intern', 'junior analyst', 'analyst', 'data analyst', 'quant apprentice',
-    'credit engineer', 'risk quant', 'fraud engineer', 'platform engineer',
-    'lead engineer', 'chief fintech officer'
+    'credit analyst', 'risk analyst', 'fraud analyst', 'backend engineer',
+    'fintech engineer', 'senior engineer', 'ledger engineer',
+    'payments engineer', 'platform engineer', 'credit risk modeller',
+    'fraud lead', 'quant developer', 'head of risk', 'principal engineer',
+    'head of engineering', 'chief fintech officer'
   ],
 
   /* Accounts. The client id identifies this site to Google and is meant to be

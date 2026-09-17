@@ -17,15 +17,25 @@
       test: function (s) { return anyLevel(s, function (l) { return l.projectDone; }, 2); } },
     { id: 'perfect', ico: '🎯', name: 'Flawless', hint: 'Score 15 of 15 on a drill',
       test: function (s) { return anyLevel(s, function (l) { return l.quizBest === 15; }, 1); } },
-    { id: 'halfway', ico: '⚡', name: 'Halfway', hint: 'Clear 5 levels',
-      test: function (s) { return clearedCount(s) >= 5; } },
-    { id: 'scholar', ico: '📚', name: 'Scholar', hint: 'Pass all 10 drills',
-      test: function (s) { return countWhere(s, function (l) { return l.quizPassed; }) >= 10; } },
-    { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Finish the setup and all 9 builds',
-      test: function (s) { return countWhere(s, function (l) { return l.projectDone; }) >= 10; } },
-    { id: 'cfo', ico: '👑', name: 'Chief fintech officer', hint: 'Clear all 10 levels',
-      test: function (s) { return clearedCount(s) >= 10; } }
+    { id: 'halfway', ico: '⚡', name: 'Halfway', hint: 'Clear half the course',
+      test: function (s) { return clearedCount(s) >= Math.ceil(total() / 2); } },
+    { id: 'scholar', ico: '📚', name: 'Scholar', hint: 'Pass every drill',
+      test: function (s) { return countWhere(s, function (l) { return l.quizPassed; }) >= total(); } },
+    { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Finish every build',
+      test: function (s) { return countWhere(s, function (l) { return l.projectDone; }) >= total(); } },
+    { id: 'cfo', ico: '👑', name: 'Chief fintech officer', hint: 'Clear the whole course',
+      test: function (s) { return clearedCount(s) >= total(); } }
   ];
+
+  /* How many levels there are is a question for the curriculum, not for this
+     file: register an eleventh level and every count here follows it. */
+  function total() {
+    return (w.FQ && w.FQ.levels && w.FQ.levels.length) || 0;
+  }
+
+  function ids() {
+    return ((w.FQ && w.FQ.levels) || []).map(function (l) { return l.id; });
+  }
 
   function blank() {
     return { xp: 0, levels: {}, badges: [], started: Date.now(), tutorAsked: 0 };
@@ -73,19 +83,18 @@
 
   function clearedCount(s) {
     var n = 0;
-    for (var i = 1; i <= 10; i++) if (cleared(i, s)) n++;
+    ids().forEach(function (i) { if (cleared(i, s)) n++; });
     return n;
   }
 
   function countWhere(s, fn) {
     var n = 0;
-    for (var i = 1; i <= 10; i++) if (fn(lvl(i, s))) n++;
+    ids().forEach(function (i) { if (fn(lvl(i, s))) n++; });
     return n;
   }
 
   function anyLevel(s, fn, from) {
-    for (var i = from || 1; i <= 10; i++) if (fn(lvl(i, s))) return true;
-    return false;
+    return ids().some(function (i) { return i >= (from || 1) && fn(lvl(i, s)); });
   }
 
   function checkBadges() {
@@ -154,11 +163,11 @@
 
     /* first level that is unlocked but not cleared */
     currentLevel: function () {
-      for (var i = 1; i <= 10; i++) {
-        if (store.isUnlocked(i) && !cleared(i)) return i;
-      }
-      return 10;
+      var open = ids().filter(function (i) { return store.isUnlocked(i) && !cleared(i); });
+      return open.length ? open[0] : (ids()[ids().length - 1] || 1);
     },
+
+    total: total,
 
     rank: function () {
       var n = clearedCount(state);
