@@ -96,7 +96,7 @@ function Learn({ level, onAskTutor }) {
       </div>
 
       <aside class="col-9-12">
-        <div style=${{ position: 'sticky', top: '92px' }}>
+        <div class="rail">
           <${SectionHead} title="Terms" note=${`${level.glossary.length}`} />
           <dl class="deflist" style=${{ borderTop: 0 }}>
             ${level.glossary.map((g, i) => html`

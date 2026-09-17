@@ -217,6 +217,42 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   .medal { grid-column: span 12 !important; }
 }
 
+/* The terms rail beside a lesson.
+   Sticky, so the words stay next to the paragraph that uses them. Capped to
+   the window with its own scroll, because a sticky element taller than the
+   screen just hangs off the bottom: it never moves, and the last terms in a
+   long list cannot be reached at all. */
+.rail {
+  position: sticky;
+  top: 92px;
+  max-height: calc(100vh - 92px - 28px);
+  overflow-y: auto;
+  /* Chaining left on purpose: reach the last term with the pointer over the
+     rail and the page carries on scrolling, rather than stopping dead. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-mid) transparent;
+  /* Room for the scrollbar, taken back off the margin so the column edge does
+     not move when the list is short enough not to need one. */
+  padding-right: 14px;
+  margin-right: -14px;
+}
+.rail::-webkit-scrollbar { width: 8px; }
+.rail::-webkit-scrollbar-track { background: transparent; }
+.rail::-webkit-scrollbar-thumb { background: var(--rule-mid); }
+.rail::-webkit-scrollbar-thumb:hover { background: var(--graphite); }
+
+@media (max-width: 900px) {
+  /* Stacked under the lesson, so it is an ordinary block again. A scrolling
+     box inside a scrolling page is a trap on a phone. */
+  .rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    margin-right: 0;
+  }
+}
+
 /* ==========================================================================
    MASTHEAD
    ========================================================================== */
