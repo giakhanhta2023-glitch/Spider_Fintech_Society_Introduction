@@ -237,6 +237,29 @@ const NOTES = {
       ['Insufficient funds returns 500', 'It is 422 with a code. 500 tells a well behaved client to retry forever against an account that will never have the money.'],
       ['The second identical request creates a second transfer', 'The key is being read after the write, or not at all. Look it up before touching the ledger.']
     ]
+  },
+
+  13: {
+    files: [
+      ['`schema.sql`', 'events, snapshots, balances, and the revoked permissions'],
+      ['`es/log.py`', 'append with an expected sequence, read, ConcurrencyError'],
+      ['`es/projections.py`', 'apply and project, pure and testable without a database'],
+      ['`es/commands.py`', 'the handlers that validate, append, and re-decide on a collision'],
+      ['`tests/test_replay.py`', 'the rebuilt read model against the live one']
+    ],
+    run: 'docker run --name fq-es -e POSTGRES_PASSWORD=es -e POSTGRES_DB=es -p 5432:5432 -d postgres:16 && pip install -r requirements.txt && pytest -q',
+    design: [
+      '`append` does not validate anything. Events are facts, so the only thing that can refuse them is the command handler that decides whether the fact should happen, and keeping the two apart is what lets a reader trust the log.',
+      'Concurrency is the unique constraint on (stream, seq). A collision sends the handler back to the top to read and decide again, never straight back to the append, because the second version would be a decision made against a state that no longer exists.',
+      '`apply` and `project` take plain dictionaries and return plain dictionaries. Most of the test suite needs no database at all, which is the practical benefit of a pure fold.',
+      'Old event versions are upcast on read. Nothing rewrites a stored event, because the point of the log is being able to prove what the system was told at the time.',
+      'The snapshot test deletes every snapshot and asserts no answer changed. A snapshot that is load bearing is a stored state that can drift, which is the thing this design exists to avoid.'
+    ],
+    mistakes: [
+      ['The retry loop double spends', 'It is retrying the append rather than the decision. Go back to reading the stream.'],
+      ['Replay does not match the live model', 'Trust the log and rebuild. Then find the write path that changed the projection without an event.'],
+      ['A version 1 event crashes the projection', 'The upcast is missing or runs after the apply. Upcast on read, before anything folds it.']
+    ]
   }
 };
 
