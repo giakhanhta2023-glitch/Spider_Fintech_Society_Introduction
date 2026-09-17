@@ -22,3 +22,6 @@ fx_cache.json
 .pytest_cache/
 dev-stub.html
 .neon
+
+.vercel
+.env*

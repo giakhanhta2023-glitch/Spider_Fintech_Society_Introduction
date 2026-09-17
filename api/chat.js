@@ -12,6 +12,8 @@
  *
  * Environment variables
  *   ANTHROPIC_API_KEY   required: https://console.anthropic.com/settings/keys
+ *   ANTHROPIC_WORKSPACE_ID  only needed when that key is an organization key
+ *                       rather than one created inside a workspace
  *   FINQUEST_MODEL      optional (defaults to claude-opus-5
  *   FINQUEST_EFFORT     optional) low | medium | high   (default: low)
  *   FINQUEST_MAX_TOKENS optional: default 2000. Thinking is on by default on
@@ -136,7 +138,13 @@ export default async function handler(req, res) {
   const context = typeof body.system === 'string' ? body.system.slice(0, MAX_CONTEXT_CHARS) : '';
   const system = context ? `${PREAMBLE}\n\n--- COURSE CONTEXT ---\n${context}`: PREAMBLE;
 
-  const client = new Anthropic();
+  /* An organization API key that is not scoped to a workspace is rejected with
+     a 400 unless the request names the workspace. Set ANTHROPIC_WORKSPACE_ID,
+     or use a key created inside a workspace, in which case this is unnecessary. */
+  const workspace = process.env.ANTHROPIC_WORKSPACE_ID;
+  const client = new Anthropic(
+    workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {}
+  );
 
   const request = {
     model: MODEL,                       // server-chosen: callers cannot pick the model

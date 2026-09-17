@@ -67,6 +67,24 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 Redeploy after adding them. Environment variables are read at request time, but
 a deployment made before they existed will not have them.
 
+## If the tutor answers offline on a deployment that has a key
+
+Check `/api/health` first: `ANTHROPIC_API_KEY` shows there. If it is present and
+Mou still falls back, the key may be an organization key rather than one created
+inside a workspace. The API rejects those with a 400 that says so:
+
+> This API key is not scoped to a workspace, so this request must include the
+> anthropic-workspace-id header.
+
+Two ways out, either is fine:
+
+- create a new key inside a workspace in the Console and replace
+  `ANTHROPIC_API_KEY`, or
+- set `ANTHROPIC_WORKSPACE_ID` to the workspace id and keep the key you have.
+
+The reason never reaches the browser on purpose, so read it in the function log:
+`vercel logs <deployment-url>`.
+
 ## How it fits together
 
 ```
