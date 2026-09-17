@@ -214,6 +214,29 @@ const NOTES = {
       ['The concurrency test passes without the lock', 'The threads are not overlapping. Sleep between reading the balance and writing, and give each thread its own connection.'],
       ['`current transaction is aborted`', 'An earlier statement in the same transaction failed. Use `conn.transaction()` blocks so the rollback happens for you.']
     ]
+  },
+
+  12: {
+    files: [
+      ['`main.py`', 'the app, the routes and the request id middleware'],
+      ['`api/idempotency.py`', 'the key store, the body fingerprint, and the three cases'],
+      ['`api/state.py`', 'the transition table and the one function that moves a transfer'],
+      ['`api/webhooks.py`', 'sign, deliver with backoff, dead letter, verify'],
+      ['`tests/`', 'every status code, a tampered webhook and a replayed one']
+    ],
+    run: 'pip install -r requirements.txt && pytest -q && fastapi dev main.py',
+    design: [
+      'The idempotency store keeps the key, a sha256 of the request body and the response that was sent. Without the fingerprint a key reused by mistake looks exactly like a retry, and the client believes forty payments went through when one did.',
+      'Legal transitions live in one dictionary and one function. Every write path goes through it, so an illegal transition is a 409 rather than a second refund that still balances.',
+      'Errors are a code, a message and a request id. The code is what a client branches on, the message is for a person, and the id is what a partner quotes when they report something.',
+      'Webhook signatures cover a timestamp and the raw bytes. Verification reads the body before anything parses it, refuses a timestamp older than five minutes, and compares with `hmac.compare_digest`.',
+      'Delivery is at least once by design: retry with backoff, dead letter after the last attempt, and document that the receiver must be idempotent on the event id.'
+    ],
+    mistakes: [
+      ['The signature verifies in tests and fails in production', 'You are verifying re-serialised JSON. Read the raw body once, verify those bytes, parse afterwards.'],
+      ['Insufficient funds returns 500', 'It is 422 with a code. 500 tells a well behaved client to retry forever against an account that will never have the money.'],
+      ['The second identical request creates a second transfer', 'The key is being read after the write, or not at all. Look it up before touching the ledger.']
+    ]
   }
 };
 

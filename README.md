@@ -66,6 +66,7 @@ model backed tutor.
 | 9 | Shipping a fintech service | A loan advisor anyone can open | Streamlit, pytest, deployment |
 | 10 | Compliance, architecture and the capstone | NeoBank analytics platform | packages, reconciliation |
 | 11 | The ledger that survives two writers | A ledger service on Postgres | SQL, transactions, row locks |
+| 12 | The payment API other people depend on | A payments service with webhooks | FastAPI, HMAC, state machines |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.
