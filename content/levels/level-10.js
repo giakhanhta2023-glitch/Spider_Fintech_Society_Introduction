@@ -38,6 +38,16 @@ FQ.registerLevel({
          'explainable decisions are architectural choices made early. Retrofitting them is close to impossible, which ' +
          'is why they belong in your capstone from the first commit.' },
 
+    { check: {
+      q: 'Your project keeps a balance column it updates on each payment, and one KYC status per customer that it ' +
+         'overwrites. Someone asks what the balance was on 3 March and who approved that verification. What can you tell ' +
+         'them?',
+      a: 'Nothing, and no amount of careful work will recover it. Both tables hold only the present, so every earlier state ' +
+         'was written over the moment it changed. An append only entry log answers the first question by summing entries up ' +
+         'to a date, and a status table with one row per change, each stamped with who and when, answers the second. That is ' +
+         'why these go in at the first commit: history you never stored cannot be migrated, only invented.'
+    }},
+
     { h: 'PII: the data that changes your obligations' },
     { p: '**Personally Identifiable Information** is anything that identifies a person: name, address, national ID, ' +
          'card number, and (importantly) combinations that identify someone together, like a postcode plus a birth date.' },
@@ -48,14 +58,42 @@ FQ.registerLevel({
       '**Expire**: define how long you keep records, and actually delete them.',
       '**Log access**: in a regulated system, reading data is an event worth recording too.'
     ]},
+    { check: {
+      q: 'A teammate wants to store the full card number so the profile page can show it. Talk them out of it, or agree ' +
+         'with them, using the five rules above.',
+      a: 'Minimise decides it. The page shows `**** 4471`, so what it needs is the last four digits, and storing sixteen to ' +
+         'display four is collecting data you have no use for. The cost is real: a stored full card number, the PAN, puts ' +
+         'the whole system in scope for PCI DSS, with the audits, key management and breach exposure that follow, for a ' +
+         'feature nobody asked for. The safest field is still the one you never stored.'
+    }},
     { warn: 'Never commit real personal data to a repository, even privately, even briefly. Every dataset in this course ' +
             'is synthetic for exactly this reason, and your capstone must be too. If you want realistic data, generate it.' },
+
+    { check: {
+      q: 'You export a dataset for a coursework partner, stripping names, emails and account numbers, and leaving postcode, ' +
+         'date of birth and gender. Is that export anonymous?',
+      a: 'No. Those three fields together identify a large share of any population, which is the finding that made ' +
+         'reidentification research famous, and a partner who holds an electoral roll or a marketing list can put the names ' +
+         'back. Identifiability is a property of your file plus everything else that exists, so removing the obvious columns ' +
+         'is not the test. Either aggregate, coarsen the fields (year of birth, first part of the postcode), or generate ' +
+         'synthetic data, which is what this course does and what your capstone should do.'
+    }},
 
     { h: 'Open banking, in one paragraph' },
     { p: 'Regulation in the UK, EU, and a growing list of countries requires banks to expose customer data through APIs ' +
          '**when the customer consents**. That is what lets a budgeting app read your bank transactions without asking for ' +
          'your password. The pattern that matters: **consent is explicit, scoped, time limited, and revocable**. ' +
          'If your product reads someone else\'s data, that is the standard you design to.' },
+
+    { check: {
+      q: 'Your app asks for access to every account a member holds, stores the token, and keeps refreshing it quietly after ' +
+         'they stop using the product. Which parts of that consent standard have you broken?',
+      a: 'Three of the four. Scope: you asked for every account when the budgeting feature reads one. Time limited: a token ' +
+         'that refreshes itself has no end. Revocable: nothing in the product lets them stop it, and a member who cannot ' +
+         'find the off switch has not really consented to what follows. Only explicit survives, and it survives in the ' +
+         'weakest form, a single dialog at signup. The fix is product work rather than crypto: ask for less, expire it, and ' +
+         'put a disconnect button where it can be found.'
+    }},
 
     { h: 'Architecture: layers and why they exist' },
     { code: 'interface        Streamlit pages, CLI, API endpoints\n     |           (no business logic: just input and display)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. Pure where possible. Fully tested)\ndata             loaders, validators, synthetic generators\n     |           (everything that touches a file or a network)\nstorage          CSV / SQLite / append-only entry log', lang: 'text', label: 'four layers' },
@@ -70,6 +108,16 @@ FQ.registerLevel({
         ['A test needs a browser', 'Logic trapped in the interface'],
         ['Changing a chart breaks the ledger', 'No layer boundary at all']
       ]
+    }},
+
+    { check: {
+      q: '`fraud.py` opens `data/level-08-transactions.csv` with that relative path, and it works. Name two things it has ' +
+         'quietly broken.',
+      a: 'Anyone running the program from a different directory, because a relative path is resolved against the working ' +
+         'directory rather than the file that contains it. And the tests, which now cannot check the scoring rules without ' +
+         'that CSV sitting in the right place, so a unit test has grown a dependency on the filesystem. Both come from one ' +
+         'layer violation: a service reached into the data layer. Pass the DataFrame in, or call a loader, and the rules ' +
+         'become testable with four rows written by hand.'
     }},
 
     { h: 'Project structure a stranger can follow' },
@@ -94,6 +142,15 @@ FQ.registerLevel({
              'single-process and would need row-level locking to be concurrent" tells a reviewer you understand the ' +
              'difference between a demo and a system. Claiming production-readiness you do not have does the opposite.' },
 
+    { check: {
+      q: 'Your ledger is a Python list inside one process. Does that belong in the README, and if so, how do you word it?',
+      a: 'It belongs in limitations, written as the consequence rather than the fact: two processes writing at once would ' +
+         'interleave entries and the balancing invariant could not be guaranteed, so this build is single process by design ' +
+         'and would need row level locking or a database transaction to go further. A reviewer reading that learns you know ' +
+         'where the edge is. The same reviewer reading "production ready" over the same code learns something worse, and ' +
+         'they will find the list in about a minute.'
+    }},
+
     { h: 'Reconciliation: the daily ritual' },
     { p: 'Every real money system runs a **reconciliation** job: compare your ledger against an external source of truth ' +
          '(a bank statement, a processor\'s settlement file) and explain every difference. A break that nobody explains ' +
@@ -101,6 +158,16 @@ FQ.registerLevel({
     { code: 'internal_total = sum(all ledger entries for the account)\nexternal_total = statement closing balance\nbreak         = internal_total - external_total\n\nif break != 0:\n    investigate, categorise, and record the explanation', lang: 'text' },
     { p: 'Including even a simple reconciliation check in your capstone puts you ahead of most student projects, because ' +
          'it shows you understand that a ledger is only trustworthy if something independent agrees with it.' },
+
+    { check: {
+      q: 'Your ledger says an account holds $12,430.00 and the bank statement says $12,380.00. What do you do about the $50 ' +
+         'difference?',
+      a: 'Explain it before you touch anything. It is a timing difference (something posted in your books that settles ' +
+         'tomorrow), a fee the processor took that you never recorded, or a bug, and the three look identical until you go ' +
+         'and read the entries. What you never do is adjust the ledger until it agrees. If a fee was missed, post the fee ' +
+         'with a memo saying so; if the code is wrong, fix the code and let the correcting entry stand. A silent plug ' +
+         'removes the evidence and makes the next break impossible to trust, which is exactly why fraud likes them.'
+    }},
 
     { h: 'Ethics is a design activity' },
     { p: 'You have now built things that decide who gets credit and whose card gets blocked. Three questions belong in ' +
@@ -110,6 +177,16 @@ FQ.registerLevel({
       '**Can the person affected find out why?** If your answer is "the model decided", you have built something you cannot defend.',
       '**Who does this work badly for?** Systems trained on the average user fail thin-file customers, new arrivals, and irregular earners first.'
     ]},
+    { check: {
+      q: 'Take the first question seriously for one case: your fraud score blocks a member\'s card at a supermarket till, ' +
+         'wrongly. What does "who is harmed if this is wrong" change in the code you write?',
+      a: 'It turns into features with owners. A push notification that arrives before they reach the front of the queue, ' +
+         'saying what was blocked and offering one tap to confirm it was them. A human review path with a stated response ' +
+         'time, reachable without an account number they cannot get to. A recorded reason for the block, in words, so ' +
+         'support can say more than "the system declined it". None of that is ethics as a paragraph at the end of a report. ' +
+         'It is the difference between a decline that costs a member ten seconds and one that leaves them with a full ' +
+         'trolley and no way to pay.'
+    }},
     { p: 'Writing these answers down is not decoration. It is the difference between an engineer who ships features and ' +
          'one who can be trusted with a product that touches people\'s money.' }
   ],
