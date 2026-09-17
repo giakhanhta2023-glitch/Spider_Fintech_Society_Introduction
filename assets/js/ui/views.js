@@ -64,7 +64,7 @@ export function Home({ onAskTutor }) {
             Learn fintech<br />by building it
           </h1>
           <div style=${{ marginTop: '30px' }}>
-            <${Companions} size=${60} />
+            <${Companions} size=${76} />
             <!-- One line, picked by the date rather than at random, so the
                  whole society sees the same one on the same day. -->
             <p class="daily">

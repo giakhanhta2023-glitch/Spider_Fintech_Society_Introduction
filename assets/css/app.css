@@ -978,10 +978,11 @@ body.is-gate::before { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .mou.is-bobbing { animation: none; } }
 
-/* The pair. Bruno stands a touch lower than Mou so they do not read as two
-   stickers on the same line, and the heart rises between them. */
-.duo { display: flex; align-items: flex-end; gap: 4px; }
-.duo .bear { transform: translateY(2px); }
+/* The pair. Khanh is a standing figure and Mou is a head, so they share a
+   ground line rather than a centre line, and the heart rises between them.
+   He is half again as tall as her, which is roughly right for a grizzly and
+   a rabbit. */
+.duo { display: flex; align-items: flex-end; gap: 6px; }
 .duo .mou.is-bobbing { animation-delay: .9s; }
 
 .duo-heart {

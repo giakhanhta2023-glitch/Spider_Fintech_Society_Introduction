@@ -89,9 +89,9 @@ questions across the course, each one worked on the same figures the level teach
 ## Mou and Khanh
 
 Mou is the tutor: a 24 by 24 pixel rabbit who sits behind the **mou** button, or
-<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Khanh is the heavy brown bear beside
-her on the front page, fond of her and not subtle about it. Both are drawn as text, one character
-per pixel, in
+<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Khanh is the grizzly standing beside
+her on the front page, 24 pixels wide and 32 tall, mid roar, and fond of her in a way he is not
+subtle about. Both are drawn as text, one character per pixel, in
 [`assets/js/ui/mou.js`](assets/js/ui/mou.js) and [`bear.js`](assets/js/ui/bear.js), so a mood can be
 edited by eye:
 

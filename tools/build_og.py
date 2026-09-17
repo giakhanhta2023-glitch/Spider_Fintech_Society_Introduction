@@ -90,8 +90,8 @@ def sprite(path, mood):
 
     block = re.search(r'const FRAME = \[(.*?)\];', src, re.S).group(1)
     rows = re.findall(r"'([^']{24})'", block)
-    if len(rows) != 24:
-        raise SystemExit('%s: expected 24 rows, found %d' % (path, len(rows)))
+    if not rows:
+        raise SystemExit('%s: no sprite rows found' % path)
 
     block = re.search(r'\b%s: \{(.*?)\}' % mood, src, re.S).group(1)
     for index, row in re.findall(r"(\d+):\s*'([^']{24})'", block):
@@ -160,8 +160,9 @@ def build():
     foot = load('mono', 21)
     tracked(d, (left, 538), 'finquest-rank-nullity.vercel.app', foot, GRAPHITE, 0.6)
 
-    # Khanh and Mou, at the same size, standing on one baseline, clear of the
-    # longest line of the title.
+    # Khanh and Mou, at the same pixel size, standing on one baseline. He is a
+    # standing figure and taller than she is, so each sprite's own row count
+    # decides where it starts.
     scale = 9
     size = 24 * scale
     base = 498
@@ -170,8 +171,8 @@ def build():
     mou_x = W - 92 - size
     bear, bear_palette = sprite('assets/js/ui/bear.js', 'idle')
     mou, mou_palette = sprite('assets/js/ui/mou.js', 'idle')
-    draw_sprite(img, bear, bear_palette, (bear_x, base - size), scale)
-    draw_sprite(img, mou, mou_palette, (mou_x, base - size), scale)
+    draw_sprite(img, bear, bear_palette, (bear_x, base - len(bear) * scale), scale)
+    draw_sprite(img, mou, mou_palette, (mou_x, base - len(mou) * scale), scale)
 
     names = load('mono', 19)
     for x, name in ((bear_x, 'khanh'), (mou_x, 'mou')):
