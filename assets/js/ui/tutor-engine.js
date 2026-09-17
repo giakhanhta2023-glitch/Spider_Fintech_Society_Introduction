@@ -53,6 +53,13 @@ function buildIndex() {
       if (b.h) {
         current = { title: b.h, text: [], lv: lv.id, kind: 'knowledge', tab: 'learn' };
         docs.push(current);
+      } else if (b.check) {
+        /* A check is already a question with a full answer under it, which is
+           the closest thing in the course to what a learner types in here. It
+           is indexed on its own so a question can be matched as a question. */
+        docs.push({
+          title: b.check.q, text: [b.check.a], lv: lv.id, kind: 'check', tab: 'learn'
+        });
       } else if (current) {
         blocksText([b]).forEach((t) => current.text.push(t));
         if (b.code && !current.code) current.code = { code: b.code, lang: b.lang || 'text' };
@@ -104,7 +111,7 @@ export function search(query, levelId, limit) {
   const terms = tokens(query);
   if (!terms.length) return [];
 
-  const kindBoost = { faq: 2.2, glossary: 1.8, knowledge: 1.3, tutorial: 1.2, project: 1.0 };
+  const kindBoost = { faq: 2.2, check: 2.0, glossary: 1.8, knowledge: 1.3, tutorial: 1.2, project: 1.0 };
 
   const scored = index.map((doc) => {
     let score = 0;
@@ -264,19 +271,30 @@ export function offlineAnswer(question, ctx) {
   }
 
   const best = hits[0].doc;
-  let answer = `**${best.title}** (level ${best.lv})\n\n${sentences(best.text.join(' '), 4)}`;
+  /* A check reads here the way it reads on the page: the question, then the
+     answer under it. Everything else reads as a section title and its text. */
+  let answer = best.kind === 'check'
+    ? `From level ${best.lv}, a question much like yours:\n\n> ${best.title}\n\n${sentences(best.text.join(' '), 6)}`
+    : `**${best.title}** (level ${best.lv})\n\n${sentences(best.text.join(' '), 4)}`;
   if (best.code) {
     answer += '\n\n```\n' + best.code.code.split('\n').slice(0, 14).join('\n') + '\n```';
   }
   answer += '\n\n' + levelLink(best.lv, best.tab, 'Read the full section');
 
-  const related = hits.slice(1).map((h) => h.doc.title);
+  const related = hits.slice(1).map((h) => h.doc);
   return {
     text: answer,
     source: `level ${best.lv}, ${best.kind}`,
-    /* Some section titles are already questions, so do not staple a verb onto them. */
     chips: related.length
-      ? related.map((r) => (/\?$/.test(r) ? r : 'Explain ' + r))
+      ? related.map((doc) => {
+          /* A question, or a check's scenario, is already the thing to ask:
+             only a bare section title needs a verb in front of it. A check
+             runs long, and cut short it still carries the words that found
+             it, so clicking the chip lands on the same answer. */
+          const asks = doc.kind === 'check' || /\?$/.test(doc.title);
+          const text = asks ? doc.title : 'Explain ' + doc.title;
+          return text.length > 58 ? text.slice(0, 55).trim() + '...' : text;
+        })
       : ['Give me an example', 'hint']
   };
 }
