@@ -6,6 +6,7 @@ import {
   Gauge, Btn, Tag, SectionHead, AlertDialog
 } from './lib.js';
 import { Mou } from './mou.js';
+import { Companions } from './companions.js';
 
 /* =============================== HOME =============================== */
 function IndexRow({ level }) {
@@ -62,6 +63,12 @@ export function Home({ onAskTutor }) {
           <h1 class="display display-xl">
             Learn fintech<br />by building it
           </h1>
+          <div style=${{ marginTop: '30px' }}>
+            <${Companions} size=${60} />
+            <p class="mono-s" style=${{ marginTop: '12px' }}>
+              Mou tutors. Bruno mostly watches Mou.
+            </p>
+          </div>
         </div>
 
         <div class="col-9-12">

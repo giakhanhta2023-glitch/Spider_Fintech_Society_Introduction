@@ -13,6 +13,7 @@
    site, it does not authorise anything. The secret half never leaves Google.
    ========================================================================= */
 import { html, useState, useEffect, useRef, CFG, store, Btn } from './lib.js';
+import { Companions } from './companions.js';
 
 const GSI = 'https://accounts.google.com/gsi/client';
 
@@ -131,6 +132,12 @@ function SignIn({ onSignedIn }) {
             Ten levels, 150 drill questions and nine things to build, with a tutor who knows which
             level you are on. Sign in to start, and your progress follows you to any device.
           </p>
+          <div>
+            <${Companions} size=${64} />
+            <p class="mono-s" style=${{ marginTop: '12px' }}>
+              Mou tutors. Bruno mostly watches Mou.
+            </p>
+          </div>
         </div>
 
         <div class="col-9-12">
