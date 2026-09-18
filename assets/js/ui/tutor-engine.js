@@ -261,7 +261,7 @@ export function offlineAnswer(question, ctx) {
   const hits = search(question, levelId, 3);
   if (!hits.length) {
     return {
-      text: 'I could not find that in the course material.\n\nI answer from the ten levels in front of you, so try ' +
+      text: 'I could not find that in the course material.\n\nI answer from the course levels in front of you, so try ' +
             'naming a concept (**compounding**, **idempotency**, **drawdown**, **precision**), pasting an error message, ' +
             'or asking for a **hint** on the build you are on.' +
             (lv ? `\n\nYou are on level ${lv.id}, which covers ${lv.tags.join(', ')}.` : ''),

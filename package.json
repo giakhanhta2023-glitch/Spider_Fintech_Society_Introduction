@@ -2,7 +2,7 @@
   "name": "finquest",
   "version": "1.0.0",
   "private": true,
-  "description": "FinQuest: a ten level fintech course built around projects, with an AI tutor",
+  "description": "FinQuest: a twenty level fintech course built around projects, with an AI tutor",
   "homepage": "https://finquest-rank-nullity.vercel.app",
   "repository": {
     "type": "git",

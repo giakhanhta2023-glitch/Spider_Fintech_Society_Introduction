@@ -1,8 +1,8 @@
-<img src="assets/img/finquest-logo.svg" alt="" width="104" height="104" align="left">
+<img src="assets/img/icon-512.png" alt="FinQuest F(q) logo" width="104" height="104" align="left">
 
 # FinQuest, a fintech training arcade
 
-A ten level fintech course built around projects that runs in a browser tab. Each level teaches the
+A twenty level fintech course built around projects that runs in a browser tab. Each level teaches the
 knowledge, walks you through the tools step by step, drills you with 15 questions, then hands you a
 build you can finish using **only what that level taught you**: with a complete, verified solution
 key waiting in this repository.
@@ -124,7 +124,7 @@ local midnight. Add your own, keep them short, and only add what you can source.
 
 | Tutor mode | Setup | What you get |
 |------|-------|--------------|
-| **Course knowledge base** | none. This is the default | Retrieval over all ten levels: concepts, glossary, tutorial steps, error diagnosis, and hints tied to your next unticked requirement |
+| **Course knowledge base** | none. This is the default | Retrieval over every level: concepts, glossary, tutorial steps, error diagnosis, and hints tied to your next unticked requirement |
 | **Hosted endpoint** | deploy with `ANTHROPIC_API_KEY` set | Claude, with the current level's material in its system prompt |
 | **Your own key** | paste it in the tutor's settings | Same, straight from your browser. Never do this on a shared computer |
 
@@ -209,7 +209,7 @@ node tools/build_quiz_keys.js         # solutions/level-XX/quiz-key.md
 node tools/build_solution_readmes.js  # solutions/level-XX/README.md
 node tools/balance_answers.js --check # answer position distribution per level
 python tools/slop_scan.py             # banned words and tired patterns in every word a learner reads
-python tools/build_og.py              # assets/img/og-card.png, after a change to the sprites or the palette
+python tools/build_brand.py          # og-card.png and the icons, cut from assets/img/brand/fq-logo-source.png
 ```
 
 `tools/balance_answers.js` (without `--check`) rewrites each quiz so the correct answer is spread

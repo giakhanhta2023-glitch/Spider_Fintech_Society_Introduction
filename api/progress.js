@@ -12,7 +12,7 @@ import { loadProgress, saveProgress } from './_lib/db.js';
 import { read } from './_lib/session.js';
 import { redact } from './_lib/redact.js';
 
-/* Progress for all ten levels is a few kilobytes. Anything far past that is
+/* Progress for every level is a few kilobytes. Anything far past that is
    either a bug or somebody using the table as free storage. */
 const MAX_BYTES = 64 * 1024;
 
