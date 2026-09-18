@@ -1,0 +1,506 @@
+{
+  "_note": "SYNTHETIC export for FinQuest level 18. Not a real account.",
+  "account": {
+    "iban": "VN00BANKB0000000001",
+    "currency": "VND"
+  },
+  "transactions": {
+    "booked": [
+      {
+        "transactionId": "B00000",
+        "bookingDate": "12/06/2026",
+        "valueDate": "13/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "5603200",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00001",
+        "bookingDate": "12/06/2026",
+        "valueDate": "13/06/2026",
+        "remittanceInformationUnstructured": "POS HIGHLANDS COFFEE HANOI",
+        "transactionAmount": {
+          "amount": "2702500",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00002",
+        "bookingDate": "12/06/2026",
+        "valueDate": "13/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "14030300",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00003",
+        "bookingDate": "13/06/2026",
+        "valueDate": "14/06/2026",
+        "remittanceInformationUnstructured": "POS HIGHLANDS COFFEE HANOI",
+        "transactionAmount": {
+          "amount": "2823700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00004",
+        "bookingDate": "13/06/2026",
+        "valueDate": "14/06/2026",
+        "remittanceInformationUnstructured": "POS NETFLIX.COM HANOI",
+        "transactionAmount": {
+          "amount": "50401600",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00005",
+        "bookingDate": "13/06/2026",
+        "valueDate": "14/06/2026",
+        "remittanceInformationUnstructured": "POS PHO 24 HANOI",
+        "transactionAmount": {
+          "amount": "1537900",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00006",
+        "bookingDate": "13/06/2026",
+        "valueDate": "14/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "7020700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00007",
+        "bookingDate": "13/06/2026",
+        "valueDate": "14/06/2026",
+        "remittanceInformationUnstructured": "POS GRAB *RIDE HANOI",
+        "transactionAmount": {
+          "amount": "2416000",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00008",
+        "bookingDate": "13/06/2026",
+        "valueDate": "14/06/2026",
+        "remittanceInformationUnstructured": "POS NETFLIX.COM HANOI",
+        "transactionAmount": {
+          "amount": "8225800",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00009",
+        "bookingDate": "14/06/2026",
+        "valueDate": "15/06/2026",
+        "remittanceInformationUnstructured": "POS VINMART HANOI",
+        "transactionAmount": {
+          "amount": "4364200",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00010",
+        "bookingDate": "14/06/2026",
+        "valueDate": "15/06/2026",
+        "remittanceInformationUnstructured": "POS VINMART HANOI",
+        "transactionAmount": {
+          "amount": "4117900",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00011",
+        "bookingDate": "14/06/2026",
+        "valueDate": "15/06/2026",
+        "remittanceInformationUnstructured": "POS EVN HANOI HANOI",
+        "transactionAmount": {
+          "amount": "11903700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00012",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS VINMART HANOI",
+        "transactionAmount": {
+          "amount": "18718500",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00013",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS VINMART HANOI",
+        "transactionAmount": {
+          "amount": "19844000",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00014",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "9056100",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00015",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS EVN HANOI HANOI",
+        "transactionAmount": {
+          "amount": "39175600",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00016",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "18463200",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00017",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "6660800",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00018",
+        "bookingDate": "15/06/2026",
+        "valueDate": "16/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "14849700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00019",
+        "bookingDate": "16/06/2026",
+        "valueDate": "17/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "2885100",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00020",
+        "bookingDate": "16/06/2026",
+        "valueDate": "17/06/2026",
+        "remittanceInformationUnstructured": "POS PHO 24 HANOI",
+        "transactionAmount": {
+          "amount": "8472200",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00021",
+        "bookingDate": "16/06/2026",
+        "valueDate": "17/06/2026",
+        "remittanceInformationUnstructured": "POS EVN HANOI HANOI",
+        "transactionAmount": {
+          "amount": "21015800",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00022",
+        "bookingDate": "17/06/2026",
+        "valueDate": "18/06/2026",
+        "remittanceInformationUnstructured": "POS GRAB *RIDE HANOI",
+        "transactionAmount": {
+          "amount": "5680400",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00023",
+        "bookingDate": "17/06/2026",
+        "valueDate": "18/06/2026",
+        "remittanceInformationUnstructured": "POS PHO 24 HANOI",
+        "transactionAmount": {
+          "amount": "5215300",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00024",
+        "bookingDate": "17/06/2026",
+        "valueDate": "18/06/2026",
+        "remittanceInformationUnstructured": "POS SHOPEE HANOI",
+        "transactionAmount": {
+          "amount": "6429800",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00025",
+        "bookingDate": "18/06/2026",
+        "valueDate": "19/06/2026",
+        "remittanceInformationUnstructured": "POS HIGHLANDS COFFEE HANOI",
+        "transactionAmount": {
+          "amount": "3646600",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00026",
+        "bookingDate": "18/06/2026",
+        "valueDate": "19/06/2026",
+        "remittanceInformationUnstructured": "POS LOTTE MART HANOI",
+        "transactionAmount": {
+          "amount": "9298900",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00027",
+        "bookingDate": "18/06/2026",
+        "valueDate": "19/06/2026",
+        "remittanceInformationUnstructured": "POS GRAB *RIDE HANOI",
+        "transactionAmount": {
+          "amount": "32246600",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00028",
+        "bookingDate": "18/06/2026",
+        "valueDate": "19/06/2026",
+        "remittanceInformationUnstructured": "POS HIGHLANDS COFFEE HANOI",
+        "transactionAmount": {
+          "amount": "8725400",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00029",
+        "bookingDate": "18/06/2026",
+        "valueDate": "19/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "10030300",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00030",
+        "bookingDate": "19/06/2026",
+        "valueDate": "20/06/2026",
+        "remittanceInformationUnstructured": "POS PHO 24 HANOI",
+        "transactionAmount": {
+          "amount": "2868700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00031",
+        "bookingDate": "19/06/2026",
+        "valueDate": "20/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "3293900",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00032",
+        "bookingDate": "19/06/2026",
+        "valueDate": "20/06/2026",
+        "remittanceInformationUnstructured": "POS VINMART HANOI",
+        "transactionAmount": {
+          "amount": "15623300",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00033",
+        "bookingDate": "19/06/2026",
+        "valueDate": "20/06/2026",
+        "remittanceInformationUnstructured": "POS SHOPEE HANOI",
+        "transactionAmount": {
+          "amount": "4404300",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00034",
+        "bookingDate": "20/06/2026",
+        "valueDate": "21/06/2026",
+        "remittanceInformationUnstructured": "POS HIGHLANDS COFFEE HANOI",
+        "transactionAmount": {
+          "amount": "6909100",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00035",
+        "bookingDate": "20/06/2026",
+        "valueDate": "21/06/2026",
+        "remittanceInformationUnstructured": "POS CIRCLE K HANOI",
+        "transactionAmount": {
+          "amount": "5439700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00036",
+        "bookingDate": "20/06/2026",
+        "valueDate": "21/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "9666500",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00037",
+        "bookingDate": "21/06/2026",
+        "valueDate": "22/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "3546900",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00038",
+        "bookingDate": "21/06/2026",
+        "valueDate": "22/06/2026",
+        "remittanceInformationUnstructured": "POS PHO 24 HANOI",
+        "transactionAmount": {
+          "amount": "36669500",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00039",
+        "bookingDate": "21/06/2026",
+        "valueDate": "22/06/2026",
+        "remittanceInformationUnstructured": "POS VINMART HANOI",
+        "transactionAmount": {
+          "amount": "16051400",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00040",
+        "bookingDate": "21/06/2026",
+        "valueDate": "22/06/2026",
+        "remittanceInformationUnstructured": "POS LOTTE MART HANOI",
+        "transactionAmount": {
+          "amount": "18531200",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00041",
+        "bookingDate": "21/06/2026",
+        "valueDate": "22/06/2026",
+        "remittanceInformationUnstructured": "POS GRAB *RIDE HANOI",
+        "transactionAmount": {
+          "amount": "3808400",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00042",
+        "bookingDate": "22/06/2026",
+        "valueDate": "23/06/2026",
+        "remittanceInformationUnstructured": "POS NETFLIX.COM HANOI",
+        "transactionAmount": {
+          "amount": "8082700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00043",
+        "bookingDate": "22/06/2026",
+        "valueDate": "23/06/2026",
+        "remittanceInformationUnstructured": "POS EVN HANOI HANOI",
+        "transactionAmount": {
+          "amount": "11635700",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      },
+      {
+        "transactionId": "B00044",
+        "bookingDate": "23/06/2026",
+        "valueDate": "24/06/2026",
+        "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",
+        "transactionAmount": {
+          "amount": "9359000",
+          "currency": "VND"
+        },
+        "creditDebitIndicator": "DBIT"
+      }
+    ]
+  }
+}

@@ -286,6 +286,99 @@ def gen_applications():
 
 
 # ---------------------------------------------------------------------------
+# LEVEL 18: the same month of spending, exported by three different banks
+# ---------------------------------------------------------------------------
+def gen_bank_exports():
+    """One person, one month, three banks, three incompatible shapes.
+
+    Deliberately included: a different sign convention per bank, three date
+    formats, minor units in one file and decimals in another, pending rows
+    that later appear as booked, and a re-export overlap so the ingester has
+    to deduplicate. Nothing here is a real person or a real account.
+    """
+    import json
+
+    rng = random.Random(SEED + 18)
+    merchants = [
+        ("CIRCLE K", "groceries"), ("HIGHLANDS COFFEE", "dining"),
+        ("GRAB *RIDE", "transport"), ("VINMART", "groceries"),
+        ("SHOPEE", "shopping"), ("NETFLIX.COM", "subscriptions"),
+        ("EVN HANOI", "utilities"), ("PHO 24", "dining"),
+        ("APPLE.COM/BILL", "subscriptions"), ("LOTTE MART", "groceries"),
+    ]
+
+    # one underlying truth, then three exports of it
+    truth = []
+    day = date(2026, 6, 1)
+    for i in range(140):
+        d = day + timedelta(days=rng.randint(0, 29))
+        name, cat = rng.choice(merchants)
+        amount = round(abs(rng.lognormvariate(11.2, 0.9)))     # dong, whole units
+        truth.append({"id": f"TX{i:04d}", "date": d, "merchant": name,
+                      "category": cat, "amount_vnd": amount})
+    truth.sort(key=lambda r: r["date"])
+
+    a, b, c = truth[:60], truth[60:105], truth[105:]
+
+    # ---- bank A: csv, negative debits, ISO dates, decimals, re-export overlap
+    rows_a = [{"date": r["date"].isoformat(),
+               "description": r["merchant"],
+               "amount": f"-{r['amount_vnd']}.00",
+               "running_balance": ""} for r in a]
+    rows_a += rows_a[-8:]                       # the overlap a second sync brings
+    path_a = OUT / "level-18-bank-a.csv"
+    with path_a.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["date", "description", "amount", "running_balance"])
+        w.writeheader()
+        w.writerows(rows_a)
+
+    # ---- bank B: json, credit/debit indicator, minor units, different keys
+    payload = {
+        "_note": "SYNTHETIC export for FinQuest level 18. Not a real account.",
+        "account": {"iban": "VN00BANKB0000000001", "currency": "VND"},
+        "transactions": {
+            "booked": [
+                {"transactionId": f"B{i:05d}",
+                 "bookingDate": r["date"].strftime("%d/%m/%Y"),
+                 "valueDate": (r["date"] + timedelta(days=1)).strftime("%d/%m/%Y"),
+                 "remittanceInformationUnstructured": f"POS {r['merchant']} HANOI",
+                 "transactionAmount": {"amount": str(r["amount_vnd"] * 100), "currency": "VND"},
+                 "creditDebitIndicator": "DBIT"}
+                for i, r in enumerate(b)
+            ]
+        }
+    }
+    path_b = OUT / "level-18-bank-b.json"
+    path_b.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # ---- bank C: csv, separate debit and credit columns, pending then booked
+    rows_c = []
+    for i, r in enumerate(c):
+        pending = i % 4 == 0                     # a quarter appear twice
+        if pending:
+            rows_c.append({"posted_at": r["date"].strftime("%m-%d-%Y"),
+                           "merchant_name": r["merchant"].title(),
+                           "debit": f"{r['amount_vnd']}", "credit": "",
+                           "status": "pending",
+                           "reference": f"C{i:05d}"})
+        rows_c.append({"posted_at": r["date"].strftime("%m-%d-%Y"),
+                       "merchant_name": r["merchant"].title(),
+                       "debit": f"{r['amount_vnd']}", "credit": "",
+                       "status": "booked",
+                       "reference": f"C{i:05d}"})
+    path_c = OUT / "level-18-bank-c.csv"
+    with path_c.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["posted_at", "merchant_name", "debit",
+                                           "credit", "status", "reference"])
+        w.writeheader()
+        w.writerows(rows_c)
+
+    total_raw = len(rows_a) + len(payload["transactions"]["booked"]) + len(rows_c)
+    print(f"level-18 bank exports: {total_raw} raw rows across three files, "
+          f"{len(truth)} real transactions underneath")
+
+
+# ---------------------------------------------------------------------------
 # LEVEL 5: offline fallback snapshot of FX rates (so the level works offline)
 # ---------------------------------------------------------------------------
 def gen_fx_snapshot():
@@ -309,5 +402,6 @@ if __name__ == "__main__":
     gen_prices()
     gen_fraud()
     gen_applications()
+    gen_bank_exports()
     gen_fx_snapshot()
     print("done, all datasets are synthetic")

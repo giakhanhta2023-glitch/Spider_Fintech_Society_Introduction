@@ -1,0 +1,45 @@
+posted_at,merchant_name,debit,credit,status,reference
+06-23-2026,Netflix.Com,89982,,pending,C00000
+06-23-2026,Netflix.Com,89982,,booked,C00000
+06-23-2026,Netflix.Com,435420,,booked,C00001
+06-24-2026,Vinmart,38725,,booked,C00002
+06-24-2026,Shopee,242895,,booked,C00003
+06-24-2026,Apple.Com/Bill,302701,,pending,C00004
+06-24-2026,Apple.Com/Bill,302701,,booked,C00004
+06-25-2026,Circle K,30056,,booked,C00005
+06-25-2026,Vinmart,120968,,booked,C00006
+06-26-2026,Circle K,68463,,booked,C00007
+06-26-2026,Circle K,46141,,pending,C00008
+06-26-2026,Circle K,46141,,booked,C00008
+06-26-2026,Highlands Coffee,36149,,booked,C00009
+06-26-2026,Highlands Coffee,89458,,booked,C00010
+06-26-2026,Vinmart,70567,,booked,C00011
+06-26-2026,Circle K,114387,,pending,C00012
+06-26-2026,Circle K,114387,,booked,C00012
+06-26-2026,Lotte Mart,214105,,booked,C00013
+06-27-2026,Grab *Ride,12961,,booked,C00014
+06-27-2026,Shopee,161984,,booked,C00015
+06-27-2026,Vinmart,10855,,pending,C00016
+06-27-2026,Vinmart,10855,,booked,C00016
+06-27-2026,Pho 24,81739,,booked,C00017
+06-27-2026,Grab *Ride,26051,,booked,C00018
+06-27-2026,Vinmart,21928,,booked,C00019
+06-27-2026,Evn Hanoi,92017,,pending,C00020
+06-27-2026,Evn Hanoi,92017,,booked,C00020
+06-28-2026,Apple.Com/Bill,258681,,booked,C00021
+06-28-2026,Apple.Com/Bill,10906,,booked,C00022
+06-28-2026,Vinmart,22033,,booked,C00023
+06-28-2026,Grab *Ride,41814,,pending,C00024
+06-28-2026,Grab *Ride,41814,,booked,C00024
+06-28-2026,Vinmart,17892,,booked,C00025
+06-28-2026,Evn Hanoi,148407,,booked,C00026
+06-29-2026,Shopee,16787,,booked,C00027
+06-29-2026,Lotte Mart,89343,,pending,C00028
+06-29-2026,Lotte Mart,89343,,booked,C00028
+06-29-2026,Vinmart,125831,,booked,C00029
+06-30-2026,Highlands Coffee,192638,,booked,C00030
+06-30-2026,Evn Hanoi,60842,,booked,C00031
+06-30-2026,Vinmart,84477,,pending,C00032
+06-30-2026,Vinmart,84477,,booked,C00032
+06-30-2026,Pho 24,126225,,booked,C00033
+06-30-2026,Shopee,44411,,booked,C00034

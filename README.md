@@ -72,6 +72,7 @@ model backed tutor.
 | 15 | Fraud detection with a stopwatch running | A fraud decision service under 100ms | serving, feature stores, drift |
 | 16 | The backtest that does not lie to you | A backtest engine with walk forward | costs, overfitting, bias |
 | 17 | Weights, and the risk they actually carry | A portfolio and risk engine | optimisation, risk parity, VaR |
+| 18 | Three banks, three shapes, one account view | An open banking aggregator | OAuth2, consent, normalisation |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.
