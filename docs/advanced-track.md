@@ -60,3 +60,9 @@ it. They are worth doing in order.
 
 20 comes last, because it puts the level 12 service into production and needs
 something worth deploying.
+
+## Status
+
+All ten levels are written and shipped. The course is twenty levels, 300 quiz
+questions and nineteen builds, and every figure quoted in levels 11 to 20 was
+computed from the dataset in `data/` before it was published.

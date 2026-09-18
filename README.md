@@ -74,6 +74,7 @@ model backed tutor.
 | 17 | Weights, and the risk they actually carry | A portfolio and risk engine | optimisation, risk parity, VaR |
 | 18 | Three banks, three shapes, one account view | An open banking aggregator | OAuth2, consent, normalisation |
 | 19 | Ninety eight percent of your alerts are wrong | An AML and sanctions monitor | fuzzy matching, rule tuning |
+| 20 | The mean was 45 milliseconds and the service was down | Shipping the level 12 service | Docker, CI, SLOs, cost |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.

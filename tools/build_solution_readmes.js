@@ -406,6 +406,36 @@ const NOTES = {
       ['Screening takes minutes', 'Score distinct names, not payments: 887 against 12,067. Then read the note on blocking before assuming this scales.'],
       ['A real hit got discounted', 'A secondary identifier rule is firing on absence rather than disagreement. Assert in a test that none of the seven is ever discounted.']
     ]
+  },
+
+  20: {
+    files: [
+      ['`Dockerfile`', 'two stages, pinned by digest, non root, with a health check'],
+      ['`.github/workflows/ci.yml`', 'lint, types, tests against real Postgres, migration up then down, build, scan'],
+      ['`migrations/`', 'the six step expand and contract, with lock_timeout set'],
+      ['`app/observability.py`', 'structlog, the RED metrics, and the OpenTelemetry spans'],
+      ['`analysis/loadtest.py`', 'percentiles by window and by endpoint, from the shipped run'],
+      ['`slo/`', 'the two objectives, the budget arithmetic and the multiwindow burn rate alerts'],
+      ['`docs/`', 'a runbook page per alert, the drill record, and the cost estimate']
+    ],
+    run: 'docker compose up --build   then   pytest -q && python -m analysis.loadtest',
+    design: [
+      'The Dockerfile is two stages and pinned by digest, so the compiler and the test dependencies never reach production and a build from a month ago reproduces byte for byte. It runs as uid 10001, because a container escape as root is a different incident.',
+      'The pipeline applies every migration and then rolls it back. That is the step most repositories skip, and it is the one that answers the question you will ask during an incident.',
+      'The rename is six migrations and three deploys rather than one. There is a test that runs the old application code against the new schema, which is the state the service is actually in during every rolling deploy.',
+      'One id joins the three signals. The request id from level 12 and the trace id sit on the same log line, so a metric leads to a log line and a log line leads to a trace.',
+      'Metric labels are the route template, the method and the status class, and nothing else. A customer id in a label turns a thousand series into ten million, and the bill arrives before the outage does.',
+      'The load test analysis splits by window before it reports anything. The whole run averages 44.7 ms and 1.06% errors; steady state is 31.2 ms and 0.08%, and one minute is 152.7 ms and 9.82%. The summary line describes no minute of the run.',
+      'The error budget is computed rather than quoted: 259,200 failures allowed a month at 100 rps, of which the bad minute spent 589, which is 0.23%. That number ends two arguments at once.',
+      'The cost estimate includes the logs. 259.2 million requests at 400 bytes each is 103.68 GB a month, which at ordinary ingest prices costs more than the compute it describes.'
+    ],
+    mistakes: [
+      ['The image is over a gigabyte', 'A single stage build, or no .dockerignore. Check docker history and look for the layer that carries the build tooling.'],
+      ['Compose works for you and nobody else', 'Something is still on your machine: a local database, a file outside the repository, or an environment variable set in your shell months ago.'],
+      ['The deploy broke for two minutes', 'A migration that assumed only one version of the code was running. Expand and contract, and test the old code against the new schema.'],
+      ['Prometheus fell over', 'A high cardinality label. Count the series after a thousand distinct requests and find the label that grew with them.'],
+      ['The percentiles do not reproduce', 'Check the window boundaries first, then whether the percentile is interpolated. A p99 over a different window is a different number, and that is the lesson rather than a bug.']
+    ]
   }
 };
 

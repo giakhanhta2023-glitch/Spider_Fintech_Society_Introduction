@@ -559,6 +559,58 @@ def gen_aml():
     print(f"{path.name}: {len(payments)} payments, {len(counterparties)} counterparties")
 
 
+# ---------------------------------------------------------------------------
+# LEVEL 20: one load test against the level 12 payment service
+# ---------------------------------------------------------------------------
+def gen_loadtest():
+    """Ten minutes at a hundred requests a second, with one bad minute in it.
+
+    Synthetic, but shaped like a real run: a warm up, a steady state, a
+    minute where the database slows down and a fraction of requests fail,
+    and a recovery. The point is that the summary average hides all of it.
+    """
+    rng = random.Random(SEED + 20)
+
+    endpoints = (["POST /payments"] * 6 + ["GET /payments/{id}"] * 3 + ["GET /health"])
+    base = {"POST /payments": 3.55, "GET /payments/{id}": 2.95, "GET /health": 1.10}
+
+    start = datetime(2026, 7, 2, 14, 0, 0)
+    rows = []
+    for i in range(60000):
+        offset = i / 100.0                       # 100 requests a second
+        when = start + timedelta(seconds=offset)
+        ep = rng.choice(endpoints)
+        latency = rng.lognormvariate(base[ep], 0.55)
+
+        if offset < 5:                           # cold start, first five seconds
+            latency *= rng.uniform(3.0, 9.0)
+
+        status = 201 if ep.startswith("POST") else 200
+        if 360 <= offset < 420:                  # the bad minute
+            latency *= rng.uniform(3.5, 7.0)
+            if rng.random() < 0.09:
+                status = 503
+                latency = rng.uniform(20, 60)    # failures come back fast
+        elif rng.random() < 0.0008:              # ordinary background errors
+            status = 500
+            latency = rng.uniform(15, 40)
+
+        rows.append({
+            "at": when.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int((offset % 1) * 1000):03d}",
+            "endpoint": ep,
+            "status": status,
+            "latency_ms": f"{latency:.2f}",
+        })
+
+    path = OUT / "level-20-loadtest.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+    bad = sum(1 for r in rows if int(r["status"]) >= 500)
+    print(f"{path.name}: {len(rows)} requests, {bad} failed ({bad / len(rows):.2%})")
+
+
 def gen_fx_snapshot():
     import json
     snapshot = {
@@ -582,5 +634,6 @@ if __name__ == "__main__":
     gen_applications()
     gen_bank_exports()
     gen_aml()
+    gen_loadtest()
     gen_fx_snapshot()
     print("done, all datasets are synthetic")
