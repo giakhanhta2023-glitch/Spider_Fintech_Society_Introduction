@@ -312,155 +312,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'Why do lenders still use a scorecard when a boosted tree scores better?',
+    { q: "Why do lenders still use a scorecard when a boosted tree scores better?",
       options: [
-        'Trees cannot handle missing values',
-        'Because a decline has to be explained, justified years later and validated before launch',
-        'Because logistic regression is faster to train',
-        'Because regulators ban machine learning'
-      ],
-      answer: 1,
-      why: 'The industry pattern is a scorecard for the decision and a stronger model where the explanation duty is lighter.' },
-
-    { q: 'What does a weight of evidence of +1.10 for a bin mean?',
-      options: [
-        'The bin contains 110% of the expected goods',
-        'The bin is riskier than the book',
-        'The bin is safer than the book',
-        'The variable is not useful'
-      ],
-      answer: 2,
-      why: 'WOE is ln(good share / bad share). Positive means the bin holds proportionally more goods than the book average.' },
-
-    { q: 'A variable comes out with an information value of 0.9. What is the right response?',
-      options: [
-        'Use it immediately, it is the best predictor you have',
-        'Check whether the value was knowable at the moment of the decision',
-        'Drop it automatically',
-        'Split it into more bins'
-      ],
-      answer: 1,
-      why: 'Above 0.5 is a prompt, not a verdict. Something like a count of collection calls scores enormously and is only high because the account was already going bad.' },
-
-    { q: 'Why are bin edges learned on the training set and applied unchanged to the test set?',
-      options: [
-        'To save computation',
-        'Because pandas cannot recompute them',
-        'Because the test set is smaller',
-        'Because refitting them on the test set leaks the answer into the validation'
+        "Because regulators ban machine learning",
+        "Because logistic regression is faster to train",
+        "Trees cannot handle missing values",
+        "Because a decline has to be explained, justified years later and validated before launch"
       ],
       answer: 3,
-      why: 'Same rule as level 8. Anything learned from the test set makes the test result optimistic by an amount you cannot estimate.' },
+      why: "The industry pattern is a scorecard for the decision and a stronger model where the explanation duty is lighter." },
 
-    { q: 'A bin holds ninety applications out of eight thousand. What should you usually do?',
+    { q: "What does a weight of evidence of +1.10 for a bin mean?",
       options: [
-        'Merge it with a neighbouring bin',
-        'Keep it, because it has the strongest WOE',
-        'Drop those applications',
-        'Give it a WOE of zero'
+        "The bin contains 110% of the expected goods",
+        "The bin is safer than the book",
+        "The bin is riskier than the book",
+        "The variable is not useful"
       ],
-      answer: 0,
-      why: 'A thin bin gives an unstable WOE that will swing at the next refit. Coarse classing trades separation for stability on purpose.' },
+      answer: 1,
+      why: "WOE is ln(good share / bad share). Positive means the bin holds proportionally more goods than the book average." },
 
-    { q: 'A twelve month performance window is shortened to six. What happens to the model?',
+    { q: "A variable comes out with an information value of 0.9. What is the right response?",
       options: [
-        'It becomes more accurate because the data is fresher',
-        'Nothing, the ranking is unchanged',
-        'Borrowers who fail in months seven to twelve are labelled good, and the model learns to approve slow failures',
-        'The bad rate rises'
+        "Use it immediately, it is the best predictor you have",
+        "Split it into more bins",
+        "Check whether the value was knowable at the moment of the decision",
+        "Drop it automatically"
       ],
       answer: 2,
-      why: 'The window should match the life of the product, not how quickly you would like to retrain.' },
+      why: "Above 0.5 is a prompt, not a verdict. Something like a count of collection calls scores enormously and is only high because the account was already going bad." },
 
-    { q: 'What is the Gini coefficient of a model with AUC 0.771?',
+    { q: "Why are bin edges learned on the training set and applied unchanged to the test set?",
       options: [
-        '0.771',
-        '0.229',
-        '0.386',
-        '0.542'
+        "Because pandas cannot recompute them",
+        "Because the test set is smaller",
+        "To save computation",
+        "Because refitting them on the test set leaks the answer into the validation"
       ],
       answer: 3,
-      why: 'Gini is 2 x AUC - 1. The fifties are normal for an application scorecard; the nineties mean leakage until proven otherwise.' },
+      why: "Same rule as level 8. Anything learned from the test set makes the test result optimistic by an amount you cannot estimate." },
 
-    { q: 'With PDO 20, what does twenty more points mean?',
+    { q: "A bin holds ninety applications out of eight thousand. What should you usually do?",
       options: [
-        'Half the odds of going bad',
-        'Twice the probability of approval',
-        'Twenty percent lower risk',
-        'A one grade improvement'
+        "Merge it with a neighbouring bin",
+        "Drop those applications",
+        "Keep it, because it has the strongest WOE",
+        "Give it a WOE of zero"
       ],
       answer: 0,
-      why: 'Points to double the odds is the scale constant. It is what makes a score readable across an organisation without anybody quoting a log odds.' },
+      why: "A thin bin gives an unstable WOE that will swing at the next refit. Coarse classing trades separation for stability on purpose." },
 
-    { q: 'A coefficient comes out with the opposite sign to the one the WOE construction implies. What is it usually?',
+    { q: "A twelve month performance window is shortened to six. What happens to the model?",
       options: [
-        'Evidence of a genuine reversal in risk',
-        'Two correlated variables fighting',
-        'A bug in scikit-learn',
-        'Proof that the variable should be squared'
+        "The bad rate rises",
+        "Borrowers who fail in months seven to twelve are labelled good, and the model learns to approve slow failures",
+        "It becomes more accurate because the data is fresher",
+        "Nothing, the ranking is unchanged"
       ],
       answer: 1,
-      why: 'Credit teams will not ship a card that says more income raises your risk. Drop one of the pair rather than explaining it away.' },
+      why: "The window should match the life of the product, not how quickly you would like to retrain." },
 
-    { q: 'What is a reason code?',
+    { q: "What is the Gini coefficient of a model with AUC 0.771?",
       options: [
-        'An internal error code for the underwriting system',
-        'The principal reasons for a decline, ranked by points lost',
-        'The bin label with the strongest WOE',
-        'A code identifying which model version scored the application'
-      ],
-      answer: 1,
-      why: 'With an additive card it is arithmetic: compare each variable against a reference and rank the gaps. Written in words the applicant can act on.' },
-
-    { q: 'Removing age and postcode from the model means it cannot discriminate. True?',
-      options: [
-        'True, the attributes are gone',
-        'True, provided the data was anonymised',
-        'False: employer, school and shopping behaviour can reconstruct them, so the test is on outcomes',
-        'False, but only for models with more than ten variables'
+        "0.771",
+        "0.229",
+        "0.542",
+        "0.386"
       ],
       answer: 2,
-      why: 'Compare approval rates and the bad rate among the approved, by group. A lower approval rate with a lower bad rate means that group is being held to a higher standard.' },
+      why: "Gini is 2 x AUC - 1. The fifties are normal for an application scorecard; the nineties mean leakage until proven otherwise." },
 
-    { q: 'PSI on the score is 0.31 and the Gini is unchanged. What has happened?',
+    { q: "With PDO 20, what does twenty more points mean?",
       options: [
-        'The model has stopped ranking risk',
-        'The population applying has shifted, so the policy built on the old distribution needs recalibrating',
-        'The score has been miscalculated',
-        'Nothing worth acting on'
+        "Twice the probability of approval",
+        "Half the odds of going bad",
+        "Twenty percent lower risk",
+        "A one grade improvement"
       ],
       answer: 1,
-      why: 'A steady Gini says the ranking still works. The cut off was set to approve a share of a population that no longer exists.' },
+      why: "Points to double the odds is the scale constant. It is what makes a score readable across an organisation without anybody quoting a log odds." },
 
-    { q: 'Where should the cut off come from?',
+    { q: "A coefficient comes out with the opposite sign to the one the WOE construction implies. What is it usually?",
       options: [
-        'The score that maximises accuracy',
-        'The median score of the applicants',
-        'Whatever the model author thinks is prudent',
-        'The value of an approved good account against the cost of an approved bad one'
-      ],
-      answer: 3,
-      why: 'With a ten percent bad rate, approving nobody is ninety percent accurate and earns nothing. Bring the band table and ask for the two figures.' },
-
-    { q: 'Why is a missing value given its own bin rather than being filled with the mean?',
-      options: [
-        'Because pandas cannot compute a mean with nulls',
-        'Because "we could not find out" is itself information about the applicant',
-        'Because it keeps the bins equal in size',
-        'Because regulators require it'
+        "A bug in scikit-learn",
+        "Two correlated variables fighting",
+        "Proof that the variable should be squared",
+        "Evidence of a genuine reversal in risk"
       ],
       answer: 1,
-      why: 'Missingness often carries as much signal as the value would have. Filling it with an average throws that away and quietly invents data.' },
+      why: "Credit teams will not ship a card that says more income raises your risk. Drop one of the pair rather than explaining it away." },
 
-    { q: 'What belongs in the model document that does not belong in the notebook?',
+    { q: "What is a reason code?",
       options: [
-        'The definitions, the card, the fairness numbers and the monitoring plan',
-        'The training code',
-        'The raw data',
-        'The library versions'
+        "An internal error code for the underwriting system",
+        "The bin label with the strongest WOE",
+        "The principal reasons for a decline, ranked by points lost",
+        "A code identifying which model version scored the application"
+      ],
+      answer: 2,
+      why: "With an additive card it is arithmetic: compare each variable against a reference and rank the gaps. Written in words the applicant can act on." },
+
+    { q: "Removing age and postcode from the model means it cannot discriminate. True?",
+      options: [
+        "False, but only for models with more than ten variables",
+        "True, the attributes are gone",
+        "False: employer, school and shopping behaviour can reconstruct them, so the test is on outcomes",
+        "True, provided the data was anonymised"
+      ],
+      answer: 2,
+      why: "Compare approval rates and the bad rate among the approved, by group. A lower approval rate with a lower bad rate means that group is being held to a higher standard." },
+
+    { q: "PSI on the score is 0.31 and the Gini is unchanged. What has happened?",
+      options: [
+        "The population applying has shifted, so the policy built on the old distribution needs recalibrating",
+        "The model has stopped ranking risk",
+        "The score has been miscalculated",
+        "Nothing worth acting on"
       ],
       answer: 0,
-      why: 'A validator reads the document before the code, and it is what makes the model defensible in two years when you have left.' }
+      why: "A steady Gini says the ranking still works. The cut off was set to approve a share of a population that no longer exists." },
+
+    { q: "Where should the cut off come from?",
+      options: [
+        "Whatever the model author thinks is prudent",
+        "The median score of the applicants",
+        "The score that maximises accuracy",
+        "The value of an approved good account against the cost of an approved bad one"
+      ],
+      answer: 3,
+      why: "With a ten percent bad rate, approving nobody is ninety percent accurate and earns nothing. Bring the band table and ask for the two figures." },
+
+    { q: "Why is a missing value given its own bin rather than being filled with the mean?",
+      options: [
+        "Because \"we could not find out\" is itself information about the applicant",
+        "Because pandas cannot compute a mean with nulls",
+        "Because regulators require it",
+        "Because it keeps the bins equal in size"
+      ],
+      answer: 0,
+      why: "Missingness often carries as much signal as the value would have. Filling it with an average throws that away and quietly invents data." },
+
+    { q: "What belongs in the model document that does not belong in the notebook?",
+      options: [
+        "The definitions, the card, the fairness numbers and the monitoring plan",
+        "The library versions",
+        "The training code",
+        "The raw data"
+      ],
+      answer: 0,
+      why: "A validator reads the document before the code, and it is what makes the model defensible in two years when you have left." }
   ],
 
   project: {

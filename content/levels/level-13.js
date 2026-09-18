@@ -254,155 +254,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'Which of these is an event rather than a command?',
+    { q: "Which of these is an event rather than a command?",
       options: [
-        'TransferMoney',
-        'FreezeAccount',
-        'MoneyDeposited',
-        'SetBalance'
+        "SetBalance",
+        "FreezeAccount",
+        "MoneyDeposited",
+        "TransferMoney"
       ],
       answer: 2,
-      why: 'Events are facts in the past tense. The other three are instructions, and an instruction can be refused, which means it is a command.' },
+      why: "Events are facts in the past tense. The other three are instructions, and an instruction can be refused, which means it is a command." },
 
-    { q: 'What makes the (stream, seq) unique constraint the whole concurrency story?',
+    { q: "What makes the (stream, seq) unique constraint the whole concurrency story?",
       options: [
-        'It sorts the events for reading',
-        'It compresses the stream',
-        'It lets two writers append at once',
-        'Two writers who read the same version cannot both append the next one'
+        "It sorts the events for reading",
+        "It compresses the stream",
+        "It lets two writers append at once",
+        "Two writers who read the same version cannot both append the next one"
       ],
       answer: 3,
-      why: 'One insert wins and the other gets a unique violation, which is the signal to read again and redo the decision against the new state.' },
+      why: "One insert wins and the other gets a unique violation, which is the signal to read again and redo the decision against the new state." },
 
-    { q: 'An append fails with ConcurrencyError. What must the caller do?',
+    { q: "An append fails with ConcurrencyError. What must the caller do?",
       options: [
-        'Re-read the stream, redo the decision, and append after the new last sequence',
-        'Retry the same append immediately',
-        'Increment the sequence and retry',
-        'Fall back to a lock'
+        "Increment the sequence and retry",
+        "Fall back to a lock",
+        "Re-read the stream, redo the decision, and append after the new last sequence",
+        "Retry the same append immediately"
+      ],
+      answer: 2,
+      why: "Retrying the same append writes a decision made against a state that no longer exists. That is the lost update in a new costume." },
+
+    { q: "What is a projection?",
+      options: [
+        "State computed by folding events in order",
+        "A forecast of future balances",
+        "A database view over the snapshots",
+        "A copy of the event table"
       ],
       answer: 0,
-      why: 'Retrying the same append writes a decision made against a state that no longer exists. That is the lost update in a new costume.' },
+      why: "Same events, same order, same result. That purity is what makes rebuilding it from zero a meaningful test." },
 
-    { q: 'What is a projection?',
+    { q: "The replay test fails: the rebuilt balances differ from the live table. Which one do you trust?",
       options: [
-        'A forecast of future balances',
-        'State computed by folding events in order',
-        'A copy of the event table',
-        'A database view over the snapshots'
+        "The log, and you rebuild the projection",
+        "Whichever is larger",
+        "The live table, because it has been serving traffic",
+        "Neither, until an auditor decides"
+      ],
+      answer: 0,
+      why: "The events are the record of what happened. A projection is a summary of them, and a summary that disagrees with its source is simply wrong." },
+
+    { q: "How do you answer \"what was this balance on 31 March\"?",
+      options: [
+        "Subtract this year's transactions from today's balance",
+        "Fold the events up to that date",
+        "Restore a database backup",
+        "Keep a monthly balance table"
       ],
       answer: 1,
-      why: 'Same events, same order, same result. That purity is what makes rebuilding it from zero a meaningful test.' },
+      why: "Time travel is the same fold with a filter, which is the single most useful thing an event log gives you." },
 
-    { q: 'The replay test fails: the rebuilt balances differ from the live table. Which one do you trust?',
+    { q: "You add a fee field to an event type. What keeps the events already in the log working?",
       options: [
-        'The live table, because it has been serving traffic',
-        'Whichever is larger',
-        'The log, and you rebuild the projection',
-        'Neither, until an auditor decides'
+        "A migration that rewrites the old events",
+        "An upcast on read that fills the new field with a default",
+        "Deleting events older than the change",
+        "A second events table"
+      ],
+      answer: 1,
+      why: "Upcast on read, never in storage. Rewriting stored events means you can no longer prove what the system was told at the time." },
+
+    { q: "What is a snapshot allowed to be?",
+      options: [
+        "A backup of the read model",
+        "A replacement for the events before it",
+        "A cache that the system must work correctly without",
+        "The source of truth for old periods"
       ],
       answer: 2,
-      why: 'The events are the record of what happened. A projection is a summary of them, and a summary that disagrees with its source is simply wrong.' },
+      why: "Delete every snapshot and every answer must still be correct, only slower. A snapshot that is load bearing is a stored state that can drift." },
 
-    { q: 'How do you answer "what was this balance on 31 March"?',
+    { q: "A colleague proposes deleting events older than the latest snapshot to save space. What have they proposed?",
       options: [
-        'Keep a monthly balance table',
-        'Fold the events up to that date',
-        'Subtract this year\'s transactions from today\'s balance',
-        'Restore a database backup'
+        "A balance column with extra steps",
+        "A faster replay",
+        "Standard practice in event sourcing",
+        "A reasonable retention policy"
       ],
-      answer: 1,
-      why: 'Time travel is the same fold with a filter, which is the single most useful thing an event log gives you.' },
+      answer: 0,
+      why: "You lose replay, rebuilds after a bug, questions about that period, and any proof for an auditor. Space is solved by compression and cheaper storage, not by deletion." },
 
-    { q: 'You add a fee field to an event type. What keeps the events already in the log working?',
+    { q: "Why does personal data not belong inside events?",
       options: [
-        'A migration that rewrites the old events',
-        'Deleting events older than the change',
-        'An upcast on read that fills the new field with a default',
-        'A second events table'
-      ],
-      answer: 2,
-      why: 'Upcast on read, never in storage. Rewriting stored events means you can no longer prove what the system was told at the time.' },
-
-    { q: 'What is a snapshot allowed to be?',
-      options: [
-        'The source of truth for old periods',
-        'A cache that the system must work correctly without',
-        'A replacement for the events before it',
-        'A backup of the read model'
-      ],
-      answer: 1,
-      why: 'Delete every snapshot and every answer must still be correct, only slower. A snapshot that is load bearing is a stored state that can drift.' },
-
-    { q: 'A colleague proposes deleting events older than the latest snapshot to save space. What have they proposed?',
-      options: [
-        'A reasonable retention policy',
-        'A balance column with extra steps',
-        'Standard practice in event sourcing',
-        'A faster replay'
-      ],
-      answer: 1,
-      why: 'You lose replay, rebuilds after a bug, questions about that period, and any proof for an auditor. Space is solved by compression and cheaper storage, not by deletion.' },
-
-    { q: 'Why does personal data not belong inside events?',
-      options: [
-        'It makes the table large',
-        'JSONB cannot hold unicode names',
-        'Because the log is append only, and erasure requests require deletion',
-        'Because events must be under 1KB'
+        "It makes the table large",
+        "Because events must be under 1KB",
+        "Because the log is append only, and erasure requests require deletion",
+        "JSONB cannot hold unicode names"
       ],
       answer: 2,
-      why: 'Reference the person by an opaque id and keep them in a normal table you can delete from. Decide it before the first event, because afterwards it is a rewrite.' },
+      why: "Reference the person by an opaque id and keep them in a normal table you can delete from. Decide it before the first event, because afterwards it is a rewrite." },
 
-    { q: 'What does CQRS name?',
+    { q: "What does CQRS name?",
       options: [
-        'A consistency level for distributed databases',
-        'A message queue protocol',
-        'A snapshotting strategy',
-        'Separating the write path from the read path'
+        "Separating the write path from the read path",
+        "A snapshotting strategy",
+        "A message queue protocol",
+        "A consistency level for distributed databases"
+      ],
+      answer: 0,
+      why: "Commands append events, queries read projections. The name is in the job description; the idea is a handful of lines." },
+
+    { q: "Which of these is the strongest reason to choose event sourcing?",
+      options: [
+        "It is faster than a normalised schema",
+        "It avoids writing tests",
+        "It removes the need for a database",
+        "The history is the product, and corrections have to stay visible"
       ],
       answer: 3,
-      why: 'Commands append events, queries read projections. The name is in the job description; the idea is a handful of lines.' },
+      why: "Ledgers, orders and trades are histories. A settings page is not, and paying this complexity for one is a bad trade." },
 
-    { q: 'Which of these is the strongest reason to choose event sourcing?',
+    { q: "Why should append not decide whether a transfer is allowed?",
       options: [
-        'The history is the product, and corrections have to stay visible',
-        'It is faster than a normalised schema',
-        'It removes the need for a database',
-        'It avoids writing tests'
-      ],
-      answer: 0,
-      why: 'Ledgers, orders and trades are histories. A settings page is not, and paying this complexity for one is a bad trade.' },
-
-    { q: 'Why should append not decide whether a transfer is allowed?',
-      options: [
-        'Because appends must be async',
-        'Because the decision belongs to the command handler, and mixing them makes the log untrustworthy',
-        'Because the database cannot express the rule',
-        'Because validation is slow'
+        "Because validation is slow",
+        "Because the decision belongs to the command handler, and mixing them makes the log untrustworthy",
+        "Because appends must be async",
+        "Because the database cannot express the rule"
       ],
       answer: 1,
-      why: 'Events are facts. Validation lives in the handler that turns a command into an event, and keeping them apart is what lets a reader trust the log.' },
+      why: "Events are facts. Validation lives in the handler that turns a command into an event, and keeping them apart is what lets a reader trust the log." },
 
-    { q: 'What is eventual consistency in this design?',
+    { q: "What is eventual consistency in this design?",
       options: [
-        'Events can arrive out of order',
-        'Snapshots may be stale',
-        'A read model can be a moment behind the log',
-        'Two projections may disagree forever'
+        "Snapshots may be stale",
+        "Events can arrive out of order",
+        "Two projections may disagree forever",
+        "A read model can be a moment behind the log"
       ],
-      answer: 2,
-      why: 'Fine for a report, not for a balance check inside a command. A command reads its own stream, which is always current.' },
+      answer: 3,
+      why: "Fine for a report, not for a balance check inside a command. A command reads its own stream, which is always current." },
 
-    { q: 'Level 11 took a row lock, this level uses a version number. What is the trade?',
+    { q: "Level 11 took a row lock, this level uses a version number. What is the trade?",
       options: [
-        'Locks are always slower',
-        'Version numbers require a single writer',
-        'Locks make the loser wait, optimistic concurrency makes the loser retry',
-        'Locks work only in Postgres'
+        "Version numbers require a single writer",
+        "Locks make the loser wait, optimistic concurrency makes the loser retry",
+        "Locks are always slower",
+        "Locks work only in Postgres"
       ],
-      answer: 2,
-      why: 'Pick the lock when the conflict is the normal case, and the version when it is rare, because a retry costs nothing if it almost never happens.' }
+      answer: 1,
+      why: "Pick the lock when the conflict is the normal case, and the version when it is rare, because a retry costs nothing if it almost never happens." }
   ],
 
   project: {

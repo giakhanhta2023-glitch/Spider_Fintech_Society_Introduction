@@ -267,155 +267,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'What does position = signal.shift(1) prevent?',
+    { q: "What does position = signal.shift(1) prevent?",
       options: [
-        'Acting on information you did not have yet',
-        'Trading on the last day of the sample',
-        'Costs being double counted',
-        'Division by zero in the returns'
+        "Division by zero in the returns",
+        "Acting on information you did not have yet",
+        "Costs being double counted",
+        "Trading on the last day of the sample"
+      ],
+      answer: 1,
+      why: "Measured on this course's data: the same rule gives +21,745,676% unshifted and -26.05% shifted." },
+
+    { q: "A backtest reports a Sharpe ratio of 21. What is the most likely explanation?",
+      options: [
+        "Costs were set too low",
+        "Too little data",
+        "Lookahead bias",
+        "A very strong strategy"
+      ],
+      answer: 2,
+      why: "Real equity strategies live between 0 and 2. Above about 3 is a bug until proven otherwise, and 21 is arithmetic telling you the model knew the answer." },
+
+    { q: "Ten basis points of cost destroys one strategy and barely touches another. What decides which?",
+      options: [
+        "Turnover",
+        "The Sharpe ratio",
+        "The asset class",
+        "The length of the sample"
       ],
       answer: 0,
-      why: 'Measured on this course\'s data: the same rule gives +21,745,676% unshifted and -26.05% shifted.' },
+      why: "248 turns a year against 5.5. The cost rate is the same; how often you pay it is not." },
 
-    { q: 'A backtest reports a Sharpe ratio of 21. What is the most likely explanation?',
+    { q: "Why report the break even cost rather than the cost you assumed?",
       options: [
-        'A very strong strategy',
-        'Lookahead bias',
-        'Too little data',
-        'Costs were set too low'
-      ],
-      answer: 1,
-      why: 'Real equity strategies live between 0 and 2. Above about 3 is a bug until proven otherwise, and 21 is arithmetic telling you the model knew the answer.' },
-
-    { q: 'Ten basis points of cost destroys one strategy and barely touches another. What decides which?',
-      options: [
-        'The Sharpe ratio',
-        'The asset class',
-        'Turnover',
-        'The length of the sample'
-      ],
-      answer: 2,
-      why: '248 turns a year against 5.5. The cost rate is the same; how often you pay it is not.' },
-
-    { q: 'Why report the break even cost rather than the cost you assumed?',
-      options: [
-        'It is easier to compute',
-        'Because it is a single number a reader can judge against reality, instead of an assumption to argue about',
-        'Because regulators require it',
-        'Because it is always lower'
-      ],
-      answer: 1,
-      why: 'It turns a debate about assumptions into one figure. A strategy that breaks even at seven basis points is dead for most instruments, and everybody can see that at once.' },
-
-    { q: 'What is survivorship bias?',
-      options: [
-        'Keeping only the strategies that worked',
-        'Testing on names that lasted, because the failures were removed from the data',
-        'Overweighting recent data',
-        'Ignoring dividends'
-      ],
-      answer: 1,
-      why: 'It lives in the file rather than in your code, and no amount of careful programming removes it. You need a point in time universe.' },
-
-    { q: 'Seventy nine parameter combinations are tested. The best in sample scores Sharpe 2.18 and -1.95 out of sample, and the correlation between the two is -0.57. What does that say?',
-      options: [
-        'The out of sample period was unusual',
-        'The parameters need finer steps',
-        'The best in sample result was mostly luck, and searching harder makes that more certain',
-        'The cost assumption was wrong'
-      ],
-      answer: 2,
-      why: 'None of the top five in sample beat the median out of sample. Choosing the best fit to one history is choosing its accidents.' },
-
-    { q: 'What are the first three questions to ask about a strategy with an in sample Sharpe of 2.4?',
-      options: [
-        'What is the idea, who else uses it, and how much capital it takes',
-        'How many variations were tried, what happened on untouched data, and what the turnover and cost are',
-        'Which library, which data vendor, and which language',
-        'The maximum drawdown, the hit rate and the time in market'
-      ],
-      answer: 1,
-      why: 'None of the three is about the idea. The idea is the part that is easy to have.' },
-
-    { q: 'In walk forward testing, which periods go in the reported result?',
-      options: [
-        'All of it, fits and tests together',
-        'The fits, because they use more data',
-        'The test periods only, joined end to end',
-        'The best fold'
-      ],
-      answer: 2,
-      why: 'Every test period is genuinely out of sample, which is what makes the joined series worth reading.' },
-
-    { q: 'The parameters chosen by walk forward jump from 5 and 20 to 35 and 90 and back between folds. What does that tell you?',
-      options: [
-        'The market is changing quickly',
-        'The fit window is too long',
-        'The optimiser has a bug',
-        'There is probably nothing to choose, and the parameter is noise'
+        "Because regulators require it",
+        "Because it is always lower",
+        "It is easier to compute",
+        "Because it is a single number a reader can judge against reality, instead of an assumption to argue about"
       ],
       answer: 3,
-      why: 'Stability across folds is evidence. Instability is the absence of it, and it is worth more in a report than the return.' },
+      why: "It turns a debate about assumptions into one figure. A strategy that breaks even at seven basis points is dead for most instruments, and everybody can see that at once." },
 
-    { q: 'A strategy is invested 12% of the time and reports a Sharpe higher than buy and hold. What must the report say?',
+    { q: "What is survivorship bias?",
       options: [
-        'Its time in market, so the comparison is fair',
-        'Nothing extra, Sharpe already accounts for it',
-        'The number of trades only',
-        'That it is riskier by definition'
-      ],
-      answer: 0,
-      why: 'Sitting in cash is not skill. Without exposure alongside it, the comparison flatters the strategy.' },
-
-    { q: 'Why is maximum drawdown reported next to the return?',
-      options: [
-        'Because regulators require it',
-        'Because it determines the tax treatment',
-        'Because it is what decides whether anybody could hold the strategy through',
-        'Because it is the same as volatility'
-      ],
-      answer: 2,
-      why: 'Level 7 made the point in money: the crossover here draws down 28% against buy and hold\'s 60%, and that difference matters more than the extra return.' },
-
-    { q: 'Monthly rebalancing using quarterly earnings dated to the quarter end is:',
-      options: [
-        'Fine, the date is in the past',
-        'Lookahead, because earnings are published weeks after the quarter they describe',
-        'Survivorship bias',
-        'Only a problem for daily strategies'
-      ],
-      answer: 1,
-      why: 'The test is whether the value was published before you act, not whether its timestamp looks historical.' },
-
-    { q: 'What belongs in the write up that almost nobody includes?',
-      options: [
-        'The Sharpe ratio',
-        'The equity curve',
-        'The list of libraries used',
-        'How many variations were tried in total, including abandoned ones'
+        "Keeping only the strategies that worked",
+        "Overweighting recent data",
+        "Ignoring dividends",
+        "Testing on names that lasted, because the failures were removed from the data"
       ],
       answer: 3,
-      why: 'It gives the Sharpe ratio a denominator. Without it the number means one thing after two attempts and nothing after four hundred.' },
+      why: "It lives in the file rather than in your code, and no amount of careful programming removes it. You need a point in time universe." },
 
-    { q: 'Anchored walk forward differs from rolling in that:',
+    { q: "Seventy nine parameter combinations are tested. The best in sample scores Sharpe 2.18 and -1.95 out of sample, and the correlation between the two is -0.57. What does that say?",
       options: [
-        'Anchored keeps the start fixed and lets the fit window grow',
-        'Anchored tests on the fit period',
-        'Rolling uses all history every time',
-        'Rolling cannot be used with daily data'
+        "The out of sample period was unusual",
+        "The best in sample result was mostly luck, and searching harder makes that more certain",
+        "The parameters need finer steps",
+        "The cost assumption was wrong"
+      ],
+      answer: 1,
+      why: "None of the top five in sample beat the median out of sample. Choosing the best fit to one history is choosing its accidents." },
+
+    { q: "What are the first three questions to ask about a strategy with an in sample Sharpe of 2.4?",
+      options: [
+        "Which library, which data vendor, and which language",
+        "The maximum drawdown, the hit rate and the time in market",
+        "How many variations were tried, what happened on untouched data, and what the turnover and cost are",
+        "What is the idea, who else uses it, and how much capital it takes"
+      ],
+      answer: 2,
+      why: "None of the three is about the idea. The idea is the part that is easy to have." },
+
+    { q: "In walk forward testing, which periods go in the reported result?",
+      options: [
+        "All of it, fits and tests together",
+        "The best fold",
+        "The test periods only, joined end to end",
+        "The fits, because they use more data"
+      ],
+      answer: 2,
+      why: "Every test period is genuinely out of sample, which is what makes the joined series worth reading." },
+
+    { q: "The parameters chosen by walk forward jump from 5 and 20 to 35 and 90 and back between folds. What does that tell you?",
+      options: [
+        "There is probably nothing to choose, and the parameter is noise",
+        "The optimiser has a bug",
+        "The market is changing quickly",
+        "The fit window is too long"
       ],
       answer: 0,
-      why: 'Rolling drops the oldest data, which is the right choice when you believe the world changes rather than accumulates.' },
+      why: "Stability across folds is evidence. Instability is the absence of it, and it is worth more in a report than the return." },
 
-    { q: 'Your walk forward Sharpe is worse than your single split Sharpe. What goes in the report?',
+    { q: "A strategy is invested 12% of the time and reports a Sharpe higher than buy and hold. What must the report say?",
       options: [
-        'Both, with a sentence explaining why they differ',
-        'The single split, since it used more data for fitting',
-        'The walk forward only',
-        'Whichever is closer to the benchmark'
+        "That it is riskier by definition",
+        "Its time in market, so the comparison is fair",
+        "Nothing extra, Sharpe already accounts for it",
+        "The number of trades only"
+      ],
+      answer: 1,
+      why: "Sitting in cash is not skill. Without exposure alongside it, the comparison flatters the strategy." },
+
+    { q: "Why is maximum drawdown reported next to the return?",
+      options: [
+        "Because it determines the tax treatment",
+        "Because regulators require it",
+        "Because it is what decides whether anybody could hold the strategy through",
+        "Because it is the same as volatility"
+      ],
+      answer: 2,
+      why: "Level 7 made the point in money: the crossover here draws down 28% against buy and hold's 60%, and that difference matters more than the extra return." },
+
+    { q: "Monthly rebalancing using quarterly earnings dated to the quarter end is:",
+      options: [
+        "Survivorship bias",
+        "Fine, the date is in the past",
+        "Only a problem for daily strategies",
+        "Lookahead, because earnings are published weeks after the quarter they describe"
+      ],
+      answer: 3,
+      why: "The test is whether the value was published before you act, not whether its timestamp looks historical." },
+
+    { q: "What belongs in the write up that almost nobody includes?",
+      options: [
+        "How many variations were tried in total, including abandoned ones",
+        "The Sharpe ratio",
+        "The list of libraries used",
+        "The equity curve"
       ],
       answer: 0,
-      why: 'A reader who later finds you ran both and reported the flattering one will not believe anything else in the document.' }
+      why: "It gives the Sharpe ratio a denominator. Without it the number means one thing after two attempts and nothing after four hundred." },
+
+    { q: "Anchored walk forward differs from rolling in that:",
+      options: [
+        "Anchored keeps the start fixed and lets the fit window grow",
+        "Anchored tests on the fit period",
+        "Rolling cannot be used with daily data",
+        "Rolling uses all history every time"
+      ],
+      answer: 0,
+      why: "Rolling drops the oldest data, which is the right choice when you believe the world changes rather than accumulates." },
+
+    { q: "Your walk forward Sharpe is worse than your single split Sharpe. What goes in the report?",
+      options: [
+        "The walk forward only",
+        "Both, with a sentence explaining why they differ",
+        "Whichever is closer to the benchmark",
+        "The single split, since it used more data for fitting"
+      ],
+      answer: 1,
+      why: "A reader who later finds you ran both and reported the flattering one will not believe anything else in the document." }
   ],
 
   project: {

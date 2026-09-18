@@ -73,6 +73,7 @@ model backed tutor.
 | 16 | The backtest that does not lie to you | A backtest engine with walk forward | costs, overfitting, bias |
 | 17 | Weights, and the risk they actually carry | A portfolio and risk engine | optimisation, risk parity, VaR |
 | 18 | Three banks, three shapes, one account view | An open banking aggregator | OAuth2, consent, normalisation |
+| 19 | Ninety eight percent of your alerts are wrong | An AML and sanctions monitor | fuzzy matching, rule tuning |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.

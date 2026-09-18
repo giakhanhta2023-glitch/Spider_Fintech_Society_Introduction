@@ -282,155 +282,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'Why is p99 latency the number that matters rather than the average?',
+    { q: "Why is p99 latency the number that matters rather than the average?",
       options: [
-        'Because averages are hard to compute in production',
-        'Because the one customer in a hundred waiting two seconds is standing at a till',
-        'Because p99 is always lower than the mean',
-        'Because regulators require percentile reporting'
+        "Because p99 is always lower than the mean",
+        "Because averages are hard to compute in production",
+        "Because the one customer in a hundred waiting two seconds is standing at a till",
+        "Because regulators require percentile reporting"
+      ],
+      answer: 2,
+      why: "An average hides the tail, and the tail is the experience people complain about and abandon carts over." },
+
+    { q: "Scoring a logistic regression at serving time is best done by:",
+      options: [
+        "Calling predict_proba on a one row data frame",
+        "Querying a model server over HTTP",
+        "A dot product and a sigmoid over a plain vector",
+        "Re-fitting on recent data per request"
+      ],
+      answer: 2,
+      why: "Measured on this course's model: about 0.10 ms through scikit-learn against about 0.003 ms as arithmetic. The overhead is data frame shaped and does not belong in a request path." },
+
+    { q: "How is a one hour transaction count computed at decision time?",
+      options: [
+        "A full table scan with an index hint",
+        "From counters kept in expiring buckets as transactions arrive",
+        "By re-reading the training data",
+        "A query over the transaction table filtered by customer"
       ],
       answer: 1,
-      why: 'An average hides the tail, and the tail is the experience people complain about and abandon carts over.' },
+      why: "Small writes on the way in beat a large read on the way out, and bucket expiry means no cleanup job." },
 
-    { q: 'Scoring a logistic regression at serving time is best done by:',
+    { q: "What is training and serving skew?",
       options: [
-        'Calling predict_proba on a one row data frame',
-        'A dot product and a sigmoid over a plain vector',
-        'Re-fitting on recent data per request',
-        'Querying a model server over HTTP'
+        "A feature meaning something different in training than it does in production",
+        "Latency differences between environments",
+        "The gap between train and test accuracy",
+        "The model drifting as the population changes"
       ],
-      answer: 1,
-      why: 'Measured on this course\'s model: about 0.10 ms through scikit-learn against about 0.003 ms as arithmetic. The overhead is data frame shaped and does not belong in a request path.' },
+      answer: 0,
+      why: "The model is fine and every prediction is subtly wrong. One implementation of each feature, called by both paths, is the structural fix." },
 
-    { q: 'How is a one hour transaction count computed at decision time?',
+    { q: "Why must a velocity feature exclude the transaction being scored?",
       options: [
-        'A query over the transaction table filtered by customer',
-        'A full table scan with an index hint',
-        'By re-reading the training data',
-        'From counters kept in expiring buckets as transactions arrive'
+        "Because including it uses information from the moment being predicted and inflates the training signal",
+        "Because Redis cannot increment and read atomically",
+        "Because the counter has not been written yet",
+        "To save a millisecond"
+      ],
+      answer: 0,
+      why: "Point in time correctness. The signal looks strong offline and vanishes live, which is the same trap as level 8 leakage." },
+
+    { q: "Offline AUC is 0.97 and the live model catches almost nothing. What do you check first?",
+      options: [
+        "Whether the database is slow",
+        "Whether the threshold is too high",
+        "Whether the features computed live match the features computed in training",
+        "Whether to add more trees"
+      ],
+      answer: 2,
+      why: "Recompute the features offline for transactions already decided live and compare field by field. A difference names itself." },
+
+    { q: "What does shadow mode tell you that an offline test cannot?",
+      options: [
+        "The true fraud rate",
+        "Whether the candidate would have caught fraud you approved",
+        "The optimal threshold",
+        "How the candidate behaves on live traffic, including its latency and how much review volume it would create"
       ],
       answer: 3,
-      why: 'Small writes on the way in beat a large read on the way out, and bucket expiry means no cleanup job.' },
+      why: "What it cannot tell you is the second option, because you approved those transactions and may never learn they were bad." },
 
-    { q: 'What is training and serving skew?',
+    { q: "A review threshold sends 1.2% of traffic to a queue, and volume doubles. Which response is the one that happens by accident?",
       options: [
-        'The model drifting as the population changes',
-        'A feature meaning something different in training than it does in production',
-        'The gap between train and test accuracy',
-        'Latency differences between environments'
+        "Pausing the campaign",
+        "The backlog being auto approved because nobody decided",
+        "Raising the threshold deliberately",
+        "Hiring more reviewers"
       ],
       answer: 1,
-      why: 'The model is fine and every prediction is subtly wrong. One implementation of each feature, called by both paths, is the structural fix.' },
+      why: "And it is the worst, because the cases auto approved are the ones the model was least sure about. Raising the threshold on purpose, with the expected loss written down, is the honest move." },
 
-    { q: 'Why must a velocity feature exclude the transaction being scored?',
+    { q: "Why do rules sit on top of the model rather than being replaced by it?",
       options: [
-        'To save a millisecond',
-        'Because the counter has not been written yet',
-        'Because including it uses information from the moment being predicted and inflates the training signal',
-        'Because Redis cannot increment and read atomically'
-      ],
-      answer: 2,
-      why: 'Point in time correctness. The signal looks strong offline and vanishes live, which is the same trap as level 8 leakage.' },
-
-    { q: 'Offline AUC is 0.97 and the live model catches almost nothing. What do you check first?',
-      options: [
-        'Whether the features computed live match the features computed in training',
-        'Whether to add more trees',
-        'Whether the threshold is too high',
-        'Whether the database is slow'
+        "Because some decisions are not statistical: a stolen card is declined whatever the score says",
+        "Because regulators ban model only decisions",
+        "Because models cannot read card status",
+        "Because rules are more accurate"
       ],
       answer: 0,
-      why: 'Recompute the features offline for transactions already decided live and compare field by field. A difference names itself.' },
+      why: "The model orders the uncertain middle. Rules handle the certain ends, and the split is what makes both explainable." },
 
-    { q: 'What does shadow mode tell you that an offline test cannot?',
+    { q: "Which monitoring signal is available immediately after a decision?",
       options: [
-        'The true fraud rate',
-        'Whether the candidate would have caught fraud you approved',
-        'How the candidate behaves on live traffic, including its latency and how much review volume it would create',
-        'The optimal threshold'
+        "Confirmed fraud losses",
+        "Recall",
+        "Input drift on each feature",
+        "Chargebacks"
       ],
       answer: 2,
-      why: 'What it cannot tell you is the second option, because you approved those transactions and may never learn they were bad.' },
+      why: "The real label arrives weeks later through disputes, which is exactly why input and prediction drift are watched from the first minute." },
 
-    { q: 'A review threshold sends 1.2% of traffic to a queue, and volume doubles. Which response is the one that happens by accident?',
+    { q: "Card present drops from 61% to 4% at 09:12 and holds. The first move is:",
       options: [
-        'Raising the threshold deliberately',
-        'Hiring more reviewers',
-        'The backlog being auto approved because nobody decided',
-        'Pausing the campaign'
-      ],
-      answer: 2,
-      why: 'And it is the worst, because the cases auto approved are the ones the model was least sure about. Raising the threshold on purpose, with the expected loss written down, is the honest move.' },
-
-    { q: 'Why do rules sit on top of the model rather than being replaced by it?',
-      options: [
-        'Because rules are more accurate',
-        'Because some decisions are not statistical: a stolen card is declined whatever the score says',
-        'Because models cannot read card status',
-        'Because regulators ban model only decisions'
+        "Retrain on the new distribution",
+        "Treat it as a data incident and page the owner of that feed",
+        "Lower the decline threshold",
+        "Ignore it until chargebacks confirm harm"
       ],
       answer: 1,
-      why: 'The model orders the uncertain middle. Rules handle the certain ends, and the split is what makes both explainable.' },
+      why: "A step change at a precise minute is upstream, not behavioural. Meanwhile the model is scoring nearly everything as card not present, and approvals are about to collapse." },
 
-    { q: 'Which monitoring signal is available immediately after a decision?',
+    { q: "What does a PSI of 0.31 on a feature mean?",
       options: [
-        'Input drift on each feature',
-        'Chargebacks',
-        'Confirmed fraud losses',
-        'Recall'
+        "The feature has become more predictive",
+        "The distribution has moved far enough that the model was built on different traffic",
+        "Thirty one percent of values are missing",
+        "The model has a bug"
       ],
-      answer: 0,
-      why: 'The real label arrives weeks later through disputes, which is exactly why input and prediction drift are watched from the first minute.' },
+      answer: 1,
+      why: "Under 0.10 stable, 0.10 to 0.25 watch, above 0.25 act. Same statistic as the scorecard monitoring in level 14." },
 
-    { q: 'Card present drops from 61% to 4% at 09:12 and holds. The first move is:',
+    { q: "Why ship a model as JSON coefficients rather than a pickled object?",
       options: [
-        'Retrain on the new distribution',
-        'Lower the decline threshold',
-        'Treat it as a data incident and page the owner of that feed',
-        'Ignore it until chargebacks confirm harm'
-      ],
-      answer: 2,
-      why: 'A step change at a precise minute is upstream, not behavioural. Meanwhile the model is scoring nearly everything as card not present, and approvals are about to collapse.' },
-
-    { q: 'What does a PSI of 0.31 on a feature mean?',
-      options: [
-        'The feature has become more predictive',
-        'The model has a bug',
-        'Thirty one percent of values are missing',
-        'The distribution has moved far enough that the model was built on different traffic'
+        "Because scikit-learn cannot be installed in production",
+        "Because pickles cannot hold floats",
+        "JSON is faster to parse",
+        "Because it is auditable, diffable, version stamped and cannot execute code"
       ],
       answer: 3,
-      why: 'Under 0.10 stable, 0.10 to 0.25 watch, above 0.25 act. Same statistic as the scorecard monitoring in level 14.' },
+      why: "Unpickling a file runs whatever is inside it, and a coefficient you cannot read in a diff is a coefficient nobody reviews." },
 
-    { q: 'Why ship a model as JSON coefficients rather than a pickled object?',
+    { q: "What has to be defined before a kill switch is real?",
       options: [
-        'JSON is faster to parse',
-        'Because it is auditable, diffable, version stamped and cannot execute code',
-        'Because scikit-learn cannot be installed in production',
-        'Because pickles cannot hold floats'
+        "The name of the configuration key",
+        "Who is allowed to flip it",
+        "How fast it propagates",
+        "What the system does when the model is off"
       ],
-      answer: 1,
-      why: 'Unpickling a file runs whatever is inside it, and a coefficient you cannot read in a diff is a coefficient nobody reviews.' },
+      answer: 3,
+      why: "Approving everything is a fraud decision and declining everything is a business decision. Decide in advance, write it in the runbook, and drill it." },
 
-    { q: 'What has to be defined before a kill switch is real?',
+    { q: "Why log the feature vector, the score and the model version with every decision?",
       options: [
-        'What the system does when the model is off',
-        'The name of the configuration key',
-        'Who is allowed to flip it',
-        'How fast it propagates'
+        "So a decision from three weeks ago can be reconstructed and explained",
+        "To retrain on it later",
+        "Because the regulator requires all logs to be kept",
+        "For the metrics dashboard"
       ],
       answer: 0,
-      why: 'Approving everything is a fraud decision and declining everything is a business decision. Decide in advance, write it in the runbook, and drill it.' },
-
-    { q: 'Why log the feature vector, the score and the model version with every decision?',
-      options: [
-        'To retrain on it later',
-        'For the metrics dashboard',
-        'So a decision from three weeks ago can be reconstructed and explained',
-        'Because the regulator requires all logs to be kept'
-      ],
-      answer: 2,
-      why: 'Somebody will ask why a transaction was declined. Without the inputs and the version, the honest answer is that you do not know.' }
+      why: "Somebody will ask why a transaction was declined. Without the inputs and the version, the honest answer is that you do not know." }
   ],
 
   project: {

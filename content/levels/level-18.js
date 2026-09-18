@@ -272,155 +272,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'Where does the customer type their bank password in the authorization code flow?',
+    { q: "Where does the customer type their bank password in the authorization code flow?",
       options: [
-        'In your app, which forwards it',
-        'At their bank, and you never see it',
-        'In the redirect URL',
-        'Nowhere: the flow uses the client secret instead'
-      ],
-      answer: 1,
-      why: 'That is the point of the flow, and why screen scraping with shared credentials is being legislated out.' },
-
-    { q: 'What does PKCE protect against?',
-      options: [
-        'An attacker who obtains the authorization code being able to exchange it',
-        'The access token expiring too soon',
-        'The bank refusing the scope',
-        'Replay of the refresh token'
+        "At their bank, and you never see it",
+        "In your app, which forwards it",
+        "Nowhere: the flow uses the client secret instead",
+        "In the redirect URL"
       ],
       answer: 0,
-      why: 'The verifier never leaves your server. Current guidance is to use it for every client type, not only mobile.' },
+      why: "That is the point of the flow, and why screen scraping with shared credentials is being legislated out." },
 
-    { q: 'The state parameter exists to:',
+    { q: "What does PKCE protect against?",
       options: [
-        'Carry the requested scopes',
-        'Identify the bank',
-        'Stop an attacker linking their account to your user\'s session',
-        'Hold the code verifier'
+        "The access token expiring too soon",
+        "Replay of the refresh token",
+        "An attacker who obtains the authorization code being able to exchange it",
+        "The bank refusing the scope"
       ],
       answer: 2,
-      why: 'Random, stored server side, checked on return, and used once. A reused state is a fatal error rather than a warning.' },
+      why: "The verifier never leaves your server. Current guidance is to use it for every client type, not only mobile." },
 
-    { q: 'How should a refresh token be stored?',
+    { q: "The state parameter exists to:",
       options: [
-        'Hashed, like a password',
-        'In plain text, because it expires anyway',
-        'In the session cookie',
-        'Encrypted at rest with a key held outside the database'
+        "Carry the requested scopes",
+        "Identify the bank",
+        "Hold the code verifier",
+        "Stop an attacker linking their account to your user's session"
       ],
       answer: 3,
-      why: 'You cannot hash it because you need it back. Encryption means a dump of the table is not a set of working credentials.' },
+      why: "Random, stored server side, checked on return, and used once. A reused state is a fatal error rather than a warning." },
 
-    { q: 'Two workers refresh the same token at the same moment. What usually happens?',
+    { q: "How should a refresh token be stored?",
       options: [
-        'Both succeed harmlessly',
-        'Many banks invalidate the old refresh token, so one worker is left holding a dead credential',
-        'The bank merges the requests',
-        'The access token is issued twice with the same value'
-      ],
-      answer: 1,
-      why: 'Take a lock and re-read inside it. A hundred workers should cost one refresh rather than a hundred races.' },
-
-    { q: 'A refresh returns 400 invalid_grant. What is the correct handling?',
-      options: [
-        'Retry five times with backoff',
-        'Reconnect automatically using the stored credentials',
-        'Mark the connection as needing consent and ask the user to reconnect',
-        'Page an engineer'
-      ],
-      answer: 2,
-      why: 'The permission is gone. No number of retries recreates it, and the only person who can fix it is the customer.' },
-
-    { q: 'Why keep the raw bank record alongside the normalised one?',
-      options: [
-        'For the audit log',
-        'Because normalisation is a guess that will be wrong for some bank, and fixing it later needs the original',
-        'To compute the running balance',
-        'Because regulators require the raw format'
-      ],
-      answer: 1,
-      why: 'Otherwise the only way to correct a parsing bug is asking every customer to reconnect and resync.' },
-
-    { q: 'Bank A sends no transaction id. How do you give its rows a stable identity?',
-      options: [
-        'Use the row number in the file',
-        'Generate a UUID at ingestion',
-        'Use the date alone',
-        'Hash the account, date, amount and description, with a counter for genuine repeats'
+        "In the session cookie",
+        "In plain text, because it expires anyway",
+        "Hashed, like a password",
+        "Encrypted at rest with a key held outside the database"
       ],
       answer: 3,
-      why: 'A UUID changes on every sync, so the same transaction arrives as new each time. The counter is what saves two identical coffees on one day.' },
+      why: "You cannot hash it because you need it back. Encryption means a dump of the table is not a set of working credentials." },
 
-    { q: 'A payment appears as pending and later as booked with the same reference. The ingester should:',
+    { q: "Two workers refresh the same token at the same moment. What usually happens?",
       options: [
-        'Keep both rows',
-        'Ignore the pending one entirely',
-        'Match on the reference and replace the pending row, keeping the fact that the amount changed',
-        'Ask the user which is correct'
-      ],
-      answer: 2,
-      why: 'One payment, two observations. Ignoring pending rows means the app is days behind, and keeping both double counts the spending.' },
-
-    { q: 'Why deliberately refetch a day or two you already have?',
-      options: [
-        'To check the bank is still up',
-        'Because banks backdate and reorder transactions, and deduplication makes the overlap free',
-        'To keep the rate limit warm',
-        'Because cursors are unreliable'
-      ],
-      answer: 1,
-      why: 'Without the overlap, a transaction backdated after your cursor passed is never seen again.' },
-
-    { q: 'What should the categoriser do first with POS APPLE.COM/BILL HANOI?',
-      options: [
-        'Feed it to the model',
-        'Clean it to APPLE.COM',
-        'Look it up in a merchant database',
-        'Ask the user'
-      ],
-      answer: 1,
-      why: 'Most of the value is in the cleaning, and it is a list of rules rather than a model. Everything downstream gets easier.' },
-
-    { q: 'A user recategorises EVN HANOI to utilities. What happens for other users?',
-      options: [
-        'Nothing at all, ever',
-        'The same change immediately',
-        'It becomes one vote, promoted to a global rule only when enough independent users agree',
-        'The model retrains on it overnight'
-      ],
-      answer: 2,
-      why: 'One correction can be a mistake or a personal preference. Applying it globally lets one person recategorise the electricity company.' },
-
-    { q: 'Which is the right order for the categorisation fallback chain?',
-      options: [
-        'User rule, global rule, model, uncategorised',
-        'Model, user rule, global rule',
-        'Global rule, model, user rule',
-        'Model only, with corrections as training data'
+        "Many banks invalidate the old refresh token, so one worker is left holding a dead credential",
+        "Both succeed harmlessly",
+        "The bank merges the requests",
+        "The access token is issued twice with the same value"
       ],
       answer: 0,
-      why: 'The user always wins, and an honest "uncategorised" beats a confident wrong answer that they have to correct twice.' },
+      why: "Take a lock and re-read inside it. A hundred workers should cost one refresh rather than a hundred races." },
 
-    { q: 'Consent typically lasts ninety days. What does that mean for the product?',
+    { q: "A refresh returns 400 invalid_grant. What is the correct handling?",
       options: [
-        'Nothing, refresh handles it',
-        'The sync will stop on a date you can predict, so warn the user before it does',
-        'The user must reauthenticate every login',
-        'Tokens must be rotated daily'
+        "Page an engineer",
+        "Mark the connection as needing consent and ask the user to reconnect",
+        "Reconnect automatically using the stored credentials",
+        "Retry five times with backoff"
       ],
       answer: 1,
-      why: 'Write the expiry down at connection time. A banner at day eighty three is worth more than any retry logic.' },
+      why: "The permission is gone. No number of retries recreates it, and the only person who can fix it is the customer." },
 
-    { q: 'Why does each bank get its own normaliser function?',
+    { q: "Why keep the raw bank record alongside the normalised one?",
       options: [
-        'For parallel processing',
-        'Because the banks use different HTTP libraries',
-        'So that nothing outside those functions sees a bank specific field, and a fourth bank touches nothing else',
-        'To allow per bank rate limits'
+        "Because regulators require the raw format",
+        "Because normalisation is a guess that will be wrong for some bank, and fixing it later needs the original",
+        "For the audit log",
+        "To compute the running balance"
+      ],
+      answer: 1,
+      why: "Otherwise the only way to correct a parsing bug is asking every customer to reconnect and resync." },
+
+    { q: "Bank A sends no transaction id. How do you give its rows a stable identity?",
+      options: [
+        "Use the date alone",
+        "Use the row number in the file",
+        "Hash the account, date, amount and description, with a counter for genuine repeats",
+        "Generate a UUID at ingestion"
       ],
       answer: 2,
-      why: 'One place per bank, one schema out, and a test per bank holding a real row and the exact object it should become.' }
+      why: "A UUID changes on every sync, so the same transaction arrives as new each time. The counter is what saves two identical coffees on one day." },
+
+    { q: "A payment appears as pending and later as booked with the same reference. The ingester should:",
+      options: [
+        "Match on the reference and replace the pending row, keeping the fact that the amount changed",
+        "Ignore the pending one entirely",
+        "Keep both rows",
+        "Ask the user which is correct"
+      ],
+      answer: 0,
+      why: "One payment, two observations. Ignoring pending rows means the app is days behind, and keeping both double counts the spending." },
+
+    { q: "Why deliberately refetch a day or two you already have?",
+      options: [
+        "To check the bank is still up",
+        "Because cursors are unreliable",
+        "Because banks backdate and reorder transactions, and deduplication makes the overlap free",
+        "To keep the rate limit warm"
+      ],
+      answer: 2,
+      why: "Without the overlap, a transaction backdated after your cursor passed is never seen again." },
+
+    { q: "What should the categoriser do first with POS APPLE.COM/BILL HANOI?",
+      options: [
+        "Feed it to the model",
+        "Clean it to APPLE.COM",
+        "Ask the user",
+        "Look it up in a merchant database"
+      ],
+      answer: 1,
+      why: "Most of the value is in the cleaning, and it is a list of rules rather than a model. Everything downstream gets easier." },
+
+    { q: "A user recategorises EVN HANOI to utilities. What happens for other users?",
+      options: [
+        "It becomes one vote, promoted to a global rule only when enough independent users agree",
+        "Nothing at all, ever",
+        "The same change immediately",
+        "The model retrains on it overnight"
+      ],
+      answer: 0,
+      why: "One correction can be a mistake or a personal preference. Applying it globally lets one person recategorise the electricity company." },
+
+    { q: "Which is the right order for the categorisation fallback chain?",
+      options: [
+        "Model, user rule, global rule",
+        "User rule, global rule, model, uncategorised",
+        "Global rule, model, user rule",
+        "Model only, with corrections as training data"
+      ],
+      answer: 1,
+      why: "The user always wins, and an honest \"uncategorised\" beats a confident wrong answer that they have to correct twice." },
+
+    { q: "Consent typically lasts ninety days. What does that mean for the product?",
+      options: [
+        "Nothing, refresh handles it",
+        "Tokens must be rotated daily",
+        "The user must reauthenticate every login",
+        "The sync will stop on a date you can predict, so warn the user before it does"
+      ],
+      answer: 3,
+      why: "Write the expiry down at connection time. A banner at day eighty three is worth more than any retry logic." },
+
+    { q: "Why does each bank get its own normaliser function?",
+      options: [
+        "For parallel processing",
+        "Because the banks use different HTTP libraries",
+        "So that nothing outside those functions sees a bank specific field, and a fourth bank touches nothing else",
+        "To allow per bank rate limits"
+      ],
+      answer: 2,
+      why: "One place per bank, one schema out, and a test per bank holding a real row and the exact object it should become." }
   ],
 
   project: {

@@ -272,155 +272,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'Why does an unconstrained mean variance optimiser produce extreme weights?',
+    { q: "Why does an unconstrained mean variance optimiser produce extreme weights?",
       options: [
-        'The solver has not converged',
-        'It treats noisy estimates as certain, so it pushes hardest where the noise pointed',
-        'The covariance matrix is singular',
-        'Because returns are not normal'
-      ],
-      answer: 1,
-      why: 'Error maximisation. The fix is constraints, shrinkage, or a method that does not need the means, not a better solver.' },
-
-    { q: 'On this data, unconstrained optimisation gains 0.05 of Sharpe over equal weight. What does it require?',
-      options: [
-        'Daily rebalancing',
-        'A 92% short position, with the margin and borrow that implies',
-        'A longer sample',
-        'A risk free asset'
-      ],
-      answer: 1,
-      why: '0.50 against 0.45. Five hundredths of Sharpe for a position most investors cannot hold and none should want.' },
-
-    { q: 'What does a long only constraint actually express?',
-      options: [
-        'A regulatory requirement',
-        'A preference for simplicity',
-        'That you do not believe your own estimates enough to bet against anything',
-        'That short selling is expensive'
-      ],
-      answer: 2,
-      why: 'Constraints are a crude prior. Practitioners reached for them first and the theory eventually agreed.' },
-
-    { q: 'Minimum variance needs which inputs?',
-      options: [
-        'The covariance matrix only',
-        'Expected returns only',
-        'Both, plus a risk free rate',
-        'Neither, only prices'
+        "It treats noisy estimates as certain, so it pushes hardest where the noise pointed",
+        "The covariance matrix is singular",
+        "The solver has not converged",
+        "Because returns are not normal"
       ],
       answer: 0,
-      why: 'That is its attraction: the means are the least reliable estimate you have, and this method does not ask for them.' },
+      why: "Error maximisation. The fix is constraints, shrinkage, or a method that does not need the means, not a better solver." },
 
-    { q: 'Equal weight gives every asset 25% of the money. On this data CRYPTOZ carries what share of the risk?',
+    { q: "On this data, unconstrained optimisation gains 0.05 of Sharpe over equal weight. What does it require?",
       options: [
-        '25%',
-        '38%',
-        '62.7%',
-        '11.7%'
-      ],
-      answer: 2,
-      why: 'Equal money is not equal risk when volatilities differ by a factor of five. Nobody chose that concentration; it fell out of the weights.' },
-
-    { q: 'Risk parity chooses weights so that:',
-      options: [
-        'Every asset contributes the same risk',
-        'Every asset has the same weight',
-        'Volatility is minimised',
-        'The Sharpe ratio is maximised'
+        "A 92% short position, with the margin and borrow that implies",
+        "A risk free asset",
+        "Daily rebalancing",
+        "A longer sample"
       ],
       answer: 0,
-      why: 'It needs no return estimates, holds more of the calm assets, and is a serious alternative rather than a curiosity.' },
+      why: "0.50 against 0.45. Five hundredths of Sharpe for a position most investors cannot hold and none should want." },
 
-    { q: 'Historical, parametric and Monte Carlo VaR agree closely on this dataset. Why?',
+    { q: "What does a long only constraint actually express?",
       options: [
-        'Because the sample is large',
-        'Because the portfolio is equal weight',
-        'Because all three use the same quantile function',
-        'Because these returns are nearly normal, with excess kurtosis of 0.15'
+        "A preference for simplicity",
+        "That short selling is expensive",
+        "That you do not believe your own estimates enough to bet against anything",
+        "A regulatory requirement"
+      ],
+      answer: 2,
+      why: "Constraints are a crude prior. Practitioners reached for them first and the theory eventually agreed." },
+
+    { q: "Minimum variance needs which inputs?",
+      options: [
+        "Neither, only prices",
+        "The covariance matrix only",
+        "Both, plus a risk free rate",
+        "Expected returns only"
+      ],
+      answer: 1,
+      why: "That is its attraction: the means are the least reliable estimate you have, and this method does not ask for them." },
+
+    { q: "Equal weight gives every asset 25% of the money. On this data CRYPTOZ carries what share of the risk?",
+      options: [
+        "62.7%",
+        "25%",
+        "11.7%",
+        "38%"
+      ],
+      answer: 0,
+      why: "Equal money is not equal risk when volatilities differ by a factor of five. Nobody chose that concentration; it fell out of the weights." },
+
+    { q: "Risk parity chooses weights so that:",
+      options: [
+        "Volatility is minimised",
+        "Every asset has the same weight",
+        "Every asset contributes the same risk",
+        "The Sharpe ratio is maximised"
+      ],
+      answer: 2,
+      why: "It needs no return estimates, holds more of the calm assets, and is a serious alternative rather than a curiosity." },
+
+    { q: "Historical, parametric and Monte Carlo VaR agree closely on this dataset. Why?",
+      options: [
+        "Because these returns are nearly normal, with excess kurtosis of 0.15",
+        "Because all three use the same quantile function",
+        "Because the portfolio is equal weight",
+        "Because the sample is large"
+      ],
+      answer: 0,
+      why: "Real markets run between three and ten, and there the parametric number is the optimistic one and the gap is the warning." },
+
+    { q: "Expected shortfall at 95% on this portfolio is -3.35% against a VaR of -2.63%. What does that mean?",
+      options: [
+        "The VaR was computed wrongly",
+        "The portfolio loses 3.35% on 5% of days",
+        "The worst possible day is -3.35%",
+        "On the days that breach the VaR, the average loss is 3.35%"
       ],
       answer: 3,
-      why: 'Real markets run between three and ten, and there the parametric number is the optimistic one and the gap is the warning.' },
+      why: "VaR gives the threshold, ES gives the average beyond it, and the worst single day here was -5.00%. Report all three." },
 
-    { q: 'Expected shortfall at 95% on this portfolio is -3.35% against a VaR of -2.63%. What does that mean?',
+    { q: "A 99% VaR is breached 22 times in 781 days. The most likely explanations are:",
       options: [
-        'The VaR was computed wrongly',
-        'On the days that breach the VaR, the average loss is 3.35%',
-        'The portfolio loses 3.35% on 5% of days',
-        'The worst possible day is -3.35%'
+        "The sample is too short to say",
+        "Fat tails or volatility clustering",
+        "A bug in the quantile function",
+        "Too few assets"
       ],
       answer: 1,
-      why: 'VaR gives the threshold, ES gives the average beyond it, and the worst single day here was -5.00%. Report all three.' },
+      why: "Eight were expected. Scattered breaches point at the distribution; bunched ones point at a volatility estimate that does not react." },
 
-    { q: 'A 99% VaR is breached 22 times in 781 days. The most likely explanations are:',
+    { q: "Far fewer exceptions than expected means:",
       options: [
-        'Fat tails or volatility clustering',
-        'A bug in the quantile function',
-        'Too few assets',
-        'The sample is too short to say'
+        "The model is working well",
+        "Nothing worth reporting",
+        "The model overstates risk, which costs capital and opportunity",
+        "The confidence level was set too low"
       ],
-      answer: 0,
-      why: 'Eight were expected. Scattered breaches point at the distribution; bunched ones point at a volatility estimate that does not react.' },
+      answer: 2,
+      why: "Being wrong in the safe direction is still being wrong, and it is a real finding rather than a comfortable one." },
 
-    { q: 'Far fewer exceptions than expected means:',
+    { q: "What does shrinkage do to a covariance matrix?",
       options: [
-        'The model is working well',
-        'The model overstates risk, which costs capital and opportunity',
-        'Nothing worth reporting',
-        'The confidence level was set too low'
+        "Scales it to annual units",
+        "Pulls the noisy sample estimate towards a simple stable target",
+        "Reduces its dimensions",
+        "Removes the correlations"
       ],
       answer: 1,
-      why: 'Being wrong in the safe direction is still being wrong, and it is a real finding rather than a comfortable one.' },
+      why: "It earns its place as the number of assets approaches the number of observations. On four assets and 781 days it does almost nothing." },
 
-    { q: 'What does shrinkage do to a covariance matrix?',
+    { q: "Risk contribution is computed as:",
       options: [
-        'Reduces its dimensions',
-        'Removes the correlations',
-        'Pulls the noisy sample estimate towards a simple stable target',
-        'Scales it to annual units'
-      ],
-      answer: 2,
-      why: 'It earns its place as the number of assets approaches the number of observations. On four assets and 781 days it does almost nothing.' },
-
-    { q: 'Risk contribution is computed as:',
-      options: [
-        'Weight times marginal contribution to risk',
-        'Weight times volatility',
-        'Weight squared times variance',
-        'The correlation with the portfolio'
-      ],
-      answer: 0,
-      why: 'And the contributions sum to the portfolio volatility, which is what makes the percentages meaningful.' },
-
-    { q: 'Why does a rebalancing policy need a threshold rather than only a calendar?',
-      options: [
-        'Because calendars vary by country',
-        'Because monthly is too frequent for any portfolio',
-        'Because a calendar rebalances when nothing has moved, and every trade pays the costs from level 16',
-        'Because thresholds are easier to implement'
-      ],
-      answer: 2,
-      why: 'A no trade band is the honest version: nothing happens until a weight has drifted far enough to be worth the cost.' },
-
-    { q: 'Which is the best summary of what constraints cost on this data?',
-      options: [
-        'Nothing at all',
-        'About 0.02 of Sharpe, in exchange for removing the borrowing, the short and the margin call',
-        'About half the return',
-        'They always improve the result'
+        "The correlation with the portfolio",
+        "Weight times marginal contribution to risk",
+        "Weight times volatility",
+        "Weight squared times variance"
       ],
       answer: 1,
-      why: '0.50 unconstrained against 0.48 long only. Cheap insurance against estimates you know are noisy.' },
+      why: "And the contributions sum to the portfolio volatility, which is what makes the percentages meaningful." },
 
-    { q: 'Ten numbers describe the covariance of four assets. How many for a hundred?',
+    { q: "Why does a rebalancing policy need a threshold rather than only a calendar?",
       options: [
-        '400',
-        '1,000',
-        '5,050',
-        '10,000'
+        "Because thresholds are easier to implement",
+        "Because calendars vary by country",
+        "Because a calendar rebalances when nothing has moved, and every trade pays the costs from level 16",
+        "Because monthly is too frequent for any portfolio"
       ],
       answer: 2,
-      why: 'n(n+1)/2, all estimated from the same limited history. That growth is why portfolio theory starts to hurt at scale.' }
+      why: "A no trade band is the honest version: nothing happens until a weight has drifted far enough to be worth the cost." },
+
+    { q: "Which is the best summary of what constraints cost on this data?",
+      options: [
+        "They always improve the result",
+        "Nothing at all",
+        "About half the return",
+        "About 0.02 of Sharpe, in exchange for removing the borrowing, the short and the margin call"
+      ],
+      answer: 3,
+      why: "0.50 unconstrained against 0.48 long only. Cheap insurance against estimates you know are noisy." },
+
+    { q: "Ten numbers describe the covariance of four assets. How many for a hundred?",
+      options: [
+        "1,000",
+        "400",
+        "10,000",
+        "5,050"
+      ],
+      answer: 3,
+      why: "n(n+1)/2, all estimated from the same limited history. That growth is why portfolio theory starts to hurt at scale." }
   ],
 
   project: {

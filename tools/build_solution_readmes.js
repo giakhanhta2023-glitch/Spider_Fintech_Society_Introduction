@@ -379,6 +379,33 @@ const NOTES = {
       ['Spending is positive for one bank', 'The sign convention differs per bank: a negative amount, an indicator field, and a column position. Normalise all three to negative for money out and test it.'],
       ['A refresh token shows up in a log line', 'Something logged the whole connection row or the whole exception. Log the connection id, and add the test that captures log output during a full flow.']
     ]
+  },
+
+  19: {
+    files: [
+      ['`monitor/names.py`', 'normalise, jaro and jaro_winkler, written by hand and checked against a library'],
+      ['`monitor/screen.py`', 'alias expansion, scoring on distinct names, the threshold sweep'],
+      ['`monitor/identify.py`', 'secondary identifiers, discounting on disagreement only'],
+      ['`monitor/rules.py`', 'structuring, pass through, and the corridor rule that finds nothing'],
+      ['`monitor/queue.py`', 'the alert table, the append only event table, and the triage CLI']
+    ],
+    run: 'pip install -r requirements.txt && pytest -q && python -m monitor.report',
+    design: [
+      'Aliases are expanded before anything else. Sixty entities are ninety five searchable strings, and screening the primary name alone loses hits without ever saying so.',
+      'Normalisation is four separate rules with a test each: case folding, punctuation, titles and token order. Together they recover five of the seven planted hits, which is the cheapest part of the whole system.',
+      'Jaro-Winkler is implemented rather than imported, then checked against rapidfuzz on a hundred pairs. Choosing between 0.95 and 0.97 is a judgement about the algorithm, and it is not a judgement you can make about a black box.',
+      'The threshold sweep is printed by the code and pasted nowhere. At 0.95 the queue is 182 payments and all seven hits are found; at 0.85 it is 7,081 and still seven; at 1.00 it is five alerts and two designated parties were paid.',
+      'Secondary identifiers discount on disagreement and never on absence, and every discount is stored with its reason rather than dropped. A missing date of birth is not evidence of innocence.',
+      'The structuring rule is reported at two deposits and at three, 16 alerts against 4, so the tuning decision appears in the output rather than in a conversation nobody wrote down.',
+      'The corridor rule ships even though it finds nothing: 514 alerts, no real cases. A negative result that costs an analyst a year is worth writing down.',
+      'Alerts store the rule version in force when they fired, and closing one appends an event. An alert from March has to stay explainable after April changed the thresholds.'
+    ],
+    mistakes: [
+      ['The sweep numbers are slightly off', 'Check the normaliser first, since token sorting and title stripping both move scores, then check that aliases were expanded into their own rows.'],
+      ['Jaro-Winkler disagrees with the library', 'The transposition count is the part everybody gets wrong. Halve it, and compare against a pair you worked out on paper.'],
+      ['Screening takes minutes', 'Score distinct names, not payments: 887 against 12,067. Then read the note on blocking before assuming this scales.'],
+      ['A real hit got discounted', 'A secondary identifier rule is firing on absence rather than disagreement. Assert in a test that none of the seven is ever discounted.']
+    ]
   }
 };
 

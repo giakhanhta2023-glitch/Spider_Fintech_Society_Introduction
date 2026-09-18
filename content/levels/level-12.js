@@ -279,155 +279,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'A client sends the same idempotency key with a different request body. What should the API return?',
+    { q: "A client sends the same idempotency key with a different request body. What should the API return?",
       options: [
-        '409, because the key was used for a different request',
-        '200 with the original transfer',
-        '201 and a second transfer',
-        '500, because the state is ambiguous'
-      ],
-      answer: 0,
-      why: 'Replaying the original hides a client bug that is quietly losing payments. 409 tells them on the second request instead of at month end.' },
-
-    { q: 'Why store a hash of the request body next to the idempotency key?',
-      options: [
-        'To compress the stored response',
-        'To detect a key reused for a different request',
-        'To verify the client signature',
-        'To index the table'
+        "500, because the state is ambiguous",
+        "409, because the key was used for a different request",
+        "201 and a second transfer",
+        "200 with the original transfer"
       ],
       answer: 1,
-      why: 'Without the fingerprint you cannot tell a retry from a mistake, so both look like a repeat and one of them is a bug you never see.' },
+      why: "Replaying the original hides a client bug that is quietly losing payments. 409 tells them on the second request instead of at month end." },
 
-    { q: 'A transfer has insufficient funds. Which status code?',
+    { q: "Why store a hash of the request body next to the idempotency key?",
       options: [
-        '500',
-        '400',
-        '403',
-        '422'
+        "To index the table",
+        "To compress the stored response",
+        "To detect a key reused for a different request",
+        "To verify the client signature"
+      ],
+      answer: 2,
+      why: "Without the fingerprint you cannot tell a retry from a mistake, so both look like a repeat and one of them is a bug you never see." },
+
+    { q: "A transfer has insufficient funds. Which status code?",
+      options: [
+        "422",
+        "400",
+        "403",
+        "500"
+      ],
+      answer: 0,
+      why: "The request was well formed and understood; the values are unacceptable. 500 tells a well behaved client to retry forever against an account that will never have the money." },
+
+    { q: "Why is a second reverse of the same transfer a 409 rather than a 400?",
+      options: [
+        "Because the client forgot a header",
+        "Because the request is well formed and the current state refuses it",
+        "Because 409 is the code for money errors",
+        "Because reversal is always asynchronous"
+      ],
+      answer: 1,
+      why: "400 means fix your request; nothing is wrong with theirs. 409 says read the state, which is the information they actually need." },
+
+    { q: "Why is the timestamp included inside the signed payload of a webhook?",
+      options: [
+        "So a captured request cannot be replayed later",
+        "Because HMAC requires a nonce",
+        "To let the sender measure latency",
+        "So the receiver can sort events"
+      ],
+      answer: 0,
+      why: "Signing it means an attacker cannot change it, and the receiver refuses anything older than a few minutes. Without it a valid message stays valid forever." },
+
+    { q: "Why must a webhook signature be verified against the raw body?",
+      options: [
+        "Because parsing is slow",
+        "Because JSON cannot be hashed",
+        "Because the body may not be JSON",
+        "Because the sender signed their exact bytes, and re-serialising produces different ones"
       ],
       answer: 3,
-      why: 'The request was well formed and understood; the values are unacceptable. 500 tells a well behaved client to retry forever against an account that will never have the money.' },
+      why: "Key order, spacing and escaping all change the bytes without changing the meaning, and HMAC has no opinion about meaning." },
 
-    { q: 'Why is a second reverse of the same transfer a 409 rather than a 400?',
+    { q: "What is wrong with comparing signatures using ==?",
       options: [
-        'Because 409 is the code for money errors',
-        'Because the request is well formed and the current state refuses it',
-        'Because the client forgot a header',
-        'Because reversal is always asynchronous'
-      ],
-      answer: 1,
-      why: '400 means fix your request; nothing is wrong with theirs. 409 says read the state, which is the information they actually need.' },
-
-    { q: 'Why is the timestamp included inside the signed payload of a webhook?',
-      options: [
-        'So the receiver can sort events',
-        'To let the sender measure latency',
-        'So a captured request cannot be replayed later',
-        'Because HMAC requires a nonce'
+        "It cannot compare bytes to strings",
+        "It allocates memory",
+        "It returns early, so how long it takes leaks how much matched",
+        "It is case sensitive"
       ],
       answer: 2,
-      why: 'Signing it means an attacker cannot change it, and the receiver refuses anything older than a few minutes. Without it a valid message stays valid forever.' },
+      why: "That is a timing attack, and hmac.compare_digest takes the same time whatever the input. One function call." },
 
-    { q: 'Why must a webhook signature be verified against the raw body?',
+    { q: "Your webhook receiver processes an event and its acknowledgement is lost. You retry. What makes that safe?",
       options: [
-        'Because parsing is slow',
-        'Because the sender signed their exact bytes, and re-serialising produces different ones',
-        'Because JSON cannot be hashed',
-        'Because the body may not be JSON'
-      ],
-      answer: 1,
-      why: 'Key order, spacing and escaping all change the bytes without changing the meaning, and HMAC has no opinion about meaning.' },
-
-    { q: 'What is wrong with comparing signatures using ==?',
-      options: [
-        'It is case sensitive',
-        'It cannot compare bytes to strings',
-        'It returns early, so how long it takes leaks how much matched',
-        'It allocates memory'
-      ],
-      answer: 2,
-      why: 'That is a timing attack, and hmac.compare_digest takes the same time whatever the input. One function call.' },
-
-    { q: 'Your webhook receiver processes an event and its acknowledgement is lost. You retry. What makes that safe?',
-      options: [
-        'The receiver handling the event id idempotently',
-        'The sender waiting longer',
-        'A larger timeout',
-        'Signing the retry with a new secret'
-      ],
-      answer: 0,
-      why: 'Delivery over a network is at least once. Every event carries a stable id so the receiver can recognise one it has already handled.' },
-
-    { q: 'A partner returns 400 to your webhook. Should you retry?',
-      options: [
-        'Yes, ten times with backoff',
-        'No: their endpoint rejects it, and sending it again changes nothing',
-        'Yes, immediately',
-        'Only if the body was larger than 1MB'
-      ],
-      answer: 1,
-      why: 'Same rule as level 5 from the other side: retry what can change on its own. 4xx cannot, except 429, and the event belongs in the dead letter list.' },
-
-    { q: 'Why keep only a hash of an API key in the database?',
-      options: [
-        'To save space',
-        'To allow key rotation',
-        'So a copy of the table is not a copy of your customers\' credentials',
-        'Because keys are too long to index'
-      ],
-      answer: 2,
-      why: 'You show the key once and store sha256 of it. Authentication still works, because you hash what arrives and compare.' },
-
-    { q: 'Adding a new optional field to a JSON response is:',
-      options: [
-        'A breaking change requiring a new version',
-        'Safe for existing clients',
-        'Only safe if all clients are internal',
-        'Impossible without a migration'
-      ],
-      answer: 1,
-      why: 'Clients ignore fields they do not know. Removing, renaming or changing the meaning of a field is what breaks them.' },
-
-    { q: 'What does the /v1 in the path buy you?',
-      options: [
-        'Faster routing',
-        'Automatic documentation',
-        'Rate limiting per version',
-        'Room to ship a new shape beside the old one instead of breaking callers'
+        "Signing the retry with a new secret",
+        "A larger timeout",
+        "The sender waiting longer",
+        "The receiver handling the event id idempotently"
       ],
       answer: 3,
-      why: 'One path segment on day one, a migration project if you add it later. It is the cheapest promise in API design.' },
+      why: "Delivery over a network is at least once. Every event carries a stable id so the receiver can recognise one it has already handled." },
 
-    { q: 'Why validate amount_cents at the API edge when the ledger already refuses a bad amount?',
+    { q: "A partner returns 400 to your webhook. Should you retry?",
       options: [
-        'Because the ledger check is unreliable',
-        'To avoid a database round trip',
-        'So the client gets a clear 422 naming the field, while the database keeps the absolute guarantee',
-        'Because pydantic replaces database constraints'
-      ],
-      answer: 2,
-      why: 'Two different jobs: a good error message early, and a guarantee that holds for every writer. Neither replaces the other.' },
-
-    { q: 'What is a request id for?',
-      options: [
-        'Tracing one report back to one request across your logs',
-        'Idempotency',
-        'Authenticating the caller',
-        'Ordering webhook deliveries'
-      ],
-      answer: 0,
-      why: 'Generated per request, logged with everything, returned in the response. A partner quotes it and you find the request in one search.' },
-
-    { q: 'Why test with TestClient instead of starting the server?',
-      options: [
-        'Because TestClient tests different code',
-        'Because it calls the app in process, with no port to clash and fast enough to run on every save',
-        'Because FastAPI cannot be started in tests',
-        'Because it skips validation'
+        "Yes, ten times with backoff",
+        "No: their endpoint rejects it, and sending it again changes nothing",
+        "Only if the body was larger than 1MB",
+        "Yes, immediately"
       ],
       answer: 1,
-      why: 'It exercises the same application object, including validation and handlers. A suite that needs a running server is a suite people stop running.' }
+      why: "Same rule as level 5 from the other side: retry what can change on its own. 4xx cannot, except 429, and the event belongs in the dead letter list." },
+
+    { q: "Why keep only a hash of an API key in the database?",
+      options: [
+        "So a copy of the table is not a copy of your customers' credentials",
+        "Because keys are too long to index",
+        "To allow key rotation",
+        "To save space"
+      ],
+      answer: 0,
+      why: "You show the key once and store sha256 of it. Authentication still works, because you hash what arrives and compare." },
+
+    { q: "Adding a new optional field to a JSON response is:",
+      options: [
+        "Only safe if all clients are internal",
+        "A breaking change requiring a new version",
+        "Impossible without a migration",
+        "Safe for existing clients"
+      ],
+      answer: 3,
+      why: "Clients ignore fields they do not know. Removing, renaming or changing the meaning of a field is what breaks them." },
+
+    { q: "What does the /v1 in the path buy you?",
+      options: [
+        "Rate limiting per version",
+        "Faster routing",
+        "Room to ship a new shape beside the old one instead of breaking callers",
+        "Automatic documentation"
+      ],
+      answer: 2,
+      why: "One path segment on day one, a migration project if you add it later. It is the cheapest promise in API design." },
+
+    { q: "Why validate amount_cents at the API edge when the ledger already refuses a bad amount?",
+      options: [
+        "To avoid a database round trip",
+        "So the client gets a clear 422 naming the field, while the database keeps the absolute guarantee",
+        "Because pydantic replaces database constraints",
+        "Because the ledger check is unreliable"
+      ],
+      answer: 1,
+      why: "Two different jobs: a good error message early, and a guarantee that holds for every writer. Neither replaces the other." },
+
+    { q: "What is a request id for?",
+      options: [
+        "Authenticating the caller",
+        "Ordering webhook deliveries",
+        "Tracing one report back to one request across your logs",
+        "Idempotency"
+      ],
+      answer: 2,
+      why: "Generated per request, logged with everything, returned in the response. A partner quotes it and you find the request in one search." },
+
+    { q: "Why test with TestClient instead of starting the server?",
+      options: [
+        "Because it calls the app in process, with no port to clash and fast enough to run on every save",
+        "Because it skips validation",
+        "Because FastAPI cannot be started in tests",
+        "Because TestClient tests different code"
+      ],
+      answer: 0,
+      why: "It exercises the same application object, including validation and handlers. A suite that needs a running server is a suite people stop running." }
   ],
 
   project: {

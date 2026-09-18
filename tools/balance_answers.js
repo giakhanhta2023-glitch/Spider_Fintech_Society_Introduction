@@ -85,6 +85,12 @@ for (const name of levelFiles) {
   let level = null;
   new Function('FQ', src)({ registerLevel: (lv) => { level = lv; } });
 
+  /* what the file actually ships today */
+  const counts = [0, 0, 0, 0];
+  for (const q of level.quiz) counts[q.answer]++;
+  const even = Math.ceil(level.quiz.length / 4);
+  const balanced = Math.max(...counts) <= even;
+
   const rand = rng(20260915 + id * 7919);
   const wanted = targets(level.quiz.length, 4, rand);
 
@@ -97,13 +103,19 @@ for (const name of levelFiles) {
     return { q: q.q, options, answer: options.indexOf(correct), why: q.why };
   });
 
-  const dist = LETTERS.map((l, j) => `${l}:${rebuilt.filter((q) => q.answer === j).length}`).join(' ');
-  summary.push(`level ${String(id).padStart(2)}  ${dist}`);
+  const dist = LETTERS.map((l, j) => `${l}:${counts[j]}`).join(' ');
+  summary.push(`level ${String(id).padStart(2)}  ${dist}${balanced ? '' : '   needs balancing'}`);
 
-  if (checkOnly) continue;
+  /* Already even: leave it alone. The shuffle is not a fixed point, so
+     rewriting a balanced level would move its answers for no reason and
+     invalidate a quiz key somebody has already printed. */
+  if (checkOnly || balanced) continue;
 
-  /* replace the quiz block, line-based against the file's own formatting */
-  const lines = src.split('\n');
+  /* replace the quiz block, line-based against the file's own formatting.
+     Some level files are CRLF and some are LF, so split on either and put
+     back whichever the file was already using. */
+  const eol = src.includes('\r\n') ? '\r\n' : '\n';
+  const lines = src.split(/\r?\n/);
   const start = lines.findIndex((l) => l === '  quiz: [');
   if (start === -1) throw new Error(`${name}: no quiz block found`);
   let end = -1;
@@ -112,8 +124,8 @@ for (const name of levelFiles) {
   }
   if (end === -1) throw new Error(`${name}: quiz block not closed`);
 
-  const next = [...lines.slice(0, start), serialiseQuiz(rebuilt),...lines.slice(end + 1)];
-  fs.writeFileSync(file, next.join('\n'), 'utf8');
+  const next = [...lines.slice(0, start), serialiseQuiz(rebuilt).split('\n').join(eol), ...lines.slice(end + 1)];
+  fs.writeFileSync(file, next.join(eol), 'utf8');
 
   /* verify the rewritten file still parses and keeps the same answers */
   let reparsed = null;

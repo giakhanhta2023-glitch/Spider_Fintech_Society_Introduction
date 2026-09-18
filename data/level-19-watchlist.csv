@@ -1,0 +1,61 @@
+entity_id,name,aliases,entity_type,country,programme,dob
+WL-0000,Nislo Davreski,"Davreski, Nislo|Nislo Ilytas Davreski",entity,XA,SYNTH-C,
+WL-0001,Katas Gostynov,,individual,XC,SYNTH-B,1981-08-04
+WL-0002,Umitas Orzekov,,individual,SG,SYNTH-C,1989-01-16
+WL-0003,Ilymir Orzekski,"Orzekski, Ilymir",individual,VN,SYNTH-C,1958-03-20
+WL-0004,Grevren Nevicitz,Grevren Ostvic Nevicitz,individual,XB,SYNTH-C,1977-09-22
+WL-0005,Ilyren Ivaskyan,,entity,XC,SYNTH-A,
+WL-0006,Grevriel Krevoul,"Krevoul, Grevriel",individual,VN,SYNTH-C,1984-10-08
+WL-0007,Branren Boskoul,,individual,VN,SYNTH-A,1975-08-15
+WL-0008,Grevmir Farelul,Grevmir Vetas Farelul,individual,XA,SYNTH-C,1960-10-01
+WL-0009,Raltas Aldreov,"Aldreov, Raltas",individual,XB,SYNTH-A,1959-06-27
+WL-0010,Talmir Nevicski,,entity,VN,SYNTH-B,
+WL-0011,Branriel Lundraul,,individual,GB,SYNTH-C,1962-06-17
+WL-0012,Sevnek Davreitz,"Davreitz, Sevnek|Sevnek Nisnek Davreitz",individual,VN,SYNTH-A,1957-04-03
+WL-0013,Mornek Nevicul,,individual,SG,SYNTH-A,1989-02-20
+WL-0014,Dorriel Joreles,,individual,VN,SYNTH-A,1955-07-03
+WL-0015,Sevren Ivaskitz,"Ivaskitz, Sevren",entity,XC,SYNTH-C,
+WL-0016,Umimir Davrear,Umimir Nisvic Davrear,individual,GB,SYNTH-A,1972-02-22
+WL-0017,Nisren Boskoar,,individual,XC,SYNTH-B,1983-07-13
+WL-0018,Umilo Gostynitz,"Gostynitz, Umilo",individual,XC,SYNTH-A,1986-07-09
+WL-0019,Ostnek Lundrayan,,individual,GB,SYNTH-A,1980-06-24
+WL-0020,Ralriel Hanreov,Ralriel Vevic Hanreov,entity,GB,SYNTH-A,
+WL-0021,Ostlo Marositz,"Marositz, Ostlo",individual,VN,SYNTH-A,1979-09-20
+WL-0022,Branlo Krevoes,,individual,XB,SYNTH-C,1977-01-25
+WL-0023,Mormir Gostynul,,individual,VN,SYNTH-A,1982-07-01
+WL-0024,Taldan Boskoes,"Boskoes, Taldan|Taldan Ostmir Boskoes",individual,VN,SYNTH-C,1992-04-27
+WL-0025,Zarmir Krevoenko,,entity,XC,SYNTH-C,
+WL-0026,Brannek Pravinul,,individual,SG,SYNTH-A,1981-10-23
+WL-0027,Kalo Boskoski,"Boskoski, Kalo",individual,XC,SYNTH-B,1987-12-15
+WL-0028,Nisriel Cernaenko,Nisriel Feldan Cernaenko,individual,GB,SYNTH-A,1965-06-13
+WL-0029,Rallo Ivaskes,,individual,XC,SYNTH-C,1956-12-05
+WL-0030,Ostriel Orzekul,"Orzekul, Ostriel",entity,XC,SYNTH-A,
+WL-0031,Ilytas Davreul,,individual,SG,SYNTH-C,1964-05-08
+WL-0032,Dorren Ivaskar,Dorren Branvic Ivaskar,individual,XC,SYNTH-C,1961-05-01
+WL-0033,Sevlo Orzekar,"Orzekar, Sevlo",individual,GB,SYNTH-A,1961-05-21
+WL-0034,Mortas Marosenko,,individual,GB,SYNTH-B,1984-11-26
+WL-0035,Ostvic Lundraar,,entity,VN,SYNTH-B,
+WL-0036,Ilydan Ivaskski,"Ivaskski, Ilydan|Ilydan Sevriel Ivaskski",individual,SG,SYNTH-A,1990-06-24
+WL-0037,Zarnek Cernaski,,individual,XB,SYNTH-C,1956-01-18
+WL-0038,Sevmir Enkoitz,,individual,SG,SYNTH-C,1971-11-23
+WL-0039,Vetas Boskoyan,"Boskoyan, Vetas",individual,GB,SYNTH-C,1988-05-24
+WL-0040,Henriel Cernaar,Henriel Zarvic Cernaar,entity,XB,SYNTH-A,
+WL-0041,Grevlo Marosski,,individual,XA,SYNTH-C,1984-01-14
+WL-0042,Vedan Marosyan,"Marosyan, Vedan",individual,SG,SYNTH-A,1960-04-18
+WL-0043,Nisnek Davrees,,individual,XA,SYNTH-B,1963-04-12
+WL-0044,Kavic Ivaskul,Kavic Dornek Ivaskul,individual,XC,SYNTH-B,1966-09-20
+WL-0045,Raldan Hanrear,"Hanrear, Raldan",entity,XA,SYNTH-B,
+WL-0046,Taltas Pravinov,,individual,XC,SYNTH-C,1973-02-13
+WL-0047,Nisvic Cernaitz,,individual,VN,SYNTH-C,1966-05-12
+WL-0048,Branmir Enkoyan,"Enkoyan, Branmir|Branmir Tallo Enkoyan",individual,XC,SYNTH-C,1963-09-26
+WL-0049,Venek Farelar,,individual,XC,SYNTH-C,1975-10-10
+WL-0050,Ralmir Boskoov,,entity,VN,SYNTH-B,
+WL-0051,Vevic Krevoyan,"Krevoyan, Vevic",individual,XB,SYNTH-B,1991-05-13
+WL-0052,Grevvic Boskoenko,Grevvic Veriel Boskoenko,individual,VN,SYNTH-B,1959-11-21
+WL-0053,Uminek Orzekes,,individual,XC,SYNTH-B,1971-04-27
+WL-0054,Mordan Krevoar,"Krevoar, Mordan",individual,XC,SYNTH-C,1964-10-10
+WL-0055,Ostmir Nevices,,entity,XB,SYNTH-A,
+WL-0056,Felvic Aldreski,Felvic Karen Aldreski,individual,XC,SYNTH-B,1987-09-21
+WL-0057,Henmir Lundraov,"Lundraov, Henmir",individual,SG,SYNTH-A,1980-03-19
+WL-0058,Felnek Cernaul,,individual,GB,SYNTH-A,1957-06-21
+WL-0059,Feldan Hanreski,,individual,XA,SYNTH-A,1980-01-27

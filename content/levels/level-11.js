@@ -263,155 +263,155 @@ FQ.registerLevel({
   ],
 
   quiz: [
-    { q: 'What does atomicity guarantee for a two leg transfer?',
+    { q: "What does atomicity guarantee for a two leg transfer?",
       options: [
-        'Both entries are written or neither is',
-        'The transfer completes within one millisecond',
-        'No other transaction can read the account',
-        'The entries are written in the order you sent them'
-      ],
-      answer: 0,
-      why: 'Atomicity is all or nothing. It says nothing about speed, visibility to others, or ordering, which are the other three letters and the isolation level.' },
-
-    { q: 'Why can a CHECK constraint not enforce that the entries of a transaction sum to zero?',
-      options: [
-        'Because CHECK cannot use arithmetic',
-        'Because CHECK sees one row at a time and this is a rule about a group of rows',
-        'Because CHECK only runs on update',
-        'Because the sum is not known until the transaction commits'
+        "The entries are written in the order you sent them",
+        "Both entries are written or neither is",
+        "No other transaction can read the account",
+        "The transfer completes within one millisecond"
       ],
       answer: 1,
-      why: 'A CHECK is evaluated per row against that row. The balancing rule is about every entry sharing a transaction id, which needs a trigger that can run at commit.' },
+      why: "Atomicity is all or nothing. It says nothing about speed, visibility to others, or ordering, which are the other three letters and the isolation level." },
 
-    { q: 'What does `deferrable initially deferred` change about a constraint trigger?',
+    { q: "Why can a CHECK constraint not enforce that the entries of a transaction sum to zero?",
       options: [
-        'It makes the trigger optional',
-        'It runs the trigger before the insert instead of after',
-        'It runs the trigger once at commit rather than after each row',
-        'It disables the trigger inside transactions'
+        "Because CHECK sees one row at a time and this is a rule about a group of rows",
+        "Because CHECK only runs on update",
+        "Because CHECK cannot use arithmetic",
+        "Because the sum is not known until the transaction commits"
+      ],
+      answer: 0,
+      why: "A CHECK is evaluated per row against that row. The balancing rule is about every entry sharing a transaction id, which needs a trigger that can run at commit." },
+
+    { q: "What does `deferrable initially deferred` change about a constraint trigger?",
+      options: [
+        "It runs the trigger once at commit rather than after each row",
+        "It makes the trigger optional",
+        "It runs the trigger before the insert instead of after",
+        "It disables the trigger inside transactions"
+      ],
+      answer: 0,
+      why: "Without it the trigger fires after the first leg, when the transaction is deliberately unbalanced, and every transfer fails." },
+
+    { q: "Two sessions read a balance of $100 and each spends $80 under read committed. What happens?",
+      options: [
+        "The second session reads $20 because the first is in progress",
+        "The second session blocks until the first commits",
+        "Both succeed and the account ends at minus $60",
+        "Postgres aborts the second with a serialization failure"
       ],
       answer: 2,
-      why: 'Without it the trigger fires after the first leg, when the transaction is deliberately unbalanced, and every transfer fails.' },
+      why: "Read committed gives each statement a consistent view and says nothing about a decision made between two statements. This is the lost update, and it is the default behaviour." },
 
-    { q: 'Two sessions read a balance of $100 and each spends $80 under read committed. What happens?',
+    { q: "What does `select ... for update` do?",
       options: [
-        'The second session blocks until the first commits',
-        'Both succeed and the account ends at minus $60',
-        'Postgres aborts the second with a serialization failure',
-        'The second session reads $20 because the first is in progress'
-      ],
-      answer: 1,
-      why: 'Read committed gives each statement a consistent view and says nothing about a decision made between two statements. This is the lost update, and it is the default behaviour.' },
-
-    { q: 'What does `select ... for update` do?',
-      options: [
-        'Marks rows as needing an update later',
-        'Takes an exclusive lock on the rows read until the transaction ends',
-        'Upgrades the transaction to serializable',
-        'Caches the rows for faster reads'
-      ],
-      answer: 1,
-      why: 'The lock makes a second writer wait rather than act on a balance that is about to change. It serialises spending per account, which is the cost.' },
-
-    { q: 'What must a caller be able to do before you choose serializable isolation over a row lock?',
-      options: [
-        'Retry the transaction when it aborts',
-        'Run inside a single process',
-        'Disable all triggers',
-        'Hold the connection open for longer'
+        "Takes an exclusive lock on the rows read until the transaction ends",
+        "Upgrades the transaction to serializable",
+        "Caches the rows for faster reads",
+        "Marks rows as needing an update later"
       ],
       answer: 0,
-      why: 'Serializable detects the conflict and aborts one side. Without a retry, one of your users just got an error instead of a payment, and a retry that is not idempotent double charges.' },
+      why: "The lock makes a second writer wait rather than act on a balance that is about to change. It serialises spending per account, which is the cost." },
 
-    { q: 'Why is a unique index the right way to make a write idempotent?',
+    { q: "What must a caller be able to do before you choose serializable isolation over a row lock?",
       options: [
-        'It is faster than a dictionary lookup',
-        'It compresses the key column',
-        'It gives a better error message',
-        'The check and the write are one operation, so two racing requests cannot both pass'
+        "Disable all triggers",
+        "Retry the transaction when it aborts",
+        "Hold the connection open for longer",
+        "Run inside a single process"
+      ],
+      answer: 1,
+      why: "Serializable detects the conflict and aborts one side. Without a retry, one of your users just got an error instead of a payment, and a retry that is not idempotent double charges." },
+
+    { q: "Why is a unique index the right way to make a write idempotent?",
+      options: [
+        "It is faster than a dictionary lookup",
+        "It gives a better error message",
+        "The check and the write are one operation, so two racing requests cannot both pass",
+        "It compresses the key column"
+      ],
+      answer: 2,
+      why: "Select then insert leaves a gap between the two statements wide enough for exactly the retry you are protecting against." },
+
+    { q: "A transfer inserts the transaction row, then the process is killed before the commit. What is in the database?",
+      options: [
+        "The transaction row, with no entries",
+        "Nothing from that transfer",
+        "Whatever was flushed to disk at the time",
+        "A locked row that must be cleaned up by hand"
+      ],
+      answer: 1,
+      why: "Uncommitted work is rolled back when the connection dies. The visible difference between a crash before and after the commit is the caller's problem, not the database's." },
+
+    { q: "Why store money as `bigint` in minor units rather than `numeric` or `float`?",
+      options: [
+        "Because bigint uses less storage than any alternative",
+        "Because floats cannot represent most decimals exactly, and integers of cents cannot drift",
+        "Because numeric cannot be summed",
+        "Because bigint is the only type Postgres indexes"
+      ],
+      answer: 1,
+      why: "numeric is exact too and is a defensible choice; float is not. Integer minor units keep the arithmetic exact and match what the payment rails send." },
+
+    { q: "Why does this schema have no `balance` column at the start?",
+      options: [
+        "Because the balance belongs in the application cache",
+        "Because balances change too often to store",
+        "Because Postgres cannot sum a column quickly",
+        "Because a stored balance is a second answer to a question the entries already answer"
       ],
       answer: 3,
-      why: 'Select then insert leaves a gap between the two statements wide enough for exactly the retry you are protecting against.' },
+      why: "Two sources of truth eventually disagree. You add the column when the sum is too slow, and you accept a reconciliation job on the same day." },
 
-    { q: 'A transfer inserts the transaction row, then the process is killed before the commit. What is in the database?',
+    { q: "What should the reconciliation query return on a healthy ledger?",
       options: [
-        'The transaction row, with no entries',
-        'Nothing from that transfer',
-        'Whatever was flushed to disk at the time',
-        'A locked row that must be cleaned up by hand'
-      ],
-      answer: 1,
-      why: 'Uncommitted work is rolled back when the connection dies. The visible difference between a crash before and after the commit is the caller\'s problem, not the database\'s.' },
-
-    { q: 'Why store money as `bigint` in minor units rather than `numeric` or `float`?',
-      options: [
-        'Because bigint is the only type Postgres indexes',
-        'Because floats cannot represent most decimals exactly, and integers of cents cannot drift',
-        'Because numeric cannot be summed',
-        'Because bigint uses less storage than any alternative'
-      ],
-      answer: 1,
-      why: 'numeric is exact too and is a defensible choice; float is not. Integer minor units keep the arithmetic exact and match what the payment rails send.' },
-
-    { q: 'Why does this schema have no `balance` column at the start?',
-      options: [
-        'Because Postgres cannot sum a column quickly',
-        'Because balances change too often to store',
-        'Because a stored balance is a second answer to a question the entries already answer',
-        'Because the balance belongs in the application cache'
-      ],
-      answer: 2,
-      why: 'Two sources of truth eventually disagree. You add the column when the sum is too slow, and you accept a reconciliation job on the same day.' },
-
-    { q: 'What should the reconciliation query return on a healthy ledger?',
-      options: [
-        'One row per account',
-        'Nothing',
-        'The total balance',
-        'Every transaction from the last day'
-      ],
-      answer: 1,
-      why: 'It selects accounts whose cached balance disagrees with their entries. A row means drift, and the job exists so that you find it rather than a customer.' },
-
-    { q: 'Why run the application as a role with no UPDATE or DELETE on the entries table?',
-      options: [
-        'It makes inserts faster',
-        'It reduces the size of the write ahead log',
-        'Because append only is then a property of the system rather than a promise in a comment',
-        'Because Postgres requires separate roles for triggers'
-      ],
-      answer: 2,
-      why: 'If the connection that posts entries can also rewrite them, the audit trail depends on everyone remembering not to. Permissions survive new colleagues.' },
-
-    { q: 'Two transfers lock the same two accounts in opposite orders. What happens?',
-      options: [
-        'Both wait forever',
-        'The database detects a deadlock and aborts one of them',
-        'The locks merge into one',
-        'Postgres escalates to a table lock'
-      ],
-      answer: 1,
-      why: 'Deadlock detection resolves it by killing a victim. Taking locks in a consistent order, usually by account id, means it does not happen.' },
-
-    { q: 'What does `%s` do in a psycopg query?',
-      options: [
-        'Formats the value into the SQL string before sending it',
-        'Escapes quotes in the value',
-        'Sends the value to the server separately from the statement',
-        'Marks the column as a string type'
-      ],
-      answer: 2,
-      why: 'The statement and the values travel separately, so a value can never become SQL. That is the whole of injection defence, and f-strings undo it.' },
-
-    { q: 'Your ledger is correct but a balance query on a hot account has become slow. What is the first thing to check?',
-      options: [
-        'Whether there is an index on entries(account_id)',
-        'Whether the disk is full',
-        'Whether to switch to serializable',
-        'Whether to shard the table'
+        "Nothing",
+        "The total balance",
+        "One row per account",
+        "Every transaction from the last day"
       ],
       answer: 0,
-      why: 'Summing one account means finding its rows. Without the index that is a scan of every entry ever written, and the fix is one line before any of the interesting answers.' }
+      why: "It selects accounts whose cached balance disagrees with their entries. A row means drift, and the job exists so that you find it rather than a customer." },
+
+    { q: "Why run the application as a role with no UPDATE or DELETE on the entries table?",
+      options: [
+        "It makes inserts faster",
+        "It reduces the size of the write ahead log",
+        "Because Postgres requires separate roles for triggers",
+        "Because append only is then a property of the system rather than a promise in a comment"
+      ],
+      answer: 3,
+      why: "If the connection that posts entries can also rewrite them, the audit trail depends on everyone remembering not to. Permissions survive new colleagues." },
+
+    { q: "Two transfers lock the same two accounts in opposite orders. What happens?",
+      options: [
+        "The locks merge into one",
+        "Both wait forever",
+        "The database detects a deadlock and aborts one of them",
+        "Postgres escalates to a table lock"
+      ],
+      answer: 2,
+      why: "Deadlock detection resolves it by killing a victim. Taking locks in a consistent order, usually by account id, means it does not happen." },
+
+    { q: "What does `%s` do in a psycopg query?",
+      options: [
+        "Formats the value into the SQL string before sending it",
+        "Marks the column as a string type",
+        "Sends the value to the server separately from the statement",
+        "Escapes quotes in the value"
+      ],
+      answer: 2,
+      why: "The statement and the values travel separately, so a value can never become SQL. That is the whole of injection defence, and f-strings undo it." },
+
+    { q: "Your ledger is correct but a balance query on a hot account has become slow. What is the first thing to check?",
+      options: [
+        "Whether the disk is full",
+        "Whether to shard the table",
+        "Whether to switch to serializable",
+        "Whether there is an index on entries(account_id)"
+      ],
+      answer: 3,
+      why: "Summing one account means finding its rows. Without the index that is a scan of every entry ever written, and the fix is one line before any of the interesting answers." }
   ],
 
   project: {

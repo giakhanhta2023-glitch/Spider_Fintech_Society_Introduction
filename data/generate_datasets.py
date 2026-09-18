@@ -11,6 +11,7 @@ Run:  python data/generate_datasets.py
 import csv
 import math
 import random
+import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -381,6 +382,183 @@ def gen_bank_exports():
 # ---------------------------------------------------------------------------
 # LEVEL 5: offline fallback snapshot of FX rates (so the level works offline)
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# LEVEL 19: AML monitoring. Customers, payments, and a watchlist.
+# ---------------------------------------------------------------------------
+def gen_aml():
+    """Three files for the monitoring level. Every name here is invented.
+
+    The watchlist is fictional: the names are built from syllables and match
+    no real sanctions programme, no real designation and no real person. The
+    high risk jurisdictions use ISO 3166 user assigned codes (XA, XB, XC) for
+    the same reason, which is also what a real test fixture should do.
+    """
+    rng = random.Random(SEED + 19)
+
+    syl_a = ["Ka", "Ve", "Mor", "Tal", "Nis", "Dor", "Ral", "Sev",
+             "Bran", "Ily", "Zar", "Hen", "Ost", "Umi", "Fel", "Grev"]
+    syl_b = ["ren", "vic", "dan", "mir", "lo", "tas", "nek", "riel"]
+    fam_a = ["Aldre", "Bosko", "Cerna", "Davre", "Enko", "Farel", "Gostyn", "Hanre",
+             "Ivask", "Jorel", "Krevo", "Lundra", "Maros", "Nevic", "Orzek", "Pravin"]
+    fam_b = ["ov", "ski", "enko", "ar", "itz", "ul", "yan", "es"]
+
+    given = sorted({a + b for a in syl_a for b in syl_b})
+    family = sorted({a + b for a in fam_a for b in fam_b})
+
+    clean = ["VN", "SG", "GB", "US", "DE", "JP", "AU", "FR", "KR", "MY"]
+    risky = ["XA", "XB", "XC"]
+
+    # ---- the watchlist: 60 fictional designations, some with aliases
+    rng.shuffle(given)
+    rng.shuffle(family)
+    watch = []
+    for i in range(60):
+        g, f = given[i], family[i]
+        aliases = []
+        if i % 3 == 0:
+            aliases.append(f"{f}, {g}")                                 # family name first
+        if i % 4 == 0:
+            aliases.append(f"{g} {given[(i + 31) % len(given)]} {f}")   # with a middle name
+        watch.append({
+            "entity_id": f"WL-{i:04d}",
+            "name": f"{g} {f}",
+            "aliases": "|".join(aliases),
+            "entity_type": "individual" if i % 5 else "entity",
+            "country": rng.choice(risky + clean[:3]),
+            "programme": f"SYNTH-{rng.choice(['A', 'B', 'C'])}",
+            "dob": "" if i % 5 == 0 else f"19{rng.randint(55, 92)}-{rng.randint(1, 12):02d}-{rng.randint(1, 28):02d}",
+        })
+
+    path = OUT / "level-19-watchlist.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(watch[0].keys()))
+        w.writeheader()
+        w.writerows(watch)
+    n_alias = sum(len(e["aliases"].split("|")) for e in watch if e["aliases"])
+    print(f"{path.name}: {len(watch)} entities, {n_alias} aliases")
+
+    # ---- customers
+    customers = []
+    for i in range(400):
+        customers.append({
+            "customer_id": f"C{i:04d}",
+            "name": f"{rng.choice(given)} {rng.choice(family)}",
+            "country": rng.choice(clean),
+            "onboarded_at": (date(2024, 1, 1) + timedelta(days=rng.randint(0, 800))).isoformat(),
+            "risk_rating": rng.choice(["low"] * 7 + ["medium"] * 2 + ["high"]),
+            "is_pep": "true" if rng.random() < 0.02 else "false",
+        })
+    path = OUT / "level-19-customers.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(customers[0].keys()))
+        w.writeheader()
+        w.writerows(customers)
+    print(f"{path.name}: {len(customers)} customers")
+
+    # ---- counterparties: ordinary ones, plus deliberate near misses
+    listed = {e["name"]} if False else set()
+    for e in watch:
+        listed.add(" ".join(sorted(e["name"].upper().split())))
+        for a in (e["aliases"].split("|") if e["aliases"] else []):
+            listed.add(" ".join(sorted(re.sub(r"[^A-Za-z0-9 ]", " ", a).upper().split())))
+
+    def collides(name):
+        return " ".join(sorted(name.upper().split())) in listed
+
+    counterparties = []
+    while len(counterparties) < 760:
+        cand = f"{rng.choice(given)} {rng.choice(family)}"
+        if not collides(cand):
+            counterparties.append(cand)
+    for e in watch[:40]:
+        g, f = e["name"].split(" ")
+        counterparties.append(f"{g} {f[:-4]}ski" if f.endswith("enko") else f"{g} {f[:-2]}enko")
+        other = rng.choice(given)
+        while collides(f"{other} {f}"):
+            other = rng.choice(given)
+        counterparties.append(f"{other} {f}")
+    counterparties = sorted({c for c in counterparties if not collides(c)})
+
+    # ---- payments
+    start = datetime(2026, 4, 1, 0, 0)
+    payments = []
+
+    def add(when, cust, direction, amount, name, country, channel):
+        payments.append({
+            "payment_id": f"P{len(payments):06d}",
+            "booked_at": when.strftime("%Y-%m-%dT%H:%M:%S"),
+            "customer_id": cust,
+            "direction": direction,
+            "amount_usd": f"{amount:.2f}",
+            "counterparty_name": name,
+            "counterparty_country": country,
+            "channel": channel,
+        })
+
+    for _ in range(12000):
+        when = start + timedelta(minutes=rng.randint(0, 90 * 24 * 60))
+        cust = f"C{rng.randint(0, 399):04d}"
+        amount = round(abs(rng.lognormvariate(7.0, 1.1)), 2)
+        country = rng.choice(clean) if rng.random() > 0.04 else rng.choice(risky)
+        add(when, cust, rng.choice(["in", "out"]), amount,
+            rng.choice(counterparties), country,
+            rng.choice(["wire"] * 6 + ["card"] * 2 + ["cash"]))
+
+    # ---- planted: seven payments to real watchlist entities, written seven ways
+    hits = [
+        (watch[0]["name"], "exact"),
+        (watch[1]["name"].upper(), "upper case"),
+        (watch[3]["aliases"].split("|")[0], "alias, family name first"),
+        (watch[7]["name"].replace("k", "c").replace("K", "C"), "transliteration"),
+        ("MR " + watch[11]["name"], "with a title"),
+        (watch[15]["name"][:4] + watch[15]["name"][5:], "one letter dropped"),
+        (" ".join(reversed(watch[21]["name"].split(" "))), "word order swapped"),
+    ]
+    for name, _kind in hits:
+        when = start + timedelta(minutes=rng.randint(0, 90 * 24 * 60))
+        add(when, f"C{rng.randint(0, 399):04d}", "out",
+            round(abs(rng.lognormvariate(8.2, 0.6)), 2), name,
+            rng.choice(risky), "wire")
+
+    # ---- planted: structuring, four customers under a 10,000 report threshold
+    for k in range(4):
+        cust = f"C{300 + k:04d}"
+        day0 = start + timedelta(days=10 + k * 7)
+        for j in range(6):
+            add(day0 + timedelta(days=j % 5, hours=rng.randint(9, 17)), cust, "in",
+                round(rng.uniform(9000, 9900), 2),
+                f"{rng.choice(given)} {rng.choice(family)}", "US", "cash")
+
+    # ---- innocent cash: near the threshold but neither frequent nor clustered
+    for k in range(12):
+        cust = f"C{200 + k:04d}"
+        day0 = start + timedelta(days=rng.randint(0, 80))
+        for j in range(2):
+            add(day0 + timedelta(days=j * rng.randint(2, 4), hours=rng.randint(9, 17)),
+                cust, "in", round(rng.uniform(9000, 9900), 2),
+                f"{rng.choice(given)} {rng.choice(family)}", "US", "cash")
+
+    # ---- planted: pass through, in and almost all out within a day
+    for k in range(3):
+        cust = f"C{350 + k:04d}"
+        t0 = start + timedelta(days=20 + k * 9, hours=9)
+        received = round(rng.uniform(40000, 60000), 2)
+        add(t0, cust, "in", received, f"{rng.choice(given)} {rng.choice(family)}",
+            rng.choice(clean), "wire")
+        left = received * rng.uniform(0.92, 0.96)
+        for j in range(3):
+            add(t0 + timedelta(hours=4 + j * 5), cust, "out", round(left / 3, 2),
+                f"{rng.choice(given)} {rng.choice(family)}", rng.choice(risky), "wire")
+
+    payments.sort(key=lambda r: r["booked_at"])
+    path = OUT / "level-19-payments.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(payments[0].keys()))
+        w.writeheader()
+        w.writerows(payments)
+    print(f"{path.name}: {len(payments)} payments, {len(counterparties)} counterparties")
+
+
 def gen_fx_snapshot():
     import json
     snapshot = {
@@ -403,5 +581,6 @@ if __name__ == "__main__":
     gen_fraud()
     gen_applications()
     gen_bank_exports()
+    gen_aml()
     gen_fx_snapshot()
     print("done, all datasets are synthetic")

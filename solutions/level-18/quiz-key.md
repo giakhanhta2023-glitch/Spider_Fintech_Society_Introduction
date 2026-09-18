@@ -5,39 +5,39 @@
 
 | # | Answer |
 |---|--------|
-| 1 | **B** |
-| 2 | **A** |
-| 3 | **C** |
+| 1 | **A** |
+| 2 | **C** |
+| 3 | **D** |
 | 4 | **D** |
-| 5 | **B** |
-| 6 | **C** |
+| 5 | **A** |
+| 6 | **B** |
 | 7 | **B** |
-| 8 | **D** |
-| 9 | **C** |
-| 10 | **B** |
+| 8 | **C** |
+| 9 | **A** |
+| 10 | **C** |
 | 11 | **B** |
-| 12 | **C** |
-| 13 | **A** |
-| 14 | **B** |
+| 12 | **A** |
+| 13 | **B** |
+| 14 | **D** |
 | 15 | **C** |
 
 ---
 
 ### 1. Where does the customer type their bank password in the authorization code flow?
 
-- A. In your app, which forwards it
-- **B. At their bank, and you never see it** ✅
-- C. In the redirect URL
-- D. Nowhere: the flow uses the client secret instead
+- **A. At their bank, and you never see it** ✅
+- B. In your app, which forwards it
+- C. Nowhere: the flow uses the client secret instead
+- D. In the redirect URL
 
 **Why:** That is the point of the flow, and why screen scraping with shared credentials is being legislated out.
 
 ### 2. What does PKCE protect against?
 
-- **A. An attacker who obtains the authorization code being able to exchange it** ✅
-- B. The access token expiring too soon
-- C. The bank refusing the scope
-- D. Replay of the refresh token
+- A. The access token expiring too soon
+- B. Replay of the refresh token
+- **C. An attacker who obtains the authorization code being able to exchange it** ✅
+- D. The bank refusing the scope
 
 **Why:** The verifier never leaves your server. Current guidance is to use it for every client type, not only mobile.
 
@@ -45,24 +45,24 @@
 
 - A. Carry the requested scopes
 - B. Identify the bank
-- **C. Stop an attacker linking their account to your user's session** ✅
-- D. Hold the code verifier
+- C. Hold the code verifier
+- **D. Stop an attacker linking their account to your user's session** ✅
 
 **Why:** Random, stored server side, checked on return, and used once. A reused state is a fatal error rather than a warning.
 
 ### 4. How should a refresh token be stored?
 
-- A. Hashed, like a password
+- A. In the session cookie
 - B. In plain text, because it expires anyway
-- C. In the session cookie
+- C. Hashed, like a password
 - **D. Encrypted at rest with a key held outside the database** ✅
 
 **Why:** You cannot hash it because you need it back. Encryption means a dump of the table is not a set of working credentials.
 
 ### 5. Two workers refresh the same token at the same moment. What usually happens?
 
-- A. Both succeed harmlessly
-- **B. Many banks invalidate the old refresh token, so one worker is left holding a dead credential** ✅
+- **A. Many banks invalidate the old refresh token, so one worker is left holding a dead credential** ✅
+- B. Both succeed harmlessly
 - C. The bank merges the requests
 - D. The access token is issued twice with the same value
 
@@ -70,36 +70,36 @@
 
 ### 6. A refresh returns 400 invalid_grant. What is the correct handling?
 
-- A. Retry five times with backoff
-- B. Reconnect automatically using the stored credentials
-- **C. Mark the connection as needing consent and ask the user to reconnect** ✅
-- D. Page an engineer
+- A. Page an engineer
+- **B. Mark the connection as needing consent and ask the user to reconnect** ✅
+- C. Reconnect automatically using the stored credentials
+- D. Retry five times with backoff
 
 **Why:** The permission is gone. No number of retries recreates it, and the only person who can fix it is the customer.
 
 ### 7. Why keep the raw bank record alongside the normalised one?
 
-- A. For the audit log
+- A. Because regulators require the raw format
 - **B. Because normalisation is a guess that will be wrong for some bank, and fixing it later needs the original** ✅
-- C. To compute the running balance
-- D. Because regulators require the raw format
+- C. For the audit log
+- D. To compute the running balance
 
 **Why:** Otherwise the only way to correct a parsing bug is asking every customer to reconnect and resync.
 
 ### 8. Bank A sends no transaction id. How do you give its rows a stable identity?
 
-- A. Use the row number in the file
-- B. Generate a UUID at ingestion
-- C. Use the date alone
-- **D. Hash the account, date, amount and description, with a counter for genuine repeats** ✅
+- A. Use the date alone
+- B. Use the row number in the file
+- **C. Hash the account, date, amount and description, with a counter for genuine repeats** ✅
+- D. Generate a UUID at ingestion
 
 **Why:** A UUID changes on every sync, so the same transaction arrives as new each time. The counter is what saves two identical coffees on one day.
 
 ### 9. A payment appears as pending and later as booked with the same reference. The ingester should:
 
-- A. Keep both rows
+- **A. Match on the reference and replace the pending row, keeping the fact that the amount changed** ✅
 - B. Ignore the pending one entirely
-- **C. Match on the reference and replace the pending row, keeping the fact that the amount changed** ✅
+- C. Keep both rows
 - D. Ask the user which is correct
 
 **Why:** One payment, two observations. Ignoring pending rows means the app is days behind, and keeping both double counts the spending.
@@ -107,9 +107,9 @@
 ### 10. Why deliberately refetch a day or two you already have?
 
 - A. To check the bank is still up
-- **B. Because banks backdate and reorder transactions, and deduplication makes the overlap free** ✅
-- C. To keep the rate limit warm
-- D. Because cursors are unreliable
+- B. Because cursors are unreliable
+- **C. Because banks backdate and reorder transactions, and deduplication makes the overlap free** ✅
+- D. To keep the rate limit warm
 
 **Why:** Without the overlap, a transaction backdated after your cursor passed is never seen again.
 
@@ -117,24 +117,24 @@
 
 - A. Feed it to the model
 - **B. Clean it to APPLE.COM** ✅
-- C. Look it up in a merchant database
-- D. Ask the user
+- C. Ask the user
+- D. Look it up in a merchant database
 
 **Why:** Most of the value is in the cleaning, and it is a list of rules rather than a model. Everything downstream gets easier.
 
 ### 12. A user recategorises EVN HANOI to utilities. What happens for other users?
 
-- A. Nothing at all, ever
-- B. The same change immediately
-- **C. It becomes one vote, promoted to a global rule only when enough independent users agree** ✅
+- **A. It becomes one vote, promoted to a global rule only when enough independent users agree** ✅
+- B. Nothing at all, ever
+- C. The same change immediately
 - D. The model retrains on it overnight
 
 **Why:** One correction can be a mistake or a personal preference. Applying it globally lets one person recategorise the electricity company.
 
 ### 13. Which is the right order for the categorisation fallback chain?
 
-- **A. User rule, global rule, model, uncategorised** ✅
-- B. Model, user rule, global rule
+- A. Model, user rule, global rule
+- **B. User rule, global rule, model, uncategorised** ✅
 - C. Global rule, model, user rule
 - D. Model only, with corrections as training data
 
@@ -143,9 +143,9 @@
 ### 14. Consent typically lasts ninety days. What does that mean for the product?
 
 - A. Nothing, refresh handles it
-- **B. The sync will stop on a date you can predict, so warn the user before it does** ✅
+- B. Tokens must be rotated daily
 - C. The user must reauthenticate every login
-- D. Tokens must be rotated daily
+- **D. The sync will stop on a date you can predict, so warn the user before it does** ✅
 
 **Why:** Write the expiry down at connection time. A banner at day eighty three is worth more than any retry logic.
 
