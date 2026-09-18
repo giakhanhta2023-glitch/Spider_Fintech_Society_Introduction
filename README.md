@@ -1,4 +1,7 @@
-<img src="assets/img/icon-512.png" alt="FinQuest F(q) logo" width="104" height="104" align="left">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/img/brand/fq-logo.png">
+  <img src="assets/img/brand/fq-logo-ink.png" alt="FinQuest F(q) logo" width="200">
+</picture>
 
 # FinQuest, a fintech training arcade
 
