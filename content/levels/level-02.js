@@ -265,13 +265,13 @@ FQ.registerLevel({
 
     { q: "Which expression correctly computes compound future value in Python?",
       options: [
-        "principal * (1 + rate * years)",
-        "principal ** (1 + rate) * years",
-        "principal * (1 + rate) ^ years",
-        "principal * (1 + rate) ** years"
+        "`principal * (1 + rate * years)`",
+        "`principal ** (1 + rate) * years`",
+        "`principal * (1 + rate) ^ years`",
+        "`principal * (1 + rate) ** years`"
       ],
       answer: 3,
-      why: "Python uses ** for exponents. The ^ operator is bitwise XOR: with a float rate it raises a TypeError, and with whole numbers it silently returns a wrong answer (2 ^ 10 gives 8, not 1024)." },
+      why: "Python uses `**` for exponents. The `^` operator is bitwise XOR: with a float rate it raises a TypeError, and with whole numbers it silently returns a wrong answer (`2 ^ 10` gives 8, not 1024)." },
 
     { q: "In FV = P(1 + r/n)^(nt), what does n represent?",
       options: [
@@ -457,9 +457,9 @@ FQ.registerLevel({
 
   faq: [
     { q: 'My compound number looks far too small',
-      a: 'You almost certainly used ^ instead of **. In Python ^ is bitwise XOR, so it returns a wrong answer without raising an error.' },
+      a: 'You almost certainly used `^` instead of `**`. In Python `^` is bitwise XOR, so it returns a wrong answer without raising an error.' },
     { q: 'ZeroDivisionError in contributions_value',
-      a: 'The annuity formula divides by i. When the rate is 0 you must return payment * periods instead. Add: if i == 0: return payment * n.' },
+      a: 'The annuity formula divides by `i`. When the rate is 0 you must return `payment * periods` instead. Add `if i == 0: return payment * n` at the top of the function.' },
     { q: 'What is the difference between APR and APY again?',
       a: 'APR is the periodic rate multiplied out and ignores compounding. APY compounds it: (1 + APR/n)^n - 1. A 24% APR card charging monthly really costs 26.82% a year.' },
     { q: 'My years_to_target never returns',

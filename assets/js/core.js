@@ -64,11 +64,19 @@
     /* Inline markdown subset used throughout the curriculum:
        **bold**, *em*, `code`, [text](url) */
     md: function (s) {
-      return FQ.esc(FQ.subst(s))
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
+      /* Code spans come out first and go back last. Without that, an expression
+         like `p * (1 + r) ** n` loses its operators to the emphasis rules and
+         the reader is shown an answer that is not the one that was written. */
+      var spans = [];
+      var out = FQ.esc(FQ.subst(s)).replace(/`([^`]+)`/g, function (_, code) {
+        spans.push(code);
+        return '\u0000' + (spans.length - 1) + '\u0000';
+      });
+      return out
         .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
         .replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        .replace(/\u0000(\d+)\u0000/g, function (_, i) { return '<code>' + spans[i] + '</code>'; });
     },
 
     /* -------------------- syntax highlighting, no deps ------------------- */

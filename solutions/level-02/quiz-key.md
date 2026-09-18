@@ -34,12 +34,12 @@
 
 ### 2. Which expression correctly computes compound future value in Python?
 
-- A. principal * (1 + rate * years)
-- B. principal ** (1 + rate) * years
-- C. principal * (1 + rate) ^ years
-- **D. principal * (1 + rate) ** years** ✅
+- A. `principal * (1 + rate * years)`
+- B. `principal ** (1 + rate) * years`
+- C. `principal * (1 + rate) ^ years`
+- **D. `principal * (1 + rate) ** years`** ✅
 
-**Why:** Python uses ** for exponents. The ^ operator is bitwise XOR: with a float rate it raises a TypeError, and with whole numbers it silently returns a wrong answer (2 ^ 10 gives 8, not 1024).
+**Why:** Python uses `**` for exponents. The `^` operator is bitwise XOR: with a float rate it raises a TypeError, and with whole numbers it silently returns a wrong answer (`2 ^ 10` gives 8, not 1024).
 
 ### 3. In FV = P(1 + r/n)^(nt), what does n represent?
 
