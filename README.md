@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/img/brand/fq-logo.png">
-  <img src="assets/img/brand/fq-logo-ink.png" alt="FinQuest F(q) logo" width="200">
+  <img src="assets/img/brand/fq-logo-ink.png" alt="FinQuest F(q) logo" width="360">
 </picture>
 
 # FinQuest, a fintech training arcade

@@ -83,14 +83,19 @@ def square(img, size, pad, background=None):
     return canvas.resize((size, size), Image.LANCZOS)
 
 
-def og_card(im):
-    """Centre crop to the 1.905 ratio every preview renderer expects."""
+def og_card(mark, background, fill=0.9):
+    """The mark as large as the 1200 x 630 card allows, centred on the ink.
+
+    Chat apps show this card at a few hundred pixels wide, so every pixel of
+    margin is logo the reader does not get to see. `fill` is the share of the
+    card's width or height the mark takes, whichever runs out first.
+    """
     W, H = 1200, 630
-    w, h = im.size
-    crop_w = min(w, round(h * W / H))
-    crop_h = round(crop_w * H / W)
-    left, top = (w - crop_w) // 2, (h - crop_h) // 2
-    return im.crop((left, top, left + crop_w, top + crop_h)).resize((W, H), Image.LANCZOS)
+    scale = min(W * fill / mark.size[0], H * fill / mark.size[1])
+    sized = mark.resize((round(mark.size[0] * scale), round(mark.size[1] * scale)), Image.LANCZOS)
+    card = Image.new('RGBA', (W, H), background + (255,))
+    card.alpha_composite(sized, ((W - sized.size[0]) // 2, (H - sized.size[1]) // 2))
+    return card.convert('RGB')
 
 
 def data_uri(img):
@@ -133,8 +138,8 @@ def main():
     print(f'wrote assets/img/favicon.svg  {len(svg):,} bytes')
 
     save(square(white, 32, 0.02), 'favicon-32.png')
-    save(square(white, 180, 0.10, ink_of(src)).convert('RGB'), 'apple-touch-icon.png')
-    save(og_card(src), 'og-card.png')
+    save(square(white, 180, 0.03, ink_of(src)).convert('RGB'), 'apple-touch-icon.png')
+    save(og_card(white, ink_of(src)), 'og-card.png')
 
 
 if __name__ == '__main__':
