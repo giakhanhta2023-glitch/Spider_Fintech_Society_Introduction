@@ -329,6 +329,29 @@ const NOTES = {
       ['Costs barely matter', 'Check the turnover calculation. A position that never changes pays nothing, and a diff on a constant series is zero everywhere.'],
       ['Walk forward beats the single split', 'Suspect leakage between folds: the fit window and the test window must not overlap, including any rolling feature that spans the boundary.']
     ]
+  },
+
+  17: {
+    files: [
+      ['`engine/optimise.py`', 'max_sharpe, min_variance and risk_parity, all with bounds'],
+      ['`engine/decompose.py`', 'marginal and total risk contributions'],
+      ['`engine/var.py`', 'historical, parametric, monte carlo and expected shortfall'],
+      ['`engine/backtest.py`', 'exception counting, with the dates so clustering shows'],
+      ['`engine/rebalance.py`', 'the no trade band and the turnover it produces']
+    ],
+    run: 'pip install -r requirements.txt && pytest -q && python -m engine.report',
+    design: [
+      'The unconstrained solution is printed rather than hidden. A weight of -92.5% for five hundredths of Sharpe is the most persuasive argument for constraints anybody will ever see, and it disappears if only the summary statistics are shown.',
+      'Risk contributions are reported next to the weights in the same table. Equal money giving one asset 62.7% of the risk is a fact a committee can act on, and it is invisible in a weights column.',
+      'Three VaR methods rather than one, with the excess kurtosis printed beside them. On this synthetic data the three agree because the returns are nearly normal, and saying so is the honest version of a result that would not hold on real returns.',
+      'The exception backtest lists the dates of the breaches. The count says whether the model is wrong; the pattern says whether it is the distribution or the volatility estimate.',
+      'Rebalancing uses a no trade band and reports turnover, so the allocation is costed through the level 16 engine rather than assumed to be free.'
+    ],
+    mistakes: [
+      ['Weights do not sum to one', 'The equality constraint is missing or the solver failed. Check the status, and assert the sum in a test.'],
+      ['Risk parity will not converge', 'Bound the weights away from zero. A contribution divided by a weight of zero is undefined and the optimiser wanders.'],
+      ['VaR looks too good', 'Check the sign convention and the tail. A 95% VaR is a loss, so it should be negative, and it should be breached about once a fortnight.']
+    ]
   }
 };
 

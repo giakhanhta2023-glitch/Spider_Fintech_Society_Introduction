@@ -71,6 +71,7 @@ model backed tutor.
 | 14 | The scorecard a regulator can read | An application scorecard with reason codes | WOE, information value, model docs |
 | 15 | Fraud detection with a stopwatch running | A fraud decision service under 100ms | serving, feature stores, drift |
 | 16 | The backtest that does not lie to you | A backtest engine with walk forward | costs, overfitting, bias |
+| 17 | Weights, and the risk they actually carry | A portfolio and risk engine | optimisation, risk parity, VaR |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.
