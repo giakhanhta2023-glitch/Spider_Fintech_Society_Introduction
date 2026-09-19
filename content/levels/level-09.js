@@ -23,163 +23,190 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'A notebook is not a product' },
-    { p: 'Notebooks are brilliant for exploring and terrible for delivering. They run top to bottom in an order only you ' +
-         'remember, they have no inputs a stranger can use, and "just run this cell" is not a product. ' +
-         'An application flips all three: it waits for input, validates it, computes, and responds.' },
+    { p: 'For eight levels your code has lived in notebooks. A notebook is brilliant for exploring: you try something, see the ' +
+         'result, try something else. It is terrible for handing to anyone. Its cells only work in the order you ran them, ' +
+         'which lives in your head. There is nowhere for a stranger to type their own numbers. And "just open Colab and run ' +
+         'cell 7" is not something you can ask a customer.' },
+    { p: 'An **application** turns that around. It waits for someone to give it input, checks the input makes sense, does the ' +
+         'calculation, and shows the answer, for anyone, in any order, as many times as they like. Putting it on a computer ' +
+         'the public can reach is called **deploying** it.' },
     { table: {
       head: ['Notebook', 'Application'],
       rows: [
         ['You are the only user', 'Anyone with the link is a user'],
-        ['Inputs are edited in code', 'Inputs come from a form'],
-        ['A crash is a red cell you ignore', 'A crash is an outage'],
-        ['Cell order is in your head', 'Every path must work in any order'],
-        ['Runs on your machine', 'Runs on a server, somewhere else']
+        ['You change inputs by editing code', 'Users type inputs into a form'],
+        ['A crash is a red cell you ignore', 'A crash is somebody unable to use your product'],
+        ['Cell order is in your head', 'Every path has to work in any order'],
+        ['Runs on your machine', 'Runs on a server somewhere else']
       ]
     }},
-
+    { p: 'The last row hides the biggest change. The moment strangers can type into your code, they will type things you ' +
+         'never imagined. Here is the level 6 payment formula meeting a user who enters a loan term of 0 years:' },
+    { code: 'monthly_payment(250000, 0.055, 0)\n\nTraceback (most recent call last):\n  ...\nZeroDivisionError: float division by zero', lang: 'python' },
+    { p: 'That wall of error text is a **traceback**: Python explaining where it crashed. It is useful to you and meaningless, ' +
+         'even alarming, to a customer.' },
     { check: {
       q: 'Your notebook has computed the right payment a hundred times. The deployed app shows a stranger a traceback the ' +
          'first afternoon, because they typed a term of 0 years. Which piece of code was wrong?',
       a: 'Neither, in the sense that the arithmetic never changed. A term of zero makes n zero, so `(1 + i) ** -n` is 1, the ' +
-         'denominator is 0, and Python raises. In a notebook that input never arrives, because you are the only user and you ' +
-         'know what the function expects. The app is the same function with the audience widened to everyone, and the work ' +
-         'the notebook let you skip is exactly the work that failed: deciding what happens when the input is impossible.'
+         'bottom of the fraction is 0, and Python refuses to divide by it. In a notebook that input never arrives, because you ' +
+         'are the only user and you know what the function expects. The app is the same function with the audience widened ' +
+         'to everyone, and the work the notebook let you skip is exactly the work that failed: deciding what happens when the ' +
+         'input is impossible.'
     }},
 
-    { h: 'Client and server' },
-    { p: 'A **client** (the browser) sends a request; a **server** runs your Python and sends back a response. Your code ' +
-         'never runs on the user\'s machine, which is why secrets can live on the server and why the server has to cope ' +
-         'with every input a stranger might type.' },
-    { code: 'browser  --- HTTP request  --->  server (your Python)\n         <-- HTML / JSON  ----      + your data sources', lang: 'text' },
-    { p: 'Two common shapes for the server half:' },
+    { h: 'Where your code actually runs' },
+    { p: 'Level 5 introduced the client and the server from the other side, when your code was the one asking. Now your code ' +
+         'is the one answering. The **client** is the user\'s browser: it sends a request and draws whatever comes back. The ' +
+         '**server** is the computer running your Python. Your code never runs on the user\'s machine.' },
+    { code: 'their browser  --- "here are my numbers" --->  server running your Python\n               <--- a page with the answer ---      (and your data, and your keys)', lang: 'text' },
+    { p: 'That one fact explains two things. It is why your API key is safe on the server: the browser only ever receives the ' +
+         'finished page. And it is why the server has to protect itself: anything a stranger can type arrives at your code.' },
+    { p: 'Servers come in two common shapes:' },
     { table: {
-      head: ['Shape', 'Returns', 'Use it when'],
+      head: ['Shape', 'What it sends back', 'Use it when'],
       rows: [
-        ['**Web app** (Streamlit)', 'A page a human looks at', 'The user is a person who wants an answer'],
-        ['**API** (FastAPI/Flask)', 'JSON another program reads', 'The user is another system']
+        ['**Web app**, for example with Streamlit', 'A page a person looks at', 'The user is a person who wants an answer'],
+        ['**API**, for example with FastAPI', 'JSON that another program reads', 'The user is another system']
       ]
     }},
-    { p: 'This level builds a **web app**, because seeing a stranger use your loan calculator is a better first experience ' +
-         'than reading a JSON response. The architecture lesson is identical.' },
-
+    { p: 'This level builds a **web app** with **Streamlit**, a Python library that turns a script into a web page with ' +
+         'sliders, boxes and charts, without you writing any HTML. Seeing a stranger use your loan calculator is a better first ' +
+         'experience than reading JSON. Level 12 builds an API.' },
     { check: {
       q: 'A member says the app is slow and asks whether a faster laptop would fix it. Answer them, and say what the answer ' +
-         'implies about where you can keep an API key.',
-      a: 'A faster laptop will not help. Their browser sends a request and draws the page that comes back; every line of ' +
-         'your Python runs on the server, so the delay is in your code, your data sources, or the network in between. What ' +
-         'would help is caching the slow load, making fewer calls, or a closer region. The same fact is why a key read on ' +
-         'the server is safe and a key in browser JavaScript is published: whatever reaches the client belongs to the client.'
+         'means for where you can keep an API key.',
+      a: 'A faster laptop will not help. Their browser sends a request and draws the page that comes back; every line of your ' +
+         'Python runs on the server, so the delay is in your code, your data sources, or the network in between. What would ' +
+         'help is saving the slow load so it is not repeated, making fewer calls, or a server closer to the user. The same ' +
+         'fact is why a key read on the server is safe and a key in the browser\'s code is public: whatever reaches the ' +
+         'client belongs to the client.'
     }},
 
-    { h: 'Separate the maths from the buttons' },
-    { p: 'The single most important structural decision: **pure functions in one file, interface in another**.' },
-    { code: 'finance.py     <- pure functions. No printing, no widgets, no I/O\napp.py         <- Streamlit UI. Imports finance, calls it, displays results\ntest_finance.py <- tests. Imports finance only, needs no browser', lang: 'text', label: 'project layout' },
-    { p: 'A **pure function** takes arguments and returns a value, with no side effects. It can be tested in one line, ' +
-         'reused in an API tomorrow, and reasoned about without running the app. The moment a calculation contains ' +
-         '`st.write()`, it is welded to the interface forever.' },
+    { h: 'Keep the maths away from the buttons' },
+    { p: 'The most important decision in this level is how you split your files. The calculations go in one file, the ' +
+         'screen in another, and the tests in a third:' },
+    { code: 'finance.py       <- the calculations. No printing, no buttons, no files\napp.py           <- the Streamlit page. Imports finance, calls it, shows the result\ntest_finance.py  <- the tests. Imports finance only, and needs no browser', lang: 'text', label: 'project layout' },
+    { p: 'Everything in `finance.py` should be a **pure function**: it takes some values in, returns a value out, and does ' +
+         'nothing else along the way. No printing, no saving, no talking to the screen. Anything a function does besides ' +
+         'returning its answer is called a **side effect**. Compare:' },
+    { code: '# pure: numbers in, number out\ndef monthly_payment(principal, annual_rate, years):\n    ...\n    return payment\n\n# not pure: welded to one screen\ndef monthly_payment(principal, annual_rate, years):\n    ...\n    st.write(f"Your payment is {payment}")      # a side effect\n    return payment', lang: 'python' },
+    { p: 'The pure version can be tested in one line, reused by an API next month, and understood without running the app. ' +
+         'The second one only works inside a Streamlit page.' },
     { check: {
-      q: 'Someone adds an `st.write()` inside `monthly_payment` so the working shows on screen. Name two things that ' +
-         'function can no longer do.',
-      a: 'It can no longer be tested without Streamlit running, because importing it drags the UI framework in and calling ' +
-         'it outside a session misbehaves. And it can no longer be called in a loop: build a 360 row schedule and you have ' +
-         'printed 360 times into the page. A third one follows for free: it cannot be reused behind an API tomorrow, which ' +
-         'is usually the next thing anyone asks for. A calculation that writes to a screen has chosen one screen forever.'
+      q: 'Someone adds an `st.write()` inside `monthly_payment` so the working shows on screen. Name two things that function ' +
+         'can no longer do.',
+      a: 'It can no longer be tested without Streamlit running, because calling it outside a Streamlit page misbehaves. And ' +
+         'it can no longer be called in a loop: build a 360 row schedule and you have written to the page 360 times. A third ' +
+         'follows for free: it cannot be reused behind an API tomorrow, which is usually the next thing anyone asks for. A ' +
+         'calculation that writes to a screen has chosen one screen forever.'
     }},
-    { money: 'In regulated fintech this separation is not just tidiness. The calculation engine is the part that gets ' +
-             'audited, version-pinned, and tested to death. It must be readable on its own, without a UI framework in the way.' },
+    { money: 'In regulated finance this split is not just tidiness. The calculation code is the part that gets audited, its ' +
+             'exact version recorded, and tested heavily. It has to be readable on its own, with no screen code in the way.' },
 
-    { h: 'Validate everything a stranger can type' },
-    { p: 'Your users will enter a negative loan, a 900% rate, a zero term, and text where a number should be. Every one of ' +
-         'those must produce a clear message, never a traceback.' },
-    { code: 'if principal <= 0:\n    st.error("Loan amount must be greater than zero.")\n    st.stop()\n\nif term_years > 40:\n    st.warning("Terms over 40 years are unusual. Check this is intended.")', lang: 'python' },
+    { h: 'Check everything a stranger can type' },
+    { p: 'Your users will enter a negative loan, a 900% rate, a zero term, and letters where a number should be. Every one of ' +
+         'those must produce a clear message, never a traceback. Checking input before using it is called **validation**.' },
+    { p: 'Do it in two places. In the calculation, raise an error with a plain explanation, so the rule protects every caller:' },
+    { code: 'def monthly_payment(principal, annual_rate, years):\n    if principal <= 0:\n        raise ValueError("Loan amount must be greater than zero.")\n    if years < 1:\n        raise ValueError("The term must be at least one year.")\n    ...', lang: 'python' },
+    { p: 'And on the page, catch that error and show it kindly, then stop drawing the rest of the page:' },
+    { code: 'try:\n    payment = monthly_payment(principal, rate, years)\nexcept ValueError as err:\n    st.error(str(err))         # a red box with the message, not a traceback\n    st.stop()\n\nif years > 40:\n    st.warning("Terms over 40 years are unusual. Check this is what you meant.")', lang: 'python' },
     { table: {
-      head: ['Input', 'Guard'],
+      head: ['Input', 'What to check'],
       rows: [
-        ['Loan amount', 'Positive, with a sane upper bound'],
-        ['Interest rate', '0% to ~50%, and handle exactly 0%'],
-        ['Term', 'At least 1 period, capped at something plausible'],
-        ['Extra payment', 'Not negative, and warn if it exceeds the payment itself'],
-        ['Income', 'Positive if you are dividing by it, never divide by user input unchecked']
+        ['Loan amount', 'Above zero, and below some sensible maximum'],
+        ['Interest rate', 'Between 0% and about 50%, and handle exactly 0% separately'],
+        ['Term', 'At least one period, and not absurdly long'],
+        ['Extra payment', 'Not negative, and warn if it is bigger than the payment itself'],
+        ['Income', 'Above zero before you divide by it. Never divide by something a user typed without checking']
       ]
     }},
-    { warn: 'Widget constraints (`min_value`, `max_value`) are a convenience, not a security control. Validate in your ' +
-            'functions too: the same code may later be called by an API where no widget exists.' },
-
+    { warn: 'The limits you set on an input box, such as `min_value` and `max_value`, only protect that one box. Put the real ' +
+            'check in the function too, because the same function may later be called from somewhere with no box at all.' },
     { check: {
-      q: 'Your loan amount widget is `st.number_input("Loan", min_value=1000.0, max_value=2000000.0)`. Is the loan amount ' +
+      q: 'Your loan amount box is `st.number_input("Loan", min_value=1000.0, max_value=2000000.0)`. Is the loan amount ' +
          'validated?',
-      a: 'On that one screen, yes. In your program, no. The rule lives in the widget, so every other caller of ' +
-         '`monthly_payment` has no rule at all: a test, a scheduled job, an API endpoint next month, or the same app after ' +
-         'somebody removes a minimum they did not understand. Put the check in the function, where it raises `ValueError`, ' +
-         'and leave the widget as a convenience that stops most people from having to see the error at all.'
+      a: 'On that one screen, yes. In your program, no. The rule lives in the box, so every other caller of `monthly_payment` ' +
+         'has no rule at all: a test, a scheduled job, an API next month, or the same page after somebody removes a limit they ' +
+         'did not understand. Put the check in the function, where it raises `ValueError`, and keep the box limits as a ' +
+         'convenience that stops most people from seeing the error at all.'
     }},
 
-    { h: 'Dependencies and environments' },
-    { p: 'Your app needs specific libraries at specific versions. `requirements.txt` lists them; the deployment platform ' +
-         'installs exactly that list. Without it, your app works locally and dies on the server.' },
+    { h: 'Make it install the same way everywhere' },
+    { p: 'Your app uses other people\'s code: Streamlit, pandas, numpy. Those are its **dependencies**. The server that runs ' +
+         'your app starts completely empty, so it needs a list of exactly what to install. That list is a text file called ' +
+         '`requirements.txt`, and the server installs everything on it, and nothing else:' },
     { code: 'streamlit==1.38.0\npandas==2.2.2\nnumpy==1.26.4\nmatplotlib==3.9.2', lang: 'text', label: 'requirements.txt' },
-    { p: 'A **virtual environment** is a private library folder per project, so one project\'s pandas upgrade cannot break ' +
-         'another. Create it once and forget about it:' },
-    { code: 'python -m venv .venv\n\n# Windows\n.venv\\Scripts\\activate\n# macOS / Linux\nsource .venv/bin/activate\n\npip install -r requirements.txt', lang: 'bash' },
+    { p: 'The `==2.2.2` part **pins** a version: install exactly this one. Leave it out and the server installs whatever is ' +
+         'newest on the day it builds, which means an app nobody touched can break after a library changes.' },
+    { p: 'On your own computer, a **virtual environment** keeps each project\'s libraries in its own folder, so upgrading ' +
+         'pandas for one project cannot break another. Create it once per project:' },
+    { code: 'python -m venv .venv                 # make the private folder\n\n# Windows\n.venv\\Scripts\\activate\n# macOS or Linux\nsource .venv/bin/activate\n\npip install -r requirements.txt      # install exactly the list', lang: 'bash' },
     { check: {
-      q: 'The app runs locally and the deployment log says `ModuleNotFoundError: No module named pandas`. You definitely ' +
-         'have pandas installed. What is going on, and what does that say about pinning versions?',
-      a: 'Installed on your laptop, where nobody else is running the app. The server built a clean environment and installed ' +
-         'exactly what `requirements.txt` listed, and pandas is not on the list, so it is not there. Local installs are ' +
-         'invisible to the deployment. The same reasoning argues for pinning: `pandas` with no version installs whatever is ' +
-         'newest on build day, so an app that was never edited can break on a Tuesday. `pandas==2.2.2` builds the same ' +
-         'environment in six months as it does today.'
+      q: 'The app runs locally and the deployment log says `ModuleNotFoundError: No module named pandas`. You definitely have ' +
+         'pandas installed. What is going on, and what does that say about pinning versions?',
+      a: 'Installed on your laptop, where nobody else runs the app. The server started empty and installed exactly what ' +
+         '`requirements.txt` listed, and pandas is not on the list, so it is not there. What is installed on your machine is ' +
+         'invisible to the server. The same reasoning argues for pinning: `pandas` with no version installs whatever is newest ' +
+         'on build day, so an app that was never edited can break on a Tuesday. `pandas==2.2.2` builds the same thing in six ' +
+         'months as it does today.'
     }},
-    { tip: 'Add `.venv/` to your `.gitignore`. It is hundreds of megabytes of files that anyone can rebuild from ' +
-           'requirements.txt in thirty seconds.' },
+    { tip: 'Add `.venv/` to your `.gitignore`. It is hundreds of megabytes that anyone can rebuild from `requirements.txt` in ' +
+           'thirty seconds.' },
 
     { h: 'Tests that run in a second' },
-    { p: 'You separated the maths precisely so you could do this. A test file of plain `assert` statements catches the ' +
-         'bugs that a UI hides, and running it takes less time than clicking through the app once.' },
-    { code: 'from finance import monthly_payment\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\ndef test_zero_rate():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\ndef test_rejects_negative():\n    try:\n        monthly_payment(-100, 0.05, 10)\n    except ValueError:\n        return\n    raise AssertionError("should have raised")', lang: 'python' },
-    { p: 'Run them with `pytest` (or just call each function at the bottom of the file). The habit that matters: ' +
-         '**every bug you fix gets a test** so it cannot come back quietly.' },
-
+    { p: 'You split the maths from the page precisely so you could do this. A **test** is a small function that calls your ' +
+         'code with inputs where you already know the right answer, and complains if the answer is different. `assert` is ' +
+         'Python\'s way of saying "this must be true, stop if it is not":' },
+    { code: 'from finance import monthly_payment\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\ndef test_zero_rate():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\ndef test_rejects_negative():\n    try:\n        monthly_payment(-100, 0.05, 10)\n    except ValueError:\n        return                      # good: it refused\n    raise AssertionError("should have refused a negative loan")', lang: 'python' },
+    { p: 'A tool called **pytest** finds every function whose name starts with `test_` and runs them all:' },
+    { code: '$ pytest\n...                                                    [100%]\n3 passed in 0.05s', lang: 'text' },
+    { p: 'Five hundredths of a second, versus a minute of clicking through the app by hand. The habit that matters most: ' +
+         '**every bug you fix gets a test**, so it cannot quietly come back.' },
     { check: {
-      q: '`test_zero_rate` says $12,000 over four years at 0% must be $250.00 a month. Why is that test worth more than the ' +
-         'one at 5.5%?',
+      q: '`test_zero_rate` says $12,000 over four years at 0% must be $250.00 a month. Why is that test worth more than the one ' +
+         'at 5.5%?',
       a: 'Because you can check it without trusting the formula: $12,000 over 48 months with no interest is $250.00, and ' +
-         'anyone can see that. The 5.5% test tells you the code still does what it did, which is worth having, but it was ' +
-         'written by running the code. The zero rate case is also the branch the formula cannot handle, since the ' +
-         'denominator becomes 0, so it is both the easiest test to verify and the most likely thing to be broken. Those two ' +
+         'anyone can see that. The 5.5% test tells you the code still does what it did, which is worth having, but the expected ' +
+         'number was found by running the code. The zero rate case is also the one the formula cannot handle, since the bottom ' +
+         'of the fraction becomes 0, so it is both the easiest test to verify and the most likely to be broken. Those two ' +
          'properties together are what make a test worth writing.'
     }},
 
-    { h: 'Secrets in a deployed app' },
-    { p: 'Level 5\'s rule still holds, with one addition: deployment platforms give you a secrets store. Streamlit Cloud ' +
-         'has a settings panel that populates `st.secrets`; the values never appear in your repository.' },
-    { code: 'import streamlit as st\n\napi_key = st.secrets.get("MARKET_API_KEY")     # set in the platform UI\nif not api_key:\n    st.info("Running without a market feed: using bundled snapshot data.")', lang: 'python' },
-    { p: 'Note the fallback. An app that dies because an optional key is missing is worse than one that degrades and says so.' },
-
+    { h: 'Keys on a deployed app' },
+    { p: 'Level 5\'s rule still holds, keys never go in your code, with one addition. Hosting platforms give you a private ' +
+         'settings page for secrets. On Streamlit Cloud you paste the key there, and your code reads it through `st.secrets`. ' +
+         'It never appears in your repository.' },
+    { code: 'import streamlit as st\n\napi_key = st.secrets.get("MARKET_API_KEY")     # pasted into the platform\'s settings page\nif not api_key:\n    st.info("Running without a live market feed: using the saved snapshot data.")', lang: 'python' },
+    { p: 'Notice what happens when the key is missing: the app keeps working and says so. An app that crashes because an ' +
+         'optional key is missing is worse than one that does less and is honest about it.' },
     { check: {
-      q: 'The market key is missing on the deployed app. Is it better to raise, so the problem is visible, or to fall back ' +
-         'to the bundled snapshot and carry on? Level 4 told you to fail loudly.',
-      a: 'Fall back, and put the reason on the page. Level 4 was about a write that decides where money goes, where a quiet ' +
-         'failure leaves the books wrong. This key is optional: without it the app still teaches, on data it labels as a ' +
-         'bundled snapshot, and every visitor can see what they are looking at. Change the situation and the answer changes ' +
-         'with it. If the key were what fetched somebody their own balance, degrading quietly would be the worse choice, ' +
-         'and the honest move would be to say the balance is unavailable rather than to show an old one.'
+      q: 'The market key is missing on the deployed app. Is it better to raise an error, so the problem is visible, or to fall ' +
+         'back to the saved snapshot and carry on? Level 4 told you to fail loudly.',
+      a: 'Fall back, and put the reason on the page. Level 4 was about writing money into a ledger, where a quiet failure ' +
+         'leaves the books wrong. This key is optional: without it the app still teaches, on data it labels as a saved ' +
+         'snapshot, and every visitor can see what they are looking at. Change the situation and the answer changes with it. ' +
+         'If the key were what fetched somebody their own balance, carrying on quietly would be the worse choice, and the honest ' +
+         'move would be to say the balance is unavailable rather than show an old one.'
     }},
 
-    { h: 'Caching, because the server is shared' },
-    { p: 'Streamlit runs your entire script again on every interaction. That is a simple and surprising model: move a slider, ' +
-         'the whole file runs again. Anything slow (a CSV download, an API call) must be cached or your app will crawl.' },
-    { code: '@st.cache_data(ttl=3600)      # remember for an hour\ndef load_prices(url):\n    return pd.read_csv(url, parse_dates=["date"])', lang: 'python' },
+    { h: 'Caching, because Streamlit reruns everything' },
+    { p: 'Streamlit has one surprising rule: every time a user moves a slider or clicks a button, **your whole script runs ' +
+         'again from the top**. That keeps things simple, but it means anything slow at the top, such as downloading a CSV, ' +
+         'happens again on every click.' },
+    { p: 'The fix is a **cache**: Streamlit remembers what a function returned for given inputs, and next time just hands ' +
+         'back the saved answer. `ttl` ("time to live") says how long to remember it:' },
+    { code: '@st.cache_data(ttl=3600)      # remember the answer for one hour\ndef load_prices(url):\n    return pd.read_csv(url, parse_dates=["date"])\n\n# first click:  downloads the file, however long that takes\n# next clicks:  returns the saved copy instantly, until the hour is up', lang: 'python' },
     { check: {
-      q: 'You decorate a function with `@st.cache_data` and, inside it, record the member\'s calculation in a table. The ' +
-         'member runs the same calculation twice. How many rows land in the table?',
-      a: 'One. The second call matches the cached arguments, so Streamlit returns the stored return value without running ' +
-         'the body at all, and the insert never happens. The app looks perfect, because the number on screen is right both ' +
-         'times: the only symptom is a table that is quietly missing rows, which you will discover weeks later when the ' +
-         'counts do not reconcile. Cache the read that fetches the prices, never the write that records what happened.'
+      q: 'You put `@st.cache_data` on a function that, inside it, records the member\'s calculation in a table. The member runs ' +
+         'the same calculation twice. How many rows land in the table?',
+      a: 'One. The second call has the same inputs, so Streamlit hands back the saved answer without running the function ' +
+         'at all, and the recording never happens. The app looks perfect, because the number on screen is right both times: ' +
+         'the only sign is a table that is quietly missing rows, which you discover weeks later when the counts do not add ' +
+         'up. Cache the function that reads the prices, never the one that records what happened.'
     }},
-    { warn: 'Never cache anything that must be fresh per user, and never cache a function that writes to a database. ' +
-            'Cache reads, not writes.' }
+    { warn: 'Never cache anything that must be fresh for each user, and never cache a function that saves or changes ' +
+            'anything. Cache reading, not writing.' }
   ],
 
   tutorial: {
