@@ -22,139 +22,217 @@ FQ.registerLevel({
   ],
 
   knowledge: [
-    { h: 'Money cannot appear from nowhere' },
-    { p: 'Every movement of money has two sides: it leaves somewhere and arrives somewhere. **Double-entry bookkeeping**, ' +
-         'standardised in Venice in 1494 and unchanged since, writes both sides as separate entries and requires them to cancel out. ' +
-         'If a transaction\'s entries do not sum to zero, the transaction is invalid, not "slightly off", *invalid*.' },
-    { code: 'Alice pays Bob $25.00\n\n  entry 1:  alice   -2500   (cents)\n  entry 2:  bob     +2500\n  ---------------------------\n  sum                    0     <- the invariant', lang: 'text', label: 'one transfer, two entries' },
-    { p: 'In traditional accounting the two sides are called **debit** and **credit**: a debit increases an asset account and ' +
-         'decreases a liability one, which confuses everybody for about a month. Many modern ledger systems keep the identical ' +
-         'invariant with **signed amounts**: positive means value in, negative means value out, and a valid transaction sums to zero. ' +
-         'That is the model you will build, and it is exactly equivalent.' },
-    { money: 'This invariant is the reason a bank can survive a crashed server mid-payment. Either both entries were written, ' +
-             'or the transaction never happened. There is no valid state in between.' },
+    { h: 'Where does the money go?' },
+    { p: 'You send a friend $25 in a banking app. Your balance goes down by $25 and theirs goes up by $25. Two numbers ' +
+         'changed, by the same amount, in opposite directions. Hold on to that picture, because this whole level is about ' +
+         'writing it down in a way that can never go wrong.' },
+    { p: 'A payments company keeps one long list of every movement of money it handles. That list is the **ledger**. Each ' +
+         'line in it is an **entry**: one account and one amount. A **transaction** is the group of entries that together ' +
+         'describe one event, such as "Alice paid Bob".' },
+    { p: '**Double-entry bookkeeping** is the rule for writing transactions: record both sides of every movement, money out ' +
+         'as a negative number and money in as a positive one, and the entries of each transaction must add up to exactly ' +
+         'zero. It was written down in Venice in 1494, and every bank still runs on it.' },
+    { code: 'Alice pays Bob $25.00\n\n  entry 1:  alice   -2500   (cents)\n  entry 2:  bob     +2500\n  ---------------------------\n  sum                    0     <- always zero', lang: 'text', label: 'one transfer, two entries' },
+    { p: 'Why zero? Because a payment does not create money or destroy it. It only moves it. If the entries of a transaction ' +
+         'add up to anything other than zero, money appeared from nowhere or disappeared into nowhere, and the ledger refuses ' +
+         'the transaction. Not "slightly off": refused.' },
+    { p: 'Engineers have a word for a rule that must be true at every moment: an **invariant**. The invariant here is ' +
+         '"every transaction sums to zero". It has a useful side effect: if every transaction sums to zero, the whole ledger ' +
+         'does too, so one addition over millions of rows tells you whether anything anywhere has gone wrong.' },
+    { p: 'You will also meet the words **debit** and **credit**, which is how accountants name the two sides. They confuse ' +
+         'almost everybody at first, partly because a bank statement uses "credit" to mean money arriving while the bank\'s ' +
+         'own books use it differently. This course uses a plus and a minus sign instead. It is exactly the same rule, just ' +
+         'easier to read.' },
+    { money: 'This rule is how a bank survives a server crashing halfway through a payment. The ledger writes all the entries ' +
+             'of a transaction together, or none of them. So either the payment happened completely, or it did not happen at ' +
+             'all. There is no state in between for money to get lost in.' },
     { check: {
       q: 'Your code writes `alice -2500`, and the process dies before it writes `bob +2500`. Someone asks what the ledger ' +
          'now says. What do you tell them?',
-      a: 'That $25.00 has left the world. Alice is poorer, nobody is richer, and the whole file now fails the sum to zero ' +
-         'test, not just that one transaction. This is why the write takes every leg at once: `_post` receives the complete ' +
-         'list, checks the sum, and only then appends. A half written transaction is not a small error you can patch up ' +
-         'later, it is a ledger that has stopped meaning anything until somebody works out what was supposed to happen.'
+      a: 'That $25.00 has left the world. Alice is poorer, nobody is richer, and the whole ledger now fails the sum to zero ' +
+         'test, not only that one transaction. This is why a ledger writes every entry of a transaction in one step: it ' +
+         'receives the complete list, checks the sum, and only then saves anything. A half written transaction is not a ' +
+         'small error you can patch later. It is a ledger that has stopped meaning anything until somebody works out what ' +
+         'was supposed to happen.'
     }},
 
-    { h: 'Three or more sides: fees' },
-    { p: 'Nothing says a transaction has only two entries. It needs only to **balance**. A $25 payment with a 50-cent platform fee is three entries:' },
-    { code: '  customer   -2500\n  merchant   +2450\n  fee_income   +50\n  --------------------\n  sum            0', lang: 'text', label: 'a payment with a fee' },
-    { p: 'This is how every payment processor records revenue. The customer\'s view ("I paid $25") and the merchant\'s view ' +
-         '("I received $24.50") are both true, on the same balanced transaction.' },
+    { h: 'More than two sides: fees' },
+    { p: 'Pay $25.00 at a shop by card and the shop does not receive $25.00. The payment company in the middle keeps a small ' +
+         'fee. So one payment touches three accounts, and nothing in the rule says a transaction needs exactly two entries. ' +
+         'It only needs the entries to add up to zero.' },
+    { code: '  customer     -2500     the customer pays $25.00\n  merchant     +2450     the shop receives $24.50\n  fee_income     +50     the platform keeps $0.50\n  -----------------------\n  sum              0', lang: 'text', label: 'a $25.00 payment with a 50 cent fee' },
+    { p: 'Check it yourself: -2500 + 2450 + 50 = 0. `fee_income` is an account like any other. The platform\'s earnings for ' +
+         'the month are simply that account\'s balance, which is why this is how every payment processor records its revenue.' },
+    { p: 'Real fees are usually a percentage plus a fixed amount. At 2.9% plus 30 cents, a $100.00 payment works out as ' +
+         '290 cents plus 30 cents, a fee of 320 cents. The entries are customer -10000, merchant +9680, fee_income +320, and ' +
+         'they still sum to zero. The customer\'s view ("I paid $100") and the shop\'s view ("I got $96.80") are both true, ' +
+         'on the same transaction.' },
     { check: {
       q: 'The merchant calls to say their statement shows $24.50 for a sale the customer swears was $25.00, and asks which ' +
          'of you is wrong. Answer them with the transaction.',
-      a: 'Neither. Read them the three legs: customer -2500, merchant +2450, fee income +50, summing to zero. The customer ' +
+      a: 'Neither. Read them the three entries: customer -2500, merchant +2450, fee income +50, summing to zero. The customer ' +
          'paid $25.00, the merchant received $24.50, and the 50 cents in between is the platform fee, 2% of the sale, which ' +
-         'is on their pricing page. Nothing is missing, because a balanced transaction has nowhere to hide money. The reason ' +
-         'you can answer in ten seconds is that the fee is a leg on the same transaction rather than a separate record ' +
-         'somewhere else.'
+         'is on their pricing page. Nothing is missing, because a balanced transaction has nowhere to hide money. You can ' +
+         'answer in ten seconds because the fee is an entry on the same transaction, not a separate record somewhere else.'
     }},
 
-    { h: 'The balance is derived, never stored' },
-    { p: 'An account\'s balance is the **sum of its entries**, not a column you update. If you store a balance and also store ' +
-         'entries, the day will come when they disagree, and you will not know which one is lying.' },
+    { h: 'A balance is worked out, never typed in' },
+    { p: 'Your bank balance feels like a number stored somewhere. In a well built ledger it is not stored at all. It is ' +
+         'calculated, every time, by adding up every entry for your account. Here is Alice\'s account:' },
+    { table: {
+      head: ['Entry', 'Amount (cents)', 'Balance after it'],
+      rows: [
+        ['Salary paid in', '+10000', '10000'],
+        ['Paid Bob', '-2500', '7500'],
+        ['Groceries', '-1200', '6300'],
+        ['Coffee', '-450', '5850']
+      ]
+    }},
+    { p: 'Her balance is 10000 - 2500 - 1200 - 450 = 5850 cents, $58.50. Nobody wrote 5850 anywhere. It comes from the ' +
+         'entries, so it can never disagree with them. In code:' },
     { code: 'def balance(account_id):\n    return sum(e.amount for e in entries if e.account == account_id)', lang: 'python' },
-    { p: 'Production systems cache balances for speed, but the cache is always rebuildable from entries. The entries are the truth.' },
+    { p: 'Why be this strict? Because if you store a balance **and** the entries, you now have two records of the same thing, ' +
+         'and the day will come when a bug updates one and not the other. When they disagree you will not know which one is ' +
+         'lying. Big systems do save a copy of the total so they are not adding millions of rows on every page load, but only ' +
+         'on one condition: the copy can be rebuilt from the entries at any moment. The entries are the truth.' },
     { check: {
       q: 'You added a `balance` column to each account and update it on every write, for speed. This morning Alice\'s column ' +
          'says $80.00 and the sum of her entries says $75.00. Which number do you show her?',
       a: 'The $75.00, because the entries are the ledger and the column is a copy of them. A copy that disagrees is simply ' +
          'wrong, whichever direction it is wrong in. So you rebuild the column from the entries, then go and find the write ' +
-         'that updated one and not the other, because it will do it again. A cached balance is allowed to exist only on one ' +
-         'condition: it can be rebuilt from the entries at any moment, and something rebuilds it often enough that a drift ' +
-         'of $5.00 is caught by you rather than by Alice.'
+         'that updated one and not the other, because it will do it again. A saved balance is allowed to exist only if it can ' +
+         'be rebuilt from the entries at any moment, and something rebuilds it often enough that a gap of $5.00 is caught by ' +
+         'you rather than by Alice.'
     }},
-    { warn: 'Never `UPDATE` or `DELETE` a posted entry. If a payment was wrong, post a **reversing entry** that cancels it. ' +
-            'The original stays visible forever. That is what makes the history auditable, and in most jurisdictions, legal.' },
+    { p: 'The same thinking decides how you fix a mistake. Say Alice sent $40.00 to the wrong person. You do not edit or ' +
+         'delete that entry. You add a new transaction that exactly cancels it, called a **reversing entry**:' },
+    { code: 'TXN 41  alice   -4000   payment to wrong account\nTXN 41  carol   +4000\nTXN 42  alice   +4000   reversal of TXN 41\nTXN 42  carol   -4000', lang: 'text' },
+    { p: 'Alice\'s balance is back where it started, and anybody reading the ledger later can see exactly what went wrong and ' +
+         'when it was put right.' },
+    { warn: 'Never edit or delete an entry once it is written. The history of every correction is what makes a ledger ' +
+            'trustworthy to an auditor, and in most countries keeping it is a legal requirement.' },
 
-    { h: 'Integer minor units, revisited' },
-    { p: 'Level 1 warned you: never store a balance as a float. Here is the discipline in practice.' },
+    { h: 'Store money as whole cents' },
+    { p: 'Level 1 showed that a computer cannot add 0.1 and 0.2 exactly:' },
+    { code: '>>> 0.1 + 0.2\n0.30000000000000004\n>>> 0.1 + 0.2 == 0.3\nFalse', lang: 'python' },
+    { p: 'Numbers with decimal points, called **floats**, are stored in binary, and most decimal amounts cannot be written ' +
+         'exactly in binary, in the same way that one third cannot be written exactly in decimals. The error is tiny, but a ' +
+         'ledger that must sum to exactly zero cannot live with tiny.' },
+    { p: 'The fix is to never use decimals for money. Store every amount as a whole number of the currency\'s smallest piece: ' +
+         'cents for dollars, pence for pounds. That smallest piece is called the **minor unit**, so $25.00 is stored as ' +
+         '`2500`. Whole numbers add exactly, every time. (Some currencies, such as the Japanese yen and the Vietnamese dong, ' +
+         'have no smaller piece in everyday use, so their minor unit is the whole unit.)' },
     { table: {
-      head: ['Rule', 'Code'],
+      head: ['Rule', 'In code', 'Why'],
       rows: [
-        ['Store in minor units', '`amount_cents = 2500`'],
-        ['Parse user input once, at the edge', '`cents = round(float(text) * 100)`'],
-        ['Do all arithmetic in integers', '`total = a + b` (never floats)'],
-        ['Format only at display time', '`f"${cents / 100:,.2f}"`'],
-        ['Never divide without deciding rounding', 'splitting 100 cents three ways needs a rule for the leftover cent']
+        ['Store amounts in cents', '`amount_cents = 2500`', 'Whole numbers add exactly'],
+        ['Convert what the user typed once, as it arrives', '`cents = round(float(text) * 100)`', 'After that, nothing else deals with decimals'],
+        ['Do all the arithmetic in whole numbers', '`total = a + b`', 'No rounding creeps in'],
+        ['Turn cents back into dollars only to show them', '`f"${cents / 100:,.2f}"`', 'The screen needs dollars, the ledger never does'],
+        ['Decide what happens to a leftover cent', 'see below', 'Division does not always come out whole']
       ]
     }},
+    { p: 'The `round` in the second row is doing real work. Converting "19.99" the obvious way loses a cent:' },
+    { code: '>>> float("19.99") * 100\n1998.9999999999998\n>>> int(float("19.99") * 100)\n1998          # int() just chops off the decimals: one cent gone\n>>> int(round(float("19.99") * 100))\n1999          # round first, then it is right', lang: 'python' },
+    { p: 'Now division. Split $10.00 evenly between three people and each share is $3.333..., which is not a number of cents. ' +
+         'In whole cents, 1000 divided by 3 is 333, with 1 cent left over. That leftover has to go to somebody, and your code ' +
+         'has to decide who, the same way every time. This is known as the **penny-splitting problem**.' },
     { check: {
       q: 'Split $10.00 evenly between three people. Work it out in cents, then say what your code does with what is left.',
       a: '1000 / 3 is 333 cents each, and 333 x 3 is 999, so one cent is left over. Somebody has to get 334, and your code ' +
-         'has to decide who in a way you can explain: first payee takes the remainder, or the largest share does, or the ' +
-         'remainder rotates between them across payouts. What you cannot do is drop it. Legs of -1000, 333, 333 and 333 sum ' +
-         'to -1, `_post` refuses the transaction, and that refusal is the ledger catching a cent that would otherwise have ' +
-         'gone missing on every split you ever ran.'
+         'has to decide who in a way you can explain: the first person takes the extra cent, or the largest share does, or ' +
+         'the extra cent takes turns between them across payouts. What you cannot do is drop it. Entries of -1000, 333, 333 ' +
+         'and 333 sum to -1, so the ledger refuses the transaction, and that refusal is the ledger catching a cent that would ' +
+         'otherwise have gone missing on every split you ever ran.'
     }},
-    { p: 'That last one has a name: the **penny-splitting problem**. If you split $10.00 between three people you cannot give ' +
-         'each $3.333... Someone must get the extra cent, and your code must decide who: deterministically. Silently dropping ' +
-         'it means your transaction no longer sums to zero.' },
 
-    { h: 'Idempotency: the network will lie to you' },
-    { p: 'A user taps Pay. The request reaches your server, you post the transaction, and the response is lost on the way back. ' +
-         'The phone retries. Without protection, you just charged them twice.' },
-    { p: 'The fix is an **idempotency key**: the client generates a unique string per intent and sends it with the request. ' +
-         'The server records the key with the resulting transaction. If a request arrives with a key it has already seen, ' +
-         'it returns the *original* result instead of doing the work again.' },
-    { code: 'if key in self._keys:\n    return self._keys[key]        # same answer, no second charge\n\ntxn = self._post(...)\nself._keys[key] = txn\nreturn txn', lang: 'python' },
+    { h: 'When the same request arrives twice' },
+    { p: 'Here is a payment going wrong, second by second:' },
+    { table: {
+      head: ['Time', 'What happens'],
+      rows: [
+        ['10:00:00.0', 'The user taps Pay $25.00. The phone sends the request'],
+        ['10:00:00.3', 'The server receives it and writes the transaction. Alice is charged'],
+        ['10:00:00.4', 'The server sends back "done", but the phone has just gone into a tunnel and never gets it'],
+        ['10:00:05.0', 'The phone has heard nothing, assumes it failed, and sends the same request again'],
+        ['10:00:05.3', 'The server receives what looks like a new payment and writes it. Alice is charged again: $50.00 in total']
+      ]
+    }},
+    { p: 'Nobody did anything wrong. Phones lose signal and servers are right to process what they receive. The fix has to be ' +
+         'designed in.' },
+    { p: 'The design is called **idempotency**, a long word for a simple property: doing something twice has the same effect ' +
+         'as doing it once. A lift button is idempotent. Press it five times and one lift comes.' },
+    { p: 'To make a payment idempotent, the phone makes up a unique label once for each payment the user means to make, such ' +
+         'as `pay-7f3a9c`, and sends it with every attempt. That label is the **idempotency key**. The server keeps a record of ' +
+         'every key it has already handled. When a request arrives with a key it has seen, it sends back the original result ' +
+         'instead of doing the work again:' },
+    { code: 'if key in self._keys:\n    return self._keys[key]        # seen this one: same answer, no second charge\n\ntxn = self._post(...)             # new: do the work\nself._keys[key] = txn             # and remember that we did\nreturn txn', lang: 'python' },
+    { p: 'Replay the tunnel. At 10:00:05.3 the retry arrives carrying `pay-7f3a9c`, the server finds that key in its record, ' +
+         'and returns the transaction it already wrote. Alice is charged once.' },
     { check: {
       q: 'Two pay requests for $25.00 arrive a second apart. One is a retry after a lost response, the other is a customer ' +
          'who really does want to send $25.00 twice. What separates them, and whose job is it to say so?',
-      a: 'Only the key separates them. The amounts, the accounts and the timestamps look identical, so the server cannot ' +
-         'tell by inspection. The client generates one key per intent, not per request: a retry of the same intent carries ' +
-         'the same key and gets the first transaction back, while a second deliberate payment is a new intent with a new key ' +
-         'and goes through. That is why the key comes from the client. It is the only party that knows how many times the ' +
+      a: 'Only the key separates them. The amounts, the accounts and the times look the same, so the server cannot tell by ' +
+         'looking. The phone makes one key per payment the user intends, not per attempt: a retry of the same payment carries ' +
+         'the same key and gets the first transaction back, while a second deliberate payment is a new intention with a new ' +
+         'key and goes through. That is why the key comes from the phone. It is the only party that knows how many times the ' +
          'user meant to pay.'
     }},
-    { money: 'Stripe, Adyen, and every serious payments API require an idempotency key on writes. It is the single most ' +
-             'important pattern in payment engineering, and a favourite interview question.' },
+    { money: 'Stripe, Adyen and every serious payments service require an idempotency key when you ask them to move money. It ' +
+             'is the most important pattern in payment engineering, and a favourite interview question.' },
 
-    { h: 'The life of a payment' },
+    { h: 'The life of a card payment' },
+    { p: 'A card payment is not one moment. It passes through stages over several days, and at some of them no money has ' +
+         'moved yet. Follow a hotel booking:' },
     { table: {
-      head: ['State', 'Meaning', 'Money moved?'],
+      head: ['Day', 'Stage', 'What it means in plain words', 'Entries in your ledger?'],
       rows: [
-        ['`pending`', 'Authorized: funds reserved on the payer', 'No'],
-        ['`posted`', 'Captured and written to the ledger', 'Yes, in your books'],
-        ['`settled`', 'Cleared between institutions', 'Yes, for real'],
-        ['`reversed`', 'Cancelled by a balancing entry', 'Net zero'],
-        ['`failed`', 'Rejected before any entry was written', 'No']
+        ['Monday', '`pending`', 'The hotel asks the card\'s bank to set $60.00 aside. The bank agrees and holds it. This is an **authorisation**', 'No, nothing has moved'],
+        ['Wednesday', '`posted`', 'You check out and the hotel confirms the charge, called a **capture**. It is written in the books', 'Yes'],
+        ['Thursday', '`settled`', 'The banks actually move the money between themselves', 'Yes, and now it is real money'],
+        ['Any time', '`reversed`', 'Cancelled by a new transaction with the opposite signs', 'Yes, two transactions that cancel'],
+        ['Any time', '`failed`', 'Refused before anything was written', 'No']
       ]
     }},
+    { p: 'The pending stage is the one people misunderstand. The customer sees $60.00 missing from their available balance, ' +
+         'but no money has gone anywhere. The bank has only promised to keep it available. If the hotel never captures it, ' +
+         'the hold simply expires after a few days.' },
     { check: {
       q: 'A customer sees a $60.00 hold from a hotel they never checked into and wants to know why it is on their statement ' +
-         'but not in your ledger. Which state is it, and what ends it?',
-      a: 'It is `pending`: the issuer reserved $60.00 of their available balance when the hotel authorized the card, and no ' +
-         'entry was written anywhere in your books because no money moved. It ends one of two ways. The hotel captures it, ' +
-         'the payment posts, and entries appear. Or the authorization expires, typically within a week, the hold falls off, ' +
-         'and there is nothing to record because nothing happened. Your ledger stays empty in the second case, which is ' +
-         'exactly right and also the hardest part to explain to the customer.'
+         'but not in your ledger. Which stage is it, and what ends it?',
+      a: 'It is `pending`: the card\'s bank set $60.00 of their available balance aside when the hotel asked, and no entry ' +
+         'was written in your books because no money moved. It ends one of two ways. The hotel captures it, the payment ' +
+         'posts, and entries appear. Or the authorisation expires, typically within a week, the hold disappears, and there ' +
+         'is nothing to record because nothing happened. Your ledger stays empty in the second case, which is exactly right ' +
+         'and also the hardest part to explain to the customer.'
     }},
-    { p: 'Refunds, chargebacks and disputes are all reversals with different reasons and different deadlines. ' +
-         'Your ledger does not need to know which. It only needs to record a balanced, reasoned entry.' },
+    { p: 'Refunds and chargebacks are both reversals. A **refund** is the shop choosing to give money back. A **chargeback** is ' +
+         'the customer\'s bank forcing the money back after the customer complains, whether the shop agrees or not. They have ' +
+         'different rules and deadlines, but your ledger records both the same way: a new, balanced transaction with a reason ' +
+         'attached.' },
 
-    { h: 'Fail loudly, not quietly' },
-    { p: 'When a transfer is invalid (unknown account, zero amount, insufficient funds) the correct behaviour is to ' +
-         '**raise an error and write nothing**. Returning `False` or `None` invites a caller to ignore it, and a ledger that ' +
-         'silently skips a write is worse than one that crashes.' },
-    { code: 'class InsufficientFunds(Exception):\n    """Raised when an account cannot cover a debit."""\n\nif self.balance(src) < amount:\n    raise InsufficientFunds(f"{src} has {self.balance(src)}, needs {amount}")', lang: 'python' },
-    { tip: 'Custom exception classes let a caller handle *this* failure differently from a bug in your code. ' +
-           '`except InsufficientFunds:` reads better than checking a return value, and cannot be forgotten.' },
+    { h: 'When something is wrong, stop loudly' },
+    { p: 'Some transfers must never happen: to an account that does not exist, for zero dollars, or for more than the sender ' +
+         'has. The question is what your code does when it is asked for one.' },
+    { p: 'Python has a built-in way to say "I refuse, and here is why": you **raise an exception**. The program stops at that ' +
+         'line, and the error travels back up to whoever asked, until some code deliberately **catches** it with ' +
+         '`try` and `except`. If nobody catches it, the whole request fails, visibly.' },
+    { code: 'class InsufficientFunds(Exception):\n    """Raised when an account cannot cover a payment."""\n\ndef withdraw(balance, amount):\n    if amount > balance:\n        raise InsufficientFunds(f"balance {balance}, asked for {amount}")\n    return balance - amount\n\ntry:\n    withdraw(1000, 5000)\nexcept InsufficientFunds as err:\n    print("refused:", err)\n\n# refused: balance 1000, asked for 5000', lang: 'python' },
+    { p: 'The tempting alternative is to return `False` when something is wrong. The problem is what a caller does with it:' },
+    { code: 'ledger.transfer("alice", "bob", 5000)   # returns False: Alice cannot afford it\nprint("Sent! Receipt emailed.")          # runs anyway, because nothing checked', lang: 'python' },
+    { p: 'A `False` is easy to ignore by accident. An exception is not. The rule for a ledger: when a request is invalid, ' +
+         '**raise an error and write nothing**.' },
+    { tip: 'Making your own exception classes, like `InsufficientFunds`, lets a caller treat each failure differently: show ' +
+           '"not enough money" for that one, and a general error page for a real bug. `except InsufficientFunds:` is also ' +
+           'much easier to read than checking a return value.' },
     { check: {
       q: 'A teammate changes `transfer` to return `False` instead of raising `InsufficientFunds`, because raising felt harsh. ' +
          'Two weeks later the app is showing transfers that never happened. Explain how that follows.',
       a: 'Every caller that wrote `ledger.transfer(src, dst, amount)` on its own line still runs the next line, which says ' +
          '"sent!" and emails a receipt. The `False` went nowhere, because nothing was looking at it. An exception cannot be ' +
          'ignored by accident: the caller either handles it or the request fails visibly, which is the outcome you want when ' +
-         'the alternative is a receipt for money that is still in the sender\'s account. Raising is the kinder behaviour ' +
-         'here, not the harsher one.'
+         'the alternative is a receipt for money that is still in the sender\'s account. Raising is the kinder behaviour here, ' +
+         'not the harsher one.'
     }}
   ],
 
