@@ -84,7 +84,7 @@
 - **C. about $75,616 and 91 months** ✅
 - D. $200,000 and 15 years
 
-**Why:** Each extra dollar of principal removes all the future interest that dollar would have generated, so $54,000 of overpayments removes about $75,616 of interest and 7.5 years.
+**Why:** Each extra dollar of principal removes all the future interest that dollar would have generated, so $53,800 of overpayments removes about $75,616 of interest and 7.5 years.
 
 ### 8. An extra payment on an amortizing loan is applied to:
 

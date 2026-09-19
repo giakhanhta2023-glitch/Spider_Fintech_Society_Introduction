@@ -22,149 +22,214 @@ FQ.registerLevel({
   ],
 
   knowledge: [
-    { h: 'An amortizing loan in one sentence' },
-    { p: 'You borrow a lump sum and repay it with **equal payments**. Each payment first covers the interest that accrued ' +
-         'since the last one; whatever is left reduces the balance. Because the balance shrinks, the interest portion shrinks, ' +
-         'so the principal portion grows: the same payment, split differently every month.' },
-    { code: 'payment = P x i / (1 - (1 + i) ** -n)\n\nP = amount borrowed\ni = periodic rate  = annual rate / payments per year\nn = total payments = years x payments per year', lang: 'text', label: 'the amortization formula' },
-    { p: 'This is the level 2 annuity relationship rearranged: the payment whose present value equals the loan. ' +
-         'You are solving "what stream of payments is worth exactly $250,000 today at this discount rate?"' },
+    { h: 'The words on a loan' },
+    { p: 'A car dealer offers you $20,000 of credit at 7% over five years, "just $396 a month". Before any formula, here are ' +
+         'the four words that describe every loan you will ever see:' },
+    { table: {
+      head: ['Word', 'Plain meaning', 'In the car loan'],
+      rows: [
+        ['**Principal**', 'The amount you borrowed and still owe, not counting interest', '$20,000 at the start'],
+        ['**Interest**', 'The price of borrowing: a percentage of what you still owe, charged each month', '7% a year'],
+        ['**Term**', 'How long you have to pay it back', '5 years, or 60 monthly payments'],
+        ['**Instalment**', 'Each regular payment', '$396.02']
+      ]
+    }},
+    { p: 'Almost every car loan, mortgage and "buy now, pay later" plan is an **amortizing loan**: you pay the same amount ' +
+         'every month, and the payments are sized so the debt reaches exactly zero with the last one. Each payment does two ' +
+         'jobs. First it pays the interest that built up since last month. Whatever is left over reduces the principal.' },
+
+    { h: 'Where the monthly payment comes from' },
+    { p: 'The payment comes from one formula. It looks worse than it is, because every symbol is something you already know:' },
+    { code: 'payment = P x i / (1 - (1 + i) ** -n)\n\nP = amount borrowed\ni = monthly rate      = yearly rate / 12\nn = number of payments = years x 12', lang: 'text', label: 'the monthly payment' },
+    { p: 'For the car: P is 20,000, i is 0.07 / 12 = 0.005833 (just over half a percent a month), and n is 5 x 12 = 60. Put ' +
+         'those in and the payment is $396.02.' },
+    { p: 'Where does it come from? Level 2 showed that money arriving in the future is worth less than money today. This ' +
+         'formula finds the one monthly payment whose 60 future instalments, valued back to today at 7%, are worth exactly ' +
+         'the $20,000 you borrowed. You do not need to derive it. You need to know what each letter is and check your answer ' +
+         'against a table like this one:' },
     { table: {
       head: ['Loan', 'Rate', 'Term', 'Monthly', 'Total interest'],
       rows: [
         ['$20,000 car', '7.0%', '5 yrs', '$396.02', '$3,761.44'],
         ['$250,000 home', '5.5%', '30 yrs', '$1,419.47', '**$261,010**'],
-        ['$5,000 card debt', '24.0%', '2 yrs', '$264.36', '$1,344.53']
+        ['$5,000 card debt', '24.0%', '2 yrs', '$264.36', '$1,344.52']
       ]
     }},
     { check: {
-      q: 'The car loan is $20,000 at 7% for five years, and 60 payments of $396.02 come to $23,761.20. A member expects the ' +
+      q: 'The car loan is $20,000 at 7% for five years, and 60 payments of $396.02 come to about $23,761. A member expects the ' +
          'interest to be 7% of $20,000 for five years, which is $7,000. It is $3,761. Where did the other half go?',
-      a: 'It was never owed. You hold the full $20,000 for one month only. After the first payment you owe about $19,720, ' +
-         'and by the final year you owe a few hundred dollars, so the interest each month is charged on a balance that is ' +
-         'falling the whole time. Average roughly half the loan over the term and you land near half the naive figure, which ' +
-         'is what happened here. The same reasoning tells you why an interest only loan costs so much more: nothing shrinks.'
+      a: 'It was never owed. You owe the full $20,000 for one month only. After the first payment you owe about $19,720, and ' +
+         'by the final year you owe a few hundred dollars, so the interest each month is charged on a balance that is falling ' +
+         'the whole time. On average you owe roughly half the loan over the five years, so you pay roughly half the simple ' +
+         'figure. The same reasoning explains why an interest-only loan costs so much more: nothing shrinks.'
     }},
-    { money: 'On that mortgage the borrower repays $511,010 for a $250,000 house. The interest is not a rounding detail. ' +
-             'It is the second house. Showing this clearly is the single most useful feature a lending product can ship.' },
+    { money: 'On that mortgage the borrower repays $511,010 for a $250,000 house. The interest is not a small detail. It is ' +
+             'a second house. Showing this clearly, before someone signs, is the most useful thing a lending product can do.' },
 
-    { h: 'Why the first payment barely dents the debt' },
-    { p: 'On the $250,000 mortgage the first payment of $1,419.47 splits like this:' },
+    { h: 'Why the first payments barely dent the debt' },
+    { p: 'Take the $250,000 mortgage. In month 1 the whole $250,000 is owed, so the interest is large:' },
     { code: 'interest  = 250,000 x (0.055 / 12) = $1,145.83\nprincipal = 1,419.47 - 1,145.83    =   $273.64', lang: 'text', label: 'month 1' },
+    { p: 'Only $273.64 of the $1,419.47, about **19%**, reduces the debt. The rest is the price of having borrowed. Now follow ' +
+         'the same payment through the life of the loan:' },
+    { table: {
+      head: ['Month', 'Interest part', 'Principal part', 'Still owed afterwards'],
+      rows: [
+        ['1', '$1,145.83', '$273.64', '$249,726.36'],
+        ['12', '$1,131.72', '$287.76', '$246,632.28'],
+        ['60', '$1,061.09', '$358.39', '$231,151.51'],
+        ['120', '$947.94', '$471.53', '$206,352.48'],
+        ['**210**', '**$707.86**', '**$711.62**', '$153,729.80'],
+        ['300', '$345.53', '$1,073.95', '$74,313.41'],
+        ['360', '$6.48', '$1,413.00', '$0.00']
+      ]
+    }},
+    { p: 'The payment never changes. What changes is the split. As the balance falls, a little less interest is charged, so ' +
+         'a little more of the same payment goes to the debt, which makes the balance fall faster, and so on. Month 210 is ' +
+         'the first month where more goes to the debt than to interest, seventeen and a half years into a thirty year loan. ' +
+         'In the whole first year the borrower pays $17,033.64 and the debt falls by only $3,367.72.' },
+    { p: 'This is not a trick by the bank. It follows directly from charging interest on what is still owed. But borrowers are ' +
+         'regularly shocked by it, which makes it worth showing on screen.' },
     { check: {
       q: 'Work out the month 2 split without building a schedule, then say what it tells you about month 3.',
-      a: 'The balance is now 250,000.00 - 273.64 = $249,726.36. Interest is 249,726.36 x 0.055 / 12 = $1,144.58, so principal ' +
-         'is 1,419.47 - 1,144.58 = $274.89: $1.25 more than last month. Month 3 will move a little more than that, because ' +
-         'the balance fell a little further. That widening step is the entire mechanism of amortization, and it is why the ' +
-         'crossover happens two thirds of the way in rather than halfway.'
+      a: 'The balance is now 250,000.00 - 273.64 = $249,726.36. Interest is 249,726.36 x 0.055 / 12 = $1,144.58, so the ' +
+         'principal part is 1,419.47 - 1,144.58 = $274.89: $1.25 more than last month. Month 3 moves a little more than that, ' +
+         'because the balance fell a little further. That slowly widening step is the whole mechanism, and it is why the ' +
+         'crossover happens about two thirds of the way in rather than halfway.'
     }},
-    { p: 'Only **19%** of the first payment reduces the debt. By month 210 the split has crossed over and most of the payment ' +
-         'is principal. This is not a trick by the bank (it falls out of charging interest on the outstanding balance) ' +
-         'but borrowers are consistently shocked by it, which makes it worth showing on screen.' },
-    { warn: 'Recomputing interest on the *original* amount each month instead of the *current balance* is the most common ' +
-            'bug in a first amortization schedule. Your final balance will not land on zero, which is how you catch it.' },
-
+    { warn: 'The most common bug in a first schedule is charging interest on the **original** amount every month instead of ' +
+            'the **current** balance. The last line gives it away: the balance does not end at zero.' },
     { check: {
       q: 'A schedule charges interest on the original $250,000 every month instead of the current balance. The payment is ' +
          'right and the term is right, so nothing looks wrong. How does the bug announce itself?',
-      a: 'The closing balance. Interest is stuck at $1,145.83, so principal is stuck at $273.64, and 360 x 273.64 = ' +
-         '$98,510.40. After thirty years of paying on time the borrower would still owe $151,489.60. The schedule ends ' +
-         'nowhere near zero, which is why the last line of your build is an assertion that the final balance is exactly ' +
-         'zero: it is the one check that catches most of the ways this can go wrong.'
+      a: 'The closing balance. Interest is stuck at $1,145.83, so the principal part is stuck at $273.64, and 360 x 273.64 = ' +
+         '$98,510.40. After thirty years of paying on time the borrower would still owe $151,489.60. The schedule ends nowhere ' +
+         'near zero, which is why the last line of your build checks that the final balance is exactly zero: it is the one ' +
+         'check that catches most of the ways this can go wrong.'
     }},
 
-    { h: 'Interest rate vs APR' },
-    { p: 'The **interest rate** prices the borrowed money. The **APR** is a legally-defined disclosure that also folds in ' +
-         'fees, so two loans can be compared fairly. If a lender charges a $400 origination fee on a $20,000 loan at 7%, ' +
-         'the borrower receives only $19,600 but still repays $396.02 a month.' },
-    { code: 'Rate stated:  7.00%\nCash received: $19,600  (after the $400 fee)\nPayment:       $396.02 x 60 months\n\nTrue APR:      7.85%   <- the rate that makes the payments worth $19,600 today', lang: 'text', label: 'fees change the real cost' },
-    { p: 'There is no closed-form solution for that APR: you find it by **searching**: try a rate, compute the present value ' +
-         'of the payments, and adjust. Halving the search range each time (bisection) converges in a handful of steps.' },
-
+    { h: 'Interest rate versus APR' },
+    { p: 'Two lenders can advertise the same rate and still charge different amounts, because of fees. So the law in most ' +
+         'countries requires lenders to show a second number, the **APR** (annual percentage rate). The interest rate prices ' +
+         'only the borrowed money. The APR also includes the fees, so two offers can be compared fairly.' },
+    { p: 'Here is how a fee hides. A lender takes a $400 "origination fee" (a charge for setting up the loan) out of the ' +
+         '$20,000 before handing it over. You receive $19,600, but you still repay $396.02 a month for 60 months, as if you ' +
+         'had received the full $20,000:' },
+    { code: 'Rate advertised:  7.00%\nCash you receive: $19,600  (after the $400 fee)\nYou repay:         $396.02 x 60 months\n\nAPR:               7.85%   <- the rate at which 60 payments of $396.02 are worth $19,600 today', lang: 'text', label: 'the fee shows up in the APR' },
+    { p: 'There is no formula that gives the APR directly, so you find it by guessing and checking, and halving the range ' +
+         'each time. Start between 0% and 20% and ask: at this rate, are 60 payments of $396.02 worth more or less than ' +
+         '$19,600?' },
+    { table: {
+      head: ['Step', 'Try', 'Payments are worth', 'So the rate is'],
+      rows: [
+        ['1', '10.00%', '$18,638.83', 'too high'],
+        ['2', '5.00%', '$20,985.38', 'too low'],
+        ['3', '7.50%', '$19,763.50', 'too low'],
+        ['4', '8.75%', '$19,189.59', 'too high'],
+        ['5', '8.13%', '$19,473.58', 'too high'],
+        ['6', '7.81%', '$19,617.79', 'too low']
+      ]
+    }},
+    { p: 'Each step halves the range, so it closes in fast: after 20 steps or so the answer is correct to far more decimal ' +
+         'places than anyone needs, 7.85%. This method is called **bisection**, and you will write it in the build.' },
     { check: {
       q: 'Two lenders quote 7% on $20,000 over five years. The payment is $396.02 either way, but one deducts a $400 ' +
          'origination fee from the cash it hands over. Which is cheaper, and which number says so?',
-      a: 'The one without the fee, and the number is the APR. The borrower with the fee repays the same $23,761.20 having ' +
-         'received $19,600, so the rate that makes those payments worth $19,600 today is 7.85%, not 7.00%. The stated rate ' +
-         'cannot show the difference, because it is identical in both offers. That gap is exactly what APR disclosure rules ' +
-         'exist to close, and it is why a loan comparison screen that shows rate rather than APR is not a comparison.'
+      a: 'The one without the fee, and the number is the APR. The borrower with the fee repays the same total having received ' +
+         'only $19,600, so the rate that makes those payments worth $19,600 today is 7.85%, not 7.00%. The advertised rate ' +
+         'cannot show the difference, because it is identical in both offers. That gap is exactly what APR rules exist to ' +
+         'close, and it is why a loan comparison screen that shows the rate rather than the APR is not a comparison.'
     }},
 
-    { h: 'Overpayment: the highest-return move most borrowers never make' },
-    { p: 'An extra payment goes **entirely to principal**. Every dollar of principal removed also removes all the future ' +
-         'interest that dollar would have generated, which is why the effect is so large.' },
+    { h: 'Paying extra: the best deal most borrowers never take' },
+    { p: 'Any money paid on top of the regular instalment goes **entirely to the principal**. And every dollar of principal ' +
+         'you remove early also removes all the interest that dollar would have been charged in every month after. That is ' +
+         'why a small extra payment has a large effect:' },
     { table: {
-      head: ['$250,000 at 5.5% over 30 years', 'Standard', 'Plus $200/month'],
+      head: ['$250,000 at 5.5% over 30 years', 'Standard', 'Plus $200 a month'],
       rows: [
         ['Monthly payment', '$1,419.47', '$1,619.47'],
-        ['Months to clear', '360', '**269**'],
+        ['Months to clear the loan', '360', '**269**'],
         ['Total interest', '$261,010', '$185,394'],
         ['Interest saved', '', '**$75,616**']
       ]
     }},
-    { p: 'An extra $200 a month ($54,000 of deposits over 22 years) removes about $75,616 of interest and ends the loan ' +
-         'seven and a half years early. Comparing that against an investment returning the same rate is a genuinely ' +
-         'useful thing for a product to do.' },
+    { p: 'The extra $200 is paid 269 times, $53,800 in all, and it removes about $75,616 of interest and ends the loan 91 ' +
+         'months, seven and a half years, early. Showing a borrower that trade next to what the same $200 would earn in ' +
+         'savings is a genuinely useful feature.' },
     { check: {
       q: 'The extra deposits add up to $53,800, yet the interest bill falls by $75,616. Explain how paying in $53,800 takes ' +
          'out $75,616.',
       a: 'Because a dollar of principal repaid early takes every future month of interest on that dollar with it. The $200 ' +
          'paid in month one comes off the balance and carries 359 months of its own interest away with it. Then the loan ' +
-         'finishes 91 months early, so 91 payments of $1,419.47, another $129,171, are never made at all. The deposits are ' +
-         'small and early; what they cancel is large and spread over decades.'
+         'finishes 91 months early, so 91 payments of $1,419.47, another $129,172, are never made at all. The extra payments ' +
+         'are small and early; what they cancel is large and spread over decades.'
     }},
-    { tip: 'Not all lenders treat overpayments the same way. Some reduce the term (best for the borrower), others reduce ' +
-           'the future payment, and some charge an early repayment penalty. Read the contract before writing the feature.' },
+    { tip: 'Lenders handle extra payments differently. Some shorten the loan (best for the borrower), some lower the future ' +
+           'payment instead, and some charge a penalty for paying early. Read the contract before you build the feature.' },
 
-    { h: 'How lenders decide: the five Cs' },
+    { h: 'How a lender decides who to lend to' },
+    { p: 'Before lending, a lender asks five questions, traditionally called **the five Cs**. You will see them in every ' +
+         'credit team:' },
     { table: {
-      head: ['C', 'Question', 'Measured by'],
+      head: ['C', 'The question', 'How they measure it'],
       rows: [
-        ['**Character**', 'Do they repay debts?', 'Credit history, prior defaults'],
-        ['**Capacity**', 'Can they afford this?', 'Debt-to-income ratio'],
-        ['**Capital**', 'What have they put in?', 'Deposit, savings'],
-        ['**Collateral**', 'What secures it?', 'Loan-to-value ratio'],
-        ['**Conditions**', 'What is the environment?', 'Rates, sector, purpose']
+        ['**Character**', 'Does this person pay back what they borrow?', 'Their credit history: past loans, missed payments'],
+        ['**Capacity**', 'Can they afford this payment?', 'Debt-to-income ratio, below'],
+        ['**Capital**', 'How much of their own money is in it?', 'The deposit, their savings'],
+        ['**Collateral**', 'What can the lender take back if they stop paying?', 'Loan-to-value ratio, below'],
+        ['**Conditions**', 'What is going on around the loan?', 'Interest rates, their industry, what the money is for']
       ]
     }},
-    { code: 'DTI = monthly debt payments / gross monthly income\n      $1,250 / $4,000 = 31.3%     (under ~36% is comfortable)\n\nLTV = loan / asset value\n      $200,000 / $250,000 = 80%   (higher LTV = higher risk = higher rate)', lang: 'text', label: 'the two ratios you will meet everywhere' },
+    { p: 'Two of those come down to a simple ratio, and you will meet both everywhere:' },
+    { code: 'Debt-to-income (DTI) = monthly debt payments / monthly income before tax\n                     = $1,250 / $4,000 = 31.3%      (under about 36% is comfortable)\n\nLoan-to-value (LTV)  = loan / value of the house or car\n                     = $200,000 / $250,000 = 80%    (the higher it is, the riskier)', lang: 'text' },
+    { p: 'DTI asks "how much of every paycheque is already promised to lenders?". LTV asks "if we have to sell the house, is ' +
+         'it worth enough to get our money back?". At 80% LTV the house can lose a fifth of its value before the lender is ' +
+         'out of pocket.' },
     { check: {
-      q: 'An applicant grosses $4,000 a month, already pays $1,250 a month on other debt, and wants the $250,000 mortgage at ' +
-         '$1,419.47. Work out the ratio a lender will look at, and say which of the five Cs just decided this.',
+      q: 'An applicant earns $4,000 a month before tax, already pays $1,250 a month on other debt, and wants the $250,000 ' +
+         'mortgage at $1,419.47. Work out the ratio a lender will look at, and say which of the five Cs just decided this.',
       a: '(1,250.00 + 1,419.47) / 4,000.00 = 66.7% debt to income, against a comfort line around 36%. That is capacity, and ' +
-         'it fails on its own: character, capital, collateral and conditions do not get a vote, because the payments do not ' +
-         'fit in the income whatever else is true. A well built product says this before the application, not after, since ' +
-         'the applicant can act on a number they can see.'
+         'it fails on its own: the other four Cs do not get a vote, because the payments do not fit in the income whatever ' +
+         'else is true. A well built product shows this number before the application, not after, because the applicant can ' +
+         'act on a number they can see.'
     }},
-    { p: 'A lender\'s price is a risk price. Expected loss is roughly **probability of default x loss given default x exposure**, ' +
-         'and the interest rate must cover that expected loss, the cost of funds, operating cost, and profit. When you see a ' +
-         '29% APR product, you are usually looking at a population where many borrowers do not repay.' },
-    { warn: 'Credit models decide who gets a loan, so they are heavily regulated. Using a variable that proxies for race, ' +
-            'gender, or postcode can be illegal discrimination even when the intent is innocent, and "the model said so" ' +
-            'is not a defence. Level 8 returns to this with fraud scoring.' },
 
+    { h: 'Why risky borrowers pay higher rates' },
+    { p: 'Some borrowers will not repay. A lender cannot know which ones, but it can estimate how much it expects to lose on ' +
+         'average, and charge enough to cover it. The estimate multiplies three numbers:' },
+    { code: 'expected loss = chance of default x share lost if they default x amount owed\n\n$10,000 loan, 5% chance of default, lender gets 40% back by selling the car:\n              = 0.05 x 0.60 x 10,000\n              = $300 a year, or 3% of the loan', lang: 'text' },
+    { p: 'So this lender needs at least 3% a year in the rate just to break even on defaults, before its own borrowing costs, ' +
+         'staff and profit. That is why a 29% APR product exists: it is priced for a group of borrowers where many will not ' +
+         'repay, and everybody in the group pays for it.' },
+    { warn: 'Credit decisions decide who gets a loan, so they are tightly regulated. Using information that stands in for ' +
+            'race, gender or religion can be illegal discrimination even when nobody intended it, and "the model said so" is ' +
+            'not a defence. Level 8 returns to this with fraud scoring.' },
     { check: {
       q: 'Your credit model never sees race or gender, and it is measurably more accurate with postcode included. Is it safe ' +
          'to ship?',
-      a: 'Not on that reasoning alone. Where people live correlates strongly with race in most countries, so postcode can ' +
-         'carry the protected attribute into the model without anyone having to intend it, and the law in the US, the UK and ' +
-         'the EU looks at the outcome rather than the intent. What you owe is measurement: approval and pricing rates ' +
-         'compared across protected groups, a reason you can give for every decline, and a willingness to give up some ' +
-         'accuracy when the test fails. "The model is more accurate this way" is a description of the problem, not a defence.'
+      a: 'Not on that reasoning alone. Where people live is closely linked to race in most countries, so postcode can carry ' +
+         'that information into the model without anyone intending it, and the law in the US, the UK and the EU judges the ' +
+         'outcome, not the intention. What you owe is measurement: approval rates and prices compared across groups, a reason ' +
+         'you can give for every decline, and a willingness to give up some accuracy when the comparison fails. "The model is ' +
+         'more accurate this way" is a description of the problem, not a defence.'
     }},
 
-    { h: 'Rounding the last payment' },
-    { p: 'Payments are rounded to cents, so 359 identical payments will not clear the balance exactly. Real lenders make the ' +
-         '**final payment different**: it is whatever is left. Your schedule should do the same, and finish with a balance of ' +
-         'exactly zero rather than $0.04 or -$0.17.' },
+    { h: 'The last payment is different' },
+    { p: 'The exact monthly payment on the mortgage is $1,419.4725: a quarter of a cent more than the $1,419.47 a bank can ' +
+         'actually charge. So every month the borrower pays a tiny bit too little, and that tiny shortfall earns interest too. ' +
+         'After 360 payments of $1,419.47, **$2.30 is still owed**.' },
+    { p: 'Real lenders deal with this by making the **final payment different**: it is exactly whatever is left, that month\'s ' +
+         'interest plus the remaining balance. Here the 360th payment is $1,421.77 instead of $1,419.47, and the balance lands ' +
+         'on exactly zero. Your schedule should do the same.' },
     { check: {
-      q: 'Your schedule charges 360 payments of exactly $1,419.47 and ends at a balance of -$0.17. Say what the minus sign ' +
-         'means for the borrower, and what a real lender does instead.',
-      a: 'It means they paid 17 cents more than they owed, so the lender is holding money that is not theirs. Tiny, and ' +
-         'still the kind of thing that becomes a letter. A real lender sizes the last payment to whatever is left: that ' +
-         'month\'s interest plus the remaining balance, which makes the final row a few cents different from the other 359 ' +
-         'and lands the schedule on exactly zero. Assert that closing balance in your build. It is the cheapest test you ' +
-         'will ever write and it catches most of the ways a schedule goes wrong.'
+      q: 'Your schedule charges 360 identical payments of $1,419.47 and stops. It ends with $2.30 still owed. What is wrong, ' +
+         'and what would a balance of -$2.30 have meant instead?',
+      a: 'The last payment was not adjusted. Rounding the payment down to whole cents leaves a small shortfall every month, ' +
+         'and 360 of them, plus the interest on them, add up to $2.30. A real lender sizes the last payment to whatever is ' +
+         'left, which makes the final row $1,421.77 and lands the schedule on exactly zero. A balance of -$2.30 would mean the ' +
+         'opposite mistake: the borrower paid more than they owed, and the lender is holding money that is not theirs. ' +
+         'Tiny either way, and still the kind of thing that becomes a complaint. Check the closing balance is exactly zero in ' +
+         'your build: it is the cheapest test you will ever write.'
     }}
   ],
 
@@ -325,7 +390,7 @@ FQ.registerLevel({
         "$200,000 and 15 years"
       ],
       answer: 2,
-      why: "Each extra dollar of principal removes all the future interest that dollar would have generated, so $54,000 of overpayments removes about $75,616 of interest and 7.5 years." },
+      why: "Each extra dollar of principal removes all the future interest that dollar would have generated, so $53,800 of overpayments removes about $75,616 of interest and 7.5 years." },
 
     { q: "An extra payment on an amortizing loan is applied to:",
       options: [
