@@ -24,138 +24,183 @@ FQ.registerLevel({
   ],
 
   knowledge: [
-    { h: 'What the list could not do' },
-    { p: 'The level 4 ledger was correct and useless. It lived in one Python process, so it forgot everything when the ' +
-         'process stopped, and it had exactly one writer, so the question that decides whether a payments system works ' +
-         'never came up: what happens when two transfers touch one account in the same millisecond.' },
-    { p: 'A database answers both. It keeps the entries after the process dies, and it has machinery for concurrent writers ' +
-         'that took the industry forty years to get right. Your job is to use that machinery rather than to rebuild it in ' +
-         'Python, and the first step is knowing what it guarantees.' },
+    { h: 'What the Python list could not do' },
+    { p: 'The level 4 ledger was correct, and useless for a real business, for two reasons. It lived in one running Python ' +
+         'program, so everything vanished when the program stopped. And only one person could use it at a time, so the ' +
+         'question that decides whether a payments system works never came up: what happens when two payments touch the same ' +
+         'account in the same thousandth of a second?' },
+    { p: 'A **database** solves both. It is a program whose whole job is to store data safely on disk and let many users read ' +
+         'and change it at once without corrupting it. This level uses **Postgres**, the free database most fintech companies ' +
+         'run on. You talk to it in **SQL**, a language for asking a database to store and fetch data.' },
+    { p: 'A few words you need first:' },
     { table: {
-      head: ['Letter', 'What it promises', 'What it means for a transfer'],
+      head: ['Word', 'Plain meaning'],
       rows: [
-        ['**A**tomicity', 'All of it or none of it', 'Both legs are written or neither is'],
-        ['**C**onsistency', 'Constraints hold at commit', 'A transaction that does not balance cannot commit'],
-        ['**I**solation', 'Concurrent transactions do not see each other half done', 'Two transfers cannot both spend the last $10'],
-        ['**D**urability', 'Committed means committed', 'A power cut after the commit does not undo it']
+        ['**Table**', 'Like a spreadsheet sheet: named columns, and one row per record'],
+        ['**Schema**', 'The design of your tables: which columns, what type each holds, and what rules they must follow'],
+        ['**Constraint**', 'A rule the database enforces on every row, whoever writes it. Break it and the write is refused'],
+        ['**Query**', 'A question or command sent to the database in SQL']
+      ]
+    }},
+    { p: 'One word needs special care, because it means two things in this level. In money, a **transaction** is an event ' +
+         'like "Alice paid Bob". In a database, a **transaction** is a group of changes that are saved together or not at ' +
+         'all. The good news is that one money transfer is exactly one database transaction, as you will see.' },
+    { p: 'Databases make four promises about transactions, known by their initials as **ACID**:' },
+    { table: {
+      head: ['Letter', 'The promise', 'What it means for a transfer'],
+      rows: [
+        ['**A**tomicity', 'All of it happens, or none of it does', 'Both entries are saved, or neither is'],
+        ['**C**onsistency', 'Every rule still holds when the change is saved', 'A transfer that does not balance cannot be saved'],
+        ['**I**solation', 'Two transactions running at once cannot see each other half finished', 'Two transfers cannot both spend the last $10'],
+        ['**D**urability', 'Once saved, it stays saved', 'A power cut a second later does not undo it']
       ]
     }},
     { check: {
-      q: 'Level 4 said a transaction that does not balance is invalid, and enforced that in `_post`. Why is the same check ' +
-         'in the database worth writing twice?',
-      a: 'Because `_post` is one door into the data and a database has many. A migration script, a colleague with psql, a ' +
-         'second service written next year, and a bug fix that adds a new write path all skip your Python entirely. A check ' +
-         'in the schema holds for every one of them, including the ones that do not exist yet. Application checks give ' +
-         'better error messages and catch things earlier; database checks are the ones that are actually guarantees.'
+      q: 'Level 4 said a transaction that does not balance is invalid, and your Python checked that before saving. Why is the ' +
+         'same check in the database worth writing again?',
+      a: 'Because your Python is one door into the data, and a database has many. A one-off fix-up script, a colleague typing ' +
+         'SQL directly, a second service written next year, and a bug fix that adds a new way to write all skip your Python ' +
+         'entirely. A rule in the schema holds for every one of them, including the ones that do not exist yet. Checks in your ' +
+         'code give friendlier error messages and catch problems earlier; checks in the database are the ones that are actually ' +
+         'guarantees.'
     }},
 
-    { h: 'The schema, three tables' },
-    { p: 'Accounts, transactions, entries. A transaction is the event, an entry is one leg of it, and an account is what ' +
-         'entries attach to. Money is `bigint` in minor units, which is level 1 turned into a column type.' },
+    { h: 'The design: three tables' },
+    { p: 'The ledger needs three tables. An **account** is somewhere money can sit. A **transaction** is one money event. An ' +
+         '**entry** is one line of that event: an account and an amount. Alice paying Bob $25 is one row in `transactions` and ' +
+         'two rows in `entries`, -2500 for Alice and +2500 for Bob. Amounts are whole cents, as in level 4, stored in a column ' +
+         'of type `bigint` (a whole number that can go very large).' },
     { code: 'create table accounts (\n  id           bigserial primary key,\n  name         text        not null unique,\n  kind         text        not null check (kind in (\'customer\', \'revenue\', \'world\')),\n  allow_negative boolean   not null default false,\n  created_at   timestamptz not null default now()\n);\n\ncreate table transactions (\n  id              bigserial primary key,\n  memo            text        not null,\n  idempotency_key text        unique,          -- the retry guard, see below\n  created_at      timestamptz not null default now()\n);\n\ncreate table entries (\n  id             bigserial primary key,\n  transaction_id bigint      not null references transactions(id),\n  account_id     bigint      not null references accounts(id),\n  amount_cents   bigint      not null check (amount_cents <> 0),\n  created_at     timestamptz not null default now()\n);\n\ncreate index entries_account_idx on entries (account_id);', lang: 'sql', label: 'the whole ledger' },
-    { p: 'Four things in that schema are doing real work. `references` stops an entry pointing at an account that does not ' +
-         'exist. `check (amount_cents <> 0)` stops a zero leg, which is always a bug. `unique` on the idempotency key is the ' +
-         'retry guard. And the index on `account_id` is what keeps a balance query fast once there are a million entries.' },
-    { warn: 'There is no `balance` column on `accounts`, and that is deliberate. A balance is the sum of the entries. Store ' +
-            'it as well and you now have two answers to the same question, which is the subject of the last section.' },
+    { p: 'Read it one piece at a time:' },
+    { table: {
+      head: ['Piece', 'What it does'],
+      rows: [
+        ['`bigserial primary key`', 'Gives every row a unique number, 1, 2, 3, filled in automatically. The **primary key** is how you refer to one row'],
+        ['`not null`', 'This column can never be left empty'],
+        ['`references accounts(id)`', 'An entry can only point at an account that exists. This link is called a **foreign key**'],
+        ['`check (amount_cents <> 0)`', 'Refuses an entry of zero, which is always a bug'],
+        ['`unique`', 'No two rows may have the same value here. On the idempotency key, this is the retry guard'],
+        ['`timestamptz ... default now()`', 'Records the moment the row was written, with its time zone'],
+        ['`create index`', 'A lookup table, like the index at the back of a book, so finding one account\'s entries stays fast with a million rows']
+      ]
+    }},
+    { warn: 'There is no `balance` column on `accounts`, on purpose. A balance is the sum of the entries, as in level 4. Store ' +
+            'it as well and you have two answers to the same question, which is the subject of the last section.' },
 
-    { h: 'One transfer is one database transaction' },
-    { p: 'Two legs must land together. In SQL that is `begin` and `commit` around both inserts, and in Python it is the ' +
-         'connection acting as a context manager: leave the block normally and it commits, raise inside it and everything ' +
-         'since `begin` is thrown away.' },
-    { code: 'with conn:                       # begin ... commit, or rollback on an exception\n    with conn.cursor() as cur:\n        cur.execute(\n            "insert into transactions (memo, idempotency_key) values (%s, %s) returning id",\n            (memo, key),\n        )\n        txn_id = cur.fetchone()[0]\n        cur.executemany(\n            "insert into entries (transaction_id, account_id, amount_cents) values (%s, %s, %s)",\n            [(txn_id, src_id, -amount), (txn_id, dst_id, amount)],\n        )', lang: 'python', label: 'all of it or none of it' },
-    { warn: 'Never build SQL with f-strings or `+`. `%s` in psycopg is not string formatting: the value is sent to the server ' +
-            'separately from the statement, so a name containing a quote is data rather than SQL. This is the whole of SQL ' +
-            'injection, and the fix is a habit rather than a library.' },
+    { h: 'One transfer, one database transaction' },
+    { p: 'Both entries of a transfer must be saved together. In SQL you start a database transaction with `begin`, make your ' +
+         'changes, and save them all at once with `commit`. If anything goes wrong in between, `rollback` throws every change ' +
+         'away, as if none of it happened.' },
+    { p: 'In Python, the psycopg library does this for you with a `with` block. Leave the block normally and it commits. Hit ' +
+         'an error inside it and it rolls back:' },
+    { code: 'with conn:                       # begin; then commit at the end, or rollback on an error\n    with conn.cursor() as cur:\n        cur.execute(\n            "insert into transactions (memo, idempotency_key) values (%s, %s) returning id",\n            (memo, key),\n        )\n        txn_id = cur.fetchone()[0]\n        cur.executemany(\n            "insert into entries (transaction_id, account_id, amount_cents) values (%s, %s, %s)",\n            [(txn_id, src_id, -amount), (txn_id, dst_id, amount)],\n        )', lang: 'python', label: 'all of it or none of it' },
+    { p: 'Notice the `%s` placeholders. They are not ordinary Python string formatting. psycopg sends the SQL and the values to ' +
+         'the database separately, so a value can never be mistaken for a command. That matters because of this:' },
+    { code: '# NEVER do this\nname = "Bob\'); delete from entries; --"\ncur.execute(f"insert into accounts (name) values (\'{name}\')")\n\n# the database receives:\n#   insert into accounts (name) values (\'Bob\'); delete from entries; --\')\n#   ...and deletes your whole ledger', lang: 'python' },
+    { warn: 'That attack is called **SQL injection**, and it is one of the most common security holes on the internet. The whole ' +
+            'defence is a habit: never build SQL by gluing strings together with f-strings or `+`. Always use placeholders.' },
     { check: {
-      q: 'Your transfer inserts the transaction row, inserts the first entry, and then the process is killed. What is in the ' +
+      q: 'Your transfer inserts the transaction row, inserts the first entry, and then the program is killed. What is in the ' +
          'database when it comes back up?',
-      a: 'Nothing from that transfer. The inserts were inside an open transaction that never committed, so Postgres rolls ' +
-         'them back when the connection dies: no transaction row, no entry, no half written transfer. That is atomicity, and ' +
-         'it is the property that made the level 4 warning about a dead process between two legs stop being your problem. ' +
-         'What is still your problem is telling the caller it failed, because from outside, a crash before the commit and a ' +
-         'crash after it look identical.'
+      a: 'Nothing from that transfer. The inserts were inside a database transaction that never reached `commit`, so Postgres ' +
+         'throws them away when the connection dies: no transaction row, no entry, no half written transfer. That is atomicity, ' +
+         'and it is why the level 4 worry about a program dying between two entries stops being your problem. What is still your ' +
+         'problem is telling the caller it failed, because from outside, a crash just before the commit and just after it look ' +
+         'identical.'
     }},
 
-    { h: 'The invariant belongs in the schema' },
-    { p: 'The rule is that the entries of one transaction sum to zero. A `check` constraint cannot express it, because a ' +
-         'check sees one row and this is a statement about a group of rows. Two things can: a constraint trigger that runs ' +
-         'at commit, or a written reconciliation that runs on a schedule. Real systems use both.' },
-    { code: 'create or replace function entries_balance() returns trigger as $$\nbegin\n  if (select sum(amount_cents) from entries where transaction_id = new.transaction_id) <> 0 then\n    raise exception \'transaction % does not balance\', new.transaction_id;\n  end if;\n  return null;\nend;\n$$ language plpgsql;\n\ncreate constraint trigger entries_must_balance\n  after insert on entries\n  deferrable initially deferred        -- checked at commit, not per row\n  for each row execute function entries_balance();', lang: 'sql' },
-    { p: '`deferrable initially deferred` is the part that matters. Without it the trigger fires after the first leg, when ' +
-         'the transaction is deliberately unbalanced, and every transfer fails. Deferred means the check happens once, at ' +
-         'commit, when all the legs are in.' },
-    { money: 'A ledger with this trigger cannot hold an unbalanced transaction, no matter which service wrote it or how ' +
-             'confused that service was. Auditors ask for exactly this: not whether your code is careful, but whether the ' +
-             'system could physically record the money going missing.' },
+    { h: 'Make the database enforce the balance rule' },
+    { p: 'The rule is that the entries of one money transaction add up to zero. A `check` constraint cannot express that, ' +
+         'because a check only ever looks at one row at a time, and this rule is about a group of rows. A **trigger** can. A ' +
+         'trigger is a small function the database runs automatically when something happens, here whenever an entry is ' +
+         'inserted:' },
+    { code: 'create or replace function entries_balance() returns trigger as $$\nbegin\n  if (select sum(amount_cents) from entries where transaction_id = new.transaction_id) <> 0 then\n    raise exception \'transaction % does not balance\', new.transaction_id;\n  end if;\n  return null;\nend;\n$$ language plpgsql;\n\ncreate constraint trigger entries_must_balance\n  after insert on entries\n  deferrable initially deferred        -- run the check at commit, not after each row\n  for each row execute function entries_balance();', lang: 'sql' },
+    { p: 'The line `deferrable initially deferred` is the part that matters. Think about the moment after the first entry is ' +
+         'inserted: Alice\'s -2500 is there and Bob\'s +2500 is not yet. The transaction is unbalanced, on purpose, for a moment. ' +
+         'Checked then, every transfer would fail. **Deferred** means "wait until commit, when every entry is in, then check".' },
+    { money: 'A ledger with this trigger cannot hold an unbalanced transaction, no matter which program wrote it or how buggy ' +
+             'that program was. Auditors ask for exactly this: not whether your code is careful, but whether the system could ' +
+             'even record money going missing.' },
 
-    { h: 'Two writers, one balance' },
-    { p: 'Here is the failure that separates people who have run a ledger from people who have written one. Two transfers ' +
-         'start at the same moment, both from an account holding $100, each for $80. Both read the balance, both see $100, ' +
-         'both decide $80 is fine, both write. The account ends at minus $60 and both transfers think they behaved.' },
-    { code: 'session A                          session B\n---------------------------------  ---------------------------------\nbegin;                             begin;\nselect sum(amount_cents)           select sum(amount_cents)\n  from entries                       from entries\n where account_id = 7;               where account_id = 7;\n-- 10000                            -- 10000\n-- 8000 <= 10000, fine              -- 8000 <= 10000, fine\ninsert ... -8000 ...                insert ... -8000 ...\ncommit;                            commit;\n\n-- balance is now -6000', lang: 'text', label: 'the lost update, in full' },
-    { p: 'Nothing here is a bug in your Python. Both sessions did exactly what you told them, and under Postgres\'s default ' +
-         'isolation level, `read committed`, both were allowed to. The default gives you a consistent view of every ' +
-         'statement, and says nothing about a decision you made between two statements.' },
+    { h: 'Two payments, one balance, the same moment' },
+    { p: 'Here is the failure that separates people who have run a ledger from people who have written one. An account holds ' +
+         '$100. Two transfers of $80 each arrive at the same moment, from two different requests, each handled by its own ' +
+         'connection to the database (each called a **session**):' },
+    { code: 'session A                          session B\n---------------------------------  ---------------------------------\nbegin;                             begin;\nselect sum(amount_cents)           select sum(amount_cents)\n  from entries                       from entries\n where account_id = 7;               where account_id = 7;\n-- 10000                            -- 10000\n-- 8000 <= 10000, fine              -- 8000 <= 10000, fine\ninsert ... -8000 ...                insert ... -8000 ...\ncommit;                            commit;\n\n-- balance is now -6000', lang: 'text', label: 'the lost update, step by step' },
+    { p: 'Both read the balance, both saw $100, both decided $80 was affordable, both saved. The account ends at **-$60**, ' +
+         'and each session believes it behaved perfectly. This is called a **lost update**, one kind of **race condition**: a ' +
+         'bug that only appears when two things happen at almost exactly the same time.' },
+    { p: 'Nothing here is a bug in your Python. Postgres\'s default **isolation level**, the setting for how much transactions ' +
+         'running at once can affect each other, is called `read committed`. It guarantees each individual query sees a ' +
+         'consistent picture. It says nothing about a decision you made in Python between two queries. There are three ways to ' +
+         'close the gap:' },
     { table: {
       head: ['Fix', 'What it does', 'What it costs'],
       rows: [
-        ['`select ... for update`', 'Locks the account row; the second session waits', 'Serialises spending per account. Needs a row to lock'],
-        ['`serializable` isolation', 'Postgres detects the conflict and aborts one', 'You must be able to retry. The loser gets an error'],
-        ['A balance constraint', 'The database refuses a negative balance outright', 'Needs a materialised balance to constrain']
+        ['`select ... for update`', 'Locks the account\'s row. The second session has to wait until the first commits', 'Payments from one account happen one at a time'],
+        ['`serializable` isolation', 'Postgres notices the two sessions clashed and cancels one with an error', 'Your code must be ready to retry the cancelled one'],
+        ['A rule on a stored balance', 'The database refuses to let a balance go below zero', 'You need a stored balance to put the rule on']
       ]
     }},
-    { code: '-- lock the account first, then decide\nselect id from accounts where id = %s for update;\nselect coalesce(sum(amount_cents), 0) from entries where account_id = %s;\n-- the second session reaches the lock and waits here until the first commits', lang: 'sql' },
+    { p: 'The first fix, the **row lock**, is the most common. Here is the same race with it:' },
+    { code: '-- lock the account first, then decide\nselect id from accounts where id = %s for update;\nselect coalesce(sum(amount_cents), 0) from entries where account_id = %s;\n\n-- session A takes the lock, sees $100, spends $80, commits, releases the lock\n-- session B was waiting at the first line; now it runs, sees $20, and refuses', lang: 'sql' },
     { check: {
       q: 'You add `for update` on the source account and the double spend stops. A colleague asks why you did not use ' +
          '`serializable` instead, which needs no lock. Answer them.',
-      a: 'Both work, and they fail differently. `for update` makes the second transfer wait and then succeed or be refused ' +
-         'on the real balance, so the caller never sees a retry: the cost is that spending from one account is now single ' +
-         'file, which matters for a hot account like fee income. `serializable` lets both run and aborts one with a ' +
-         'serialization failure, which is cheaper when conflicts are rare, but every caller has to be written to retry, and ' +
-         'a retry that is not idempotent double charges somebody. Pick the lock when the conflict is the normal case, and ' +
-         'serializable with a retry loop when it is not.'
+      a: 'Both work, and they fail differently. `for update` makes the second transfer wait, then succeed or be refused on the ' +
+         'real balance, so the caller never sees a retry: the cost is that spending from one account now happens single file, ' +
+         'which matters for a very busy account like the fee income account. `serializable` lets both run and cancels one with ' +
+         'an error, which is cheaper when clashes are rare, but every caller has to be written to retry, and a retry that is not ' +
+         'idempotent charges somebody twice. Pick the lock when clashes are normal, and serializable with a retry loop when ' +
+         'they are rare.'
     }},
 
-    { h: 'Idempotency is a unique index' },
-    { p: 'Level 4 stored the key in a dictionary. In a database you do better: put a unique constraint on the column and let ' +
-         'the insert fail. Two requests carrying the same key can race each other and exactly one wins, because uniqueness ' +
-         'is enforced by the index rather than by a check you performed a moment earlier.' },
-    { code: 'try:\n    txn_id = post_transfer(...)          # inserts with idempotency_key\nexcept psycopg.errors.UniqueViolation:\n    # somebody got there first, including possibly this same caller\n    txn_id = lookup_by_key(key)\nreturn txn_id', lang: 'python' },
-    { p: 'Notice the shape: try the write, catch the violation, return the original. The alternative, checking whether the ' +
-         'key exists and then inserting, has a gap between the two statements that is exactly wide enough for the request ' +
-         'you are trying to protect against.' },
+    { h: 'Idempotency, done by the database' },
+    { p: 'Level 4 remembered idempotency keys in a Python dictionary. A database can do better: put a `unique` constraint on ' +
+         'the key column, and simply try to insert. If the key already exists, the database refuses the insert, and you look ' +
+         'up the original transaction instead:' },
+    { code: 'try:\n    txn_id = post_transfer(...)          # inserts with idempotency_key\nexcept psycopg.errors.UniqueViolation:\n    # this key was used before: by an earlier attempt of this same payment\n    txn_id = lookup_by_key(key)\nreturn txn_id', lang: 'python' },
+    { p: 'Why not the obvious way, "look for the key, and insert if it is not there"? Because there is a gap between the look ' +
+         'and the insert, and two retries of the same payment can both fit inside it:' },
+    { code: 'request 1                         request 2 (a retry, same key)\nselect ... where key = \'k9\'   ->  select ... where key = \'k9\'\n  -- not found                       -- not found\ninsert ... key = \'k9\'              insert ... key = \'k9\'\n  -- charged                         -- charged again', lang: 'text' },
+    { p: 'The unique constraint has no gap: checking and inserting are one operation inside the database, so exactly one of ' +
+         'the two can ever succeed.' },
     { check: {
       q: 'Why is "select where key = ..., and insert if there is no row" wrong, when it passes every test you can write for it?',
-      a: 'Because the failure needs two requests inside the same few milliseconds and your tests run one at a time. Both ' +
-         'select, both find nothing, both insert, and you have charged the customer twice with code that reads as if it ' +
-         'checked. This is the same shape as the double spend above: a decision made between two statements is a decision ' +
-         'made on stale information. The unique index has no gap, because the check and the write are one operation.'
+      a: 'Because the failure needs two requests inside the same few thousandths of a second, and your tests run one at a time. ' +
+         'Both select, both find nothing, both insert, and you have charged the customer twice with code that reads as if it ' +
+         'checked. It is the same shape as the double spend above: a decision made between two statements is a decision made on ' +
+         'out-of-date information. The unique constraint has no gap, because the check and the write are one operation.'
     }},
 
     { h: 'The balance you show, and the balance that is true' },
-    { p: 'Summing entries is correct and gets slower as the ledger grows. At some size you cache the balance on the account ' +
-         'row, and from that moment you own a reconciliation problem: two numbers that are supposed to agree.' },
-    { code: 'alter table accounts add column balance_cents bigint not null default 0;\n\n-- keep it current in the same transaction as the entry\ncreate or replace function apply_entry() returns trigger as $$\nbegin\n  update accounts set balance_cents = balance_cents + new.amount_cents\n   where id = new.account_id;\n  return new;\nend;\n$$ language plpgsql;\n\ncreate trigger entries_apply after insert on entries\n  for each row execute function apply_entry();', lang: 'sql' },
-    { p: 'The trigger runs inside the same transaction as the insert, so the cached balance and the entry commit together or ' +
-         'not at all. That removes most ways for them to drift, and not all, which is why the job still runs:' },
+    { p: 'Adding up every entry is correct, and gets slower as the ledger grows: an account with a million entries means adding ' +
+         'a million numbers for every balance on screen. At some size you store a copy of the balance on the account row. From ' +
+         'that moment you have two numbers that are supposed to agree, and checking that they do is your job.' },
+    { code: 'alter table accounts add column balance_cents bigint not null default 0;\n\n-- keep it up to date in the same transaction as the entry\ncreate or replace function apply_entry() returns trigger as $$\nbegin\n  update accounts set balance_cents = balance_cents + new.amount_cents\n   where id = new.account_id;\n  return new;\nend;\n$$ language plpgsql;\n\ncreate trigger entries_apply after insert on entries\n  for each row execute function apply_entry();', lang: 'sql' },
+    { p: 'The trigger runs inside the same database transaction as the entry, so the stored balance and the entry are saved ' +
+         'together or not at all. That removes most ways for them to drift apart, but not every way, so a check still runs ' +
+         'every day. This query lists any account whose stored balance disagrees with its entries:' },
     { code: 'select a.id, a.name, a.balance_cents, coalesce(sum(e.amount_cents), 0) as from_entries\n  from accounts a\n  left join entries e on e.account_id = a.id\n group by a.id\nhaving a.balance_cents <> coalesce(sum(e.amount_cents), 0);', lang: 'sql', label: 'the query that should return nothing' },
     { check: {
-      q: 'That reconciliation query returns nothing every morning for six months. What has it been worth?',
-      a: 'It has been worth the six months. A reconciliation that finds nothing is not a reconciliation that did nothing: it ' +
-         'is the evidence that the invariant held, and it is the reason anybody can trust the balance column at all. The day ' +
-         'it does return a row you will know within hours instead of learning it from a customer, and you will know which ' +
-         'account and by how much. Cheap jobs that usually print nothing are most of what operational engineering is.'
+      q: 'That check returns nothing every morning for six months. What has it been worth?',
+      a: 'It has been worth the six months. A check that finds nothing is not a check that did nothing: it is the evidence that ' +
+         'the rule held, and it is the reason anybody can trust the balance column at all. The day it does return a row you ' +
+         'will know within hours instead of hearing it from a customer, and you will know which account and by how much. Cheap ' +
+         'jobs that usually print nothing are most of what running a system looks like.'
     }},
 
-    { h: 'Append only, and what that means for permissions' },
-    { p: 'The ledger is a record of what happened, so nothing in it is ever updated or deleted. A wrong transfer is fixed by ' +
+    { h: 'Only ever add, and make the database insist' },
+    { p: 'The ledger is a record of what happened, so nothing in it is ever changed or deleted. A wrong transfer is fixed with ' +
          'a reversing transaction, exactly as in level 4, and the original stays visible forever.' },
-    { p: 'You can say that in a comment, or you can say it in the grant table. The second one survives a new colleague:' },
+    { p: 'You can write that rule in a comment, or you can make the database enforce it. Databases have **roles**, named users ' +
+         'with specific permissions, and you can take away a role\'s permission to change or delete rows:' },
     { code: 'revoke update, delete on entries, transactions from app_user;\ngrant insert, select on entries, transactions to app_user;', lang: 'sql' },
-    { warn: 'Doing this properly means your application connects as a role that physically cannot rewrite history, and your ' +
-            'migrations run as a different one. If the same connection string can both post entries and drop the table, the ' +
-            'append only property is a promise rather than a property.' }
+    { p: 'Now the application, which connects as `app_user`, can add entries and read them, and physically cannot rewrite ' +
+         'history, even if a bug or an attacker tells it to.' },
+    { warn: 'This only works if the application really connects as that limited role, and changes to the table design run as a ' +
+            'different one. If the same connection details can both post entries and delete the table, "we never change ' +
+            'history" is a promise rather than a fact.' }
   ],
 
   tutorial: {
