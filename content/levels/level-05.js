@@ -22,186 +22,264 @@ FQ.registerLevel({
   ],
 
   knowledge: [
-    { h: 'An API is a menu, not a mystery' },
-    { p: 'A REST API is a set of URLs you can request. You send a URL, you get back JSON. That is genuinely all it is. ' +
-         'The skill is in reading the menu and handling the times the kitchen is closed.' },
-    { code: 'https://api.frankfurter.app/latest?base=USD&symbols=EUR,GBP\n\\____/  \\_______________/\\_____/ \\____________________/\nscheme       host          path        query parameters', lang: 'text', label: 'anatomy of a request' },
-    { code: '{\n  "amount": 1.0,\n  "base": "USD",\n  "date": "2025-09-01",\n  "rates": { "EUR": 0.9123, "GBP": 0.7684 }\n}', lang: 'json', label: 'the JSON that comes back' },
-    { p: 'JSON maps directly onto Python: objects become dicts, arrays become lists, strings and numbers stay themselves. ' +
-         '`response.json()` does the conversion, so `data["rates"]["EUR"]` gets you 0.9123.' },
+    { h: 'What an API is, in plain words' },
+    { p: 'When you open a website, your browser sends a short message to another computer somewhere, asking for a page. ' +
+         'That computer sends the page back. Your side is the **client**, their side is the **server**, the message you send ' +
+         'is a **request**, and what comes back is a **response**.' },
+    { p: 'An **API** is the same exchange, except the thing asking is a program instead of a person, and what comes back is ' +
+         'data instead of a web page. The company running the server publishes a list of what you are allowed to ask for and ' +
+         'what you will get back. Think of it as a restaurant menu: you cannot walk into the kitchen, but you can order ' +
+         'anything on the list.' },
+    { p: 'Most APIs you will meet are **REST APIs**, which only means each thing you can ask for has its own web address. ' +
+         'Here is a real one that returns exchange rates. Paste it into a browser and you will see the answer:' },
+    { code: 'https://api.frankfurter.app/latest?base=USD&symbols=EUR,GBP\n\\____/  \\_______________/\\_____/ \\____________________/\nscheme       host          path        query parameters', lang: 'text', label: 'the four parts of a request' },
     { table: {
-      head: ['Verb', 'Means', 'Used for'],
+      head: ['Part', 'In this example', 'What it does'],
+      rows: [
+        ['Scheme', '`https`', 'How to talk: the `s` means the conversation is encrypted'],
+        ['Host', '`api.frankfurter.app`', 'Which computer to ask'],
+        ['Path', '`/latest`', 'Which item on the menu: here, today\'s rates'],
+        ['Query parameters', '`?base=USD&symbols=EUR,GBP`', 'Your options for that item: rates measured in dollars, for euros and pounds only. `?` starts them, `&` separates them']
+      ]
+    }},
+    { p: 'The response comes back as **JSON**, a way of writing data as plain text that almost every API uses:' },
+    { code: '{\n  "amount": 1.0,\n  "base": "USD",\n  "date": "2025-09-01",\n  "rates": { "EUR": 0.9123, "GBP": 0.7684 }\n}', lang: 'json', label: 'what comes back' },
+    { p: 'If that looks like a Python dictionary, it nearly is. Curly brackets become a dict, square brackets become a list, ' +
+         'and text and numbers stay what they are. `response.json()` does the conversion, and then you step down one level ' +
+         'per pair of square brackets: `data["rates"]` is the inner dict, and `data["rates"]["EUR"]` is `0.9123`.' },
+    { p: 'Every request also says what kind of action it is, with a word called the **method**:' },
+    { table: {
+      head: ['Method', 'Means', 'Used for'],
       rows: [
         ['`GET`', 'Read something', 'Fetching rates, prices, balances'],
         ['`POST`', 'Create something', 'Making a payment, opening an account'],
-        ['`PUT` / `PATCH`', 'Replace / update', 'Editing a profile'],
+        ['`PUT` or `PATCH`', 'Replace or update', 'Editing a profile'],
         ['`DELETE`', 'Remove', 'Closing a card']
       ]
     }},
-    { p: 'This level only uses `GET`, because reading market data is the safe half of the job. Note the pattern though: ' +
-         '`GET` is naturally repeatable, `POST` is not, which is exactly why level 4 needed idempotency keys.' },
-
+    { p: 'This level only uses `GET`, because reading market data is the safe half of the job. Notice the difference though: ' +
+         'asking for today\'s rates twice does no harm, while creating a payment twice charges someone twice. That is exactly ' +
+         'why level 4 needed idempotency keys for payments.' },
     { check: {
       q: 'From that response, write the expression that gets 0.7684. Then say what `data["rates"]["JPY"]` does, given that ' +
          'JPY was never in `symbols`.',
-      a: '`data["rates"]["GBP"]`. The JSON object became a dict and each pair of brackets steps down one level. Asking for ' +
-         'JPY raises `KeyError`, and that is the correct failure: the alternative, a quiet zero, would value a Japanese ' +
-         'holding at nothing and print it as a number. Use `data["rates"].get("JPY")` when you would rather handle the ' +
-         'absence yourself, and either way decide what a missing rate means before you multiply by it.'
+      a: '`data["rates"]["GBP"]`. The JSON became a dict, and each pair of brackets steps down one level. Asking for JPY ' +
+         'raises `KeyError`, and that is the correct failure: the alternative, a quiet zero, would value a Japanese holding at ' +
+         'nothing and print it as a number. Use `data["rates"].get("JPY")` when you would rather handle the absence yourself, ' +
+         'and either way decide what a missing rate means before you multiply by it.'
     }},
 
-    { h: 'Status codes tell you whose fault it is' },
+    { h: 'Status codes: how the request went' },
+    { p: 'Along with the data, every response carries a three digit number, the **status code**, that says how it went. You ' +
+         'have seen one already: a "404 page not found". The first digit tells you the most important thing, which is whose ' +
+         'problem it is:' },
     { table: {
       head: ['Code', 'Meaning', 'What you should do'],
       rows: [
-        ['`200`', 'OK', 'Carry on'],
-        ['`400`', 'Bad request', 'Your parameters are wrong. Fix the code, do not retry'],
-        ['`401` / `403`', 'Unauthorized / forbidden', 'Key missing, wrong, or out of permissions'],
-        ['`404`', 'Not found', 'Wrong path or unknown symbol'],
-        ['`429`', 'Too many requests', 'You hit the rate limit: back off and slow down'],
-        ['`500` / `502` / `503`', 'Their server broke', 'Retry with backoff; it may fix itself']
+        ['`200`', 'OK, here is your data', 'Carry on'],
+        ['`400`', 'Bad request: what you sent makes no sense', 'Fix your code. Sending it again gets the same answer'],
+        ['`401` or `403`', 'Not allowed: key missing, wrong, or without permission', 'Check your key'],
+        ['`404`', 'Not found', 'Wrong path, or a currency or symbol they do not have'],
+        ['`429`', 'Too many requests', 'You are going too fast: wait, then slow down'],
+        ['`500`, `502`, `503`', 'Their server broke', 'Try again in a moment; it often fixes itself']
       ]
     }},
-    { p: 'The rule of thumb: **4xx means you are wrong, 5xx means they are wrong**. Retrying a 400 forever just burns ' +
-         'your rate limit; retrying a 503 a few times usually works.' },
+    { p: 'The rule of thumb: **codes in the 400s mean you are wrong, codes in the 500s mean they are wrong**. Retrying a 400 ' +
+         'is pointless, because nothing about your request changed. Retrying a 503 a few times usually works, because servers ' +
+         'restart and recover.' },
     { check: {
       q: 'Your job retries every failed call five times with backoff. Overnight it meets a `400` and a `503`, and retries ' +
          'both the same way. Which one is your code making worse?',
-      a: 'The `400`. The server has told you the request itself is malformed, so the sixth identical request gets the ' +
-         'identical answer: you are spending your rate limit to be told off five extra times, and starving the `503` retries ' +
-         'that might actually have worked. Retry what can change on its own, meaning `5xx` and connection errors. Fix what ' +
-         'cannot, meaning `4xx`, in the code. The exception is `429`, which is a `4xx` that means slow down rather than stop, ' +
-         'and it is the one case where waiting longer is the whole fix.'
+      a: 'The `400`. The server has told you the request itself is wrong, so the sixth identical request gets the identical ' +
+         'answer: you are using up your allowance of requests to be told off five extra times, and crowding out the `503` ' +
+         'retries that might have worked. Retry what can change on its own, meaning 500s and dropped connections. Fix what ' +
+         'cannot, meaning 400s, in the code. The exception is `429`, a 400-series code that means "slow down" rather than ' +
+         '"stop", and it is the one case where waiting is the whole fix.'
     }},
-    { warn: '`requests.get(url)` with no `timeout` can hang **forever** if the server accepts the connection and never answers. ' +
-            'Every request in production code has a timeout. No exceptions.' },
-
+    { p: 'One more failure has no status code at all: the server accepts your request and then never answers. That is what ' +
+         'a **timeout** is for. It is how long you are willing to wait before giving up, and you set it on every request:' },
+    { code: 'r = requests.get(url, timeout=10)    # wait at most 10 seconds, then raise an error', lang: 'python' },
+    { warn: '`requests.get(url)` with no `timeout` will wait **forever** if the server never answers, because the requests ' +
+            'library has no default limit. Every request in real code has a timeout. No exceptions.' },
     { check: {
       q: 'A rate feed accepts your connection and then answers nothing at all, for hours. You called `requests.get(url)` ' +
          'with no timeout. Describe what your app is doing.',
-      a: 'Waiting, and it will wait as long as the socket stays open, because requests has no default timeout. In a notebook ' +
-         'that is one stuck cell. In a web app it is one worker thread gone from the pool, then another on the next request, ' +
-         'until the pool is empty and the site stops answering every user for a reason that has nothing to do with them. ' +
-         '`timeout=10` converts a silent hang into a `requests.Timeout` you can catch, log and fall back from. That is the ' +
-         'whole argument for the rule having no exceptions.'
+      a: 'Waiting, for as long as the connection stays open. In a notebook that is one stuck cell. In a web app it is one ' +
+         'worker gone from the pool that handles visitors, then another on the next request, until none are left and the site ' +
+         'stops answering every user, for a reason that has nothing to do with them. `timeout=10` turns a silent hang into a ' +
+         '`requests.Timeout` error you can catch, log and recover from. That is the whole argument for the rule having no ' +
+         'exceptions.'
     }},
 
-    { h: 'Rate limits and backoff' },
-    { p: 'Free APIs cap how often you may call them: perhaps 30 requests a minute. Exceed it and you get `429`, sometimes ' +
-         'followed by a temporary ban. The polite and effective response is **exponential backoff**: wait 1 second, then 2, then 4.' },
-    { code: 'for attempt in range(3):\n    try:\n        r = requests.get(url, timeout=10)\n        r.raise_for_status()\n        return r.json()\n    except requests.RequestException:\n        time.sleep(2 ** attempt)        # 1s, 2s, 4s\nraise RuntimeError("giving up after 3 attempts")', lang: 'python' },
-    { money: 'A trading desk that hammers a rate-limited feed gets throttled precisely when markets are volatile: the ' +
-             'moment the data matters most. Backoff is self-preservation.' },
-
+    { h: 'Rate limits, and backing off politely' },
+    { p: 'Free APIs cap how often you may call them, for example 30 requests a minute, the way a busy shop lets in only so ' +
+         'many customers at once. That cap is the **rate limit**. Go over it and you get a `429`, and keep hammering and some ' +
+         'providers block you for a while.' },
+    { p: 'The polite and effective response is **exponential backoff**: after each failure, wait twice as long as last time ' +
+         'before trying again. Here it is as a timeline, when all three attempts fail:' },
+    { table: {
+      head: ['Time', 'What happens'],
+      rows: [
+        ['0 s', 'Attempt 1 fails. Wait 1 second'],
+        ['1 s', 'Attempt 2 fails. Wait 2 seconds'],
+        ['3 s', 'Attempt 3 fails. Wait 4 seconds'],
+        ['7 s', 'Give up and move on to your fallback']
+      ]
+    }},
+    { code: 'for attempt in range(3):\n    try:\n        r = requests.get(url, timeout=10)\n        r.raise_for_status()           # turns a 4xx or 5xx code into an error\n        return r.json()\n    except requests.RequestException:\n        time.sleep(2 ** attempt)        # 1s, 2s, 4s\nraise RuntimeError("giving up after 3 attempts")', lang: 'python' },
+    { money: 'A trading desk that hammers a rate-limited feed gets cut off exactly when markets are moving fast, which is the ' +
+             'moment the data matters most. Backing off is self-preservation.' },
     { check: {
       q: 'Why wait 1, then 2, then 4 seconds rather than trying three times a second apart? And how long have you waited in ' +
          'total if all three attempts fail?',
       a: 'Seven seconds, which is 1 + 2 + 4. The doubling is the point. A `429` means too many requests are arriving too ' +
-         'fast, usually from more clients than just you, and a fixed one second retry sends everybody back at the same ' +
-         'moment to make the same problem again. Backing off gives the server room to recover and takes you further out of ' +
-         'the queue on each attempt. Retrying hard against a rate limit is the rate limit violation with extra steps.'
+         'fast, usually from many clients, not only you, and a fixed one second retry sends everybody back at the same moment ' +
+         'to cause the same jam again. Doubling gives the server room to recover and moves you further back in the queue each ' +
+         'time. Retrying hard against a rate limit is breaking the rate limit with extra steps.'
     }},
 
     { h: 'Never trust a single live call' },
-    { p: 'An app that shows a blank screen when an API is slow is a broken app. Three layers of defence, in order:' },
+    { p: 'An app that shows a blank screen when an API is slow is a broken app. So you build three layers of defence, and the ' +
+         'code tries them in order:' },
     { ol: [
-      '**Cache**: save the last good response with a timestamp. If it is younger than your freshness window, use it and skip the call entirely.',
-      '**Retry**: on a network error or 5xx, try again a few times with backoff.',
-      '**Fallback**: if everything fails, use a bundled snapshot and **label it clearly as stale**.'
+      '**Cache**: every time a call succeeds, save the answer together with the time you got it. Next time, if that saved ' +
+      'copy is recent enough, use it and skip the call entirely. "Recent enough" is a number you choose, called the ' +
+      '**freshness window**: exchange rates published once a day are fine an hour old.',
+      '**Retry**: if the call fails with a dropped connection or a 500-series code, try again a few times with backoff.',
+      '**Fallback**: if everything fails, use a copy of the data you shipped with the app, and **label it clearly as old**.'
     ]},
-    { p: 'The last part matters more than the code: a rate shown without its age is a lie waiting to happen. ' +
-         'Every number you display from an external source should carry where it came from and when.' },
+    { p: 'Here is a morning with a one hour freshness window:' },
+    { table: {
+      head: ['Time', 'What happens', 'What the user sees'],
+      rows: [
+        ['09:00', 'No saved copy. Call the API, it works, save the answer', 'Live rate, "as of 09:00"'],
+        ['09:40', 'Saved copy is 40 minutes old, inside the window. No call made', 'Same rate, "as of 09:00"'],
+        ['10:15', 'Saved copy is too old. Call the API: it is down. Three retries fail', 'Yesterday\'s bundled rate, "offline copy, 2025-09-01"']
+      ]
+    }},
+    { p: 'The label in the last column matters more than the code. A rate shown without its age is a problem waiting to happen. ' +
+         'Every number you show from someone else\'s data should say where it came from and when.' },
     { check: {
       q: 'The feed goes down, your fallback works exactly as designed, nothing crashes, and a member converts $5,000 on the ' +
          'rate you showed. Your code behaved correctly. What went wrong?',
-      a: 'The screen said nothing about the number being from yesterday, so the member read a stale rate as a live one and ' +
+      a: 'The screen said nothing about the number being from yesterday, so the member read an old rate as a live one and ' +
          'made a real decision on it. Not crashing was the easy half. The half that matters is one line of text next to the ' +
-         'figure: the source and the timestamp, for example "ECB reference rate, 2025-09-01, 19 hours old". A user who sees ' +
-         'that can decide to wait. A user who sees a bare number cannot, and they will be right to blame you.'
+         'figure: the source and the time, for example "ECB reference rate, 2025-09-01, 19 hours old". A user who sees that ' +
+         'can decide to wait. A user who sees a bare number cannot, and they will be right to blame you.'
     }},
 
-    { h: 'Secrets do not go in code' },
-    { p: 'Many APIs need a key. It identifies you and often bills you, so treat it like a password.' },
-    { code: 'import os\nfrom getpass import getpass\n\n# In Colab: type it once per session, never save it in the notebook\nAPI_KEY = os.environ.get("MARKET_API_KEY") or getpass("API key: ")', lang: 'python' },
+    { h: 'Keys are passwords: keep them out of your code' },
+    { p: 'Many APIs ask for a **key**, a long random string that proves the request comes from you. It usually also decides ' +
+         'who gets billed, so anybody holding your key can run up your bill. Treat it exactly like a password.' },
+    { p: 'The safe place for a key is an **environment variable**: a value your computer hands to a program when it starts, ' +
+         'kept outside your code files. Your code asks for it by name, so the key itself never appears in anything you save or ' +
+         'share. In a notebook, where that is awkward, you type it in each session with `getpass`, which hides what you type:' },
+    { code: 'import os\nfrom getpass import getpass\n\n# Use the environment variable if it exists, otherwise ask, and never save it in the notebook\nAPI_KEY = os.environ.get("MARKET_API_KEY") or getpass("API key: ")', lang: 'python' },
     { table: {
       head: ['Do', 'Do not'],
       rows: [
-        ['Read from an environment variable', 'Paste the key into a cell you will commit'],
-        ['Prompt with `getpass` in a notebook', 'Put it in a URL you print or log'],
-        ['Add `.env` to `.gitignore`', 'Email it to a teammate'],
-        ['Rotate a key the moment it leaks', 'Assume a deleted commit is gone. It is not']
+        ['Read it from an environment variable', 'Paste the key into a cell you will commit'],
+        ['Type it with `getpass` in a notebook', 'Put it in a web address you print or log'],
+        ['List `.env` in `.gitignore` so git never saves it', 'Send it to a teammate in a chat message'],
+        ['Cancel the key and make a new one the moment it leaks', 'Assume deleting it from the file removes it. It does not']
       ]
     }},
-    { warn: 'Deleting a key from a file does **not** remove it from git history. If a key is ever committed, revoke it immediately. ' +
-            'Bots scan public repositories continuously and will find it in minutes.' },
-
+    { warn: 'Deleting a key from a file does **not** remove it from git history: every earlier version of the file is still ' +
+            'stored and readable. If a key is ever committed to a public repository, cancel it at the provider immediately. ' +
+            'Automated programs scan public code for keys all day and can find one within minutes.' },
     { check: {
       q: 'You pasted a key into a notebook and pushed it. An hour later you notice, delete the line, and push again. Is the ' +
          'key safe?',
-      a: 'No. The commit that carried it is still in the history and anybody can read it there, which is why a deleted line ' +
-         'proves nothing. Public repositories are scanned continuously by bots that do nothing else, and an hour is a long ' +
-         'time. The fix is to revoke the key at the provider and issue a new one, today, before anything else. Cleaning the ' +
-         'history afterwards is tidy, but the key is already spent and no amount of tidying makes it unspent.'
+      a: 'No. The commit that carried it is still in the history, and anybody can read it there, so a deleted line proves ' +
+         'nothing. Public repositories are scanned all day by programs that do nothing else, and an hour is a long time. The ' +
+         'fix is to cancel the key at the provider and create a new one, today, before anything else. Cleaning the history ' +
+         'afterwards is tidy, but the key is already spent, and no amount of tidying makes it unspent.'
     }},
 
-    { h: 'FX: base, quote, cross rates, and the spread' },
-    { p: 'A rate is always a pair. `EUR/USD = 1.0961` means one **base** unit (EUR) costs 1.0961 of the **quote** currency (USD). ' +
-         'Reading it backwards is the single most common FX bug.' },
-    { code: '# Given rates quoted against USD:\n#   EUR = 0.9123   (1 USD buys 0.9123 EUR)\n#   GBP = 0.7684\n\nusd_to_eur = 250 * 0.9123           # 228.08 EUR\neur_to_usd = 250 / 0.9123           # 274.03 USD   <- divide to go back\n\n# cross rate EUR -> GBP, via the common base\neur_to_gbp = 0.7684 / 0.9123        # 0.8423', lang: 'python' },
+    { h: 'Exchange rates: which way round?' },
+    { p: 'An exchange rate is always about two currencies. `EUR/USD = 1.0961` means one euro costs 1.0961 dollars. The first ' +
+         'currency, the one you are pricing, is the **base**. The second, the one the price is written in, is the **quote**. ' +
+         'Reading a rate the wrong way round is the most common currency bug there is.' },
+    { p: 'The rates in this level all use the dollar as the base: "1 USD buys 0.9123 EUR". So the direction of your sum ' +
+         'depends on which way you are going:' },
+    { table: {
+      head: ['You have', 'You want', 'Do this', 'Result'],
+      rows: [
+        ['$250', 'Euros', 'Multiply: 250 x 0.9123', '228.075 EUR'],
+        ['250 EUR', 'Dollars', 'Divide: 250 / 0.9123', '$274.03'],
+        ['$10', 'Vietnamese dong', 'Multiply: 10 x 25,480', '254,800 VND']
+      ]
+    }},
+    { p: 'And if you want euros to pounds but only have rates against the dollar, go through the dollar. The rate you get ' +
+         'that way is called a **cross rate**:' },
+    { code: '# rates against USD:  EUR 0.9123   GBP 0.7684\n\neur_to_gbp = 0.7684 / 0.9123        # 0.842267 pounds per euro', lang: 'python' },
+    { tip: 'Before trusting any conversion, ask which number should be bigger. If $1 buys 25,480 dong, then $10 must be ' +
+           'hundreds of thousands of dong. If your answer is 0.0004, you divided when you should have multiplied.' },
     { check: {
       q: 'USD is the base and 1 USD buys 0.9123 EUR. A member holds 250 EUR and asks what it is worth in dollars. Work it ' +
          'out, and say how you would catch yourself getting it backwards.',
-      a: '250 / 0.9123 = $274.03. You divide because the rate is quoted per dollar and you are going the other way. The check ' +
-         'needs no formula at all: a euro is worth more than a dollar here, so the dollar figure has to be the bigger one. ' +
-         'Multiplying instead gives about $228.08, roughly $46 short, and it looks perfectly reasonable on screen, which is ' +
-         'exactly why this bug reaches production. Every conversion gets the does this number point the right way glance ' +
-         'before it ships.'
+      a: '250 / 0.9123 = $274.03. You divide because the rate is written per dollar and you are going the other way. The ' +
+         'check needs no formula at all: a euro is worth more than a dollar here, so the dollar figure has to be the bigger ' +
+         'one. Multiplying instead gives about $228, roughly $46 short, and it looks perfectly reasonable on screen, which is ' +
+         'exactly why this bug reaches real users. Every conversion gets a "does this point the right way" glance before it ' +
+         'ships.'
     }},
-    { p: 'Real trading quotes come in pairs: the **bid** (what a dealer pays you) and the **ask** (what they charge you). ' +
-         'The gap is the **spread**, and it is how the dealer earns. A mid-market rate (the average) is what news sites show ' +
-         'and is never what you actually get. Consumer apps quoting "the real exchange rate" mean mid-market plus a stated fee.' },
-    { tip: 'Sanity check every conversion: if 1 USD buys 25,480 VND, then $10 should be about 254,800 VND. If your ' +
-           'answer is 0.0004, you divided when you should have multiplied.' },
     { check: {
       q: 'You hold only USD quotes: EUR 0.9123 and GBP 0.7684. Convert 1,000 EUR to GBP two ways, through dollars and ' +
          'through the cross rate, and account for any difference.',
       a: 'Through dollars: 1,000 / 0.9123 = $1,096.13, then x 0.7684 = £842.27. Through the cross rate: 0.7684 / 0.9123 = ' +
-         '0.842267 per euro, so 1,000 x 0.842267 = £842.27. The same answer, because the cross rate is that pair of steps ' +
-         'with the dollars cancelled. Round the cross rate to 0.8423 first and you get £842.30, three pence out, and on a ' +
+         '0.842267 per euro, so 1,000 x 0.842267 = £842.27. The same answer, because the cross rate is those two steps with ' +
+         'the dollars cancelled out. Round the cross rate to 0.8423 first and you get £842.30, three pence out, and on a ' +
          'million euro transfer the same rounding is off by £33. Keep full precision through the calculation and round once, ' +
          'at the end, when you show it.'
     }},
 
+    { h: 'The spread: why you never get the rate on the news' },
+    { p: 'A currency dealer quotes two prices, not one. The **bid** is what they will pay you for a euro. The **ask** is what ' +
+         'they will charge you for one. The gap between them is the **spread**, and it is how the dealer earns a living. The ' +
+         'number on the news is the **mid-market rate**, exactly halfway between the two.' },
+    { table: {
+      head: ['Quote', 'EUR/USD', 'Selling 1,000 EUR gets you'],
+      rows: [
+        ['Bid (dealer buys from you)', '1.0950', '$1,095.00'],
+        ['Mid-market (the news)', '1.0961', '$1,096.10, but nobody trades here'],
+        ['Ask (dealer sells to you)', '1.0972', '']
+      ]
+    }},
+    { p: 'Selling 1,000 euros at the bid gets you $1.10 less than the headline rate suggests, and that $1.10 is the dealer\'s ' +
+         'income. Apps that promise "the real exchange rate" usually mean they convert at mid-market and charge a separate, ' +
+         'stated fee instead of hiding it in the spread.' },
     { check: {
       q: 'A news site says EUR/USD is 1.0961. An app advertises "the real exchange rate" and the member ends up with less ' +
          'than 1.0961 dollars per euro. Who is lying?',
-      a: 'Nobody, necessarily. 1.0961 is the mid-market rate, the midpoint between what dealers pay and what they charge, ' +
-         'and it is a price at which nobody actually transacts. The member bought at the ask, and the gap to the mid is the ' +
-         'dealer\'s income. An honest app quotes mid-market and shows its own fee as a separate line, so the two numbers add ' +
-         'up to what lands in the account. A dishonest one buries the fee inside a worse rate and calls the result "no ' +
-         'fees". What you owe the member is the amount they will receive, not a rate that compares well.'
+      a: 'Nobody, necessarily. 1.0961 is the mid-market rate, the halfway point between what dealers pay and what they ' +
+         'charge, and nobody actually trades at it. The member dealt at the dealer\'s price, and the gap to the middle is the ' +
+         'dealer\'s income. An honest app quotes mid-market and shows its own fee as a separate line, so the two add up to what ' +
+         'lands in the account. A dishonest one hides the fee inside a worse rate and calls the result "no fees". What you owe ' +
+         'the member is the amount they will actually receive, not a rate that looks good next to the news.'
     }},
 
-    { h: 'No feed covers everything' },
-    { p: 'The free FX API in this level publishes the **European Central Bank reference set**: 29 currencies. ' +
-         'USD, EUR, GBP, JPY, SGD and INR are in it. **VND is not**, and neither are most African, Middle Eastern, ' +
-         'and smaller Asian currencies.' },
-    { p: 'This is normal, and it is a design question rather than a bug. When a source does not quote a currency you hold, ' +
-         'you have three options. Drop the holding, which understates the total. Value it at zero, which is worse, because ' +
-         'it puts a number on screen that says the money is gone. Or **fall back to another source for that one currency and ' +
-         'label the row**. The third is what real systems do, and it is why professional valuation tables carry a source ' +
-         'column rather than a single footnote.' },
+    { h: 'No data source covers everything' },
+    { p: 'The free rates API in this level publishes the **European Central Bank reference rates**, around 30 currencies. ' +
+         'USD, EUR, GBP, JPY, SGD and INR are in it. **VND is not**, and neither are most African, Middle Eastern and smaller ' +
+         'Asian currencies.' },
+    { p: 'That is normal, and it is a design decision rather than a bug. When your source does not cover a currency someone ' +
+         'holds, you have three choices. Leave the holding out, which makes the total too small. Value it at zero, which is ' +
+         'worse, because it puts a number on screen that says the money is gone. Or **use a second source for that one ' +
+         'currency and label the row** so the reader can see where it came from. Real systems do the third, which is why ' +
+         'professional valuation tables have a "source" column.' },
     { check: {
       q: 'A member holds 5,000,000 VND and your feed does not quote it. Take each of the three options in turn and say what ' +
          'the portfolio total reads.',
-      a: 'Drop the holding and the total is short by roughly $196, with nothing on screen to say so. Value it at zero and ' +
-         'the total is short by the same amount, except now a row says the member\'s money is worth nothing, which they will ' +
-         'notice and disbelieve. Take a second source for that one row, label it, and the total is right while the reader ' +
-         'can see where the odd figure came from. The first two options are quiet, and quiet is the property you do not ' +
-         'want: the third is the only one that survives somebody checking your work.'
+      a: 'At 25,480 dong to the dollar the holding is worth about $196.23. Leave it out and the total is short by that much, ' +
+         'with nothing on screen to say so. Value it at zero and the total is short by the same amount, except now a row says ' +
+         'the member\'s money is worth nothing, which they will notice and disbelieve. Use a second source for that one row, ' +
+         'label it, and the total is right while the reader can see where the odd figure came from. The first two options are ' +
+         'quiet, and quiet is exactly what you do not want: the third is the only one that survives somebody checking your work.'
     }},
-    { money: 'Mixed provenance is the normal state of financial data: a treasury report routinely blends a live feed, ' +
-             'a broker file, and a manually entered rate. The discipline is not avoiding the mix. It is labelling it.' }
+    { money: 'Mixing sources is the normal state of financial data: a finance team\'s report routinely combines a live feed, ' +
+             'a file from a broker and a rate somebody typed in by hand. The discipline is not avoiding the mix. It is ' +
+             'labelling it.' }
   ],
 
   tutorial: {
