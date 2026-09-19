@@ -23,172 +23,222 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'The rules you are building inside' },
-    { p: 'Handling other people\'s money is one of the most regulated activities there is. You do not need to be a lawyer, ' +
-         'but shipping a fintech product while unaware of these four obligations is how teams get shut down.' },
+    { p: 'Handling other people\'s money is one of the most tightly regulated things a business can do. You do not need to ' +
+         'be a lawyer, but building a money product without knowing these four obligations is how teams get shut down. Each ' +
+         'one turns into code:' },
     { table: {
-      head: ['Obligation', 'What it demands', 'What it means in your code'],
+      head: ['Obligation', 'In plain words', 'What it means in your code'],
       rows: [
-        ['**KYC**', 'Verify identity before a user holds money', 'An onboarding state machine; no transactions until verified'],
-        ['**AML**', 'Detect and report suspicious patterns', 'Monitoring rules, alerts, case records, retained evidence'],
-        ['**Data protection**', 'Lawful, minimal, secure use of personal data', 'Store less, encrypt, restrict access, log who read what'],
-        ['**Audit and retention**', 'Reconstruct any decision years later', 'Append-only ledgers, immutable logs, versioned rules']
+        ['**KYC**, know your customer', 'Check who someone is before they can hold money', 'A sign-up process with stages, and no payments until the person is verified'],
+        ['**AML**, anti-money-laundering', 'Spot and report money that looks like it comes from crime', 'Rules that watch payments, alerts, and records of what was investigated'],
+        ['**Data protection**', 'Collect little personal data, keep it safe, use it only for what you said', 'Store less, encrypt it, limit who can read it, record who did'],
+        ['**Audit and record keeping**', 'Be able to show, years later, exactly what happened and why', 'Records that are only ever added to, never changed, with versioned rules']
       ]
     }},
-    { p: 'Notice how much of this is *engineering*, not paperwork. Append-only storage, immutable audit logs, and ' +
-         'explainable decisions are architectural choices made early. Retrofitting them is close to impossible, which ' +
-         'is why they belong in your capstone from the first commit.' },
-
+    { p: 'KYC in a real app is a sequence of states a new customer moves through, and the code refuses to skip any:' },
+    { code: 'signed_up  ->  documents_submitted  ->  verified  ->  active\n                      |\n                      +->  rejected\n\nOnly "active" customers can receive or send money.', lang: 'text', label: 'a KYC process' },
+    { p: 'And AML means watching for patterns, not single payments. A classic one: somebody deposits $9,500 in cash on ' +
+         'Monday, $9,600 on Tuesday and $9,400 on Wednesday. Each is below $10,000, the cash amount at which a US bank must file a report, which is ' +
+         'exactly the point, and exactly what an AML rule looks for. Level 19 builds a full monitoring system.' },
+    { p: 'Notice how much of this is **engineering** rather than paperwork. Keeping every record, never overwriting history, ' +
+         'and being able to explain every decision are choices you make in the first week of a project. Adding them later is ' +
+         'close to impossible, which is why they belong in your capstone from the first commit.' },
     { check: {
-      q: 'Your project keeps a balance column it updates on each payment, and one KYC status per customer that it ' +
-         'overwrites. Someone asks what the balance was on 3 March and who approved that verification. What can you tell ' +
-         'them?',
+      q: 'Your project keeps a balance column it updates on each payment, and one KYC status per customer that it overwrites. ' +
+         'Someone asks what the balance was on 3 March and who approved that verification. What can you tell them?',
       a: 'Nothing, and no amount of careful work will recover it. Both tables hold only the present, so every earlier state ' +
-         'was written over the moment it changed. An append only entry log answers the first question by summing entries up ' +
-         'to a date, and a status table with one row per change, each stamped with who and when, answers the second. That is ' +
-         'why these go in at the first commit: history you never stored cannot be migrated, only invented.'
+         'was written over the moment it changed. A ledger of entries that are only ever added to answers the first question, ' +
+         'by adding up entries to that date. A status table with one row per change, each stamped with who and when, answers ' +
+         'the second. That is why these go in at the first commit: history you never stored cannot be recovered later, only ' +
+         'made up.'
     }},
 
-    { h: 'PII: the data that changes your obligations' },
-    { p: '**Personally Identifiable Information** is anything that identifies a person: name, address, national ID, ' +
-         'card number, and (importantly) combinations that identify someone together, like a postcode plus a birth date.' },
+    { h: 'Personal data: the information that changes your obligations' },
+    { p: '**PII**, personally identifiable information, is anything that can identify a real person. Some of it is obvious. ' +
+         'Some of it only identifies someone in combination:' },
+    { table: {
+      head: ['Obviously PII', 'PII in combination'],
+      rows: [
+        ['Full name', 'Postcode'],
+        ['Home address', 'Date of birth'],
+        ['National ID or passport number', 'Gender'],
+        ['Full card number', 'Employer and job title'],
+        ['Phone number, email', 'The exact times someone buys coffee']
+      ]
+    }},
+    { p: 'The right-hand column is the one people underestimate. A well-known study in 2000 estimated that about 87% of the US ' +
+         'population could be picked out uniquely by just postcode, date of birth and gender together.' },
+    { p: 'Five habits cover most of what you owe:' },
     { ul: [
-      '**Minimise**: do not collect what you do not need. The safest PII is the field you never stored.',
-      '**Mask**: show `**** 4471`, not the full number. Full card numbers ("PAN") have their own standard, PCI DSS, and you do not want to be in scope for it.',
-      '**Separate**: keep identity data apart from transaction data, joined by an opaque id.',
-      '**Expire**: define how long you keep records, and actually delete them.',
-      '**Log access**: in a regulated system, reading data is an event worth recording too.'
+      '**Collect less.** Do not store what you do not need. The safest personal data is the field you never stored.',
+      '**Mask what you show.** Display `**** 4471`, not the full card number. The full number, called the **PAN**, is covered ' +
+      'by its own strict security standard, **PCI DSS**, and storing it pulls your whole system under those rules.',
+      '**Keep it apart.** Store who a person is in one place and what they did in another, linked by a meaningless id such as ' +
+      '`C0381`, so a leak of one is less harmful.',
+      '**Delete on schedule.** Decide how long you keep each kind of record, and actually delete it when the time is up.',
+      '**Record who looked.** In a regulated system, reading personal data is an event worth recording, not just changing it.'
     ]},
     { check: {
-      q: 'A teammate wants to store the full card number so the profile page can show it. Talk them out of it, or agree ' +
-         'with them, using the five rules above.',
-      a: 'Minimise decides it. The page shows `**** 4471`, so what it needs is the last four digits, and storing sixteen to ' +
-         'display four is collecting data you have no use for. The cost is real: a stored full card number, the PAN, puts ' +
-         'the whole system in scope for PCI DSS, with the audits, key management and breach exposure that follow, for a ' +
-         'feature nobody asked for. The safest field is still the one you never stored.'
+      q: 'A teammate wants to store the full card number so the profile page can show it. Talk them out of it, or agree with ' +
+         'them, using the five habits above.',
+      a: '"Collect less" decides it. The page shows `**** 4471`, so what it needs is the last four digits, and storing sixteen ' +
+         'to display four is keeping data you have no use for. The cost is real: a stored full card number puts the whole ' +
+         'system under PCI DSS, with the audits, key management and breach exposure that follow, for a feature nobody asked ' +
+         'for. The safest field is still the one you never stored.'
     }},
-    { warn: 'Never commit real personal data to a repository, even privately, even briefly. Every dataset in this course ' +
-            'is synthetic for exactly this reason, and your capstone must be too. If you want realistic data, generate it.' },
-
+    { warn: 'Never commit real personal data to a repository, even a private one, even for a minute. Every dataset in this ' +
+            'course is made up for exactly this reason, and your capstone must be too. If you want realistic data, generate it.' },
     { check: {
-      q: 'You export a dataset for a coursework partner, stripping names, emails and account numbers, and leaving postcode, ' +
+      q: 'You export a dataset for a coursework partner, removing names, emails and account numbers, and leaving postcode, ' +
          'date of birth and gender. Is that export anonymous?',
-      a: 'No. Those three fields together identify a large share of any population, which is the finding that made ' +
-         'reidentification research famous, and a partner who holds an electoral roll or a marketing list can put the names ' +
-         'back. Identifiability is a property of your file plus everything else that exists, so removing the obvious columns ' +
-         'is not the test. Either aggregate, coarsen the fields (year of birth, first part of the postcode), or generate ' +
-         'synthetic data, which is what this course does and what your capstone should do.'
+      a: 'No. Those three fields together identify a large share of any population, as the 2000 study showed, and a partner ' +
+         'who holds an electoral roll or a marketing list can put the names back. Whether someone can be identified depends on ' +
+         'your file plus everything else that exists, so removing the obvious columns is not enough. Either group the rows ' +
+         'into totals, blur the fields (year of birth instead of date, the first half of the postcode), or generate made-up ' +
+         'data, which is what this course does and what your capstone should do.'
     }},
 
-    { h: 'Open banking, in one paragraph' },
-    { p: 'Regulation in the UK, EU, and a growing list of countries requires banks to expose customer data through APIs ' +
-         '**when the customer consents**. That is what lets a budgeting app read your bank transactions without asking for ' +
-         'your password. The pattern that matters: **consent is explicit, scoped, time limited, and revocable**. ' +
-         'If your product reads someone else\'s data, that is the standard you design to.' },
-
-    { check: {
-      q: 'Your app asks for access to every account a member holds, stores the token, and keeps refreshing it quietly after ' +
-         'they stop using the product. Which parts of that consent standard have you broken?',
-      a: 'Three of the four. Scope: you asked for every account when the budgeting feature reads one. Time limited: a token ' +
-         'that refreshes itself has no end. Revocable: nothing in the product lets them stop it, and a member who cannot ' +
-         'find the off switch has not really consented to what follows. Only explicit survives, and it survives in the ' +
-         'weakest form, a single dialog at signup. The fix is product work rather than crypto: ask for less, expire it, and ' +
-         'put a disconnect button where it can be found.'
-    }},
-
-    { h: 'Architecture: layers and why they exist' },
-    { code: 'interface        Streamlit pages, CLI, API endpoints\n     |           (no business logic: just input and display)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. Pure where possible. Fully tested)\ndata             loaders, validators, synthetic generators\n     |           (everything that touches a file or a network)\nstorage          CSV / SQLite / append-only entry log', lang: 'text', label: 'four layers' },
-    { p: 'The rule points one way: **upper layers may call lower ones, never the reverse**. Your ledger must not know ' +
-         'a Streamlit page exists. Follow it and you can swap the interface, test the middle in isolation, and reason about ' +
-         'one layer at a time. Break it and everything becomes one thing that can only be tested by clicking.' },
+    { h: 'Open banking, and what consent means' },
+    { p: 'In the UK, the EU and a growing list of other countries, the law makes banks share a customer\'s data with other ' +
+         'apps **when the customer agrees**. That is how a budgeting app can read your bank payments without ever asking for ' +
+         'your bank password. Level 18 builds one.' },
+    { p: 'The idea to carry into everything you build is what "agreeing" has to mean. Proper **consent** has four properties:' },
     { table: {
-      head: ['Symptom', 'Layer violation'],
+      head: ['Consent must be', 'Meaning'],
       rows: [
-        ['A calculation calls `st.write`', 'Interface logic inside services'],
-        ['A service reads a CSV path directly', 'Data access inside business rules'],
-        ['A test needs a browser', 'Logic trapped in the interface'],
-        ['Changing a chart breaks the ledger', 'No layer boundary at all']
+        ['**Explicit**', 'The person actively said yes to this specific thing'],
+        ['**Scoped**', 'It covers only what was asked for: one account, not all of them'],
+        ['**Time limited**', 'It ends on a known date, often after 90 days, unless renewed'],
+        ['**Revocable**', 'The person can withdraw it whenever they like, easily']
       ]
     }},
-
     { check: {
-      q: '`fraud.py` opens `data/level-08-transactions.csv` with that relative path, and it works. Name two things it has ' +
-         'quietly broken.',
-      a: 'Anyone running the program from a different directory, because a relative path is resolved against the working ' +
-         'directory rather than the file that contains it. And the tests, which now cannot check the scoring rules without ' +
-         'that CSV sitting in the right place, so a unit test has grown a dependency on the filesystem. Both come from one ' +
-         'layer violation: a service reached into the data layer. Pass the DataFrame in, or call a loader, and the rules ' +
-         'become testable with four rows written by hand.'
+      q: 'Your app asks for access to every account a member holds, stores the access pass, and keeps renewing it quietly ' +
+         'after they stop using the product. Which parts of that consent standard have you broken?',
+      a: 'Three of the four. Scoped: you asked for every account when the budgeting feature reads one. Time limited: a pass ' +
+         'that renews itself has no end. Revocable: nothing in the product lets them stop it, and a member who cannot find ' +
+         'the off switch has not really agreed to what follows. Only explicit survives, and in its weakest form, a single ' +
+         'screen at sign-up. The fix is product work rather than clever code: ask for less, let it expire, and put a ' +
+         'disconnect button where it can be found.'
     }},
 
-    { h: 'Project structure a stranger can follow' },
-    { code: 'neobank/\n  README.md            <- the front door\n  requirements.txt\n  .gitignore\n  app.py               <- Streamlit entry point\n  neobank/\n    __init__.py\n    ledger.py          <- Level 4\n    analytics.py       <- Level 3\n    lending.py         <- Levels 2 + 6\n    risk.py            <- Level 7\n    fraud.py           <- Level 8\n    fx.py              <- Level 5\n    loaders.py         <- data access, one place\n  data/                <- synthetic CSVs only\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_fraud.py\n  docs/\n    architecture.md\n    screenshots/', lang: 'text' },
-    { tip: 'A folder with an `__init__.py` is a **package**, so `from neobank.ledger import Ledger` works from anywhere ' +
-           'in the project. One module per domain, and the filename tells a reviewer where to look.' },
+    { h: 'Architecture: layers, and why they exist' },
+    { p: 'By now your code does five different jobs: showing pages, applying money rules, loading data, saving it, and ' +
+         'testing it. **Architecture** is the decision about how those pieces are arranged and which may talk to which. The ' +
+         'standard answer is **layers**:' },
+    { code: 'interface        Streamlit pages, command line, API endpoints\n     |           (no money rules here: just take input and show results)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. Pure functions where possible. Fully tested)\ndata             loaders, input checks, data generators\n     |           (everything that touches a file or the network)\nstorage          CSV files, a SQLite database, the ledger\'s entry log', lang: 'text', label: 'four layers' },
+    { p: 'Follow one click through it. A member presses "Send $25". The **interface** reads the form and calls ' +
+         '`ledger.transfer("alice", "bob", 2500)`. The **service** checks the rules: enough money, both accounts exist. It asks ' +
+         'the **data** layer to save two entries, which writes them to **storage**. The answer travels back up, and the ' +
+         'interface shows "Sent".' },
+    { p: 'The one rule: **higher layers may call lower ones, never the other way round.** The ledger must not know a Streamlit ' +
+         'page exists. Keep to that and you can swap the interface for an API, test the rules without a browser, and think ' +
+         'about one layer at a time. Break it and everything becomes one tangle that can only be tested by clicking.' },
+    { table: {
+      head: ['Warning sign', 'What it means'],
+      rows: [
+        ['A calculation calls `st.write`', 'Screen code has leaked into the rules'],
+        ['A service opens a CSV file itself', 'Data loading has leaked into the rules'],
+        ['A test needs a browser to run', 'The rules are trapped inside the screen'],
+        ['Changing a chart breaks the ledger', 'There are no layers at all']
+      ]
+    }},
+    { check: {
+      q: '`fraud.py` opens `data/level-08-transactions.csv` using that relative path, and it works. Name two things it has ' +
+         'quietly broken.',
+      a: 'Anyone running the program from a different folder, because a relative path is looked up from wherever the program ' +
+         'was started, not from where `fraud.py` lives. And the tests, which now cannot check the scoring rules without that ' +
+         'CSV sitting in the right place, so a small test depends on a file on disk. Both come from one broken rule: a service ' +
+         'reached down into data loading. Pass the table in, or call a loader, and the rules become testable with four rows ' +
+         'written by hand.'
+    }},
+
+    { h: 'A project a stranger can find their way around' },
+    { p: 'Here is how the capstone is laid out. Each file maps to a level you already finished:' },
+    { code: 'neobank/\n  README.md            <- the front door\n  requirements.txt\n  .gitignore\n  app.py               <- the Streamlit page\n  neobank/\n    __init__.py\n    ledger.py          <- level 4\n    analytics.py       <- level 3\n    lending.py         <- levels 2 and 6\n    risk.py            <- level 7\n    fraud.py           <- level 8\n    fx.py              <- level 5\n    loaders.py         <- all data loading, in one place\n  data/                <- made-up CSVs only\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_fraud.py\n  docs/\n    architecture.md\n    screenshots/', lang: 'text' },
+    { tip: 'A folder containing a file called `__init__.py` is a **package**: Python treats the folder as one importable unit, ' +
+           'so `from neobank.ledger import Ledger` works from anywhere in the project. One file per topic, named so a reviewer ' +
+           'knows where to look.' },
 
     { h: 'The README is the product' },
-    { p: 'A reviewer gives your repository about thirty seconds before deciding whether to read the code. The README is ' +
-         'what they spend it on. In order:' },
+    { p: 'The **README** is the page GitHub shows first when someone opens your repository. A reviewer gives it about thirty ' +
+         'seconds before deciding whether to read any code. Spend those thirty seconds well, in this order:' },
     { ol: [
       '**One sentence** saying what it is and who it is for.',
-      '**A live link and a screenshot**: the fastest possible proof it is real.',
-      '**Features**, as five or six bullets of what it actually does.',
-      '**Architecture**: the layer diagram and one line per module.',
-      '**Run it locally**: commands that work when copied, in order.',
-      '**Tests**: how to run them and what passes.',
-      '**Data**: stated clearly as synthetic, with the generator script.',
-      '**Limitations and next steps**: the section that signals seniority.'
+      '**A live link and a screenshot**: the fastest proof that it is real.',
+      '**Features**: five or six bullets of what it actually does.',
+      '**Architecture**: the layer diagram and one line per file.',
+      '**Run it yourself**: commands that work when copied, in order.',
+      '**Tests**: how to run them, and what passes.',
+      '**Data**: said plainly to be made up, with the script that generates it.',
+      '**Limitations and next steps**: what it does not do yet. The section that marks you out as serious.'
     ]},
-    { money: 'That last section is the one people skip and the one interviewers notice. Writing "this ledger is ' +
-             'single-process and would need row-level locking to be concurrent" tells a reviewer you understand the ' +
-             'difference between a demo and a system. Claiming production-readiness you do not have does the opposite.' },
-
+    { money: 'That last section is the one people skip and the one interviewers notice. Writing "this ledger runs in one ' +
+             'process and would need database locking to handle two writers at once" tells a reviewer you know the difference ' +
+             'between a demo and a real system. Claiming it is ready for real customers when it is not does the opposite.' },
     { check: {
-      q: 'Your ledger is a Python list inside one process. Does that belong in the README, and if so, how do you word it?',
-      a: 'It belongs in limitations, written as the consequence rather than the fact: two processes writing at once would ' +
-         'interleave entries and the balancing invariant could not be guaranteed, so this build is single process by design ' +
-         'and would need row level locking or a database transaction to go further. A reviewer reading that learns you know ' +
-         'where the edge is. The same reviewer reading "production ready" over the same code learns something worse, and ' +
-         'they will find the list in about a minute.'
+      q: 'Your ledger is a Python list inside one running program. Does that belong in the README, and if so, how do you ' +
+         'word it?',
+      a: 'It belongs under limitations, written as the consequence rather than the fact: two programs writing at once could ' +
+         'interleave their entries and the sum-to-zero rule could no longer be guaranteed, so this build runs as a single ' +
+         'program by design and would need database locking to go further. A reviewer reading that learns you know where the ' +
+         'edge is. The same reviewer reading "production ready" over the same code learns something worse, and finds the list ' +
+         'in about a minute.'
     }},
 
-    { h: 'Reconciliation: the daily ritual' },
-    { p: 'Every real money system runs a **reconciliation** job: compare your ledger against an external source of truth ' +
-         '(a bank statement, a processor\'s settlement file) and explain every difference. A break that nobody explains ' +
-         'is either a bug, a timing difference, or fraud, and you cannot tell which until you look.' },
-    { code: 'internal_total = sum(all ledger entries for the account)\nexternal_total = statement closing balance\nbreak         = internal_total - external_total\n\nif break != 0:\n    investigate, categorise, and record the explanation', lang: 'text' },
-    { p: 'Including even a simple reconciliation check in your capstone puts you ahead of most student projects, because ' +
-         'it shows you understand that a ledger is only trustworthy if something independent agrees with it.' },
-
+    { h: 'Reconciliation: checking your books against someone else\'s' },
+    { p: 'Every real money system runs a daily job called **reconciliation**: compare your own records with an independent ' +
+         'source, such as the bank\'s statement, and explain every difference. A difference is called a **break**. Here is ' +
+         'one, explained line by line:' },
+    { table: {
+      head: ['', 'Amount'],
+      rows: [
+        ['Your ledger says the account holds', '$12,430.00'],
+        ['The bank statement says', '$12,380.00'],
+        ['Break to explain', '**$50.00**'],
+        ['A $12.50 monthly bank fee, on the statement but never recorded in your ledger', '-$12.50'],
+        ['A $37.50 card payment the bank processed today; your ledger will record it tomorrow', '-$37.50'],
+        ['Left unexplained', '**$0.00**']
+      ]
+    }},
+    { p: 'The fee is a genuine gap: you post it to the ledger, with a note. The card payment is a **timing difference**: both ' +
+         'sides will agree by tomorrow, and you check that they do. Only when every dollar has a reason is the reconciliation ' +
+         'finished.' },
+    { code: 'internal = sum of every ledger entry for the account\nexternal = closing balance on the statement\nbreak    = internal - external\n\nif break != 0:\n    find each cause, label it, and record the explanation', lang: 'text' },
+    { p: 'Even a simple reconciliation check puts your capstone ahead of most student projects, because it shows you ' +
+         'understand that a ledger is only trustworthy when something independent agrees with it.' },
     { check: {
-      q: 'Your ledger says an account holds $12,430.00 and the bank statement says $12,380.00. What do you do about the $50 ' +
-         'difference?',
-      a: 'Explain it before you touch anything. It is a timing difference (something posted in your books that settles ' +
-         'tomorrow), a fee the processor took that you never recorded, or a bug, and the three look identical until you go ' +
-         'and read the entries. What you never do is adjust the ledger until it agrees. If a fee was missed, post the fee ' +
-         'with a memo saying so; if the code is wrong, fix the code and let the correcting entry stand. A silent plug ' +
-         'removes the evidence and makes the next break impossible to trust, which is exactly why fraud likes them.'
+      q: 'Your ledger says an account holds $12,430.00 and the bank statement says $12,380.00. Before you have looked at any ' +
+         'entries, what do you do about the $50 difference?',
+      a: 'Explain it before you touch anything. It could be a timing difference (something recorded on one side that the other ' +
+         'records tomorrow), a fee that was never recorded, or a bug, and all three look identical until you read the entries. ' +
+         'What you never do is adjust the ledger until the numbers agree. If a fee was missed, post the fee with a note saying ' +
+         'so; if the code is wrong, fix the code and let the correcting entry stand. A silent adjustment destroys the evidence ' +
+         'and makes the next break impossible to trust, which is exactly why fraudsters like them.'
     }},
 
-    { h: 'Ethics is a design activity' },
-    { p: 'You have now built things that decide who gets credit and whose card gets blocked. Three questions belong in ' +
-         'your capstone report, and in every design review you will ever attend:' },
+    { h: 'Ethics is a design decision' },
+    { p: 'You have now built things that decide who gets a loan and whose card gets blocked. Three questions belong in your ' +
+         'capstone report, and in every design meeting you will ever attend:' },
     { ul: [
-      '**Who is harmed if this is wrong?** A false fraud flag strands someone at a checkout with no other payment method.',
-      '**Can the person affected find out why?** If your answer is "the model decided", you have built something you cannot defend.',
-      '**Who does this work badly for?** Systems trained on the average user fail thin-file customers, new arrivals, and irregular earners first.'
+      '**Who is harmed if this is wrong?** A false fraud flag strands someone at a checkout with no other way to pay.',
+      '**Can the person affected find out why?** If your answer is "the model decided", you have built something you cannot ' +
+      'defend.',
+      '**Who does this work badly for?** Systems built around the average customer fail first for people with little credit ' +
+      'history, people new to the country, and people whose income arrives irregularly.'
     ]},
     { check: {
       q: 'Take the first question seriously for one case: your fraud score blocks a member\'s card at a supermarket till, ' +
          'wrongly. What does "who is harmed if this is wrong" change in the code you write?',
-      a: 'It turns into features with owners. A push notification that arrives before they reach the front of the queue, ' +
-         'saying what was blocked and offering one tap to confirm it was them. A human review path with a stated response ' +
-         'time, reachable without an account number they cannot get to. A recorded reason for the block, in words, so ' +
+      a: 'It turns into features with owners. A phone notification that arrives before they reach the front of the queue, ' +
+         'saying what was blocked and offering one tap to confirm it was them. A way to reach a human, with a stated response ' +
+         'time, that does not need an account number they cannot get to. A recorded reason for the block, in words, so ' +
          'support can say more than "the system declined it". None of that is ethics as a paragraph at the end of a report. ' +
-         'It is the difference between a decline that costs a member ten seconds and one that leaves them with a full ' +
-         'trolley and no way to pay.'
+         'It is the difference between a decline that costs a member ten seconds and one that leaves them with a full trolley ' +
+         'and no way to pay.'
     }},
-    { p: 'Writing these answers down is not decoration. It is the difference between an engineer who ships features and ' +
-         'one who can be trusted with a product that touches people\'s money.' }
+    { p: 'Writing these answers down is not decoration. It is the difference between an engineer who ships features and one ' +
+         'who can be trusted with a product that touches people\'s money.' }
   ],
 
   tutorial: {
