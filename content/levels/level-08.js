@@ -23,79 +23,120 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'The shape of the problem' },
-    { p: 'In this level\'s 6,000 transactions, **108 are fraud: 1.8%**. That imbalance changes everything about how you ' +
-         'build and judge a detector.' },
-    { code: 'always_predict_legit  ->  accuracy = 98.2%\n                          fraud caught = 0\n                          business value = negative', lang: 'text', label: 'why accuracy is a trap' },
-    { warn: 'Any time someone reports a fraud model with 99% accuracy, your first question is the base rate. ' +
-            'Under imbalance, accuracy measures how common the majority class is, not how good your model is.' },
-
+    { p: 'This level\'s data is 6,000 card payments from June and July 2025, made by customers of a Vietnamese card issuer.' +
+         'Each row has already been labelled: somebody later confirmed whether it was fraud. **108 of them were: 1.8%.**' },
+    { p: 'That small number changes how you have to judge a fraud detector. Try the laziest detector possible, one that ' +
+         'says "not fraud" for every single payment:' },
+    { code: 'says "not fraud" every time  ->  right 5,892 times out of 6,000  =  98.2% accurate\n                                  fraud caught:  0 of 108', lang: 'text', label: 'why accuracy is a trap' },
+    { p: '**Accuracy** is the share of predictions that were right, and here it rewards doing nothing. When one outcome is ' +
+         'rare, a model can be right almost all the time by always guessing the common one. This situation, one class far ' +
+         'rarer than the other, is called **class imbalance**, and fraud is the textbook case.' },
+    { warn: 'Whenever someone shows you a fraud model with 99% accuracy, first ask how common fraud is in their data. If ' +
+            'it is 1%, their number means nothing.' },
     { check: {
       q: 'A vendor demos a fraud model on your data, reports 98.2% accuracy, and asks for a decision. What do you ask, and ' +
          'what answer ends the meeting?',
-      a: 'Ask for the base rate and the confusion matrix. Fraud is 108 of these 6,000 rows, so returning "legit" for every ' +
-         'transaction scores exactly 98.2% without reading a single column: their headline number is the base rate in a ' +
-         'suit. The meeting ends if the matrix shows zero or near zero true positives, which is what that accuracy usually ' +
-         'means. Recall tells you what share of the 108 they caught, precision tells you what it cost in blocked customers, ' +
+      a: 'Ask how common fraud is in the data, and ask for the confusion matrix (the four-box table later in this level). ' +
+         'Fraud is 108 of these 6,000 rows, so saying "not fraud" for everything scores exactly 98.2% without reading a single ' +
+         'column: their headline number is simply how rare fraud is. The meeting ends if the table shows few or no frauds ' +
+         'actually caught. Recall says what share of the 108 they caught, precision says how many honest customers that cost, ' +
          'and neither can be faked by doing nothing.'
     }},
 
-    { h: 'Features: turning a row into evidence' },
-    { p: 'A raw transaction says little on its own. **Feature engineering** is the act of computing the columns that ' +
-         'actually separate fraud from normal behaviour. Here is what separates them in this dataset:' },
+    { h: 'Features: turning a payment into clues' },
+    { p: 'A raw payment row says little on its own. A **feature** is a column you calculate because it helps tell fraud ' +
+         'apart from normal spending. Working them out is called **feature engineering**, and it is most of the job.' },
+    { p: 'Compare the two groups in this data, the honest payments and the fraudulent ones:' },
     { table: {
-      head: ['Feature', 'Legitimate', 'Fraud', 'Signal'],
+      head: ['Feature', 'Honest payments', 'Fraud', 'How useful'],
       rows: [
         ['Average amount', '$31.85', '$167.25', 'Strong'],
-        ['Card present', '61.1%', '3.7%', '**Very strong**'],
-        ['Foreign country', '6.0%', '69.4%', '**Very strong**'],
+        ['Card physically present (tapped or inserted)', '61.1%', '3.7%', '**Very strong**'],
+        ['Paid from another country', '6.0%', '69.4%', '**Very strong**'],
         ['Between midnight and 6am', '5.5%', '33.3%', 'Strong'],
-        ['Transactions in the last hour', '0.55', '3.66', '**Very strong**'],
-        ['Travel / electronics / gaming', '38%', '76%', 'Moderate']
+        ['Payments on the same card in the last hour', '0.55 on average', '3.66 on average', '**Very strong**'],
+        ['Travel, electronics or gaming', '38%', '76%', 'Moderate']
       ]
     }},
-    { p: 'None of these is proof. Plenty of honest people buy electronics abroad at 2am. That is exactly why a single rule ' +
-         'is a bad detector and a *combination* of weak signals is a good one.' },
+    { p: 'Read the second row carefully. **Card present** means the card itself was at the till. When it is **not present**, ' +
+         'the card details were typed in, online or over the phone, which is exactly what a thief with stolen card numbers ' +
+         'does. Only 3.7% of the frauds had the real card.' },
+    { p: 'None of these clues is proof on its own. Plenty of honest people buy electronics abroad at 2am. That is why a single ' +
+         'rule makes a bad detector and a **combination** of weak clues makes a good one.' },
     { check: {
-      q: 'Card present is 61.1% of legitimate transactions and 3.7% of fraud, which makes card not present the strongest ' +
-         'single signal in the table. Why not simply decline every card not present transaction?',
-      a: 'Because it flags 2,394 of the 6,000 rows. It does catch 104 of the 108 frauds, a recall of 96.3%, but 2,290 of ' +
-         'the flags are honest customers, so precision is 4.3%: twenty two false alarms for every fraud stopped. A feature ' +
-         'can separate the classes well and still be useless alone, because the class it separates well is the rare one. ' +
-         'This is the whole argument for scoring: card not present is worth a point, not a decline.'
+      q: 'Card present is 61.1% of honest payments and 3.7% of fraud, which makes card not present the strongest single clue ' +
+         'in the table. Why not simply decline every card not present payment?',
+      a: 'Because it flags 2,394 of the 6,000 rows. It does catch 104 of the 108 frauds, 96.3% of them, but 2,290 of the ' +
+         'flags are honest customers, so only 4.3% of the flags are right: twenty two false alarms for every fraud stopped. A ' +
+         'clue can separate the groups well and still be useless alone, because the group it picks out is the rare one. This ' +
+         'is the whole argument for scoring: card not present is worth a few points, not a decline.'
     }},
-    { money: '**Velocity** (how many transactions happened in the last hour) is the highest-value feature in real card ' +
-             'fraud, because a stolen card gets tested fast: a small purchase to check it works, then rapid large ones. ' +
-             'It also requires state your system must keep, which is why it is the feature junior implementations skip.' },
+    { money: '**Velocity**, how many payments a card made in the last hour, is the most valuable clue in real card fraud. A ' +
+             'stolen card gets used fast: a small purchase to check it works, then several large ones before the owner notices. ' +
+             'It also means your system has to remember recent activity per card, which is why beginner systems skip it.' },
 
-    { h: 'The confusion matrix' },
-    { code: '                     predicted\n                 legit      fraud\nactual legit      TN         FP      <- annoyed customer\nactual fraud      FN         TP      <- money gone', lang: 'text' },
+    { h: 'Scoring: adding up the clues' },
+    { p: 'The simplest detector gives each clue some points and adds them up. The higher the total, the more suspicious the ' +
+         'payment. This level\'s rule engine uses:' },
     { table: {
-      head: ['Metric', 'Formula', 'The question it answers'],
+      head: ['Clue', 'Points'],
       rows: [
-        ['**Precision**', 'TP / (TP + FP)', 'When we flag, how often are we right?'],
-        ['**Recall**', 'TP / (TP + FN)', 'Of all fraud, how much did we catch?'],
-        ['**F1**', 'harmonic mean of the two', 'One number when you must have one number'],
-        ['Accuracy', '(TP + TN) / all', 'Nearly useless here']
+        ['Amount over $150', '2'],
+        ['Card not present', '2'],
+        ['Paid from another country', '3'],
+        ['Between midnight and 6am', '2'],
+        ['3 or more payments on this card in the last hour', '2'],
+        ['Travel, electronics or gaming', '1']
       ]
     }},
-    { p: 'The two errors are not symmetrical and never cost the same. A **false negative** is money out the door. ' +
-         'A **false positive** is a real customer whose card is declined in front of a queue, and studies of card issuers ' +
-         'consistently find false declines cost more in lost business than the fraud they prevent.' },
+    { p: 'Two real rows from the file, scored by hand:' },
+    { table: {
+      head: ['Payment', 'Details', 'Clues it hits', 'Score', 'Actually'],
+      rows: [
+        ['T104008', '$185.14 of electronics, card not present, Brazil, 21:20, 4 payments in the last hour', 'amount 2, not present 2, abroad 3, velocity 2, category 1', '**10**', 'fraud'],
+        ['T101212', '$50.53 of gaming, card present, Vietnam, 00:34', 'overnight 2, category 1', '**3**', 'honest']
+      ]
+    }},
+    { p: 'Then you pick a **threshold**, the score at which you act. Set it at 3 and the late night gamer is declined. Set it ' +
+         'at 4 and they go through. Every choice of threshold is a trade, and the rest of this level is about making that ' +
+         'trade on purpose.' },
 
+    { h: 'The confusion matrix: four ways to be right or wrong' },
+    { p: 'Every flagged or unflagged payment lands in one of four boxes, depending on what you predicted and what was true. ' +
+         'This table is called the **confusion matrix**:' },
+    { code: '                          you said\n                    not fraud     fraud\ntruly honest          TN           FP       <- an honest customer declined\ntruly fraud           FN           TP       <- money gone', lang: 'text' },
+    { ul: [
+      '**TP, true positive**: you flagged it and it was fraud. A catch.',
+      '**FP, false positive**: you flagged it and it was honest. A false alarm.',
+      '**FN, false negative**: you let it through and it was fraud. A miss.',
+      '**TN, true negative**: you let it through and it was honest. Nothing happened, correctly.'
+    ]},
+    { p: 'From those boxes come the two numbers that matter:' },
+    { table: {
+      head: ['Number', 'Formula', 'The question it answers'],
+      rows: [
+        ['**Precision**', 'TP / (TP + FP)', 'When we flag something, how often are we right?'],
+        ['**Recall**', 'TP / (TP + FN)', 'Of all the fraud there was, how much did we catch?'],
+        ['**F1**', 'a kind of average of the two', 'One number, when someone insists on one number'],
+        ['Accuracy', '(TP + TN) / everything', 'Nearly useless here, as you saw']
+      ]
+    }},
+    { p: 'The two mistakes never cost the same. A miss is money out of the door. A false alarm is a real customer whose card ' +
+         'is declined in front of a queue, who may never use that card again. Card issuers regularly find that false declines ' +
+         'lose them more business than the fraud they stop.' },
     { check: {
-      q: 'At threshold 6 the engine flags 160 transactions and 88 of them are fraud. Work out precision and recall, then say ' +
-         'who in the building cares about which.',
-      a: 'Precision is 88 / 160 = 55.0%: a bit better than a coin flip when you act on a flag. Recall is 88 / 108 = 81.5%: ' +
-         'twenty frauds went through. The fraud team reads the recall, because the 20 missed cases are the losses they have ' +
-         'to write off. Support and the customers read the precision, because the 72 false alarms are real people whose ' +
+      q: 'At threshold 6 the engine flags 160 payments and 88 of them are fraud. Work out precision and recall, then say who ' +
+         'in the company cares about which.',
+      a: 'Precision is 88 / 160 = 55.0%: when you act on a flag, you are right a bit more often than a coin flip. Recall is ' +
+         '88 / 108 = 81.5%: twenty frauds went through. The fraud team reads the recall, because the 20 misses are losses ' +
+         'they have to write off. Customer support reads the precision, because the 72 false alarms are real people whose ' +
          'cards were declined. Report one number and you have picked whose problem to hide.'
     }},
 
-    { h: 'Precision and recall trade against each other' },
-    { p: 'Every detector has a knob: how suspicious must a transaction be before you act? Here is the same rule engine at ' +
-         'different thresholds on the same 6,000 rows:' },
+    { h: 'Precision and recall pull against each other' },
+    { p: 'Here is the same rule engine at five thresholds, on the same 6,000 payments:' },
     { table: {
-      head: ['Threshold', 'Flagged', 'Caught (of 108)', 'False alarms', 'Precision', 'Recall'],
+      head: ['Act at score', 'Flagged', 'Fraud caught (of 108)', 'False alarms', 'Precision', 'Recall'],
       rows: [
         ['3', '1,560', '106', '1,454', '6.8%', '**98.1%**'],
         ['5', '349', '95', '254', '27.2%', '88.0%'],
@@ -104,109 +145,116 @@ FQ.registerLevel({
         ['9', '31', '31', '0', '**100%**', '28.7%']
       ]
     }},
-    { p: 'At threshold 3 you catch nearly everything and block 1,454 innocent people. At threshold 9 you are never wrong ' +
-         'and you miss 71% of the fraud. **There is no setting that is good at both**, which means the choice is a ' +
-         'business decision, not a technical one.' },
-
+    { p: 'At 3 you catch nearly everything and decline 1,454 honest people. At 9 you are never wrong and you miss 71% of the ' +
+         'fraud. **No setting is good at both.** Raising the threshold makes you more sure about each flag and makes you flag ' +
+         'less, so you miss more. Where to sit is a business decision, not a technical one.' },
     { check: {
-      q: 'At threshold 3 you catch 106 of the 108 and block 1,454 honest customers. At threshold 9 you are never wrong and ' +
+      q: 'At threshold 3 you catch 106 of the 108 and decline 1,454 honest customers. At threshold 9 you are never wrong and ' +
          'miss 77 frauds. Is there a setting of this engine that gives you high precision and high recall together?',
-      a: 'Not by moving the threshold. The knob slides you along one fixed curve, and every step that buys precision sells ' +
-         'recall at the going rate. What lifts both at once is better evidence: a feature that separates the classes more ' +
-         'sharply moves the whole curve up, so every threshold on it is better than it was. That is the difference between ' +
-         'tuning and improving. Tuning picks a point on the curve you have, and it is a business decision. Improving is ' +
-         'engineering work on the features, and it is where the real gains in fraud detection come from.'
+      a: 'Not by moving the threshold. The threshold only slides you along one fixed trade-off, and every step that buys ' +
+         'precision sells recall. What lifts both at once is better evidence: a new clue that separates the groups more ' +
+         'sharply makes every threshold better than it was. That is the difference between tuning and improving. Tuning picks ' +
+         'a point on the trade-off you have, and it is a business decision. Improving is engineering work on the features, and ' +
+         'it is where the real gains in fraud detection come from.'
     }},
 
-    { h: 'Tune against money, not F1' },
-    { p: 'The right threshold falls out of a cost model. Say a missed fraud costs the transaction amount, and reviewing a ' +
-         'flagged transaction costs $4 of an analyst\'s time:' },
-    { code: 'total cost = sum(amount of missed fraud) + $4 x (false positives)\n\nthreshold 3:  missed $139    + review $5,816  = $5,955\nthreshold 4:  missed $288    + review $1,780  = $2,068   <- cheapest\nthreshold 6:  missed $1,798  + review $288    = $2,086\nthreshold 7:  missed $2,711  + review $56     = $2,767\nthreshold 9:  missed $8,580  + review $0      = $8,580', lang: 'text', label: 'cost curve' },
-    { p: 'The **F1-optimal** threshold here is 7. The **cost-optimal** threshold is 4, which F1 would have told you was ' +
-         'mediocre. They disagree because F1 treats both errors as equally bad and your business does not. ' +
-         'Always state the costs you assumed; they are the actual model.' },
+    { h: 'Choose the threshold with money, not a score' },
+    { p: 'The right threshold comes from what each mistake costs. Say a missed fraud costs the payment amount, and a false ' +
+         'alarm costs $4 of an analyst\'s time to review. Add both up at each threshold:' },
+    { code: 'total cost = amount of fraud missed + $4 x false alarms\n\nact at 3:  missed $139    + reviews $5,816  = $5,955\nact at 4:  missed $288    + reviews $1,780  = $2,068   <- cheapest\nact at 6:  missed $1,798  + reviews $288    = $2,086\nact at 7:  missed $2,711  + reviews $56     = $2,767\nact at 9:  missed $8,580  + reviews $0      = $8,580', lang: 'text', label: 'what each threshold costs' },
+    { p: 'The F1 score picks threshold 7. Money picks threshold 4, which F1 would have called mediocre. They disagree because ' +
+         'F1 treats a false alarm and a missed fraud as equally bad, and your business does not. Always write down the costs ' +
+         'you assumed: they are the real decision.' },
     { check: {
       q: 'F1 says threshold 7 and the cost model says threshold 4. Your manager asks which one is correct.',
       a: 'Both, for different questions. F1 asks which threshold balances precision against recall, and it has no idea what ' +
          'anything costs, so it treats a $4 review and a missed $300 fraud as the same size of mistake. The cost model asks ' +
-         'which threshold loses the least money, and at $4 a review the answer is 4, for $2,068 against $2,767 at threshold ' +
-         '7. What you owe your manager is the assumption in writing: at $4 the answer is 4, and if a review really costs ' +
-         '$20 the answer moves. The costs are the model; F1 is a tiebreaker.'
+         'which threshold loses the least money, and at $4 a review the answer is 4, costing $2,068 against $2,767 at ' +
+         'threshold 7. What you owe your manager is the assumption in writing: at $4 a review the answer is 4, and if a review ' +
+         'really costs $20 the answer becomes 7. The costs are the decision; F1 is a tiebreaker.'
     }},
-    { tip: 'Change the review cost to $20 and the optimum moves. That sensitivity is worth showing to stakeholders: ' +
-           'it converts "which model is best" into "what do you want to spend".' },
+    { tip: 'Change the review cost to $20 and the cheapest threshold moves from 4 to 7. Showing that to decision makers turns ' +
+           '"which model is best?" into "what do you want to spend?", which is the question they can actually answer.' },
 
     { h: 'Adding a model' },
-    { p: '**Logistic regression** learns a weight for each feature and outputs a probability between 0 and 1. It is the ' +
-         'default first model in financial services for one overwhelming reason: **you can explain it**. Each coefficient ' +
-         'says how much that feature moves the odds, which satisfies both a regulator and an angry customer.' },
-    { code: 'from sklearn.linear_model import LogisticRegression\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train, y_train)\nprobabilities = model.predict_proba(X_test)[:, 1]     # column 1 = P(fraud)', lang: 'python' },
-    { p: '`class_weight="balanced"` tells the model that the 1.8% class matters as much as the 98.2% one. Without it, ' +
-         'the fastest way to minimise error is to predict "legit" for everything: the same trap as accuracy, now inside the model.' },
+    { p: 'Rule points are chosen by a person. A **model** learns them from the labelled data instead. The usual first choice ' +
+         'in finance is **logistic regression**: it learns one weight per feature and outputs a probability between 0 and 1 ' +
+         'that a payment is fraud. It is the default for one overwhelming reason: **you can explain it**. Each weight says ' +
+         'how much that feature pushes the odds up or down, which satisfies a regulator and an angry customer alike.' },
+    { code: 'from sklearn.linear_model import LogisticRegression\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train, y_train)                            # learn the weights\nprobabilities = model.predict_proba(X_test)[:, 1]     # chance of fraud for each payment', lang: 'python' },
+    { p: '`class_weight="balanced"` tells the model that the rare 1.8% matters as much as the common 98.2%. Without it, the ' +
+         'easiest way for the model to make few mistakes is to say "not fraud" every time: the accuracy trap again, now inside ' +
+         'the model.' },
     { check: {
-      q: 'You leave out `class_weight="balanced"`. Training reports a low loss, the model looks well fitted, and it flags ' +
+      q: 'You leave out `class_weight="balanced"`. Training reports small errors, the model looks well fitted, and it flags ' +
          'almost nothing. Explain what it learned.',
-      a: 'It learned the base rate. With 98.2% of the rows labelled legit, the cheapest way to be wrong less often is to say ' +
-         'legit and stop, so the fitting process walks straight to the same useless answer that accuracy rewarded earlier. ' +
-         'Balancing tells it that one fraud row counts roughly as much as fifty five legitimate ones, which makes missing ' +
-         'fraud expensive inside the model rather than only in your report. The trap did not change, it just moved from the ' +
-         'metric into the optimizer.'
+      a: 'It learned how rare fraud is. With 98.2% of the rows honest, the cheapest way to be wrong less often is to say ' +
+         '"honest" and stop, so training walks straight to the same useless answer that accuracy rewarded earlier. Balancing ' +
+         'tells it that one fraud row counts roughly as much as fifty five honest ones, which makes missing fraud expensive ' +
+         'inside the model rather than only in your report. The trap did not change, it just moved from the score into the ' +
+         'training.'
     }},
-    { warn: 'Always split into train and test **before** looking at anything. If you tune a threshold on data the model was ' +
-            'trained on, your reported numbers are fiction. This is **leakage**, and it is the most common fatal flaw in ' +
-            'student and production ML alike.' },
+    { p: 'Now the rule that matters most in all of machine learning. You split the data into two parts before doing anything: ' +
+         'a **training set** the model learns from, and a **test set** you keep hidden until the very end to see how it does ' +
+         'on payments it has never seen. The test set stands in for the future.' },
+    { warn: 'If anything about the test set influences a choice you make, the model or the threshold, your test results are ' +
+            'fiction. This is called **leakage**, and it is the most common fatal mistake in machine learning, in classrooms ' +
+            'and in companies.' },
     { check: {
-      q: 'You pick the best threshold by scanning all 6,000 rows, then split into train and test and report the test ' +
+      q: 'You pick the best threshold by scanning all 6,000 rows, then split into training and test and report the test ' +
          'precision and recall at that threshold. What exactly is wrong with the number you are about to publish?',
       a: 'The threshold saw the test rows. It was chosen partly because it works on them, so the test set has stopped being ' +
-         'a sample of the future and become part of the fitting process. The numbers will be optimistic by an amount nobody ' +
-         'can estimate, and you find out how much on the day it goes live. Split first, tune everything on the training ' +
-         'half, and touch the test half once. If you need to tune repeatedly, cut a third slice for validation and leave the ' +
-         'test set alone until the end.'
+         'a stand-in for the future and become part of the fitting. The numbers will be too good by an amount nobody can ' +
+         'estimate, and you find out how much on the day it goes live. Split first, tune everything on the training part, and ' +
+         'look at the test part once. If you need to tune repeatedly, cut a third slice for that and leave the test set alone ' +
+         'until the end.'
     }},
-    { p: 'One more practical note: logistic regression is sensitive to feature scale. `amount` ranges over hundreds while ' +
-         '`is_night` is 0 or 1, so the amount coefficient comes out tiny and hard to read. Standardising features ' +
-         '(subtract the mean, divide by the standard deviation) makes the coefficients comparable.' },
+    { p: 'One practical note. Logistic regression is thrown off by features on very different scales: `amount` runs into the ' +
+         'hundreds while `is_night` is only 0 or 1, so the weights come out hard to compare. **Standardising** fixes it: for ' +
+         'each feature, subtract its average and divide by its standard deviation, so every feature is measured in "how ' +
+         'unusual is this" units.' },
 
     { h: 'When rules beat models' },
     { table: {
       head: ['Rules win when', 'Models win when'],
       rows: [
-        ['You must explain every decision', 'Patterns are subtle and interact'],
+        ['You must explain every single decision', 'The patterns are subtle and combine in odd ways'],
         ['The pattern is known and stable', 'You have lots of labelled history'],
-        ['You need it live today', 'You can monitor and retrain it'],
-        ['Regulators are watching closely', 'Precision at the margin is worth real money']
+        ['You need it working today', 'You can watch it and retrain it regularly'],
+        ['Regulators are watching closely', 'A little extra precision is worth real money']
       ]
     }},
-    { p: 'Real fraud stacks: rules for the obvious and the legally required, a model for the rest, and a human queue for ' +
-         'the ambiguous middle. The score your model produces usually routes a case rather than deciding it outright.' },
-    { warn: 'A fraud model that declines more transactions from one nationality, postcode, or age group is a ' +
-            'discrimination problem, not just a modelling one, and "the model learned it from the data" is not a defence. ' +
-            'Check flag rates across groups before shipping, and keep a human review path.' },
-
+    { p: 'Real fraud systems use all three: rules for the obvious cases and the ones the law requires, a model for the rest, ' +
+         'and a human review queue for the unclear middle. The model\'s score usually decides which queue a payment goes to, ' +
+         'not whether it is blocked outright.' },
+    { warn: 'A fraud model that declines more payments from one nationality, postcode or age group is a discrimination ' +
+            'problem, not just a modelling one, and "the model learned it from the data" is not a defence. Check flag rates ' +
+            'across groups before you ship, and keep a way for a human to review.' },
     { check: {
-      q: 'Your model flags 3% of transactions overall and 11% of transactions from one country. Is that fraud detection or ' +
+      q: 'Your model flags 3% of payments overall and 11% of payments from one country. Is that fraud detection or ' +
          'discrimination?',
-      a: 'The ratio alone cannot tell you, which is the reason to go and measure rather than argue. Compare precision ' +
-         'inside each group. If the flags from that country are right about as often as the flags everywhere else, the model ' +
-         'is tracking a real difference in fraud rate. If precision is much lower there, the model is worse at judging those ' +
-         'customers and they are paying for its uncertainty with declined cards. That second case is a defect whatever the ' +
-         'overall score says, and the fix is usually a human review path rather than a coefficient.'
+      a: 'The ratio alone cannot tell you, which is the reason to measure rather than argue. Compare precision inside each ' +
+         'group. If the flags from that country are right about as often as flags everywhere else, the model is tracking a ' +
+         'real difference in fraud. If precision is much lower there, the model is worse at judging those customers and they ' +
+         'are paying for its uncertainty with declined cards. That second case is a defect whatever the overall score says, ' +
+         'and the fix is usually a human review path rather than a tweak to one weight.'
     }},
 
-    { h: 'A word on this dataset' },
-    { p: 'These 6,000 rows are **synthetic and deliberately separable**: a logistic regression reaches an AUC near 0.999 on ' +
-         'them, which does not happen in reality. Real card fraud models live around 0.85 to 0.95 AUC against an adversary ' +
-         'who changes tactics the moment you catch them. Treat the workflow as real and the score as flattering.' },
+    { h: 'A word about this data' },
+    { p: 'These 6,000 rows are made up, and made **deliberately easy**: the fraud looks very different from the honest ' +
+         'payments, so a logistic regression separates them almost perfectly. Its **AUC**, a score from 0.5 (guessing) to 1.0 ' +
+         '(perfect) for how well a model ranks fraud above honest payments, comes out near 0.999. Real card fraud models ' +
+         'score around 0.85 to 0.95, against criminals who change tactics the moment they are caught. Treat the method as ' +
+         'real and the score as flattering.' },
     { check: {
       q: 'Your first run on real data comes back at 0.999 AUC and you feel good about it. Why is that number a reason to go ' +
          'and check your work?',
-      a: 'Because working fraud models sit around 0.85 to 0.95 against people who change tactics as soon as they are ' +
-         'caught, so 0.999 is saying something other than "this model is excellent". It is usually one of three things: the ' +
-         'data was generated with clean separations, which is the case here and is why this level says so out loud; a ' +
-         'feature leaked the answer, such as a column that only gets filled in once a case has been marked as fraud; or the ' +
-         'model was scored on rows it trained on. Read the coefficients and see which feature carries the result. If one of ' +
-         'them is doing nearly all the work, you have found your leak.'
+      a: 'Because working fraud models sit around 0.85 to 0.95 against people who change tactics as soon as they are caught, ' +
+         'so 0.999 is saying something other than "this model is excellent". It is usually one of three things: the data was ' +
+         'made with clean separations, which is the case here and is why this level says so; a feature leaked the answer, such ' +
+         'as a column that only gets filled in after a case is confirmed as fraud; or the model was scored on rows it trained ' +
+         'on. Read the weights and see which feature carries the result. If one of them does nearly all the work, you have ' +
+         'found your leak.'
     }}
   ],
 
