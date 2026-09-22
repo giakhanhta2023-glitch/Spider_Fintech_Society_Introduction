@@ -111,19 +111,30 @@ const NOTES = {
     ]
   },
   6: {
-    files: [['`loan_simulator.py`', 'payment, schedule, APR by bisection, comparisons, two charts']],
-    run: 'python loan_simulator.py',
+    files: [
+      ['`migrations/`', 'numbered, forward-only SQL: schema, trigger, indexes, cached balance'],
+      ['`ledgerdb/migrate.py`', 'applies any file not already recorded in schema_migrations'],
+      ['`ledgerdb/seed.py`', '2,000 accounts and 400,000 balanced entries, generated inside SQL'],
+      ['`ledgerdb/transfer.py`', 'one transfer, one database transaction, idempotent by unique index'],
+      ['`ledgerdb/bench.py`', 'EXPLAIN ANALYZE for the balance query, three ways'],
+      ['`scripts/reconcile.sql`', 'cached balance against the entries: should return no rows']
+    ],
+    run: 'export DATABASE_URL=... && python -m ledgerdb.migrate && python -m ledgerdb.seed && python -m ledgerdb.bench && pytest -q',
     design: [
-      'Interest is charged on the **current** balance every month. Using the original amount is the classic bug, and it shows up as a final balance that never reaches zero.',
-      'The final payment is capped at the remaining balance, so the schedule ends at exactly `0.00` instead of a few stray cents.',
-      'The loop is bounded and raises a readable error when the payment cannot cover the interest: otherwise the balance grows every month and the `while` never ends.',
-      '`true_apr` uses bisection because the rate has no closed-form solution. Eighty iterations is far more precision than money needs and costs nothing.',
-      'The invest-instead comparison deliberately refuses to give a one-word answer: overpaying returns a guaranteed rate, investing is uncertain and illiquid, and a tool that hides that is selling something.'
+      'Constraints carry the rules that must never be broken: the amount check, both foreign keys, and the unique idempotency key. They hold for every writer, including the ones that skip the application entirely, which is the whole reason to duplicate a check the API already does.',
+      'The balance rule is a deferred constraint trigger. Checked per row it would fail every transfer, because after the first entry the transaction is unbalanced on purpose. Checked at commit it refuses exactly the transactions that are wrong, and leaves nothing behind when it fires.',
+      'There is no balance column until the last migration, and when it arrives it comes with the query that checks it. Two numbers for one fact is a decision, not an accident, and the reconciliation job is the price of making it.',
+      'The benchmark prints plans rather than opinions. On the reference database the balance query ran at 30.917 ms with 3,334 buffers on a sequential scan, 0.375 ms with 206 buffers on a plain index, and 0.106 ms with 6 buffers on a covering index with Heap Fetches: 0.',
+      'Index sizes are reported next to the timings, because the cost side is half the answer: 26 MB of table, 2,872 kB for the account index, 13 MB for the covering one.',
+      'entries.transaction_id is indexed. Postgres indexes the primary key side of a foreign key and not the referencing side, and the balance trigger queries by transaction_id once per row: 41.697 ms without the index, 0.112 ms with it.',
+      'Migrations are numbered, forward-only and safe to run twice. The runner records what it applied, so a retried deploy is a no-op rather than an error.'
     ],
     mistakes: [
-      ['Balance never reaches zero', 'Interest computed on the original principal, or no cap on the final payment.'],
-      ['Payment about 12× too big', 'You passed the annual rate as `i`, or years as `n`. Both must be per period.'],
-      ['Crossover month looks wrong', 'It is the first month `principal > interest`, not the month the balance halves.']
+      ['Every transfer fails the balance check', 'The trigger is not deferred. After the first entry the transaction is unbalanced on purpose.'],
+      ['Inserts get slower as the table grows', 'Something runs per row against an unindexed column. Index the referencing side of the foreign key.'],
+      ['EXPLAIN still says Seq Scan', 'Run analyze after creating the index, or the table is small enough that scanning really is cheaper.'],
+      ['The second migration run fails', 'The runner is applying files it already applied. Record them, and use if not exists.'],
+      ['Balances disagree with the entries', 'Something wrote an entry outside the trigger path, or a backfill ran while writes continued. The reconciliation query tells you which account and by how much.']
     ]
   },
   7: {

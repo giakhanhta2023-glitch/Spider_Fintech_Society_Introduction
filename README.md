@@ -63,7 +63,7 @@ model backed tutor.
 | 3 | Reading the money | Personal spending analyzer | pandas, matplotlib |
 | 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |
 | 5 | The money library everything else imports | An exact Money library, tested and packaged | Decimal, Hypothesis, mypy, CI |
-| 6 | Credit, loans and amortization | Loan and early payoff simulator | bisection, scenario modelling |
+| 6 | The ledger in Postgres | A ledger schema, measured with EXPLAIN | SQL, constraints, indexes, migrations |
 | 7 | Risk and return | Portfolio risk dashboard | numpy, volatility, drawdown |
 | 8 | Fraud detection and decision thresholds | Fraud scoring engine | scikit-learn, precision and recall |
 | 9 | Shipping a fintech service | A loan advisor anyone can open | Streamlit, pytest, deployment |

@@ -1,4 +1,4 @@
-# Level 6: Credit, loans and amortization: quiz answer key
+# Level 6: The ledger in Postgres, and the query plan that proves it: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. In `payment = P * i / (1 - (1 + i) ** -n)`, what is i?
+### 1. Why does the schema have no `balance` column on `accounts` at first?
 
-- A. The inflation rate
-- B. The total interest paid
-- C. The annual interest rate
-- **D. The rate per payment period: annual rate divided by payments per year** ✅
+- A. Balances change too often to store
+- B. It would break the foreign key
+- C. Postgres cannot store a running total
+- **D. A balance is the sum of the entries, and a second copy is a second answer that can disagree** ✅
 
-**Why:** Every term in the formula is per period. Passing an annual rate with a monthly term count inflates the payment by roughly twelve times.
+**Why:** You add the copy later, deliberately, together with the job that checks it still matches the entries.
 
-### 2. How is the interest portion of a monthly payment calculated?
+### 2. What does `check (amount_minor <> 0)` buy you that validation in your API does not?
 
-- A. Original loan amount x periodic rate
-- B. Payment amount x periodic rate
-- **C. Current outstanding balance x periodic rate** ✅
-- D. Total interest divided by the number of payments
+- A. Better error messages for users
+- B. Faster inserts
+- **C. It holds for every writer, including scripts and services that never touch your API** ✅
+- D. It prevents duplicate entries
 
-**Why:** Interest accrues on what is still owed. Using the original amount is the classic bug: the balance then never reaches zero.
+**Why:** Checks in code catch mistakes early; checks in the database are the ones that are actually guarantees.
 
-### 3. On a $250,000 loan at 5.5% over 30 years, roughly what share of the first payment reduces the debt?
+### 3. Why must the balance trigger be `deferrable initially deferred`?
 
-- A. About 81%
-- B. All of it
-- C. About 50%
-- **D. About 19%** ✅
+- A. Because triggers cannot read other rows
+- B. To avoid locking the accounts table
+- C. Deferred triggers run faster
+- **D. Because after the first entry the transaction is deliberately unbalanced, so an immediate check would fail every transfer** ✅
 
-**Why:** Month 1 is $1,145.83 interest and $273.64 principal out of $1,419.47: 19.3%. The split crosses over around month 180.
+**Why:** Deferred means the check happens at commit, when every entry of the transaction is present.
 
-### 4. What does the crossover point of an amortization schedule mean?
+### 4. In a plan, "Rows Removed by Filter: 133267" tells you:
 
-- A. The month the loan is half repaid in time
-- B. The month the payment changes
-- **C. The month the principal portion first exceeds the interest portion** ✅
-- D. The month the balance goes negative
+- A. The query returned 133,267 rows
+- B. 133,267 rows were deleted
+- **C. The query read 133,267 rows it did not want, which usually means a missing index** ✅
+- D. The filter ran after sorting
 
-**Why:** It marks the shift from mostly paying for the money to mostly repaying it. On this 30-year mortgage it lands in month 210 (year 18) far later than most borrowers expect.
+**Why:** It is the clearest single sign of wasted work in an EXPLAIN plan.
 
-### 5. A lender charges a $400 fee on a $20,000 loan at 7% for 5 years. What happens to the APR?
+### 5. Buffers are a better measure of query cost than time because:
 
-- A. It stays at 7% because the rate did not change
-- **B. It rises to about 7.85% because the borrower receives only $19,600** ✅
-- C. It falls, since the fee is paid separately
-- D. It cannot be calculated
+- A. They are measured in milliseconds
+- **B. They count pages of data touched, which does not change with how busy the machine is** ✅
+- C. They ignore indexes
+- D. They include planning time
 
-**Why:** APR is the rate at which the payment stream equals the cash actually advanced. Fees raise the effective cost even when the quoted rate is unchanged.
+**Why:** Time varies with load and caching. Buffers are the work the query actually did.
 
-### 6. Why is bisection used to find a fee-inclusive APR?
+### 6. The balance query went from 30.917 ms to 0.375 ms after one index. What changed in the plan?
 
-- A. Because the formula is too slow to evaluate
-- **B. Because there is no closed-form solution, so the rate must be searched for numerically** ✅
-- C. Because APR is always an approximation by law
-- D. Because Python cannot compute exponents
+- A. It started using parallel workers
+- **B. A Seq Scan became a Bitmap Index Scan, and the filtered-out rows disappeared** ✅
+- C. Postgres rewrote the SQL
+- D. The table moved into memory
 
-**Why:** The rate appears inside a polynomial with no algebraic solution. Bisection brackets the answer and halves the interval until it is precise enough.
+**Why:** It stopped reading rows it did not want: 3,334 buffers became 206 for the same answer.
 
-### 7. An extra $200 a month on a 30-year $250,000 mortgage at 5.5% saves about:
+### 7. What does `Heap Fetches: 0` on an Index Only Scan mean?
 
-- A. $54,000 and 22 months
-- B. $7,500 and 9 months
-- **C. about $75,616 and 91 months** ✅
-- D. $200,000 and 15 years
+- A. The table has no primary key
+- B. The index is empty
+- **C. The query was answered entirely from the index, without touching the table** ✅
+- D. No rows matched
 
-**Why:** Each extra dollar of principal removes all the future interest that dollar would have generated, so $53,800 of overpayments removes about $75,616 of interest and 7.5 years.
+**Why:** That is what an INCLUDE column buys: 6 buffers instead of 206 for the same sum.
 
-### 8. An extra payment on an amortizing loan is applied to:
+### 8. Which is a real cost of adding an index?
 
-- A. The final payment only
-- B. Interest first, then principal
-- **C. Principal only** ✅
-- D. Split in the same ratio as the regular payment
+- A. Foreign keys stop being enforced
+- B. Reads of other columns get slower
+- **C. Every insert must update it, and it takes disk and memory: the covering index here was 13 MB on a 26 MB table** ✅
+- D. The table can no longer be altered
 
-**Why:** The scheduled payment already covers the accrued interest, so anything extra reduces the balance directly, which is exactly why overpaying is so effective.
+**Why:** In a payments system the write path is the one that matters, so unused indexes are a real tax.
 
-### 9. Why is the last payment of a real loan usually a different amount?
+### 9. Postgres automatically creates an index for:
 
-- A. The borrower gets a discount
-- **B. Rounding to cents means identical payments do not land exactly on zero** ✅
-- C. Interest rates change at the end of a term
-- D. Lenders charge a closing fee
+- A. Nothing at all
+- **B. Primary keys and unique constraints only** ✅
+- C. Every column used in a WHERE clause
+- D. Every foreign key column
 
-**Why:** Each payment is rounded, so a tiny residue accumulates. The final payment is whatever is actually left, and your schedule should end at exactly zero.
+**Why:** The referencing side of a foreign key is left to you, which is where the fourteen minute insert came from.
 
-### 10. What does a DTI of 31.3% mean?
+### 10. A trigger runs an unindexed query costing 41.697 ms once per inserted row. Inserting 20,000 rows means:
 
-- **A. Monthly debt payments consume 31.3% of gross monthly income** ✅
-- B. The borrower has a 31.3% chance of default
-- C. 31.3% of the loan is repaid
-- D. The loan covers 31.3% of the asset value
+- **A. About 14 minutes of trigger work** ✅
+- B. The same as without the trigger
+- C. About 42 milliseconds in total
+- D. A cost that depends only on disk speed
 
-**Why:** DTI measures capacity to pay. Under roughly 36% is usually considered comfortable; above 43% is commonly treated as high risk.
+**Why:** Per-row work multiplies by the number of rows. This is how a system gets slower as it fills, with no error anywhere.
 
-### 11. A $200,000 loan against a $250,000 property has what LTV, and what does it imply?
+### 11. Your write path is fine at 5,000 rows and unusable at 5 million, with no code change. Look first at:
 
-- **A. 80%, moderate risk with a 20% equity cushion** ✅
-- B. 125%, the loan exceeds the value
-- C. 20%, very low risk
-- D. 80%, meaning the borrower owns 80% of the property
+- **A. Anything that runs per row: a trigger, a foreign key check, or a lookup inside a loop** ✅
+- B. Network latency
+- C. The connection pool size
+- D. The Postgres version
 
-**Why:** LTV = 200,000 / 250,000 = 80%. The 20% deposit is the lender's cushion if the property must be sold; higher LTV means higher risk and a higher rate.
+**Why:** Work proportional to table size is invisible in a test fixture and fatal in production.
 
-### 12. Expected loss on a loan portfolio is approximately:
+### 12. Why is a migration never edited once it has been applied?
 
-- A. Interest rate x loan amount
-- B. Total defaults divided by total loans
-- C. Loan amount minus collateral value
-- **D. Probability of default x loss given default x exposure** ✅
+- A. The file becomes read-only
+- B. Editing breaks a checksum Postgres stores
+- C. Migrations are compiled
+- **D. Other databases already applied the old version and will never see your edit** ✅
 
-**Why:** Three factors: how likely default is, how much is lost when it happens, and how much is outstanding. The rate charged must cover this plus funding, operations, and profit.
+**Why:** Forward-only, numbered files. If something is wrong, the fix is another migration.
 
-### 13. Why must credit models avoid variables that proxy for protected characteristics?
+### 13. `create index concurrently` exists because:
 
-- **A. Because lending decisions based on them can be illegal discrimination, whatever the intent** ✅
-- B. They reduce model accuracy
-- C. Because regulators ban all demographic data
-- D. Because such data is always missing
+- **A. The plain form locks out writers, which on a payments table stops every payment while it runs** ✅
+- B. It builds the index faster
+- C. It builds several indexes at once
+- D. It is required for unique indexes
 
-**Why:** Fair-lending law looks at outcomes, not intentions. A postcode variable can encode race; "the model said so" is not a defence, which is why explainability is mandatory in credit.
+**Why:** It takes longer and lets traffic continue, which is the trade you want on a live system.
 
-### 14. Your schedule loop ends with a balance of -$0.17. What is wrong?
+### 14. Setting `lock_timeout` on a migration means:
 
-- A. The interest rate is too high
-- **B. The final payment was not capped at the remaining balance** ✅
-- C. Nothing, negative balances are normal
-- D. The loop ran too few times
+- A. The migration runs faster
+- **B. A blocked migration fails in seconds instead of queueing the whole system behind it** ✅
+- C. The migration cannot be rolled back
+- D. Other queries wait longer
 
-**Why:** When the principal portion exceeds what is left, cap it at the remaining balance so the final payment is smaller and the loan ends at exactly zero.
+**Why:** The outage is rarely the migration itself. It is everything else waiting on the lock it took.
 
-### 15. Why include a `month < 1200` bound in the schedule loop?
+### 15. After adding a cached `balance_minor` column, what keeps it honest?
 
-- **A. As a safety bound: a payment too small to cover the interest would otherwise loop forever** ✅
-- B. Because loans cannot exceed 100 years by law
-- C. To stop the DataFrame growing too large
-- D. To make the function faster
+- **A. A daily query comparing it against the sum of entries, which should return no rows** ✅
+- B. The primary key index
+- C. The foreign key
+- D. Nothing: the trigger makes drift impossible
 
-**Why:** If the payment is less than the accrued interest the balance grows every month and the while condition never becomes false. A bound turns an infinite hang into a visible bug.
+**Why:** The trigger removes most ways to drift, not all. A check nobody looks at is not a check.
