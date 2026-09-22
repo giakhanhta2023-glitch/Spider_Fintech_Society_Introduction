@@ -1,4 +1,4 @@
-# Level 8: Fraud detection and decision thresholds: quiz answer key
+# Level 8: Eight requests, one balance, minus $540: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Fraud is 1.8% of transactions. A model that flags nothing achieves what accuracy?
+### 1. Eight workers each read a balance of $100.00 and each spend $80.00. The account ends at minus $540.00. What is the name for this?
 
-- A. 50%
-- B. 1.8%
-- **C. 98.2%** ✅
-- D. It cannot be calculated
+- A. A dirty read
+- B. A deadlock
+- **C. A lost update caused by a race between the read and the write** ✅
+- D. A rollback failure
 
-**Why:** It is right on every legitimate transaction. That is why accuracy is meaningless under imbalance: it measures the base rate, not the model.
+**Why:** Every worker was right when it looked. Nothing forced any of them to notice the world changing in between.
 
-### 2. What does precision measure?
+### 2. Wrapping the read and the write in one transaction does not fix it because:
 
-- A. How consistent the model is between runs
-- B. The overall proportion of correct predictions
-- C. The share of fraud that was caught
-- **D. How often a flagged transaction really is fraud** ✅
+- A. The entries table has no primary key
+- B. Postgres ignores transactions under load
+- C. The transaction was too short
+- **D. Transactions are only about atomicity and visibility, not exclusivity** ✅
 
-**Why:** Precision is TP / (TP + FP): the quality of your flags. Recall is the other question: what share of all fraud you caught.
+**Why:** It guarantees both entries land together. It does not stop seven other transactions reading the same balance.
 
-### 3. At threshold 3 the rule engine catches 106 of 108 frauds but raises 1,454 false alarms. What is wrong with shipping it?
+### 3. Under `read committed`, what exactly is guaranteed?
 
-- **A. Precision is 6.8%: over 93% of flagged customers are innocent and would be blocked** ✅
-- B. Recall is too low
-- C. Nothing, catching fraud is the goal
-- D. The model is overfitting
+- **A. Each statement sees a consistent snapshot of committed data** ✅
+- B. No other transaction can write while yours is open
+- C. Your transaction sees one snapshot for its whole life
+- D. Transactions behave as if run one at a time
 
-**Why:** A false decline is a real customer whose card fails in public. Issuers consistently find false declines cost more in lost business than the fraud they prevent.
+**Why:** Per statement, not per transaction, which is exactly the gap a read-then-write decision falls into.
 
-### 4. Which pair of numbers describes the fundamental trade-off in a detector?
+### 4. `select ... for update` fixes the race by:
 
-- A. Base rate and sample size
-- B. Accuracy and AUC
-- **C. Precision and recall** ✅
-- D. Training time and model size
+- A. Copying the row into a temporary table
+- B. Detecting the conflict at commit and aborting one transaction
+- **C. Locking the rows so other transactions wait until you commit** ✅
+- D. Making the query faster
 
-**Why:** Raising the threshold improves precision and lowers recall; lowering it does the reverse. No threshold is good at both, so the choice is a business decision.
+**Why:** Pessimistic: assume a conflict and prevent it. Measured, it took the run from 367 ms to 691 ms and from wrong to right.
 
-### 5. The F1-optimal threshold here is 7, but the cheapest threshold is 4. Why do they disagree?
+### 5. The measured cost of the row lock in this level was:
 
-- A. The cost model ignores recall
-- B. A bug in the cost calculation
-- **C. F1 treats false positives and false negatives as equally costly, and this business does not** ✅
-- D. F1 is only valid for balanced data
+- A. A negative balance on one account
+- B. A retry for every caller
+- **C. Spending from that account became serialised: 691 ms against 367 ms** ✅
+- D. A deadlock in one run of eight
 
-**Why:** F1 is symmetric by construction. Once a missed fraud costs the transaction amount and a review costs $4, the optimum moves. The cost assumptions are the real model.
+**Why:** Correctness had a price, and knowing the price is the part an interviewer is listening for.
 
-### 6. Which feature is typically the strongest signal in card fraud?
+### 6. Serializable isolation requires what from every caller?
 
-- A. The card issuer
-- **B. Transaction velocity: how many transactions occurred in the last hour** ✅
-- C. The merchant name
-- D. The day of the week
+- A. A second connection
+- **B. A retry loop, because a conflicting transaction is aborted rather than delayed** ✅
+- C. A longer timeout
+- D. A row lock as well
 
-**Why:** Stolen cards get tested and drained quickly: a small probe, then rapid larger purchases. Velocity requires keeping state, which is why weaker implementations omit it.
+**Why:** And a retry is only safe if the operation is idempotent, which is why level 7 required an idempotency key.
 
-### 7. What does `class_weight="balanced"` do in scikit-learn?
+### 7. When is a row lock the better choice than serializable?
 
-- A. Balances precision and recall automatically
-- **B. Weights the rare class up so the model cannot minimise error by ignoring it** ✅
-- C. Normalises the feature scales
-- D. Splits the data evenly into train and test
+- A. When you cannot change the schema
+- **B. When conflicts are common, such as a hot account, and you do not want callers to see retries** ✅
+- C. When the table has no index
+- D. When conflicts are rare
 
-**Why:** With a 1.8% positive rate, predicting "legit" always is nearly optimal for plain error. Class weighting removes that shortcut.
+**Why:** Serializable is cheaper when clashes are rare and turns into retry storms when they are not.
 
-### 8. Why use `stratify=y` in train_test_split?
+### 8. A check constraint such as `balance_minor >= 0` is stronger than an application check because:
 
-- **A. To keep the same fraud rate in both halves so the test set is meaningful** ✅
-- B. To shuffle the rows
-- C. To remove duplicates
-- D. To sort by target
+- **A. It is enforced for every writer, including code that forgets to check, and two transactions cannot update one row at once** ✅
+- B. It runs faster
+- C. It removes the need for transactions
+- D. It prevents deadlocks
 
-**Why:** Without stratification a random split can leave very few frauds in the test set, making every metric computed on it pure noise.
+**Why:** The trade is that you now maintain a balance column, so the reconciliation job stops being optional.
 
-### 9. What is data leakage?
+### 9. You set the isolation level on the session and `show transaction_isolation` reports `read committed` anyway. Why?
 
-- A. Missing values in the training set
-- B. Losing rows when merging tables
-- C. A security breach of customer data
-- **D. Letting test information influence training or tuning, producing performance that will not hold up** ✅
+- A. The setting takes effect only after a reconnect
+- B. Postgres ignores that setting
+- C. The isolation level can only be set by a superuser
+- **D. A transaction mode connection pooler discarded your session setting** ✅
 
-**Why:** Tuning a threshold on data the model trained on reports fiction. Fit scalers on train only, and keep the test set untouched until the end.
+**Why:** Set it per transaction instead. Nothing raises an error, which is why this one reaches production.
 
-### 10. `confusion_matrix(y_true, y_pred).ravel()` returns four numbers. In what order?
+### 10. Which of these also stops working quietly behind a transaction mode pooler?
 
-- **A. tn, fp, fn, tp** ✅
-- B. fp, fn, tp, tn
-- C. tp, tn, fp, fn
-- D. tp, fp, fn, tn
+- **A. Session advisory locks, LISTEN and NOTIFY, temporary tables and session SET** ✅
+- B. Write ahead logging
+- C. Primary key indexes
+- D. Foreign key constraints
 
-**Why:** tn, fp, fn, tp: reading across the rows of the matrix. Assuming the wrong order silently inverts precision and recall.
+**Why:** Anything that assumes you keep the same real connection between transactions.
 
-### 11. Why is logistic regression the default first model in regulated financial services?
+### 11. Measured: no pool 31.4 req/s, a pool of 8 with 8 workers 127.1 req/s, a pool of 2 with 8 workers 30.8 req/s. What does the third number teach?
 
-- A. It is the most accurate model available
-- B. It handles imbalance automatically
-- C. It needs no training data
-- **D. Its coefficients are explainable, which regulators and customers both require** ✅
+- A. Pools only help with more than 8 workers
+- B. Pools should always be as large as possible
+- C. The database was overloaded
+- **D. A pool that is too small is as slow as no pool, and the waiting never appears in your query timings** ✅
 
-**Why:** Explainability is a legal requirement in credit and a practical one in fraud. A model you cannot explain is one you cannot defend when a customer disputes a decline.
+**Why:** The pool is a queue. Requests wait for a connection while the database reports that every query it ran was fast.
 
-### 12. Why standardise features before reading logistic regression coefficients?
+### 12. How should you size a connection pool?
 
-- A. To make training faster
-- **B. Because unscaled features give coefficients on wildly different scales that cannot be compared** ✅
-- C. Because sklearn requires it
-- D. To remove outliers
+- A. As large as the database will allow
+- **B. From measured hold time and required throughput, with headroom, capped well below the database total across all instances** ✅
+- C. One connection per expected user
+- D. Twice the number of CPU cores, always
 
-**Why:** With amount in the hundreds and is_night as 0/1, the amount coefficient looks tiny regardless of its importance. Standardising makes the magnitudes comparable.
+**Why:** Every instance has its own pool and they all add up. Past a point, more connections make the database slower.
 
-### 13. A fraud model declines a far higher share of transactions from one nationality. What is the correct response?
+### 13. Why put a timeout on acquiring a connection from the pool?
 
-- A. Remove all country data and ship
-- **B. Investigate and fix it: disparate outcomes are a legal and ethical problem, and the data explanation is not a defence** ✅
-- C. Raise the threshold for everyone
-- D. Ship it: the model learned it from the data
+- A. To force connections to be recycled
+- **B. Because otherwise an exhausted pool becomes an unbounded queue and the service stops answering anybody** ✅
+- C. Because the database requires it
+- D. To detect network failures
 
-**Why:** Fair-lending and consumer-protection law looks at outcomes. Check flag rates across groups before shipping, keep a human review route, and document the decision.
+**Why:** Fail fast with 503 for the requests you cannot serve, rather than slowly for everybody.
 
-### 14. What does an AUC of 0.999 on this dataset tell you?
+### 14. Which of these should never be retried?
 
-- **A. The data is synthetic and unusually separable. Real fraud models sit far lower** ✅
-- B. AUC is being computed incorrectly
-- C. The model is production-ready
-- D. The model has memorised the test set
+- **A. A 422 insufficient funds** ✅
+- B. A 503
+- C. A serialization failure
+- D. A deadlock
 
-**Why:** Real card fraud models run around 0.85-0.95 against adversaries who adapt. Treat the workflow as realistic and the score as flattering, and say so in your report.
+**Why:** Retry only what can succeed next time, and only what is safe to repeat, which means an idempotency key.
 
-### 15. What is the most useful output of a fraud system for an operations team?
+### 15. Why does the test rig open every connection before the barrier?
 
-- A. A binary label on every transaction
-- B. The model coefficients
-- **C. A ranked review queue with the amount at stake and the reasons for each flag** ✅
-- D. A single overall accuracy figure
+- A. To share one connection between threads
+- B. Because psycopg requires it
+- **C. Because otherwise the workers are staggered by their handshakes and the first commits before the last connects** ✅
+- D. To reduce database load
 
-**Why:** Humans work queues, not labels. Rank by risk, show the money involved, and attach the reasons so the reviewer can act in seconds rather than investigate from scratch.
+**Why:** It is the difference between a test that fails every time and one that fails occasionally, which is no test at all.

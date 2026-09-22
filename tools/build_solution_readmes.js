@@ -165,20 +165,28 @@ const NOTES = {
     ]
   },
   8: {
-    files: [['`fraud_engine.py`', 'features, rule engine, cost curve, model, queue, fairness check']],
-    run: 'python fraud_engine.py',
+    files: [
+      ['`bench/race.py`', 'the workers, the barrier, and the three modes'],
+      ['`bench/pool.py`', 'the same workload with no pool, a right sized pool and a small one'],
+      ['`migrations/0005_balance_constraint.sql`', 'the check that makes an overdraft impossible'],
+      ['`tests/test_concurrency.py`', 'the reproduction, as a test that fails without the fix']
+    ],
+    run: 'python -m bench.race naive && python -m bench.race for_update && python -m bench.race serializable && python -m bench.pool',
     design: [
-      'The do-nothing baseline (98.20% accuracy, zero fraud caught) prints **before** any model. Every later number is judged against it.',
-      'Rules are a list of `(name, test, points)`. Adding one is a single line and the whole rulebook prints for an auditor.',
-      '`score_row` returns the score **and** the reasons. A flag nobody can explain is a flag nobody can defend to a declined customer.',
-      'The cost curve is the part that decides what ships. F1 picks threshold 7; at a $4 review cost the cheapest is 4, and at $20 it moves again. The cost assumptions *are* the model, which is why they are printed.',
-      'The split is stratified and the scaler is fitted on training data only. Tuning a threshold on data the model trained on reports fiction.',
-      'The fairness check is run, not mentioned. The foreign flag rate is far above the home rate, and the write-up says what would have to happen before that went near production.'
+      'Connections are opened before the barrier. Staggered handshakes are the reason a race test passes by accident, and this one has to fail every time or it proves nothing.',
+      'The naive mode is kept in the repository on purpose. A fix nobody has seen fail is a claim, and the point of this project is evidence.',
+      'Three fixes, three different costs. The row lock is correct with no retries and makes spending from one account single file: measured at 691 ms against 367 ms for the broken version. Serializable is faster here at 368 ms and moves the cost to every caller, who must retry, which is only safe because level 7 made writes idempotent.',
+      'The constraint is the one that survives a new code path. A lock protects the code that takes it; a check on the balance column protects the account from code that has not been written yet.',
+      'The isolation level is set per transaction, never as a session SET. Behind a transaction mode pooler a session setting is silently discarded, which was measured while writing this level: show transaction_isolation reported read committed immediately after setting serializable.',
+      'The pool table is the argument for measuring rather than assuming: 31.4 requests a second with no pool, 127.1 with a pool of 8, and 30.8 with a pool of 2. A pool that is too small is a queue, and the wait does not appear in any query timing.',
+      'Waiting for a connection is recorded as its own metric, separately from query time. That single number is how you tell a slow database from a starved pool.'
     ],
     mistakes: [
-      ['"My model is 98% accurate"', 'So is flagging nothing. Report precision and recall.'],
-      ['Precision and recall look swapped', '`confusion_matrix(...).ravel()` returns `tn, fp, fn, tp`: in that order.'],
-      ['`amount` coefficient is ~0', 'Unscaled features. Standardise before comparing coefficient magnitudes.']
+      ['The naive run does not overdraw', 'The workers are not concurrent. Open every connection before the barrier and check the barrier count matches the worker count.'],
+      ['Serializable makes no difference', 'A pooler discarded the session setting. Set the isolation level per transaction and print show transaction_isolation to prove it applied.'],
+      ['Everything deadlocks once two accounts are locked', 'Lock ids in a consistent order, lowest first, so a cycle cannot form.'],
+      ['Throughput does not improve with a pool', 'The pool is smaller than the concurrency, so requests queue for a connection instead of using the database.'],
+      ['The service hangs under load instead of failing', 'No acquire timeout on the pool. An exhausted pool should return 503 with Retry-After, not an unbounded queue.']
     ]
   },
   9: {

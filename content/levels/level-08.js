@@ -1,591 +1,589 @@
 /* =========================================================================
-   Level 8: fraud detection
+   LEVEL 8: concurrency, and the bug that only happens under load
    ========================================================================= */
 FQ.registerLevel({
   id: 8,
-  codename: 'fraud desk',
-  title: 'Fraud detection and decision thresholds',
-  tagline: 'Catching 98% of fraud is the easy part. Doing it without blocking 1,454 honest customers is the real job.',
+  codename: 'race',
+  title: 'Eight requests, one balance, minus $540',
+  tagline: 'Your API is correct when you test it by hand and wrong when eight people press pay at once. This level reproduces that on a real database, then fixes it three ways and measures each one.',
   difficulty: 8,
-  minutes: 180,
-  tags: ['features', 'precision/recall', 'thresholds', 'ML'],
-  summary: 'Fraud is 1.8% of this dataset, so a model that never flags anything is 98.2% accurate and completely useless. ' +
-           'This level builds a scoring engine, measures it honestly, and tunes the threshold against money rather than a metric.',
+  minutes: 420,
+  tags: ['concurrency', 'locking', 'isolation', 'connection pools'],
+  summary: 'The single most asked question in a payments backend interview is what happens when two requests touch one ' +
+           'account at the same moment. This level answers it with a test rig you write: eight workers, one account holding ' +
+           '$100, each spending $80. The naive version ends at minus $540. Then you fix it with a row lock, with ' +
+           'serializable isolation, and with a constraint, and measure the cost of each. Every number here came out of a ' +
+           'real run.',
 
   objectives: [
-    'Engineer fraud features: velocity, card-not-present, geography, time of day',
-    'Explain why accuracy is the wrong metric under class imbalance',
-    'Read a confusion matrix and compute precision, recall, and F1',
-    'Tune a decision threshold against a business cost, not a leaderboard score',
-    'Train and evaluate a logistic regression without leaking test data',
-    'Justify when a transparent rule engine beats a more accurate model'
+    'Reproduce a lost update deliberately, with a test rig that fails every time',
+    'Explain isolation levels and what read committed does not promise',
+    'Fix a race with a row lock and say what it costs',
+    'Fix the same race with serializable isolation and a retry loop',
+    'Push the rule into the database so no application can get it wrong',
+    'Find the setting a connection pooler silently threw away',
+    'Size a connection pool, and recognise a pool that has become the bottleneck',
+    'Write tests for concurrency that fail reliably rather than sometimes'
   ],
 
   knowledge: [
-    { h: 'The shape of the problem' },
-    { p: 'This level\'s data is 6,000 card payments from June and July 2025, made by customers of a Vietnamese card issuer.' +
-         'Each row has already been labelled: somebody later confirmed whether it was fraud. **108 of them were: 1.8%.**' },
-    { p: 'That small number changes how you have to judge a fraud detector. Try the laziest detector possible, one that ' +
-         'says "not fraud" for every single payment:' },
-    { code: 'says "not fraud" every time  ->  right 5,892 times out of 6,000  =  98.2% accurate\n                                  fraud caught:  0 of 108', lang: 'text', label: 'why accuracy is a trap' },
-    { p: '**Accuracy** is the share of predictions that were right, and here it rewards doing nothing. When one outcome is ' +
-         'rare, a model can be right almost all the time by always guessing the common one. This situation, one class far ' +
-         'rarer than the other, is called **class imbalance**, and fraud is the textbook case.' },
-    { warn: 'Whenever someone shows you a fraud model with 99% accuracy, first ask how common fraud is in their data. If ' +
-            'it is 1%, their number means nothing.' },
+    { h: 'The bug, first' },
+    { p: 'Here is the experiment. One account holds **$100.00**. Eight workers each try to spend **$80.00**, all at the same ' +
+         'instant. Each one does exactly what your level 7 API does: read the balance, check it is enough, write the two ' +
+         'entries.' },
+    { code: 'select coalesce(sum(amount_minor), 0) from entries where account_id = 7;   -- 10000\n-- 8000 <= 10000, fine\ninsert into transactions ...\ninsert into entries ... -8000 ...\ncommit;', lang: 'sql', label: 'what each worker runs' },
+    { p: 'Run against a real Postgres, with all eight connections opened in advance so they truly start together:' },
+    { code: '--- naive ---\n  succeeded 8 of 8   final balance -54000   367 ms\n     8 x spent (saw 10000, attempts 1)', lang: 'text', label: 'measured' },
+    { p: 'Every worker read $100.00. Every worker decided $80.00 was affordable. Every worker was right at the moment it ' +
+         'looked. The account ends at **minus $540.00**, and not one line of that code is wrong when you read it.' },
+    { p: 'This is a **race condition**: the outcome depends on the timing of things happening at once. This particular one ' +
+         'is a **lost update**, and the gap it lives in has a name worth remembering. Between your read and your write, the ' +
+         'world changed, and nothing forced you to notice.' },
+    { money: 'Every payments interview asks some version of this. Most candidates describe the problem. Very few have ' +
+             'reproduced it, and almost none can tell you what each fix costs, which is the part the job actually needs.' },
+
+    { h: 'What read committed actually promises' },
+    { p: 'Postgres did not fail here. It did exactly what its default **isolation level**, `read committed`, promises. ' +
+         'Isolation level is the setting for how much transactions running at the same time are allowed to affect each ' +
+         'other, and the promises get stronger as you go down this table:' },
+    { table: {
+      head: ['Level', 'What it promises', 'What it still allows'],
+      rows: [
+        ['`read uncommitted`', 'In Postgres, the same as read committed', 'Everything below'],
+        ['**`read committed`** (default)', 'Each statement sees a consistent snapshot of committed data', 'The world changing between two of your statements'],
+        ['`repeatable read`', 'Every statement in the transaction sees the same snapshot', 'Two transactions writing different rows on a shared rule'],
+        ['`serializable`', 'The result is as if transactions ran one after another', 'Nothing, and some transactions are aborted to keep that promise']
+      ]
+    }},
+    { p: 'Read that second row again, because it is the whole bug. `read committed` gives each **statement** a consistent ' +
+         'view. It says nothing about a decision you made in Python between two statements. Your `if balance >= amount` was ' +
+         'true when you asked, and stale by the time you wrote.' },
     { check: {
-      q: 'A vendor demos a fraud model on your data, reports 98.2% accuracy, and asks for a decision. What do you ask, and ' +
-         'what answer ends the meeting?',
-      a: 'Ask how common fraud is in the data, and ask for the confusion matrix (the four-box table later in this level). ' +
-         'Fraud is 108 of these 6,000 rows, so saying "not fraud" for everything scores exactly 98.2% without reading a single ' +
-         'column: their headline number is simply how rare fraud is. The meeting ends if the table shows few or no frauds ' +
-         'actually caught. Recall says what share of the 108 they caught, precision says how many honest customers that cost, ' +
-         'and neither can be faked by doing nothing.'
+      q: 'A colleague says the fix is to put the read and the write inside one database transaction. The eight workers ' +
+         'already did exactly that. Why did it not help?',
+      a: 'Because a transaction is about atomicity and visibility, not about exclusivity. Wrapping the pair in `begin` and ' +
+         '`commit` guarantees that both entries land together and that nobody sees half of it. It does not stop seven other ' +
+         'transactions reading the same balance at the same moment and reaching the same conclusion. To stop that, something ' +
+         'has to either make the others wait, or detect the conflict and refuse one. Those are the next two sections.'
     }},
 
-    { h: 'Features: turning a payment into clues' },
-    { p: 'A raw payment row says little on its own. A **feature** is a column you calculate because it helps tell fraud ' +
-         'apart from normal spending. Working them out is called **feature engineering**, and it is most of the job.' },
-    { p: 'Compare the two groups in this data, the honest payments and the fraudulent ones:' },
+    { h: 'Fix one: make them queue, with a row lock' },
+    { p: '`select ... for update` locks the rows it returns until your transaction ends. Any other transaction asking for ' +
+         'the same rows waits. It is called **pessimistic** locking: assume a conflict and prevent it.' },
+    { code: 'begin;\nselect id from accounts where id = %s for update;      -- other workers stop here and wait\nselect coalesce(sum(amount_minor), 0) from entries where account_id = %s;\n-- now the balance cannot change under you\ninsert into entries ...\ncommit;                                                -- the lock is released here', lang: 'sql' },
+    { p: 'The same eight workers, with that one extra line:' },
+    { code: '--- for_update ---\n  succeeded 1 of 8   final balance 2000   691 ms\n     1 x spent (saw 10000, attempts 1)\n     7 x refused (saw 2000)', lang: 'text', label: 'measured' },
+    { p: 'One worker spent, the other seven arrived after the lock was released, saw the real balance of $20.00, and refused ' +
+         'themselves. The account ends correct. Notice the cost in the last number: **691 ms** against 367 ms for the broken ' +
+         'version, because spending from this account now happens one at a time.' },
     { table: {
-      head: ['Feature', 'Honest payments', 'Fraud', 'How useful'],
+      head: ['What a row lock gives you', 'What it costs'],
       rows: [
-        ['Average amount', '$31.85', '$167.25', 'Strong'],
-        ['Card physically present (tapped or inserted)', '61.1%', '3.7%', '**Very strong**'],
-        ['Paid from another country', '6.0%', '69.4%', '**Very strong**'],
-        ['Between midnight and 6am', '5.5%', '33.3%', 'Strong'],
-        ['Payments on the same card in the last hour', '0.55 on average', '3.66 on average', '**Very strong**'],
-        ['Travel, electronics or gaming', '38%', '76%', 'Moderate']
+        ['Correct without retries: the caller never sees a conflict error', 'Requests against one account are serialised'],
+        ['Simple to reason about', 'A busy account, such as a platform fee account, becomes a queue'],
+        ['Works at any isolation level', 'Hold it too long and everything behind it waits'],
+        ['', 'Two transactions locking rows in different orders can deadlock']
       ]
     }},
-    { p: 'Read the second row carefully. **Card present** means the card itself was at the till. When it is **not present**, ' +
-         'the card details were typed in, online or over the phone, which is exactly what a thief with stolen card numbers ' +
-         'does. Only 3.7% of the frauds had the real card.' },
-    { p: 'None of these clues is proof on its own. Plenty of honest people buy electronics abroad at 2am. That is why a single ' +
-         'rule makes a bad detector and a **combination** of weak clues makes a good one.' },
+    { p: 'That last row is worth a rule. If a transfer locks both accounts, **always lock them in the same order**, for ' +
+         'example by account id, lowest first. If one transaction locks A then B while another locks B then A, each ends up ' +
+         'holding what the other needs. Postgres notices the cycle after a moment and kills one of them with SQLSTATE ' +
+         '`40P01`, "deadlock detected", so it does not hang forever, but one caller got an error that lock ordering would ' +
+         'have avoided.' },
+    { warn: 'Lock the smallest thing for the shortest time. Never hold a database lock while calling another service: your ' +
+            'lock is now held for as long as somebody else\'s network takes, and their bad day becomes your outage.' },
+
+    { h: 'Fix two: let them run, and refuse the loser' },
+    { p: 'The other approach is **optimistic**: assume conflicts are rare, let everybody run, and have the database detect ' +
+         'the clash at the end. That is what `serializable` does. Postgres tracks what each transaction read and wrote, and ' +
+         'if the result could not have happened in any order, it aborts one with a serialization failure.' },
+    { code: 'conn.isolation_level = psycopg.IsolationLevel.SERIALIZABLE\n\nwhile True:\n    try:\n        do_the_transfer(conn)          # read, check, write, commit\n        break\n    except errors.SerializationFailure:\n        conn.rollback()                # somebody else won: try again\n        time.sleep(backoff())', lang: 'python' },
+    { code: '--- serializable ---\n  succeeded 1 of 8   final balance 2000   368 ms\n     1 x spent (saw 10000, attempts 1)\n     7 x refused (saw 2000)', lang: 'text', label: 'measured' },
+    { p: 'Correct again, and faster than the lock here: 368 ms against 691 ms, because nobody waited in a queue. The price ' +
+         'is moved rather than removed. Every caller now has to be written to retry, and a retry is only safe if the ' +
+         'operation is idempotent, which is exactly why level 7 put an idempotency key on every write.' },
+    { table: {
+      head: ['', 'Row lock', 'Serializable'],
+      rows: [
+        ['Conflicts are', 'Prevented by waiting', 'Detected and one is aborted'],
+        ['The caller must', 'Nothing special', 'Retry on serialization failure'],
+        ['Best when', 'Conflicts are common: a hot account', 'Conflicts are rare'],
+        ['Worst when', 'One account is busy: everything queues', 'Conflicts are common: retry storms'],
+        ['Measured here', '691 ms, 1 of 8 succeeded', '368 ms, 1 of 8 succeeded']
+      ]
+    }},
     { check: {
-      q: 'Card present is 61.1% of honest payments and 3.7% of fraud, which makes card not present the strongest single clue ' +
-         'in the table. Why not simply decline every card not present payment?',
-      a: 'Because it flags 2,394 of the 6,000 rows. It does catch 104 of the 108 frauds, 96.3% of them, but 2,290 of the ' +
-         'flags are honest customers, so only 4.3% of the flags are right: twenty two false alarms for every fraud stopped. A ' +
-         'clue can separate the groups well and still be useless alone, because the group it picks out is the rare one. This ' +
-         'is the whole argument for scoring: card not present is worth a few points, not a decline.'
+      q: 'You switch to serializable isolation and your error rate jumps, with callers seeing failures they never saw ' +
+         'before. Is the database broken?',
+      a: 'No: it is telling you about conflicts that were previously silent and wrong. Under read committed those same ' +
+         'transactions committed and produced a state that could not have happened if they had run one at a time, which is ' +
+         'the overdraft you just fixed. What is missing is the other half of the pattern: serializable is only usable with a ' +
+         'retry loop, and the retry has to be safe to repeat, which means an idempotency key. If you cannot add retries to ' +
+         'the callers, use a row lock instead, where the waiting happens inside your service and nobody outside sees it.'
     }},
-    { money: '**Velocity**, how many payments a card made in the last hour, is the most valuable clue in real card fraud. A ' +
-             'stolen card gets used fast: a small purchase to check it works, then several large ones before the owner notices. ' +
-             'It also means your system has to remember recent activity per card, which is why beginner systems skip it.' },
 
-    { h: 'Scoring: adding up the clues' },
-    { p: 'The simplest detector gives each clue some points and adds them up. The higher the total, the more suspicious the ' +
-         'payment. This level\'s rule engine uses:' },
+    { h: 'Fix three: make the database refuse it' },
+    { p: 'Both fixes above still rely on your application checking the balance. The third approach puts the rule where no ' +
+         'application can get it wrong. Keep a balance column, as in level 6, and add a constraint:' },
+    { code: 'alter table accounts add constraint balance_never_negative\n  check (balance_minor >= 0 or allow_negative);', lang: 'sql' },
+    { p: 'Now the eight workers can race as much as they like. The updates to one row are serialised by Postgres anyway, ' +
+         'because two transactions cannot update the same row at the same time, and the ninth dollar that would take the ' +
+         'balance below zero fails the check. You still catch the error and return `422 insufficient_funds`, but the ' +
+         'guarantee no longer depends on anybody remembering to check.' },
+    { p: 'The trade is that you now maintain a balance column, which means the reconciliation job from level 6 stops being ' +
+         'optional. Most real ledgers do exactly this: a stored balance, a constraint on it, and a job that proves it still ' +
+         'equals the sum of the entries.' },
+
+    { h: 'The setting that was silently thrown away' },
+    { p: 'While measuring the serializable fix, it did not work. Eight workers, serializable isolation set, and the balance ' +
+         'still ended at minus $540. The reason is worth more than the fix.' },
+    { p: 'The code set the isolation level on the session, which is the obvious way to do it:' },
+    { code: "conn.execute(\"set transaction_isolation to 'serializable'\")\nconn.commit()\n\n# then, in the very next transaction:\nshow transaction_isolation;   -->   read committed", lang: 'text', label: 'measured: the setting did not survive' },
+    { p: 'The connection went through a **connection pooler**, a service that sits between your application and the ' +
+         'database and shares a small number of real database connections among many clients. In its usual mode, a pooler ' +
+         'hands you a real connection **for one transaction at a time** and gives it to somebody else afterwards. Anything ' +
+         'you set on "your" session is therefore either lost or, worse, inherited by a stranger, so poolers discard it.' },
+    { p: 'The fix is to ask for the isolation level **per transaction**, which sends it as part of `begin`:' },
+    { code: 'conn.isolation_level = psycopg.IsolationLevel.SERIALIZABLE\n\nshow transaction_isolation;   -->   serializable', lang: 'text', label: 'measured: this one sticks' },
+    { warn: 'Session level things that quietly stop working behind a transaction-mode pooler: `SET` of any kind, session ' +
+            'advisory locks, `LISTEN` and `NOTIFY`, temporary tables, and server side prepared statements. None of them ' +
+            'raise an error. They simply do not do what you think, which is why this is a favourite interview question and ' +
+            'a common production incident.' },
+    { check: {
+      q: 'Your application sets `statement_timeout` once when it starts a connection, and you notice queries occasionally ' +
+         'running for minutes anyway. You are behind a pooler. What is happening, and what do you do?',
+      a: 'The setting was applied to whichever real connection the pooler happened to give you for that one transaction, and ' +
+         'discarded afterwards, so most of your queries run with the server default. Nothing errors, which is why it took a ' +
+         'production incident to notice. The fix is to stop treating it as session state: set the timeout per transaction, ' +
+         'or configure it on the database role with `alter role ... set statement_timeout`, which the pooler cannot throw ' +
+         'away because it is not session state at all. The general rule behind a pooler: if it feels like something you set ' +
+         'once and forget, check whether it survives.'
+    }},
+
+    { h: 'The pool is a queue' },
+    { p: 'Level 7 measured what opening a connection per request costs: 202.7 ms median against 62.3 ms on a connection ' +
+         'already open. A **connection pool** keeps a set of connections open and lends them out. Here is the same work, 24 ' +
+         'requests across 8 workers, measured three ways:' },
     { table: {
-      head: ['Clue', 'Points'],
+      head: ['Setup', 'p50', 'p95', 'Throughput'],
       rows: [
-        ['Amount over $150', '2'],
-        ['Card not present', '2'],
-        ['Paid from another country', '3'],
-        ['Between midnight and 6am', '2'],
-        ['3 or more payments on this card in the last hour', '2'],
-        ['Travel, electronics or gaming', '1']
+        ['No pool, connect every request', '228.8 ms', '296.0 ms', '31.4 requests/s'],
+        ['**Pool of 8, 8 workers**', '**59.8 ms**', '**61.8 ms**', '**127.1 requests/s**'],
+        ['Pool of 2, 8 workers', '251.1 ms', '272.7 ms', '30.8 requests/s']
       ]
     }},
-    { p: 'Two real rows from the file, scored by hand:' },
-    { table: {
-      head: ['Payment', 'Details', 'Clues it hits', 'Score', 'Actually'],
-      rows: [
-        ['T104008', '$185.14 of electronics, card not present, Brazil, 21:20, 4 payments in the last hour', 'amount 2, not present 2, abroad 3, velocity 2, category 1', '**10**', 'fraud'],
-        ['T101212', '$50.53 of gaming, card present, Vietnam, 00:34', 'overnight 2, category 1', '**3**', 'honest']
-      ]
-    }},
-    { p: 'Then you pick a **threshold**, the score at which you act. Set it at 3 and the late night gamer is declined. Set it ' +
-         'at 4 and they go through. Every choice of threshold is a trade, and the rest of this level is about making that ' +
-         'trade on purpose.' },
-
-    { h: 'The confusion matrix: four ways to be right or wrong' },
-    { p: 'Every flagged or unflagged payment lands in one of four boxes, depending on what you predicted and what was true. ' +
-         'This table is called the **confusion matrix**:' },
-    { code: '                          you said\n                    not fraud     fraud\ntruly honest          TN           FP       <- an honest customer declined\ntruly fraud           FN           TP       <- money gone', lang: 'text' },
-    { ul: [
-      '**TP, true positive**: you flagged it and it was fraud. A catch.',
-      '**FP, false positive**: you flagged it and it was honest. A false alarm.',
-      '**FN, false negative**: you let it through and it was fraud. A miss.',
-      '**TN, true negative**: you let it through and it was honest. Nothing happened, correctly.'
+    { p: 'Four times the throughput from the middle row, for no change to the query. And then read the third row, which is ' +
+         'the one worth remembering: **a pool that is too small is as slow as no pool at all.** Six of the eight workers ' +
+         'spend their time waiting for a connection rather than for the database, and the waiting does not show up in your ' +
+         'query timings at all.' },
+    { p: 'How big should it be? Not as big as possible. Every connection is memory and a process on the database, and past ' +
+         'a point more connections make the database slower, not faster. Start from what you are waiting for:' },
+    { ol: [
+      '**Measure how long one request holds a connection**, including the query and anything you do while holding it.',
+      '**Decide the throughput you need**, in requests per second.',
+      '**Multiply.** Ten requests per second, each holding a connection for 60 ms, needs about 0.6 connections busy on ' +
+      'average, so a pool of 5 is generous and a pool of 50 is waste.',
+      '**Leave headroom for the slow days**, then cap it well below what the database can accept in total, because every ' +
+      'instance of your service has its own pool and they all add up.'
     ]},
-    { p: 'From those boxes come the two numbers that matter:' },
+    { p: 'And set a timeout on getting a connection. Without one, a pool that has run dry turns into an unbounded queue of ' +
+         'requests waiting for a connection, and your service stops answering anybody. With one, the requests that cannot be ' +
+         'served fail fast with `503`, which is worse for them and much better for everybody else.' },
+    { check: {
+      q: 'Your API\'s p99 latency is fine at 50 requests a second and collapses to seconds at 200, while the database\'s own ' +
+         'slow query log shows nothing above 3 ms. Where is the time going?',
+      a: 'Into the queue in front of the pool. Each request is waiting for a connection rather than for the database, so the ' +
+         'database sees nothing wrong: from its point of view every query it receives is fast. That is exactly the third row ' +
+         'of the table above, where a pool of 2 was no better than no pool. You find it by measuring the wait to acquire a ' +
+         'connection as its own number, separately from query time, which is a metric every pool library exposes and almost ' +
+         'nobody records. Then either raise the pool size, if the database can take it, or reduce how long each request ' +
+         'holds a connection, which is usually the better fix.'
+    }},
+
+    { h: 'Timeouts, retries and the shape of a safe retry' },
+    { p: 'Under load, everything that can wait eventually waits too long. Four timeouts belong in a payments service, and ' +
+         'they should get shorter as you go outward:' },
     { table: {
-      head: ['Number', 'Formula', 'The question it answers'],
+      head: ['Timeout', 'What it bounds', 'Sensible starting point'],
       rows: [
-        ['**Precision**', 'TP / (TP + FP)', 'When we flag something, how often are we right?'],
-        ['**Recall**', 'TP / (TP + FN)', 'Of all the fraud there was, how much did we catch?'],
-        ['**F1**', 'a kind of average of the two', 'One number, when someone insists on one number'],
-        ['Accuracy', '(TP + TN) / everything', 'Nearly useless here, as you saw']
+        ['`lock_timeout`', 'How long a statement waits for a lock', 'A few seconds'],
+        ['`statement_timeout`', 'How long one statement may run', 'Longer than your slowest legitimate query'],
+        ['Pool acquire timeout', 'How long a request waits for a connection', 'Under a second'],
+        ['Client timeout', 'How long the caller waits for your whole response', 'Shorter than their patience, longer than your p99']
       ]
     }},
-    { p: 'The two mistakes never cost the same. A miss is money out of the door. A false alarm is a real customer whose card ' +
-         'is declined in front of a queue, who may never use that card again. Card issuers regularly find that false declines ' +
-         'lose them more business than the fraud they stop.' },
-    { check: {
-      q: 'At threshold 6 the engine flags 160 payments and 88 of them are fraud. Work out precision and recall, then say who ' +
-         'in the company cares about which.',
-      a: 'Precision is 88 / 160 = 55.0%: when you act on a flag, you are right a bit more often than a coin flip. Recall is ' +
-         '88 / 108 = 81.5%: twenty frauds went through. The fraud team reads the recall, because the 20 misses are losses ' +
-         'they have to write off. Customer support reads the precision, because the 72 false alarms are real people whose ' +
-         'cards were declined. Report one number and you have picked whose problem to hide.'
-    }},
+    { p: 'Retries then follow three rules. **Only retry what is safe to repeat**, which means an idempotency key on every ' +
+         'write. **Only retry what can succeed next time**: a serialization failure, a deadlock, a timeout, a `503`. Never a ' +
+         '`422`. And **back off with jitter**: if every client retries after exactly one second, they all arrive together ' +
+         'and rebuild the pile-up they were retreating from.' },
+    { code: 'delay = min(cap, base * 2 ** attempt) * random.uniform(0.5, 1.0)     # jitter', lang: 'python' },
 
-    { h: 'Precision and recall pull against each other' },
-    { p: 'Here is the same rule engine at five thresholds, on the same 6,000 payments:' },
-    { table: {
-      head: ['Act at score', 'Flagged', 'Fraud caught (of 108)', 'False alarms', 'Precision', 'Recall'],
-      rows: [
-        ['3', '1,560', '106', '1,454', '6.8%', '**98.1%**'],
-        ['5', '349', '95', '254', '27.2%', '88.0%'],
-        ['6', '160', '88', '72', '55.0%', '81.5%'],
-        ['7', '91', '77', '14', '**84.6%**', '71.3%'],
-        ['9', '31', '31', '0', '**100%**', '28.7%']
-      ]
-    }},
-    { p: 'At 3 you catch nearly everything and decline 1,454 honest people. At 9 you are never wrong and you miss 71% of the ' +
-         'fraud. **No setting is good at both.** Raising the threshold makes you more sure about each flag and makes you flag ' +
-         'less, so you miss more. Where to sit is a business decision, not a technical one.' },
-    { check: {
-      q: 'At threshold 3 you catch 106 of the 108 and decline 1,454 honest customers. At threshold 9 you are never wrong and ' +
-         'miss 77 frauds. Is there a setting of this engine that gives you high precision and high recall together?',
-      a: 'Not by moving the threshold. The threshold only slides you along one fixed trade-off, and every step that buys ' +
-         'precision sells recall. What lifts both at once is better evidence: a new clue that separates the groups more ' +
-         'sharply makes every threshold better than it was. That is the difference between tuning and improving. Tuning picks ' +
-         'a point on the trade-off you have, and it is a business decision. Improving is engineering work on the features, and ' +
-         'it is where the real gains in fraud detection come from.'
-    }},
-
-    { h: 'Choose the threshold with money, not a score' },
-    { p: 'The right threshold comes from what each mistake costs. Say a missed fraud costs the payment amount, and a false ' +
-         'alarm costs $4 of an analyst\'s time to review. Add both up at each threshold:' },
-    { code: 'total cost = amount of fraud missed + $4 x false alarms\n\nact at 3:  missed $139    + reviews $5,816  = $5,955\nact at 4:  missed $288    + reviews $1,780  = $2,068   <- cheapest\nact at 6:  missed $1,798  + reviews $288    = $2,086\nact at 7:  missed $2,711  + reviews $56     = $2,767\nact at 9:  missed $8,580  + reviews $0      = $8,580', lang: 'text', label: 'what each threshold costs' },
-    { p: 'The F1 score picks threshold 7. Money picks threshold 4, which F1 would have called mediocre. They disagree because ' +
-         'F1 treats a false alarm and a missed fraud as equally bad, and your business does not. Always write down the costs ' +
-         'you assumed: they are the real decision.' },
-    { check: {
-      q: 'F1 says threshold 7 and the cost model says threshold 4. Your manager asks which one is correct.',
-      a: 'Both, for different questions. F1 asks which threshold balances precision against recall, and it has no idea what ' +
-         'anything costs, so it treats a $4 review and a missed $300 fraud as the same size of mistake. The cost model asks ' +
-         'which threshold loses the least money, and at $4 a review the answer is 4, costing $2,068 against $2,767 at ' +
-         'threshold 7. What you owe your manager is the assumption in writing: at $4 a review the answer is 4, and if a review ' +
-         'really costs $20 the answer becomes 7. The costs are the decision; F1 is a tiebreaker.'
-    }},
-    { tip: 'Change the review cost to $20 and the cheapest threshold moves from 4 to 7. Showing that to decision makers turns ' +
-           '"which model is best?" into "what do you want to spend?", which is the question they can actually answer.' },
-
-    { h: 'Adding a model' },
-    { p: 'Rule points are chosen by a person. A **model** learns them from the labelled data instead. The usual first choice ' +
-         'in finance is **logistic regression**: it learns one weight per feature and outputs a probability between 0 and 1 ' +
-         'that a payment is fraud. It is the default for one overwhelming reason: **you can explain it**. Each weight says ' +
-         'how much that feature pushes the odds up or down, which satisfies a regulator and an angry customer alike.' },
-    { code: 'from sklearn.linear_model import LogisticRegression\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train, y_train)                            # learn the weights\nprobabilities = model.predict_proba(X_test)[:, 1]     # chance of fraud for each payment', lang: 'python' },
-    { p: '`class_weight="balanced"` tells the model that the rare 1.8% matters as much as the common 98.2%. Without it, the ' +
-         'easiest way for the model to make few mistakes is to say "not fraud" every time: the accuracy trap again, now inside ' +
-         'the model.' },
-    { check: {
-      q: 'You leave out `class_weight="balanced"`. Training reports small errors, the model looks well fitted, and it flags ' +
-         'almost nothing. Explain what it learned.',
-      a: 'It learned how rare fraud is. With 98.2% of the rows honest, the cheapest way to be wrong less often is to say ' +
-         '"honest" and stop, so training walks straight to the same useless answer that accuracy rewarded earlier. Balancing ' +
-         'tells it that one fraud row counts roughly as much as fifty five honest ones, which makes missing fraud expensive ' +
-         'inside the model rather than only in your report. The trap did not change, it just moved from the score into the ' +
-         'training.'
-    }},
-    { p: 'Now the rule that matters most in all of machine learning. You split the data into two parts before doing anything: ' +
-         'a **training set** the model learns from, and a **test set** you keep hidden until the very end to see how it does ' +
-         'on payments it has never seen. The test set stands in for the future.' },
-    { warn: 'If anything about the test set influences a choice you make, the model or the threshold, your test results are ' +
-            'fiction. This is called **leakage**, and it is the most common fatal mistake in machine learning, in classrooms ' +
-            'and in companies.' },
-    { check: {
-      q: 'You pick the best threshold by scanning all 6,000 rows, then split into training and test and report the test ' +
-         'precision and recall at that threshold. What exactly is wrong with the number you are about to publish?',
-      a: 'The threshold saw the test rows. It was chosen partly because it works on them, so the test set has stopped being ' +
-         'a stand-in for the future and become part of the fitting. The numbers will be too good by an amount nobody can ' +
-         'estimate, and you find out how much on the day it goes live. Split first, tune everything on the training part, and ' +
-         'look at the test part once. If you need to tune repeatedly, cut a third slice for that and leave the test set alone ' +
-         'until the end.'
-    }},
-    { p: 'One practical note. Logistic regression is thrown off by features on very different scales: `amount` runs into the ' +
-         'hundreds while `is_night` is only 0 or 1, so the weights come out hard to compare. **Standardising** fixes it: for ' +
-         'each feature, subtract its average and divide by its standard deviation, so every feature is measured in "how ' +
-         'unusual is this" units.' },
-
-    { h: 'When rules beat models' },
-    { table: {
-      head: ['Rules win when', 'Models win when'],
-      rows: [
-        ['You must explain every single decision', 'The patterns are subtle and combine in odd ways'],
-        ['The pattern is known and stable', 'You have lots of labelled history'],
-        ['You need it working today', 'You can watch it and retrain it regularly'],
-        ['Regulators are watching closely', 'A little extra precision is worth real money']
-      ]
-    }},
-    { p: 'Real fraud systems use all three: rules for the obvious cases and the ones the law requires, a model for the rest, ' +
-         'and a human review queue for the unclear middle. The model\'s score usually decides which queue a payment goes to, ' +
-         'not whether it is blocked outright.' },
-    { warn: 'A fraud model that declines more payments from one nationality, postcode or age group is a discrimination ' +
-            'problem, not just a modelling one, and "the model learned it from the data" is not a defence. Check flag rates ' +
-            'across groups before you ship, and keep a way for a human to review.' },
-    { check: {
-      q: 'Your model flags 3% of payments overall and 11% of payments from one country. Is that fraud detection or ' +
-         'discrimination?',
-      a: 'The ratio alone cannot tell you, which is the reason to measure rather than argue. Compare precision inside each ' +
-         'group. If the flags from that country are right about as often as flags everywhere else, the model is tracking a ' +
-         'real difference in fraud. If precision is much lower there, the model is worse at judging those customers and they ' +
-         'are paying for its uncertainty with declined cards. That second case is a defect whatever the overall score says, ' +
-         'and the fix is usually a human review path rather than a tweak to one weight.'
-    }},
-
-    { h: 'A word about this data' },
-    { p: 'These 6,000 rows are made up, and made **deliberately easy**: the fraud looks very different from the honest ' +
-         'payments, so a logistic regression separates them almost perfectly. Its **AUC**, a score from 0.5 (guessing) to 1.0 ' +
-         '(perfect) for how well a model ranks fraud above honest payments, comes out near 0.999. Real card fraud models ' +
-         'score around 0.85 to 0.95, against criminals who change tactics the moment they are caught. Treat the method as ' +
-         'real and the score as flattering.' },
-    { check: {
-      q: 'Your first run on real data comes back at 0.999 AUC and you feel good about it. Why is that number a reason to go ' +
-         'and check your work?',
-      a: 'Because working fraud models sit around 0.85 to 0.95 against people who change tactics as soon as they are caught, ' +
-         'so 0.999 is saying something other than "this model is excellent". It is usually one of three things: the data was ' +
-         'made with clean separations, which is the case here and is why this level says so; a feature leaked the answer, such ' +
-         'as a column that only gets filled in after a case is confirmed as fraud; or the model was scored on rows it trained ' +
-         'on. Read the weights and see which feature carries the result. If one of them does nearly all the work, you have ' +
-         'found your leak.'
-    }}
+    { h: 'Testing something that only fails sometimes' },
+    { p: 'A concurrency bug that appears one run in twenty is worse than useless as a test. The test rig in this level fails ' +
+         '**every** time, and it does that through two deliberate choices:' },
+    { ol: [
+      '**Open every connection before starting.** Otherwise the workers are staggered by their TLS handshakes, and by the ' +
+      'time the last one connects the first has already committed. When this level was written, that alone was the ' +
+      'difference between a race that fired and one that did not.',
+      '**Release them with a barrier.** A `threading.Barrier(8)` makes all eight threads wait until the eighth arrives, then ' +
+      'releases them at the same instant.'
+    ]},
+    { code: 'barrier = threading.Barrier(WORKERS)\n\ndef worker(w):\n    conn = psycopg.connect(URL)      # connect first\n    barrier.wait()                   # then everybody starts together\n    return spend(conn)', lang: 'python' },
+    { p: 'That is the whole trick, and it turns "it happens in production sometimes" into a test that fails on your laptop ' +
+         'in under a second. Put it in your test suite with the assertion that matters: **the final balance is never below ' +
+         'zero**, whatever the workers did.' },
+    { money: 'Bringing a reproduction like this to an interview changes the conversation. "I wrote a test rig that overdraws ' +
+             'an account by $540 every time, then fixed it three ways and measured each" is a sentence very few graduates ' +
+             'can say, and it answers the concurrency question, the testing question and the measurement question at once.' }
   ],
 
   tutorial: {
-    intro: 'New notebook: `finquest-level-08.ipynb`. Pandas, numpy and scikit-learn are all preinstalled in Colab.',
+    intro: 'This builds directly on the level 6 database and the level 7 API. You need Postgres, psycopg, and the patience ' +
+           'to make something fail on purpose before you fix it. Work in the payments-api repository, in a `bench/` folder.',
     steps: [
       {
-        t: 'Load and confront the imbalance',
+        t: 'Set the scene',
         blocks: [
-          { code: 'import pandas as pd\nimport numpy as np\n\nURL = "{{RAW}}/data/level-08-transactions.csv"\ndf = pd.read_csv(URL, parse_dates=["timestamp"])\n\nprint(df.shape)                         # (6000, 10)\nprint(df["is_fraud"].value_counts())\nprint(f"base rate: {df[\'is_fraud\'].mean():.2%}")\n\n# the baseline you must beat\nprint(f"accuracy of never flagging: {(df[\'is_fraud\'] == 0).mean():.2%}")', lang: 'python' },
-          { p: 'Write that last number at the top of your notebook. Every result you produce later gets compared to it, ' +
-               'and any metric that cannot beat "do nothing" is not a result.' }
+          { p: 'Write a `setup()` that creates two accounts, clears their entries, and puts exactly $100.00 into the first ' +
+               'one with a balanced transaction. It must be runnable repeatedly, because you will run the experiment many ' +
+               'times.' },
+          { code: 'WORKERS = 8\nSPEND = 8000          # each worker tries to spend $80.00\nSTART = 10000         # the account starts with $100.00', lang: 'python' },
+          { warn: 'Seed the money with a balanced transaction against the `world` account, not by inserting a single entry. ' +
+                  'The level 6 trigger will refuse a lone entry, and it is right to.' }
         ],
-        check: 'You can state the base rate (1.80%) and the accuracy of flagging nothing (98.20%).'
+        check: 'Running setup() twice leaves the account holding exactly 10000 both times.'
       },
       {
-        t: 'Engineer the features',
+        t: 'Reproduce the overdraft',
         blocks: [
-          { code: 'df["hour"] = df["timestamp"].dt.hour\ndf["is_night"] = (df["hour"] < 6).astype(int)\ndf["is_foreign"] = (df["country"] != "VN").astype(int)\ndf["card_not_present"] = 1 - df["card_present"]\ndf["high_risk_cat"] = df["category"].isin(["travel", "electronics", "gaming"]).astype(int)\n\n# how well does each feature separate the classes?\nfor col in ["amount", "card_not_present", "is_foreign", "is_night", "txns_last_1h"]:\n    grouped = df.groupby("is_fraud")[col].mean()\n    print(f"{col:<20} legit {grouped[0]:>8.2f}   fraud {grouped[1]:>8.2f}")', lang: 'python' },
-          { p: '`.astype(int)` turns True/False into 1/0, which both your rules and the model want. Comparing group means ' +
-               'is the cheapest possible feature check and catches useless features before you waste time on them.' }
+          { p: 'Write the naive worker: read the balance, check it, write both entries, commit. Then run eight of them with ' +
+               'a thread pool, connections opened before the barrier.' },
+          { code: 'def worker(w, barrier):\n    conn = psycopg.connect(URL)\n    barrier.wait()\n    with conn.cursor() as cur:\n        cur.execute("select coalesce(sum(amount_minor), 0) from entries where account_id = %s", (src,))\n        available = cur.fetchone()[0]\n        if available < SPEND:\n            return f"refused (saw {available})"\n        ...\n    conn.commit()\n    return f"spent (saw {available})"', lang: 'python' },
+          { code: 'succeeded 8 of 8   final balance -54000', lang: 'text' },
+          { p: 'If yours does not overdraw, the workers are not actually concurrent. Check that every connection is open ' +
+               'before the barrier, and that the barrier count matches the worker count.' }
         ],
-        check: 'Fraud shows a mean amount near $167 and a velocity near 3.66 transactions per hour.'
+        check: 'The run ends with a negative balance, and it does so every time you run it.'
       },
       {
-        t: 'Write a transparent rule engine',
+        t: 'Fix it with a row lock',
         blocks: [
-          { p: 'Each rule contributes points, and the reasons are collected as it goes, so the score arrives with its ' +
-               'own explanation attached.' },
-          { code: 'RULES = [\n    ("large amount",        lambda r: r["amount"] > 150,        2),\n    ("card not present",    lambda r: r["card_not_present"] == 1, 2),\n    ("foreign country",     lambda r: r["is_foreign"] == 1,      3),\n    ("overnight",           lambda r: r["is_night"] == 1,        2),\n    ("high velocity",       lambda r: r["txns_last_1h"] >= 3,    2),\n    ("high-risk category",  lambda r: r["high_risk_cat"] == 1,   1),\n]\n\ndef score_row(row):\n    """Return (score, [reasons]) so every decision can be explained."""\n    score, reasons = 0, []\n    for name, test, points in RULES:\n        if test(row):\n            score += points\n            reasons.append(name)\n    return score, reasons\n\n\ndf["score"] = df.apply(lambda r: score_row(r)[0], axis=1)\ndf["reasons"] = df.apply(lambda r: ", ".join(score_row(r)[1]), axis=1)\nprint(df[["amount", "score", "reasons", "is_fraud"]].head())', lang: 'python' },
-          { p: 'A `lambda` is an anonymous function written on one line. Keeping the rules in a list like this means adding a rule is ' +
-               'one line, and the rulebook can be printed for an auditor.' }
+          { p: 'Add one statement before the balance read, and change nothing else.' },
+          { code: 'cur.execute("select id from accounts where id = %s for update", (src,))', lang: 'python' },
+          { p: 'Run it again. Exactly one worker should spend, the rest should see the real balance and refuse themselves. ' +
+               'Record the wall clock time as well as the result: the correct version is slower, and knowing by how much is ' +
+               'the point of the exercise.' },
+          { tip: 'Then try eight workers spending $10.00 each from the same $100.00. All eight should succeed, and the ' +
+                 'balance should be exactly 2000. A lock is not a refusal: it is a queue.' }
         ],
-        check: 'Every row has a score between 0 and 12 and a human-readable reason string.'
+        check: 'One worker spends, seven refuse, the balance is 2000, and you have recorded both timings.'
       },
       {
-        t: 'Evaluate honestly',
+        t: 'Fix it with serializable isolation',
         blocks: [
-          { code: 'from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score\n\ndef evaluate(y_true, y_pred, label=""):\n    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()\n    precision = precision_score(y_true, y_pred, zero_division=0)\n    recall = recall_score(y_true, y_pred)\n    print(f"{label:<14} flagged {y_pred.sum():>5}  TP {tp:>4}  FP {fp:>5}  FN {fn:>4}"\n          f"  precision {precision:>6.1%}  recall {recall:>6.1%}  F1 {f1_score(y_true, y_pred):>5.3f}")\n    return {"tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall}\n\n\nfor threshold in range(3, 11):\n    evaluate(df["is_fraud"], (df["score"] >= threshold).astype(int), f"threshold {threshold}")', lang: 'python' },
-          { p: '`.ravel()` flattens the 2x2 matrix into four numbers in the order tn, fp, fn, tp: memorise that order, ' +
-               'it is a classic source of silently inverted metrics.' }
+          { p: 'Remove the lock. Set the isolation level per transaction, wrap the work in a retry loop, and catch ' +
+               '`SerializationFailure` specifically rather than catching everything.' },
+          { code: 'conn.isolation_level = psycopg.IsolationLevel.SERIALIZABLE\n\nwhile attempts < 5:\n    try:\n        ...\n        conn.commit()\n        break\n    except psycopg.errors.SerializationFailure:\n        conn.rollback()\n        time.sleep(0.005 * attempts * random.uniform(0.5, 1.0))', lang: 'python' },
+          { warn: 'Check that the isolation level actually applied before you trust the result: run `show ' +
+                  'transaction_isolation` inside a transaction and print it. If it says `read committed`, you are behind a ' +
+                  'pooler that discarded your session setting, which is exactly what happened while writing this level.' }
         ],
-        check: 'Threshold 7 gives 84.6% precision and 71.3% recall; threshold 3 flags 1,560 transactions.'
+        check: 'show transaction_isolation prints serializable, and the run ends with one spend and a balance of 2000.'
       },
       {
-        t: 'Tune the threshold with a cost model',
+        t: 'Fix it with a constraint',
         blocks: [
-          { code: 'REVIEW_COST = 4.0        # analyst time per flagged transaction\n\ndef total_cost(data, threshold, review_cost=REVIEW_COST):\n    flagged = data["score"] >= threshold\n    missed = data.loc[~flagged & (data["is_fraud"] == 1), "amount"].sum()\n    reviews = (flagged & (data["is_fraud"] == 0)).sum() * review_cost\n    return missed + reviews, missed, reviews\n\n\nbest = None\nfor threshold in range(3, 13):\n    total, missed, reviews = total_cost(df, threshold)\n    print(f"threshold {threshold:>2}: missed ${missed:>9,.0f}  reviews ${reviews:>8,.0f}  total ${total:>9,.0f}")\n    if best is None or total < best[1]:\n        best = (threshold, total)\n\nprint(f"\\ncheapest threshold: {best[0]} at ${best[1]:,.0f}")', lang: 'python' },
-          { tip: 'Run the sweep again with REVIEW_COST = 20 and watch the optimum move. Showing that sensitivity is what ' +
-                 'turns a model into a decision a manager can actually make.' }
+          { p: 'Add the cached balance column from level 6 if you have not, then a check constraint that makes an overdraft ' +
+               'impossible whatever the application does.' },
+          { code: 'alter table accounts add constraint balance_never_negative\n  check (balance_minor >= 0 or allow_negative);', lang: 'sql' },
+          { p: 'Now run the **naive** worker again, with no lock and no serializable. It should still be impossible to ' +
+               'overdraw: some workers get a constraint violation, which your code turns into `422 insufficient_funds`.' }
         ],
-        check: 'Your cheapest threshold is 4 at about $2,068, with threshold 6 close behind.'
+        check: 'With no application level protection at all, the balance never goes below zero.'
       },
       {
-        t: 'Train a model without leaking',
+        t: 'Add a pool, and measure it',
         blocks: [
-          { code: 'from sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import roc_auc_score\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nX = df[FEATURES]\ny = df["is_fraud"]\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.3, random_state=42, stratify=y)\n\nscaler = StandardScaler().fit(X_train)          # fit on the training split only\nX_train_s = scaler.transform(X_train)\nX_test_s = scaler.transform(X_test)\n\nmodel = LogisticRegression(max_iter=2000, class_weight="balanced")\nmodel.fit(X_train_s, y_train)\n\nprobabilities = model.predict_proba(X_test_s)[:, 1]\nprint(f"AUC: {roc_auc_score(y_test, probabilities):.3f}")', lang: 'python' },
-          { p: '`stratify=y` keeps the same 1.8% fraud rate in both halves: without it a random split can leave your test ' +
-               'set with almost no fraud, and every metric becomes noise. Fitting the scaler on the training set only is ' +
-               'the other half of not leaking.' }
+          { code: 'from psycopg_pool import ConnectionPool\n\npool = ConnectionPool(DATABASE_URL, min_size=8, max_size=8, timeout=1.0, open=True)\n\nwith pool.connection() as conn, conn.cursor() as cur:\n    ...', lang: 'python' },
+          { p: 'Then run the same fixed workload three ways and put the table in your README: no pool, a pool the size of ' +
+               'your concurrency, and a pool deliberately too small. The reference numbers, for shape rather than ' +
+               'comparison:' },
+          { code: 'no pool, connect every request     p50 228.8 ms   31.4 req/s\npool of 8, 8 workers               p50  59.8 ms  127.1 req/s\npool of 2, 8 workers               p50 251.1 ms   30.8 req/s', lang: 'text' },
+          { tip: 'Record the time spent waiting for a connection separately from the time spent querying. That single metric ' +
+                 'is how you tell a slow database from a starved pool, and almost nobody has it before their first incident.' }
         ],
-        check: 'AUC is around 0.99. High because this data is synthetic, as the knowledge page warns.'
+        check: 'Your three rows show the same shape: a right sized pool much faster, a too small pool no better than none.'
       },
       {
-        t: 'Read the coefficients out loud',
+        t: 'Wire the fix into the API',
         blocks: [
-          { code: 'coefs = pd.Series(model.coef_[0], index=FEATURES).sort_values(key=abs, ascending=False)\nprint(coefs.round(3))\n\nfor name, value in coefs.items():\n    direction = "increases" if value > 0 else "decreases"\n    print(f"A higher {name} {direction} the estimated fraud odds.")', lang: 'python' },
-          { p: 'Because you standardised the features, these coefficients are comparable: the biggest absolute value is the ' +
-               'strongest driver. This paragraph (in English, from the model) is what makes logistic regression acceptable ' +
-               'in a regulated product.' }
+          { p: 'Take the winning approach back into the level 7 service. For a ledger, the usual answer is a row lock on the ' +
+               'source account plus the database constraint, because it needs no retry from the caller and still cannot be ' +
+               'bypassed.' },
+          { p: 'Then put the pool behind it, with a timeout, and return `503` with a `Retry-After` header when the pool is ' +
+               'exhausted rather than queueing forever.' },
+          { code: 'except PoolTimeout:\n    return problem(503, "service_busy", "No database connection available.", rid,\n                   headers={"Retry-After": "1"})', lang: 'python' }
         ],
-        check: 'You can name the top three drivers and say which way each pushes the odds.'
+        check: 'Eight concurrent API calls spending more than the balance produce one 201 and seven 422s, and never a negative balance.'
       },
       {
-        t: 'Produce a review queue, not a verdict',
+        t: 'Make it a test that always fails without the fix',
         blocks: [
-          { code: 'test = df.loc[X_test.index].copy()\ntest["probability"] = probabilities\n\nqueue = (test[test["probability"] >= 0.9]\n         .sort_values("probability", ascending=False)\n         [["txn_id", "amount", "country", "probability", "reasons", "is_fraud"]])\n\nprint(f"{len(queue)} cases for review")\nprint(queue.head(10).to_string(index=False))', lang: 'python' },
-          { p: 'This is the deliverable an operations team actually wants: a ranked queue with the amount at stake and the ' +
-               'reasons attached, highest risk first. A bare 0/1 prediction cannot be worked by a human.' }
+          { p: 'Move the test rig into your test suite with the assertion that matters, and make it run in CI. Then delete ' +
+               'the fix temporarily and watch the test go red, because a concurrency test you have never seen fail is not ' +
+               'evidence of anything.' },
+          { code: 'def test_cannot_overdraw_under_concurrency():\n    setup(start=10_000)\n    results = run_workers(8, spend=8_000)\n    assert balance(src) >= 0\n    assert sum(1 for r in results if r.startswith("spent")) == 1', lang: 'python' },
+          { p: 'Finish the README with the four results, the timings, the pool table, and one paragraph choosing an approach ' +
+               'and saying why. That paragraph is the interview answer.' }
         ],
-        check: 'Your queue is sorted by probability and each row carries its rule reasons.'
+        check: 'The test passes with the fix, fails without it, and takes under a second.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Class imbalance', d: 'One outcome is far rarer than the other, making accuracy misleading.' },
-    { t: 'Base rate', d: 'The proportion of positives in the data: here 1.8% fraud.' },
-    { t: 'Feature engineering', d: 'Creating columns that expose a signal the raw data only implies.' },
-    { t: 'Velocity', d: 'How many transactions occurred in a recent window. The strongest card-fraud signal.' },
-    { t: 'Card-not-present', d: 'A transaction without the physical card, such as online. Far higher fraud risk.' },
-    { t: 'Confusion matrix', d: 'The 2x2 table of true/false positives and negatives.' },
-    { t: 'Precision', d: 'TP / (TP + FP). How often a flag is correct.' },
-    { t: 'Recall', d: 'TP / (TP + FN). What share of fraud was caught.' },
-    { t: 'F1', d: 'Harmonic mean of precision and recall; treats both errors as equally costly.' },
-    { t: 'Threshold', d: 'The score above which you act. The main knob trading precision against recall.' },
-    { t: 'False decline', d: 'Blocking a legitimate customer. Often costs more than the fraud prevented.' },
-    { t: 'Leakage', d: 'Letting test information influence training or tuning, producing fake performance.' },
-    { t: 'Stratified split', d: 'Splitting while preserving the class ratio in both halves.' },
-    { t: 'class_weight balanced', d: 'Telling a model to weight the rare class up so it cannot ignore it.' },
-    { t: 'AUC', d: 'Probability the model ranks a random fraud above a random legitimate transaction.' }
+    { t: 'Race condition', d: 'A bug whose outcome depends on the timing of things happening at once.' },
+    { t: 'Lost update', d: 'Two transactions read the same value, both act on it, and one decision is silently discarded.' },
+    { t: 'Isolation level', d: 'The setting for how much concurrent transactions may affect each other.' },
+    { t: 'read committed', d: 'Postgres\' default: each statement sees committed data, and the world may change between your statements.' },
+    { t: 'serializable', d: 'The strongest level: the result must be as if transactions ran one at a time. Conflicts abort one.' },
+    { t: 'Serialization failure', d: 'The error telling you your transaction was aborted to keep that promise. Retry it.' },
+    { t: 'Pessimistic locking', d: 'Assume a conflict and prevent it, by making others wait. `select ... for update`.' },
+    { t: 'Optimistic concurrency', d: 'Assume no conflict, detect one at commit, and retry the loser.' },
+    { t: 'Row lock', d: 'A lock on specific rows, held until the transaction ends.' },
+    { t: 'Deadlock', d: 'Two transactions each holding what the other needs. Postgres aborts one with SQLSTATE 40P01.' },
+    { t: 'Lock ordering', d: 'Always taking locks in the same order, so a cycle cannot form. Usually by id.' },
+    { t: 'Connection pool', d: 'A set of open connections lent to requests, so the handshake happens once rather than per request.' },
+    { t: 'Pool timeout', d: 'How long a request waits for a free connection before failing fast.' },
+    { t: 'Connection pooler', d: 'A service between your app and the database that shares real connections between clients.' },
+    { t: 'Transaction mode pooling', d: 'A pooler that lends a real connection for one transaction, which is why session settings do not survive.' },
+    { t: 'lock_timeout', d: 'How long a statement waits for a lock before giving up.' },
+    { t: 'statement_timeout', d: 'How long one statement may run before the server cancels it.' },
+    { t: 'Jitter', d: 'Randomness added to a retry delay, so retrying clients do not all return at the same instant.' },
+    { t: 'Barrier', d: 'A synchronisation tool that holds threads until all have arrived, then releases them together.' }
   ],
 
   quiz: [
-    { q: "Fraud is 1.8% of transactions. A model that flags nothing achieves what accuracy?",
+    { q: "Eight workers each read a balance of $100.00 and each spend $80.00. The account ends at minus $540.00. What is the name for this?",
       options: [
-        "50%",
-        "1.8%",
-        "98.2%",
-        "It cannot be calculated"
+        "A dirty read",
+        "A deadlock",
+        "A lost update caused by a race between the read and the write",
+        "A rollback failure"
       ],
       answer: 2,
-      why: "It is right on every legitimate transaction. That is why accuracy is meaningless under imbalance: it measures the base rate, not the model." },
+      why: "Every worker was right when it looked. Nothing forced any of them to notice the world changing in between." },
 
-    { q: "What does precision measure?",
+    { q: "Wrapping the read and the write in one transaction does not fix it because:",
       options: [
-        "How consistent the model is between runs",
-        "The overall proportion of correct predictions",
-        "The share of fraud that was caught",
-        "How often a flagged transaction really is fraud"
+        "The entries table has no primary key",
+        "Postgres ignores transactions under load",
+        "The transaction was too short",
+        "Transactions are only about atomicity and visibility, not exclusivity"
       ],
       answer: 3,
-      why: "Precision is TP / (TP + FP): the quality of your flags. Recall is the other question: what share of all fraud you caught." },
+      why: "It guarantees both entries land together. It does not stop seven other transactions reading the same balance." },
 
-    { q: "At threshold 3 the rule engine catches 106 of 108 frauds but raises 1,454 false alarms. What is wrong with shipping it?",
+    { q: "Under `read committed`, what exactly is guaranteed?",
       options: [
-        "Precision is 6.8%: over 93% of flagged customers are innocent and would be blocked",
-        "Recall is too low",
-        "Nothing, catching fraud is the goal",
-        "The model is overfitting"
+        "Each statement sees a consistent snapshot of committed data",
+        "No other transaction can write while yours is open",
+        "Your transaction sees one snapshot for its whole life",
+        "Transactions behave as if run one at a time"
       ],
       answer: 0,
-      why: "A false decline is a real customer whose card fails in public. Issuers consistently find false declines cost more in lost business than the fraud they prevent." },
+      why: "Per statement, not per transaction, which is exactly the gap a read-then-write decision falls into." },
 
-    { q: "Which pair of numbers describes the fundamental trade-off in a detector?",
+    { q: "`select ... for update` fixes the race by:",
       options: [
-        "Base rate and sample size",
-        "Accuracy and AUC",
-        "Precision and recall",
-        "Training time and model size"
+        "Copying the row into a temporary table",
+        "Detecting the conflict at commit and aborting one transaction",
+        "Locking the rows so other transactions wait until you commit",
+        "Making the query faster"
       ],
       answer: 2,
-      why: "Raising the threshold improves precision and lowers recall; lowering it does the reverse. No threshold is good at both, so the choice is a business decision." },
+      why: "Pessimistic: assume a conflict and prevent it. Measured, it took the run from 367 ms to 691 ms and from wrong to right." },
 
-    { q: "The F1-optimal threshold here is 7, but the cheapest threshold is 4. Why do they disagree?",
+    { q: "The measured cost of the row lock in this level was:",
       options: [
-        "The cost model ignores recall",
-        "A bug in the cost calculation",
-        "F1 treats false positives and false negatives as equally costly, and this business does not",
-        "F1 is only valid for balanced data"
+        "A negative balance on one account",
+        "A retry for every caller",
+        "Spending from that account became serialised: 691 ms against 367 ms",
+        "A deadlock in one run of eight"
       ],
       answer: 2,
-      why: "F1 is symmetric by construction. Once a missed fraud costs the transaction amount and a review costs $4, the optimum moves. The cost assumptions are the real model." },
+      why: "Correctness had a price, and knowing the price is the part an interviewer is listening for." },
 
-    { q: "Which feature is typically the strongest signal in card fraud?",
+    { q: "Serializable isolation requires what from every caller?",
       options: [
-        "The card issuer",
-        "Transaction velocity: how many transactions occurred in the last hour",
-        "The merchant name",
-        "The day of the week"
+        "A second connection",
+        "A retry loop, because a conflicting transaction is aborted rather than delayed",
+        "A longer timeout",
+        "A row lock as well"
       ],
       answer: 1,
-      why: "Stolen cards get tested and drained quickly: a small probe, then rapid larger purchases. Velocity requires keeping state, which is why weaker implementations omit it." },
+      why: "And a retry is only safe if the operation is idempotent, which is why level 7 required an idempotency key." },
 
-    { q: "What does `class_weight=\"balanced\"` do in scikit-learn?",
+    { q: "When is a row lock the better choice than serializable?",
       options: [
-        "Balances precision and recall automatically",
-        "Weights the rare class up so the model cannot minimise error by ignoring it",
-        "Normalises the feature scales",
-        "Splits the data evenly into train and test"
+        "When you cannot change the schema",
+        "When conflicts are common, such as a hot account, and you do not want callers to see retries",
+        "When the table has no index",
+        "When conflicts are rare"
       ],
       answer: 1,
-      why: "With a 1.8% positive rate, predicting \"legit\" always is nearly optimal for plain error. Class weighting removes that shortcut." },
+      why: "Serializable is cheaper when clashes are rare and turns into retry storms when they are not." },
 
-    { q: "Why use `stratify=y` in train_test_split?",
+    { q: "A check constraint such as `balance_minor >= 0` is stronger than an application check because:",
       options: [
-        "To keep the same fraud rate in both halves so the test set is meaningful",
-        "To shuffle the rows",
-        "To remove duplicates",
-        "To sort by target"
+        "It is enforced for every writer, including code that forgets to check, and two transactions cannot update one row at once",
+        "It runs faster",
+        "It removes the need for transactions",
+        "It prevents deadlocks"
       ],
       answer: 0,
-      why: "Without stratification a random split can leave very few frauds in the test set, making every metric computed on it pure noise." },
+      why: "The trade is that you now maintain a balance column, so the reconciliation job stops being optional." },
 
-    { q: "What is data leakage?",
+    { q: "You set the isolation level on the session and `show transaction_isolation` reports `read committed` anyway. Why?",
       options: [
-        "Missing values in the training set",
-        "Losing rows when merging tables",
-        "A security breach of customer data",
-        "Letting test information influence training or tuning, producing performance that will not hold up"
+        "The setting takes effect only after a reconnect",
+        "Postgres ignores that setting",
+        "The isolation level can only be set by a superuser",
+        "A transaction mode connection pooler discarded your session setting"
       ],
       answer: 3,
-      why: "Tuning a threshold on data the model trained on reports fiction. Fit scalers on train only, and keep the test set untouched until the end." },
+      why: "Set it per transaction instead. Nothing raises an error, which is why this one reaches production." },
 
-    { q: "`confusion_matrix(y_true, y_pred).ravel()` returns four numbers. In what order?",
+    { q: "Which of these also stops working quietly behind a transaction mode pooler?",
       options: [
-        "tn, fp, fn, tp",
-        "fp, fn, tp, tn",
-        "tp, tn, fp, fn",
-        "tp, fp, fn, tn"
+        "Session advisory locks, LISTEN and NOTIFY, temporary tables and session SET",
+        "Write ahead logging",
+        "Primary key indexes",
+        "Foreign key constraints"
       ],
       answer: 0,
-      why: "tn, fp, fn, tp: reading across the rows of the matrix. Assuming the wrong order silently inverts precision and recall." },
+      why: "Anything that assumes you keep the same real connection between transactions." },
 
-    { q: "Why is logistic regression the default first model in regulated financial services?",
+    { q: "Measured: no pool 31.4 req/s, a pool of 8 with 8 workers 127.1 req/s, a pool of 2 with 8 workers 30.8 req/s. What does the third number teach?",
       options: [
-        "It is the most accurate model available",
-        "It handles imbalance automatically",
-        "It needs no training data",
-        "Its coefficients are explainable, which regulators and customers both require"
+        "Pools only help with more than 8 workers",
+        "Pools should always be as large as possible",
+        "The database was overloaded",
+        "A pool that is too small is as slow as no pool, and the waiting never appears in your query timings"
       ],
       answer: 3,
-      why: "Explainability is a legal requirement in credit and a practical one in fraud. A model you cannot explain is one you cannot defend when a customer disputes a decline." },
+      why: "The pool is a queue. Requests wait for a connection while the database reports that every query it ran was fast." },
 
-    { q: "Why standardise features before reading logistic regression coefficients?",
+    { q: "How should you size a connection pool?",
       options: [
-        "To make training faster",
-        "Because unscaled features give coefficients on wildly different scales that cannot be compared",
-        "Because sklearn requires it",
-        "To remove outliers"
+        "As large as the database will allow",
+        "From measured hold time and required throughput, with headroom, capped well below the database total across all instances",
+        "One connection per expected user",
+        "Twice the number of CPU cores, always"
       ],
       answer: 1,
-      why: "With amount in the hundreds and is_night as 0/1, the amount coefficient looks tiny regardless of its importance. Standardising makes the magnitudes comparable." },
+      why: "Every instance has its own pool and they all add up. Past a point, more connections make the database slower." },
 
-    { q: "A fraud model declines a far higher share of transactions from one nationality. What is the correct response?",
+    { q: "Why put a timeout on acquiring a connection from the pool?",
       options: [
-        "Remove all country data and ship",
-        "Investigate and fix it: disparate outcomes are a legal and ethical problem, and the data explanation is not a defence",
-        "Raise the threshold for everyone",
-        "Ship it: the model learned it from the data"
+        "To force connections to be recycled",
+        "Because otherwise an exhausted pool becomes an unbounded queue and the service stops answering anybody",
+        "Because the database requires it",
+        "To detect network failures"
       ],
       answer: 1,
-      why: "Fair-lending and consumer-protection law looks at outcomes. Check flag rates across groups before shipping, keep a human review route, and document the decision." },
+      why: "Fail fast with 503 for the requests you cannot serve, rather than slowly for everybody." },
 
-    { q: "What does an AUC of 0.999 on this dataset tell you?",
+    { q: "Which of these should never be retried?",
       options: [
-        "The data is synthetic and unusually separable. Real fraud models sit far lower",
-        "AUC is being computed incorrectly",
-        "The model is production-ready",
-        "The model has memorised the test set"
+        "A 422 insufficient funds",
+        "A 503",
+        "A serialization failure",
+        "A deadlock"
       ],
       answer: 0,
-      why: "Real card fraud models run around 0.85-0.95 against adversaries who adapt. Treat the workflow as realistic and the score as flattering, and say so in your report." },
+      why: "Retry only what can succeed next time, and only what is safe to repeat, which means an idempotency key." },
 
-    { q: "What is the most useful output of a fraud system for an operations team?",
+    { q: "Why does the test rig open every connection before the barrier?",
       options: [
-        "A binary label on every transaction",
-        "The model coefficients",
-        "A ranked review queue with the amount at stake and the reasons for each flag",
-        "A single overall accuracy figure"
+        "To share one connection between threads",
+        "Because psycopg requires it",
+        "Because otherwise the workers are staggered by their handshakes and the first commits before the last connects",
+        "To reduce database load"
       ],
       answer: 2,
-      why: "Humans work queues, not labels. Rank by risk, show the money involved, and attach the reasons so the reviewer can act in seconds rather than investigate from scratch." }
+      why: "It is the difference between a test that fails every time and one that fails occasionally, which is no test at all." }
   ],
 
   project: {
-    title: 'Fraud scoring engine',
-    story: 'A partner fintech is losing money to card fraud, and blocking far too many real customers while trying ' +
-           'to stop it. Build the scoring engine, show what each setting actually costs, and recommend a threshold ' +
-           'you would be happy to defend in a meeting.',
-    scope: 'Uses this level plus level 3 (pandas) and level 7 (evaluation thinking): feature engineering, a rule engine, ' +
-           'sklearn LogisticRegression, train_test_split, StandardScaler, and the metrics shown in the tutorial.',
-    dataset: '{{RAW}}/data/level-08-transactions.csv',
+    title: 'race-lab: break it, fix it three ways, measure all three',
+    story: 'Write the test rig that overdraws an account on purpose, then fix it with a lock, with serializable isolation, ' +
+           'and with a constraint. Measure each. Put a connection pool behind your level 7 API and show what it did. The ' +
+           'deliverable is the evidence, more than the fix.',
+    scope: 'Uses levels 6 and 7. Postgres, psycopg, psycopg_pool, threads. No new frameworks.',
+    dataset: '{{RAW}}/data/level-03-transactions.csv',
     requirements: [
-      '`load_and_engineer(url)` producing hour, is_night, is_foreign, card_not_present, and high_risk_cat columns',
-      'A printed baseline: base rate and the accuracy of flagging nothing, stated before any model is built',
-      'A feature comparison table showing the mean of each feature for fraud vs legitimate rows',
-      'A rule engine defined as data (a list of name / test / points) so rules can be added in one line',
-      '`score_row(row)` returning both a score and the list of reasons that produced it',
-      '`evaluate(y_true, y_pred)` returning TP, FP, FN, precision, recall, and F1',
-      'A threshold sweep from 3 to 12 printed as a table of flagged, TP, FP, FN, precision, recall',
-      'A cost model with stated assumptions: missed fraud costs the transaction amount, review costs $4',
-      'A cost curve identifying the cheapest threshold, plus a sensitivity run at a $20 review cost showing how the answer moves',
-      'A stratified train/test split with the scaler fitted on training data only',
-      'A logistic regression with class_weight="balanced", reporting AUC on the test set',
-      'Standardised coefficients printed in descending absolute order, each translated into one plain English sentence',
-      'A comparison of rules vs model at matched recall, and a written recommendation of which to ship and why',
-      'A ranked review queue of the top 20 cases with amount, probability, and reasons',
-      'A fairness check: flag rate by country, with a sentence on what you would do if it were a protected attribute',
-      'A conclusion naming your recommended threshold, its expected weekly cost, and the assumptions it depends on',
-      'Saved to your portfolio repo as `level-08-fraud-engine.ipynb`'
+      'A `setup()` that is safe to run repeatedly and seeds a known balance with a balanced transaction',
+      'A test rig of N workers that open their connections before a barrier and start together',
+      'A naive mode that overdraws the account on every single run, with the final balance printed',
+      'A row lock mode that ends correct, with the wall clock time recorded alongside',
+      'A serializable mode with a retry loop that catches only SerializationFailure, with retries counted',
+      'A check that prints `show transaction_isolation` from inside a transaction, so you can prove the level applied',
+      'A constraint mode where the naive worker cannot overdraw because the database refuses it',
+      'A benchmark of the same workload with no pool, a right sized pool and a deliberately small pool, reporting p50, p95 and throughput',
+      'The wait for a connection recorded as its own metric, separate from query time',
+      'The chosen fix wired into the level 7 API, returning 422 for insufficient funds and 503 with Retry-After when the pool is exhausted',
+      'A test in CI that fails when the fix is removed and passes with it, in under a second',
+      'A README with the four results, both tables of timings, and a paragraph choosing one approach and defending it',
+      'The repository public on GitHub as `race-lab`, or a documented folder inside `payments-api`'
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest level 8: Fraud scoring engine"""\n\nimport numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score\n\nURL = "{{RAW}}/data/level-08-transactions.csv"\nREVIEW_COST = 4.0\nHOME_COUNTRY = "VN"\n\nFEATURES = ["amount", "card_not_present", "is_foreign", "is_night",\n            "txns_last_1h", "high_risk_cat", "hours_since_prev_txn"]\n\nRULES = [\n    # (name, test, points): add rules here, one line each\n]\n\n\ndef load_and_engineer(url=URL):\n    """Load the CSV and build the model features."""\n    # TODO\n    pass\n\n\ndef baseline(df):\n    """Print base rate and do-nothing accuracy before any modelling."""\n    # TODO\n    pass\n\n\ndef feature_comparison(df):\n    """Mean of each feature for fraud vs legitimate."""\n    # TODO\n    pass\n\n\ndef score_row(row):\n    """Return (score, reasons)."""\n    # TODO\n    pass\n\n\ndef apply_rules(df):\n    """Add score and reasons columns."""\n    # TODO\n    pass\n\n\ndef evaluate(y_true, y_pred, label=""):\n    """Print and return tp/fp/fn/precision/recall/f1."""\n    # TODO\n    pass\n\n\ndef threshold_sweep(df, low=3, high=12):\n    # TODO\n    pass\n\n\ndef total_cost(df, threshold, review_cost=REVIEW_COST):\n    """(total, missed_fraud_value, review_spend)"""\n    # TODO\n    pass\n\n\ndef cost_curve(df, review_cost=REVIEW_COST):\n    """Print the cost at each threshold and return the cheapest."""\n    # TODO\n    pass\n\n\ndef train_model(df):\n    """Stratified split, scale on train only, fit, return everything needed."""\n    # TODO\n    pass\n\n\ndef explain_coefficients(model, features):\n    """One plain English sentence per feature, strongest first."""\n    # TODO\n    pass\n\n\ndef review_queue(df, probabilities, index, top=20):\n    """Ranked cases with amount, probability and reasons."""\n    # TODO\n    pass\n\n\ndef fairness_check(df, threshold):\n    """Flag rate by country."""\n    # TODO\n    pass\n\n\ndef report():\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""FinQuest level 8: reproduce the race, then fix it three ways.\n\nRun:\n  python -m bench.race naive\n  python -m bench.race for_update\n  python -m bench.race serializable\n  python -m bench.pool\n"""\n\nimport threading\nimport time\nfrom concurrent.futures import ThreadPoolExecutor\n\nimport psycopg\n\nWORKERS = 8\nSPEND = 8_000          # each worker tries to spend $80.00\nSTART = 10_000         # the account starts with $100.00\n\n\ndef setup() -> tuple[int, int]:\n    """Create the accounts, clear them, seed START with a balanced transaction."""\n    # TODO\n    raise NotImplementedError\n\n\ndef worker(mode: str, src: int, dst: int, w: int, barrier: threading.Barrier) -> str:\n    """Connect BEFORE the barrier, then all workers start together.\n\n    mode is one of: naive, for_update, serializable.\n    Return a short string describing what happened, including what balance was seen.\n    """\n    # TODO\n    raise NotImplementedError\n\n\ndef run(mode: str) -> None:\n    """Run WORKERS workers, then print how many spent, the final balance, and the time."""\n    # TODO\n    raise NotImplementedError\n'
     },
     tests: [
-      'The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%',
-      'Flagging nothing gives an accuracy is 98.20% and appears in your output before any model',
-      'Mean amount is about $31.85 for legitimate rows and $167.25 for fraud',
-      'card_present is 61.1% of legitimate rows and 3.7% of fraud',
-      'With the tutorial rule weights, threshold 6 gives 88 TP, 72 FP, precision 55.0%, recall 81.5%',
-      'Threshold 7 gives 77 TP, 14 FP, precision 84.6%, recall 71.3%',
-      'Threshold 9 gives precision 100% and recall 28.7%',
-      'The cost curve at $4 review cost is cheapest at threshold 4 (about $2,068), with threshold 6 close at about $2,086',
-      'Raising the review cost to $20 moves the cheapest threshold: report where it lands',
-      'Test AUC is above 0.98 and your report notes why that is unrealistically high',
-      'Every flagged row in the review queue carries a non-empty reasons string'
+      'The naive mode ends with a negative balance on ten runs out of ten',
+      'The row lock mode ends with a balance of exactly 2000 and one successful spend',
+      'The serializable mode ends with a balance of exactly 2000, and any retries are counted and reported',
+      'Eight workers spending 1000 each from 10000 all succeed under the row lock, ending at 2000',
+      '`show transaction_isolation` inside a transaction prints serializable in that mode',
+      'With the check constraint in place, the naive worker still cannot produce a negative balance',
+      'The pool benchmark reports higher throughput for a right sized pool than for no pool',
+      'The pool benchmark shows a too small pool performing no better than no pool',
+      'Removing the fix from the API makes the concurrency test fail',
+      'An exhausted pool returns 503 with a Retry-After header rather than hanging'
     ],
     rubric: [
-      { pts: 20, t: 'Honest evaluation', d: 'Baseline stated first, confusion matrix correct, precision and recall never confused.' },
-      { pts: 20, t: 'Threshold economics', d: 'Cost model with stated assumptions, a full sweep, and a sensitivity run that changes the answer.' },
-      { pts: 15, t: 'Feature work', d: 'All five engineered features present and justified by the comparison table.' },
-      { pts: 15, t: 'Model discipline', d: 'Stratified split, scaler fitted on train only, class weighting, no leakage anywhere.' },
-      { pts: 15, t: 'Explainability', d: 'Reasons on every flag, coefficients translated into English, a usable ranked queue.' },
-      { pts: 10, t: 'Ethics', d: 'Fairness check performed and its implications discussed rather than waved away.' },
-      { pts: 5, t: 'Shipped', d: 'Runs top to bottom and is committed to your portfolio repo.' }
+      { pts: 25, t: 'A reproduction that always fails', d: 'Connections opened before a barrier, the overdraft on every run, and the test rig in CI.' },
+      { pts: 25, t: 'Three fixes, understood', d: 'Lock, serializable with retries, and a constraint, each working, each with its cost stated.' },
+      { pts: 20, t: 'Measured', d: 'Timings for each fix, the pool table with p50, p95 and throughput, and connection wait recorded separately.' },
+      { pts: 15, t: 'Carried into the service', d: 'The API cannot overdraw under concurrent calls, and fails fast when the pool is exhausted.' },
+      { pts: 15, t: 'Defended', d: 'A README paragraph choosing one approach for this system and saying what it costs.' }
     ],
     stretch: [
-      'Add a per-customer velocity feature computed from the timestamps rather than the supplied column',
-      'Plot the precision-recall curve and mark your chosen operating point on it',
-      'Add a second model (decision tree) and compare its explainability with logistic regression',
-      'Simulate an adversary: shift fraud amounts down by 60% and measure how much recall your rules lose'
+      'Reproduce a deadlock with two transfers in opposite directions, then fix it by locking account ids in sorted order',
+      'Measure how the row lock scales: 2, 8, 32 and 128 workers against one account, and plot throughput against concurrency',
+      'Add an advisory lock version, and explain when you would prefer it to a row lock',
+      'Run the same experiment with the pooler and without it, and show which settings survive each',
+      'Add write skew: two transactions that each pass a rule looked at separately and break it together, and find the isolation level that stops it'
     ],
     solutionPath: 'solutions/level-08'
   },
 
   faq: [
-    { q: 'My model has 98% accuracy. Is that good?',
-      a: 'No. Flagging nothing at all scores 98.2% on this data. Judge it on precision and recall, and compare against that baseline of flagging nothing.' },
-    { q: 'Precision is high but recall is terrible',
-      a: 'Your threshold is too strict. Lower it to catch more fraud and accept more false alarms, then use the cost model to decide how far to go.' },
-    { q: 'What threshold should I actually pick?',
-      a: 'Whichever minimises your stated cost. At a $4 review cost the cheapest here is 4, with 6 almost identical; at $20 the optimum shifts. State the assumption alongside the number.' },
-    { q: 'Should I use rules or the model?',
-      a: 'Usually both. Rules cover known, explainable, legally required cases; the model ranks the rest; humans work the queue. Compare them at matched recall before deciding.' },
-    { q: 'What exactly is leakage and how do I avoid it?',
-      a: 'Any test information reaching training or tuning. Split first, fit scalers on the training set only, and do not touch the test set until the final evaluation.' },
-    { q: 'My precision and recall look swapped',
-      a: 'Check the order from confusion_matrix(...).ravel(): it is tn, fp, fn, tp. Getting that wrong inverts both metrics without any error appearing.' },
-    { q: 'Why is my amount coefficient nearly zero?',
-      a: 'Unscaled features. Amount ranges over hundreds while the flags are 0/1, so its coefficient is tiny per unit. Standardise before comparing coefficient magnitudes.' }
+    { q: 'My naive test rig does not overdraw',
+      a: 'The workers are not really concurrent. Open every connection before the barrier, check the barrier count equals the worker count, and make sure each worker has its own connection rather than sharing one.' },
+    { q: 'Is serializable always the safest choice?',
+      a: 'It is the strongest promise, and it is only safe in practice if every caller retries and every write is idempotent. A row lock is often the better engineering answer because the waiting stays inside your service.' },
+    { q: 'How do I know whether I am behind a pooler?',
+      a: 'Set something on the session and read it back in the next transaction. If it does not survive, you are. Hosted databases frequently give you two connection strings, one pooled and one direct, and the difference is exactly this.' },
+    { q: 'Should I use async instead of threads?',
+      a: 'For the test rig, threads are clearer. For the service, async helps when you are waiting on the network, which you mostly are. Neither fixes a race: concurrency control is a property of your database access, not of your language.' },
+    { q: 'What pool size should I actually use?',
+      a: 'Measure hold time and required throughput, then add headroom, then check the total across every instance against what the database accepts. A common production mistake is twenty instances with a pool of fifty each, pointed at a database that allows a hundred connections.' },
+    { q: 'Do I need all three fixes in one system?',
+      a: 'Most real ledgers run a row lock plus a database constraint: the lock makes the common path clean, and the constraint means a bug in a new code path cannot overdraw anybody. Serializable is the right answer for workloads where conflicts are genuinely rare.' },
+    { q: 'What do I say about this in an interview?',
+      a: 'Lead with the reproduction: eight workers, one $100 account, minus $540 every run. Then the three fixes with their measured costs, and then the pooler that threw the isolation level away. That last one is a senior engineer\'s war story and you will have had it as a student.' }
   ]
 });

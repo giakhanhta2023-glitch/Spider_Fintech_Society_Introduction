@@ -1,6 +1,6 @@
-# Level 8: Fraud detection and decision thresholds
+# Level 8: Eight requests, one balance, minus $540
 
-> **Fraud scoring engine** · build project · difficulty 8/10
+> **race-lab: break it, fix it three ways, measure all three** · build project · difficulty 8/10
 
 ## Read this second
 
@@ -10,65 +10,68 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-A partner fintech is losing money to card fraud, and blocking far too many real customers while trying to stop it. Build the scoring engine, show what each setting actually costs, and recommend a threshold you would be happy to defend in a meeting.
+Write the test rig that overdraws an account on purpose, then fix it with a lock, with serializable isolation, and with a constraint. Measure each. Put a connection pool behind your level 7 API and show what it did. The deliverable is the evidence, more than the fix.
 
-**Scope:** Uses this level plus level 3 (pandas) and level 7 (evaluation thinking): feature engineering, a rule engine, sklearn LogisticRegression, train_test_split, StandardScaler, and the metrics shown in the tutorial.
+**Scope:** Uses levels 6 and 7. Postgres, psycopg, psycopg_pool, threads. No new frameworks.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `fraud_engine.py` | features, rule engine, cost curve, model, queue, fairness check |
+| `bench/race.py` | the workers, the barrier, and the three modes |
+| `bench/pool.py` | the same workload with no pool, a right sized pool and a small one |
+| `migrations/0005_balance_constraint.sql` | the check that makes an overdraft impossible |
+| `tests/test_concurrency.py` | the reproduction, as a test that fails without the fix |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-python fraud_engine.py
+python -m bench.race naive && python -m bench.race for_update && python -m bench.race serializable && python -m bench.pool
 ```
 
 ## Why the solution is shaped this way
 
-- The do-nothing baseline (98.20% accuracy, zero fraud caught) prints **before** any model. Every later number is judged against it.
-- Rules are a list of `(name, test, points)`. Adding one is a single line and the whole rulebook prints for an auditor.
-- `score_row` returns the score **and** the reasons. A flag nobody can explain is a flag nobody can defend to a declined customer.
-- The cost curve is the part that decides what ships. F1 picks threshold 7; at a $4 review cost the cheapest is 4, and at $20 it moves again. The cost assumptions *are* the model, which is why they are printed.
-- The split is stratified and the scaler is fitted on training data only. Tuning a threshold on data the model trained on reports fiction.
-- The fairness check is run, not mentioned. The foreign flag rate is far above the home rate, and the write-up says what would have to happen before that went near production.
+- Connections are opened before the barrier. Staggered handshakes are the reason a race test passes by accident, and this one has to fail every time or it proves nothing.
+- The naive mode is kept in the repository on purpose. A fix nobody has seen fail is a claim, and the point of this project is evidence.
+- Three fixes, three different costs. The row lock is correct with no retries and makes spending from one account single file: measured at 691 ms against 367 ms for the broken version. Serializable is faster here at 368 ms and moves the cost to every caller, who must retry, which is only safe because level 7 made writes idempotent.
+- The constraint is the one that survives a new code path. A lock protects the code that takes it; a check on the balance column protects the account from code that has not been written yet.
+- The isolation level is set per transaction, never as a session SET. Behind a transaction mode pooler a session setting is silently discarded, which was measured while writing this level: show transaction_isolation reported read committed immediately after setting serializable.
+- The pool table is the argument for measuring rather than assuming: 31.4 requests a second with no pool, 127.1 with a pool of 8, and 30.8 with a pool of 2. A pool that is too small is a queue, and the wait does not appear in any query timing.
+- Waiting for a connection is recorded as its own metric, separately from query time. That single number is how you tell a slow database from a starved pool.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| "My model is 98% accurate" | So is flagging nothing. Report precision and recall. |
-| Precision and recall look swapped | `confusion_matrix(...).ravel()` returns `tn, fp, fn, tp`: in that order. |
-| `amount` coefficient is ~0 | Unscaled features. Standardise before comparing coefficient magnitudes. |
+| The naive run does not overdraw | The workers are not concurrent. Open every connection before the barrier and check the barrier count matches the worker count. |
+| Serializable makes no difference | A pooler discarded the session setting. Set the isolation level per transaction and print show transaction_isolation to prove it applied. |
+| Everything deadlocks once two accounts are locked | Lock ids in a consistent order, lowest first, so a cycle cannot form. |
+| Throughput does not improve with a pool | The pool is smaller than the concurrency, so requests queue for a connection instead of using the database. |
+| The service hangs under load instead of failing | No acquire timeout on the pool. An exhausted pool should return 503 with Retry-After, not an unbounded queue. |
 
 ## Self-checks the solution satisfies
 
-- The dataset has 6,000 rows with 108 frauds: a base rate of 1.80%
-- Flagging nothing gives an accuracy is 98.20% and appears in your output before any model
-- Mean amount is about $31.85 for legitimate rows and $167.25 for fraud
-- card_present is 61.1% of legitimate rows and 3.7% of fraud
-- With the tutorial rule weights, threshold 6 gives 88 TP, 72 FP, precision 55.0%, recall 81.5%
-- Threshold 7 gives 77 TP, 14 FP, precision 84.6%, recall 71.3%
-- Threshold 9 gives precision 100% and recall 28.7%
-- The cost curve at $4 review cost is cheapest at threshold 4 (about $2,068), with threshold 6 close at about $2,086
-- Raising the review cost to $20 moves the cheapest threshold: report where it lands
-- Test AUC is above 0.98 and your report notes why that is unrealistically high
-- Every flagged row in the review queue carries a non-empty reasons string
+- The naive mode ends with a negative balance on ten runs out of ten
+- The row lock mode ends with a balance of exactly 2000 and one successful spend
+- The serializable mode ends with a balance of exactly 2000, and any retries are counted and reported
+- Eight workers spending 1000 each from 10000 all succeed under the row lock, ending at 2000
+- `show transaction_isolation` inside a transaction prints serializable in that mode
+- With the check constraint in place, the naive worker still cannot produce a negative balance
+- The pool benchmark reports higher throughput for a right sized pool than for no pool
+- The pool benchmark shows a too small pool performing no better than no pool
+- Removing the fix from the API makes the concurrency test fail
+- An exhausted pool returns 503 with a Retry-After header rather than hanging
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 20 | Honest evaluation | Baseline stated first, confusion matrix correct, precision and recall never confused. |
-| 20 | Threshold economics | Cost model with stated assumptions, a full sweep, and a sensitivity run that changes the answer. |
-| 15 | Feature work | All five engineered features present and justified by the comparison table. |
-| 15 | Model discipline | Stratified split, scaler fitted on train only, class weighting, no leakage anywhere. |
-| 15 | Explainability | Reasons on every flag, coefficients translated into English, a usable ranked queue. |
-| 10 | Ethics | Fairness check performed and its implications discussed rather than waved away. |
-| 5 | Shipped | Runs top to bottom and is committed to your portfolio repo. |
+| 25 | A reproduction that always fails | Connections opened before a barrier, the overdraft on every run, and the test rig in CI. |
+| 25 | Three fixes, understood | Lock, serializable with retries, and a constraint, each working, each with its cost stated. |
+| 20 | Measured | Timings for each fix, the pool table with p50, p95 and throughput, and connection wait recorded separately. |
+| 15 | Carried into the service | The API cannot overdraw under concurrent calls, and fails fast when the pool is exhausted. |
+| 15 | Defended | A README paragraph choosing one approach for this system and saying what it costs. |
 
 ---
 
