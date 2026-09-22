@@ -85,19 +85,29 @@ const NOTES = {
     ]
   },
   5: {
-    files: [['`fx_portfolio.py`', 'retrying client, disk cache, snapshot fallback, valuation report']],
-    run: 'python fx_portfolio.py    (add --offline to force the snapshot path)',
+    files: [
+      ['`src/moneykit/currency.py`', 'Currency, the ISO 4217 exponents, and nothing else'],
+      ['`src/moneykit/money.py`', 'the frozen Money type: parse, format, arithmetic, comparisons'],
+      ['`src/moneykit/allocation.py`', 'allocate() by largest remainder'],
+      ['`tests/test_properties.py`', 'the Hypothesis properties, including conservation of money'],
+      ['`.github/workflows/ci.yml`', 'ruff, mypy --strict and pytest on a clean machine']
+    ],
+    run: 'pip install -e ".[dev]" && ruff check . && mypy src/moneykit --strict && pytest -q --cov=moneykit',
     design: [
-      'Three layers, tried in order: fresh cache, live call with backoff, bundled snapshot. The function never raises. There is always an answer, and it always says where the answer came from.',
-      'Every `requests.get` passes `timeout=`. Without one, a server that accepts a connection and never replies blocks forever.',
-      '`convert` adds `table[base] = 1.0` before looking anything up, so one code path handles base→x, x→base, x→y and x→x.',
-      'The live ECB feed quotes 29 currencies and **VND is not one of them**. Rather than dropping that holding, the solution falls back to the snapshot for that single currency and labels the row. Mixed provenance, stated openly, is how real treasury reports work.',
-      'Weights are stored at full precision and rounded only for display, rounding each one first makes the column sum to 1.000001.'
+      'Money and Currency are frozen dataclasses. Every operation returns a new value, so no two parts of a program can hold the same amount and disagree about it.',
+      'Amounts are integer minor units everywhere they are stored or returned. Decimal appears only inside a calculation that has a fractional unit in the middle of it, and the result is quantized back to an integer before it leaves.',
+      'The exponent lives on Currency, so nothing in the library divides by 100. That is what makes JPY and BHD work without a single special case.',
+      '__add__ calls _same_currency first, so mixing currencies raises rather than producing a number. There is deliberately no __float__: an easy way out of the type would make every guarantee optional.',
+      'allocate uses largest remainder: whole parts first, then the leftover units to whoever was cut by the most, ties broken by index so the result is deterministic. Refunds have to reverse the exact split that happened, which is impossible if the split is not repeatable.',
+      'Rounding is an argument, never a default buried in the function. The caller states ROUND_HALF_UP or ROUND_HALF_EVEN, because the right answer depends on the tax rules, not on the library.',
+      'Properties carry the weight: money is conserved under allocation, add and subtract undo each other, and format then parse round trips for every currency in the table. The example tests are there to document intent.'
     ],
     mistakes: [
-      ['The script hangs', 'A missing `timeout=`.'],
-      ['`KeyError: "USD"`', 'The API omits the base currency from its rates map. Add it as 1.0.'],
-      ['Converted amounts wildly wrong', 'Multiplied where you should divide. Sanity-check against a pair you know.']
+      ['Shares do not add back to the total', 'Each share was rounded on its own. Take the whole parts with integer division and hand out the remainder afterwards.'],
+      ['`Decimal(2.675)` is not 2.675', 'It was built from a float that was already wrong. Build from a string.'],
+      ['JPY prints as 10.00 instead of 1,000', 'Something divided by 100 instead of by 10 ** exponent.'],
+      ['mypy passes locally, fails in the pipeline', 'A dependency is installed on your machine and missing from pyproject.toml. The clean machine is right.'],
+      ['Coverage is high and a bug shipped anyway', 'Coverage counts lines that ran, not assertions that checked. Add a property.']
     ]
   },
   6: {

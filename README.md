@@ -62,7 +62,7 @@ model backed tutor.
 | 2 | The time value of money | Compound growth engine | functions, loops, f-strings |
 | 3 | Reading the money | Personal spending analyzer | pandas, matplotlib |
 | 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |
-| 5 | Market data and APIs | Portfolio valuation in several currencies | requests, JSON, caching |
+| 5 | The money library everything else imports | An exact Money library, tested and packaged | Decimal, Hypothesis, mypy, CI |
 | 6 | Credit, loans and amortization | Loan and early payoff simulator | bisection, scenario modelling |
 | 7 | Risk and return | Portfolio risk dashboard | numpy, volatility, drawdown |
 | 8 | Fraud detection and decision thresholds | Fraud scoring engine | scikit-learn, precision and recall |

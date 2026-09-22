@@ -24,157 +24,182 @@ FQ.registerLevel({
   ],
 
   knowledge: [
-    { h: 'The endpoint is a contract' },
-    { p: 'Once one other system calls your API, every response shape is a promise. Renaming a field is a breaking change, ' +
-         'adding one is not, and removing a status code you used to return will take somebody down on a Friday. Design ' +
-         'the contract before the implementation, because the implementation is the easy half to change.' },
+    { h: 'An API is a promise' },
+    { p: 'Level 11 built a ledger in a database. Nothing outside your own code can use it yet. This level puts an **API** in ' +
+         'front of it, the level 5 idea from the other side: now your server is the one other programs call. Each web address ' +
+         'it answers, together with its method, is an **endpoint**.' },
     { table: {
-      head: ['Route', 'Does', 'Returns'],
+      head: ['Endpoint', 'What it does', 'What it answers with'],
       rows: [
-        ['`POST /v1/transfers`', 'Move money between two accounts', '`201` with the transfer, or `200` on a replay'],
-        ['`GET /v1/transfers/{id}`', 'Read one transfer', '`200`, or `404` if it is not yours'],
-        ['`GET /v1/accounts/{id}/balance`', 'Balance in minor units', '`200`'],
-        ['`POST /v1/transfers/{id}/reverse`', 'Post the mirror transaction', '`201`, or `409` if already reversed']
+        ['`POST /v1/transfers`', 'Move money between two accounts', '`201` and the new transfer, or `200` if it is a retry'],
+        ['`GET /v1/transfers/{id}`', 'Look up one transfer', '`200`, or `404` if there is no such transfer for you'],
+        ['`GET /v1/accounts/{id}/balance`', 'The balance, in cents', '`200`'],
+        ['`POST /v1/transfers/{id}/reverse`', 'Cancel a transfer with a mirror transaction', '`201`, or `409` if it is already reversed']
       ]
     }},
-    { p: 'The `/v1` is not decoration. It is the promise that this shape keeps working while you build `/v2` beside it, and ' +
-         'it costs one path segment to add on the first day and a migration project to add on the thousandth.' },
+    { p: 'The moment one other company writes code against these endpoints, every detail of every response is a promise. ' +
+         'If you rename a field, their code breaks on the day you release it, and nothing warns them first. So you design the ' +
+         'endpoints carefully before writing the code behind them, because the code is the easy part to change later.' },
+    { p: 'The rule that follows: **adding** a field to a response is safe, because old code simply ignores it. **Removing** or ' +
+         '**renaming** one breaks somebody. That is what the `/v1` in every address is for: when you truly need to change the ' +
+         'shape, you build `/v2` beside it and leave `/v1` working until everybody has moved.' },
     { check: {
       q: 'A teammate wants to change `amount_cents` to `amount` and return a decimal string, because it reads better. Two ' +
          'partners already call the endpoint. What do you tell them?',
-      a: 'That it is a new version, not a rename. Every caller reading `amount_cents` breaks the moment it ships, and they ' +
-         'find out in production because nothing in HTTP warns them first. The cheap route is to add `amount` alongside, ' +
-         'leave `amount_cents` in place, mark it deprecated in the docs, and remove it in `/v2` when the partners have ' +
-         'moved. Adding a field is safe, removing or changing one is not, and that asymmetry is most of what API design is.'
+      a: 'That it is a new version, not a rename. Every caller reading `amount_cents` breaks the moment it ships, and they find ' +
+         'out when real payments fail, because nothing in the web protocol warns them first. The cheap route is to add `amount` ' +
+         'alongside, leave `amount_cents` in place, mark it as going away in the documentation, and remove it in `/v2` once the ' +
+         'partners have moved. Adding a field is safe, removing or changing one is not, and that difference is most of what ' +
+         'API design is about.'
     }},
 
-    { h: 'Idempotency over the wire' },
-    { p: 'Level 11 made the write idempotent inside the database. Now the retry arrives over a network, where the client ' +
-         'has no idea whether the first attempt reached you. The convention every payments API uses: the client generates ' +
-         'a key per intent and sends it as a header.' },
-    { code: 'POST /v1/transfers\nIdempotency-Key: 7b3c0f1a-4d22-4c0a-9a8f-1b5f0e0a2c11\nContent-Type: application/json\n\n{"from": "alice", "to": "bob", "amount_cents": 2500, "memo": "coffee"}', lang: 'text' },
-    { p: 'Three cases, and a serious API handles all three:' },
-    { ol: [
-      '**New key**: do the work, store the key with the response, return `201`.',
-      '**Same key, same request**: return the stored response and `200`. Do nothing else.',
-      '**Same key, different request body**: return `409`. The client has a bug, and quietly doing either thing hides it.'
-    ]},
-    { p: 'The third case is why you store a fingerprint of the request rather than only the key: a hash of the body, next to ' +
-         'the key, so you can tell a retry from a mistake.' },
-    { code: 'fingerprint = hashlib.sha256(raw_body).hexdigest()', lang: 'python' },
+    { h: 'Retries over the internet' },
+    { p: 'Level 4 met the lost response: the server charged the customer, the "done" message vanished in a tunnel, and the ' +
+         'phone tried again. Level 11 made the database refuse a duplicate key. Now the retry arrives over the internet, from ' +
+         'another company\'s server, which has no idea whether its first attempt reached you.' },
+    { p: 'The convention every payments API uses: the caller makes up one unique key for each payment it intends, and sends it ' +
+         'in a **header**, a labelled line of extra information that travels with the request, separate from the **body**, ' +
+         'which holds the data itself:' },
+    { code: 'POST /v1/transfers\nIdempotency-Key: 7b3c0f1a-4d22-4c0a-9a8f-1b5f0e0a2c11        <- a header\nContent-Type: application/json                               <- another header\n\n{"from": "alice", "to": "bob", "amount_cents": 2500, "memo": "coffee"}      <- the body', lang: 'text' },
+    { p: 'A serious API handles three cases:' },
+    { table: {
+      head: ['What arrives', 'What your API does', 'Status'],
+      rows: [
+        ['A key it has never seen', 'Do the transfer, save the key with the response', '`201`'],
+        ['A key it has seen, with the same body', 'A retry: send back the saved response, do nothing else', '`200`'],
+        ['A key it has seen, with a **different** body', 'The caller has a bug. Say so', '`409`']
+      ]
+    }},
+    { p: 'To spot the third case you save a **fingerprint** of the body next to the key. A fingerprint here is a **hash**: a ' +
+         'function that turns any amount of data into a short fixed-length code, where changing even one character gives a ' +
+         'completely different code:' },
+    { code: 'fingerprint = hashlib.sha256(raw_body).hexdigest()\n\n{"from": "alice", "to": "bob", "amount_cents": 2500, "memo": "coffee"}\n  -> b40aa7b7c24977df974168ca0f36e6ba2992243c978ce36e2005135419fb2a73\n\n{"from": "alice", "to": "bob", "amount_cents": 9900, "memo": "coffee"}\n  -> bb08dfe38c4af85aa928fc123dee2b1e6fea77f3a7ccf9f2fb9440e263f40dc6', lang: 'python' },
     { check: {
-      q: 'Your API stores the key and returns the old response on any repeat. A client has a bug that reuses one key for ' +
+      q: 'Your API saves the key and sends back the old response on any repeat. A caller has a bug that reuses one key for ' +
          'every transfer of the day. What does your API do, and what should it do?',
-      a: 'It returns the first transfer, every time, and the client believes forty payments went through when one did. The ' +
-         'money is safe and the records are wrong, which is worse in one way: nobody is looking for a problem. With the ' +
-         'body fingerprint stored you compare, see a different request under the same key, and return `409` naming ' +
-         'the key. The client finds their bug on the second request instead of at month end.'
+      a: 'It sends back the first transfer every time, and the caller believes forty payments went through when one did. The ' +
+         'money is safe and the records are wrong, which is worse in one way: nobody is looking for a problem. With the body ' +
+         'fingerprint saved you compare, see a different request under the same key, and return `409` naming the key. The ' +
+         'caller finds their bug on the second request instead of at the end of the month.'
     }},
 
     { h: 'A payment is a state machine' },
-    { p: 'Level 4 listed the states. Now they are columns, and the value of writing them down is that most bugs in payment ' +
-         'systems are a transition nobody thought about: a refund of a payment that failed, a capture of an authorization ' +
-         'that expired, a second reversal of the same transfer.' },
-    { code: 'requested ──▶ posted ──▶ settled\n    │             │\n    │             └──▶ reversed\n    └──▶ failed\n\nlegal = {\n  "requested": {"posted", "failed"},\n  "posted":    {"settled", "reversed"},\n  "settled":   {"reversed"},\n  "reversed":  set(),        # terminal\n  "failed":    set(),        # terminal\n}', lang: 'python', label: 'the whole machine' },
-    { code: 'def move(transfer, to_state):\n    if to_state not in LEGAL[transfer.state]:\n        raise IllegalTransition(f"{transfer.state} cannot become {to_state}")\n    transfer.state = to_state', lang: 'python' },
-    { p: 'One function, one dictionary, and the illegal transition becomes an exception instead of a support ticket. In the ' +
-         'API it becomes `409 Conflict`, because the request was well formed and the current state refuses it.' },
+    { p: 'Level 4 listed the stages a payment passes through. A **state machine** is that list plus a strict rule about which ' +
+         'stage may follow which. Most bugs in payment systems are a move nobody thought about: refunding a payment that ' +
+         'failed, or reversing the same transfer twice.' },
+    { code: 'requested ──▶ posted ──▶ settled\n    │             │\n    │             └──▶ reversed\n    └──▶ failed\n\nLEGAL = {\n  "requested": {"posted", "failed"},\n  "posted":    {"settled", "reversed"},\n  "settled":   {"reversed"},\n  "reversed":  set(),        # final: nothing can follow\n  "failed":    set(),        # final: nothing can follow\n}', lang: 'python', label: 'the whole machine' },
+    { p: 'A state with nothing after it is called **terminal**. One small function then guards every change:' },
+    { code: 'def move(transfer, to_state):\n    if to_state not in LEGAL[transfer.state]:\n        raise IllegalTransition(f"{transfer.state} cannot become {to_state}")\n    transfer.state = to_state\n\nmove(t, "reversed")    # posted -> reversed: fine\nmove(t, "reversed")    # IllegalTransition: reversed cannot become reversed', lang: 'python' },
+    { p: 'One function and one dictionary, and an impossible move becomes an error instead of a customer complaint. In the API ' +
+         'it becomes `409 Conflict`: the request was written correctly, but the transfer\'s current state refuses it.' },
     { check: {
-      q: 'A partner calls reverse twice on the same transfer, a second apart. Without the state machine, what happens, and ' +
-         'with it, what status code do they get?',
-      a: 'Without it, two mirror transactions post and the customer is refunded twice: the ledger still balances, which is ' +
-         'what makes this kind of bug survive so long. With it, the first call moves the transfer to reversed, and the ' +
-         'second finds reversed is terminal and returns `409` with a code the partner can branch on. Note what it is not: ' +
-         'not `400`, because their request was fine, and not `500`, because nothing went wrong on your side.'
+      q: 'A partner calls reverse twice on the same transfer, a second apart. Without the state machine, what happens, and with ' +
+         'it, what status code do they get?',
+      a: 'Without it, two mirror transactions are saved and the customer is refunded twice. The ledger still balances, which is ' +
+         'exactly why this kind of bug survives so long. With it, the first call moves the transfer to reversed, and the second ' +
+         'finds that reversed is terminal and gets `409` with a code the partner\'s program can check. Note what it is not: not ' +
+         '`400`, because their request was fine, and not `500`, because nothing broke on your side.'
     }},
 
-    { h: 'Errors a machine can act on' },
-    { p: 'A client cannot branch on prose. Every error gets a status code for the class of problem and a short stable string ' +
-         'for the specific one, and the human sentence is extra rather than the payload.' },
+    { h: 'Errors a program can act on' },
+    { p: 'The caller of your API is a program, and a program cannot read a sentence and decide what to do. So every error ' +
+         'carries three things: a status code for the kind of problem, a short fixed string for the exact problem, and a ' +
+         'sentence for the human who reads the logs later:' },
     { code: '{\n  "error": {\n    "code": "insufficient_funds",\n    "message": "alice holds $12.40, this transfer needs $25.00",\n    "request_id": "req_01J8ZC"\n  }\n}', lang: 'json' },
+    { p: 'The caller\'s code can then say `if error["code"] == "insufficient_funds": show_top_up_screen()`, which it could never ' +
+         'do with the sentence. The status code tells it whether trying again could ever help:' },
     { table: {
-      head: ['Status', 'Means', 'Should the client retry?'],
+      head: ['Status', 'Means', 'Should the caller try again?'],
       rows: [
-        ['`400`', 'The request is malformed', 'No, fix it'],
-        ['`401` / `403`', 'Not authenticated, or not allowed', 'No'],
-        ['`404`', 'No such thing, or not yours', 'No'],
-        ['`409`', 'Well formed, but the state refuses it', 'No, read the state'],
-        ['`422`', 'Well formed, but the values are wrong', 'No'],
-        ['`429`', 'Too fast', 'Yes, after the stated delay'],
-        ['`500`', 'You broke', 'Yes, with backoff'],
-        ['`503`', 'You are down or shedding load', 'Yes, with backoff']
+        ['`400`', 'The request is badly formed', 'No, fix it'],
+        ['`401` or `403`', 'Not logged in, or not allowed', 'No'],
+        ['`404`', 'No such thing, or not yours to see', 'No'],
+        ['`409`', 'Correctly written, but the current state refuses it', 'No, look at the state first'],
+        ['`422`', 'Correctly written, but a value is wrong', 'No'],
+        ['`429`', 'Too many requests', 'Yes, after the delay you are told'],
+        ['`500`', 'Something broke on the server', 'Yes, with backoff'],
+        ['`503`', 'The server is down or overloaded', 'Yes, with backoff']
       ]
     }},
-    { p: 'The `request_id` is the cheapest debugging tool in the building. Generate one per request, log it with everything ' +
-         'you log, and return it in every response and every error. A partner reporting a problem quotes it and you find ' +
-         'the exact request in one search.' },
+    { p: 'The `request_id` is the cheapest debugging tool there is. Make one up for every request, include it in every line you ' +
+         'log about that request, and send it back in every response. When a partner reports a problem they quote it, and you ' +
+         'find their exact request in one search instead of an afternoon.' },
     { check: {
-      q: 'Your API returns `500` when a transfer has insufficient funds, with the message "insufficient funds". Two things ' +
-         'are wrong. What are they, and what does the caller do because of it?',
-      a: 'The status is wrong and the payload is unusable. `500` means you broke, so a well behaved client retries it, with ' +
-         'backoff, forever, against an account that will never have the money: you have turned a clean refusal into a ' +
-         'retry storm. And because the only machine readable part is the status code, the client cannot tell this apart ' +
-         'from a database outage. It should be `422` with `"code": "insufficient_funds"`, which tells the client to stop ' +
-         'and tells their monitoring not to page anybody.'
+      q: 'Your API returns `500` when a transfer has insufficient funds, with the message "insufficient funds". Two things are ' +
+         'wrong. What are they, and what does the caller do because of it?',
+      a: 'The status is wrong and the body is useless to a program. `500` means the server broke, so a well written caller ' +
+         'retries it, with backoff, forever, against an account that will never have the money: you have turned a clean refusal ' +
+         'into a flood of retries. And because the only part a program can read is the status code, the caller cannot tell this ' +
+         'apart from your database being down. It should be `422` with `"code": "insufficient_funds"`, which tells the caller to ' +
+         'stop and tells their alerts not to wake anybody up.'
     }},
 
-    { h: 'Webhooks out: signed, timestamped, retried' },
-    { p: 'Polling for state changes wastes everybody\'s capacity, so you tell the client instead. The receiving endpoint is ' +
-         'on the public internet, so the only thing that makes your message trustworthy is a signature they can check.' },
+    { h: 'Webhooks: telling other systems what happened' },
+    { p: 'A partner wants to know the moment a transfer settles. They could ask you every few seconds, called **polling**, which ' +
+         'wastes everybody\'s effort. Instead you tell them: when something happens, your server sends a request to an address ' +
+         'they gave you. That is a **webhook**.' },
+    { p: 'The problem: their address is on the public internet, so anybody can send a request to it pretending to be you. The ' +
+         'only thing that makes your message trustworthy is a **signature** they can check. You and the partner share a secret ' +
+         'string, and you compute an **HMAC**: a hash of the message mixed with that secret. Only somebody holding the secret ' +
+         'can produce it, and changing even one character of the message changes it completely:' },
     { code: 'signed_payload = f"{timestamp}.{raw_body}"\nsignature = hmac.new(secret, signed_payload.encode(), hashlib.sha256).hexdigest()\nheaders = {"FQ-Signature": f"t={timestamp},v1={signature}"}', lang: 'python' },
-    { code: 'timestamp  1789000000\nbody       {"event":"transfer.posted","id":"evt_001","amount_cents":2500}\nsignature  8f06cd5628f7cb2f1a1b866c33e374be5d60dd6586354cf24f288eb58fc04b13\n\nchange amount_cents to 250000 and the same secret produces\n           5cf3256746fdfa70d1833b2d42d3ab4602d416fa88239f118b188ea55b3480f1', lang: 'text', label: 'one byte changes everything' },
-    { p: 'The timestamp is inside the signed string on purpose. Without it, anybody who captures one valid request can send ' +
-         'it again a year later and it still verifies. With it, the receiver rejects anything older than a few minutes, and ' +
-         'an attacker cannot change the timestamp without breaking the signature.' },
-    { p: 'Delivery is **at least once**, never exactly once. The network can lose your message or lose their acknowledgement, ' +
-         'and you cannot tell which, so you retry: 1 second, 2, 4, 8, up to a limit, and then the event goes to a dead ' +
-         'letter queue a human looks at. Which means the receiver has to cope with duplicates, which is why every event ' +
-         'carries an id.' },
-    { money: 'Stripe, Adyen, GoCardless and every other processor works exactly this way, down to the header format. ' +
-             'Building it once means you can integrate any of them, because you already know what the other end is doing.' },
+    { code: 'secret     whsec_demo\ntimestamp  1789000000\nbody       {"event":"transfer.posted","id":"evt_001","amount_cents":2500}\nsignature  4d1b509b955a53c3722bd994df5b07463b33bea6a533c634b6c437b642499561\n\nchange amount_cents to 250000 and the same secret produces\n           706589412db2aa3ba1945579134291303b33ab4ae02bf82bfcbd71b9b34a5857', lang: 'text', label: 'one change, a completely different signature' },
+    { p: 'The **timestamp** is inside the signed text on purpose. Without it, someone who copies one genuine message could send ' +
+         'it again a year later and it would still check out, which is called a **replay attack**. With it, the receiver refuses ' +
+         'anything more than a few minutes old, and the attacker cannot change the time without breaking the signature.' },
+    { p: 'Webhooks are delivered **at least once**, never exactly once. The internet can lose your message, or lose their ' +
+         '"got it" reply, and you cannot tell which, so you keep retrying: after 1 second, 2, 4, 8, up to a limit. After that, ' +
+         'the event goes into a holding list, a **dead letter queue**, for a person to look at. So the receiver will sometimes ' +
+         'get the same event twice, which is why every event carries its own id.' },
+    { money: 'Stripe, Adyen, GoCardless and every other payment processor works exactly this way, down to the header format. ' +
+             'Build it once and you understand what the other end is doing in every integration you will ever write.' },
     { check: {
-      q: 'Your webhook sends a transfer event, the customer\'s server processes it and credits an order, and then their ' +
-         'response is lost on the way back. You retry. What has to be true on their side for that to be safe, and whose job ' +
-         'is it to make it so?',
-      a: 'Their handler has to be idempotent on the event id: look it up, and if they have already processed `evt_001`, ' +
-         'acknowledge and do nothing. It is their job, and it is your job to make it possible, which means every event ' +
-         'carries a stable unique id and your documentation says delivery is at least once. A processor that promises ' +
-         'exactly once delivery over a network is promising something nobody can deliver.'
+      q: 'Your webhook sends a transfer event, the partner\'s server receives it and marks an order as paid, and then their ' +
+         '"got it" reply is lost. You retry. What has to be true on their side for that to be safe, and whose job is it?',
+      a: 'Their handler has to ignore an event id it has already handled: look it up, and if `evt_001` was already processed, ' +
+         'reply "got it" and do nothing. Doing that is their job; making it possible is yours, which means every event carries ' +
+         'a unique id that never changes, and your documentation says delivery is at least once. A processor that promises ' +
+         'exactly-once delivery over the internet is promising something nobody can deliver.'
     }},
 
-    { h: 'Webhooks in: verify before you trust' },
-    { p: 'When you are the receiver the order matters, and every step of it is a real incident somebody has had.' },
+    { h: 'Receiving a webhook: check before you trust' },
+    { p: 'When you are the one receiving, the order of the steps matters, and every step is a real incident someone has had:' },
     { ol: [
-      'Read the **raw body**, not the parsed JSON. Re-serialising changes the bytes and the signature will not match.',
-      'Check the **timestamp** is within a few minutes of now, or a captured message can be replayed forever.',
-      'Recompute the HMAC and compare with **`hmac.compare_digest`**, never `==`.',
-      'Only then parse the JSON and act, and make the action idempotent on the event id.'
+      'Read the **raw body**, the exact bytes that arrived, before turning it into Python objects. Converting it and back ' +
+      'changes the bytes, and the signature will no longer match.',
+      'Check the **timestamp** is within a few minutes of now, or a copied message can be replayed forever.',
+      'Recompute the HMAC with your copy of the secret and compare using **`hmac.compare_digest`**, never `==`.',
+      'Only then read the JSON and act on it, ignoring any event id you have already handled.'
     ]},
-    { code: 'import hmac, hashlib, time\n\ndef verify(raw_body: bytes, header: str, secret: bytes, tolerance=300) -> bool:\n    parts = dict(p.split("=", 1) for p in header.split(","))\n    ts, sig = parts["t"], parts["v1"]\n    if abs(time.time() - int(ts)) > tolerance:\n        return False\n    expected = hmac.new(secret, f"{ts}.".encode() + raw_body, hashlib.sha256).hexdigest()\n    return hmac.compare_digest(expected, sig)', lang: 'python' },
-    { warn: '`==` on a signature compares byte by byte and stops at the first difference, so how long it takes leaks how much ' +
-            'of the signature was right. `compare_digest` takes the same time either way. This is a real attack, it has a ' +
-            'name, and the fix is one function call.' },
+    { code: 'import hmac, hashlib, time\n\ndef verify(raw_body: bytes, header: str, secret: bytes, tolerance=300) -> bool:\n    parts = dict(p.split("=", 1) for p in header.split(","))\n    ts, sig = parts["t"], parts["v1"]\n    if abs(time.time() - int(ts)) > tolerance:          # older than 5 minutes: refuse\n        return False\n    expected = hmac.new(secret, f"{ts}.".encode() + raw_body, hashlib.sha256).hexdigest()\n    return hmac.compare_digest(expected, sig)', lang: 'python' },
+    { warn: '`==` compares two strings one character at a time and stops at the first difference, so how long it takes reveals ' +
+            'how much of a guessed signature was right. An attacker who can time thousands of guesses can work the signature ' +
+            'out one character at a time. `compare_digest` always takes the same time. This is called a **timing attack**, and ' +
+            'the fix is one function call.' },
     { check: {
-      q: 'You verify the signature against the JSON you parsed and re-serialised, because it is easier to work with. It ' +
-         'passes in your tests and fails in production. Why?',
-      a: 'Because your tests round trip the same serialiser and production does not. The sender signed their exact bytes: ' +
-         'their key order, their spacing, their unicode escaping. `json.loads` then `json.dumps` produces different bytes ' +
-         'with the same meaning, and HMAC has no opinion about meaning. Read the raw body once, verify it, and parse ' +
-         'afterwards. In FastAPI that is `await request.body()`, before anything touches the model.'
+      q: 'You check the signature against JSON you parsed and turned back into text, because it is easier to work with. It ' +
+         'passes in your tests and fails with the real partner. Why?',
+      a: 'Because your tests convert with the same library both ways and the partner does not. The partner signed their exact ' +
+         'bytes: their key order, their spacing, their way of writing special characters. `json.loads` then `json.dumps` ' +
+         'produces different bytes with the same meaning, and an HMAC only cares about bytes. Read the raw body once, check it, ' +
+         'and parse afterwards. In FastAPI that is `await request.body()`, before anything else touches the request.'
     }},
 
-    { h: 'Keys, and what you do with them at rest' },
-    { p: 'Callers authenticate with an API key in a header. Two rules make the difference between a professional service and ' +
-         'a student one, and both are about what happens after the key is issued.' },
+    { h: 'API keys, and how to store them' },
+    { p: 'Callers prove who they are with an **API key**, a long secret string sent in a header on every request:' },
     { code: 'Authorization: Bearer fq_live_9c1d...', lang: 'text' },
+    { p: 'Two rules separate a professional service from a student one, and both are about what you do after you hand the key ' +
+         'out:' },
     { ul: [
-      '**Store a hash, never the key.** You show it once at creation and keep `sha256(key)` in the database. Then a copy of ' +
-      'your table is not a copy of your customers\' credentials, and you can still authenticate by hashing what arrives.',
-      '**Never log it.** Not in access logs, not in an exception, not in a request dump. Level 11 had the same rule for the ' +
-      'connection string, and the redaction helper in this course exists because somebody learned it the hard way.'
+      '**Store a hash, never the key.** Show the key once, when it is created, and save only its hash, `sha256(key)`. When a ' +
+      'request arrives, hash the key it carries and compare. You can still check every request, but a stolen copy of your ' +
+      'table contains no working keys, because a hash cannot be turned back into the key.',
+      '**Never write it to a log.** Not in the request log, not in an error message, not in a debugging dump. Logs get copied ' +
+      'to many places and read by many people, and a key in a log is a key anyone can use.'
     ]},
-    { p: 'Give every key a prefix that says what it is, like `fq_live_` and `fq_test_`. It costs nothing, it makes a leaked ' +
-         'key findable by a scanner, and it stops the oldest mistake in the industry: running a test against production.' }
+    { p: 'Give every key a prefix that says what it is, like `fq_live_` for real money and `fq_test_` for testing. It costs ' +
+         'nothing, it lets automatic scanners recognise a leaked key, and it stops the oldest mistake in the industry: running a ' +
+         'test against real customers\' money.' }
   ],
 
   tutorial: {

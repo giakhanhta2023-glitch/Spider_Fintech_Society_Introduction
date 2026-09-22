@@ -1,611 +1,596 @@
 /* =========================================================================
-   LEVEL 5: Market data and APIs
+   LEVEL 5: the money library everything else imports
    ========================================================================= */
 FQ.registerLevel({
   id: 5,
-  codename: 'market feed',
-  title: 'Market data and APIs',
-  tagline: 'Pull live rates off the internet, and keep your app calm on the day the internet says no.',
+  codename: 'moneykit',
+  title: 'The money library everything else imports',
+  tagline: 'Every payments company has one library that owns arithmetic on money, and everything else calls it. You are going to write that library, test it the way people test money code, and ship it behind a pipeline that blocks bad merges.',
   difficulty: 5,
-  minutes: 150,
-  tags: ['REST', 'JSON', 'requests', 'resilience'],
-  summary: 'Fintech products are mostly other people\'s data, arriving over HTTP, sometimes late, sometimes wrong, ' +
-           'occasionally not at all. This level is about fetching it and about what your code does when the fetch fails.',
+  minutes: 300,
+  tags: ['Python', 'Decimal', 'testing', 'packaging', 'CI'],
+  summary: 'Level 4 stored cents as integers and moved on. That stops working once there are several currencies, percentages, ' +
+           'fees to split and a tax line. This level builds a real Money type, gets its rounding and splitting right to the ' +
+           'cent, tests it with properties rather than examples, and packages it so other projects can install it. It is also ' +
+           'where you pick up the tooling every backend team assumes you already use.',
 
   objectives: [
-    'Read an API endpoint, its query parameters, and its JSON response',
-    'Use requests with a timeout and check status codes properly',
-    'Handle failure with try/except, retries with backoff, and a cached fallback',
-    'Keep API keys out of your code and out of your repository',
-    'Convert money between currencies, including cross rates',
-    'Value a multi-currency portfolio and stamp the result with its data source and age'
+    'Say exactly why floats cannot hold money, and what integers and Decimal each cost',
+    'Design an immutable Money type that refuses to add two currencies',
+    'Choose a rounding rule on purpose, and know what half-even changes',
+    'Split an amount without losing or inventing a cent, and prove it',
+    'Write property-based tests that find the cases you would not have thought of',
+    'Package the library, type check it, and gate merges with a pipeline',
+    'Publish it as a repository a reviewer can read in two minutes'
   ],
 
   knowledge: [
-    { h: 'What an API is, in plain words' },
-    { p: 'When you open a website, your browser sends a short message to another computer somewhere, asking for a page. ' +
-         'That computer sends the page back. Your side is the **client**, their side is the **server**, the message you send ' +
-         'is a **request**, and what comes back is a **response**.' },
-    { p: 'An **API** is the same exchange, except the thing asking is a program instead of a person, and what comes back is ' +
-         'data instead of a web page. The company running the server publishes a list of what you are allowed to ask for and ' +
-         'what you will get back. Think of it as a restaurant menu: you cannot walk into the kitchen, but you can order ' +
-         'anything on the list.' },
-    { p: 'Most APIs you will meet are **REST APIs**, which only means each thing you can ask for has its own web address. ' +
-         'Here is a real one that returns exchange rates. Paste it into a browser and you will see the answer:' },
-    { code: 'https://api.frankfurter.app/latest?base=USD&symbols=EUR,GBP\n\\____/  \\_______________/\\_____/ \\____________________/\nscheme       host          path        query parameters', lang: 'text', label: 'the four parts of a request' },
+    { h: 'Why money needs its own type' },
+    { p: 'Level 4 stored amounts as a whole number of cents, and that solved one problem. Here are three more that a bare ' +
+         'integer does not solve. All three have caused real incidents at real companies.' },
+    { p: '**Problem one: a decimal amount arrives from outside.** Prices, tax rates and interest rates are written with ' +
+         'decimal points, and the obvious way to handle them loses money:' },
+    { code: '>>> 0.1 + 0.2\n0.30000000000000004\n\n>>> total = 0.0\n>>> for _ in range(1_000_000):\n...     total += 0.01\n>>> total\n10000.000000171856          # should be exactly 10000.00', lang: 'python' },
+    { p: 'A **float** is how a computer stores a number with a decimal point: as a fraction in binary. Most decimal amounts ' +
+         'have no exact binary form, in the same way one third has no exact decimal form, so each one is stored as a very ' +
+         'close approximation. A million small additions turned into an error of 0.00000017. Tiny, and exactly the kind of ' +
+         'number that makes a daily reconciliation fail.' },
+    { p: '**Problem two: currencies get mixed.** An integer knows nothing about what it counts:' },
+    { code: 'usd_balance = 1000        # $10.00\nvnd_balance = 1000        # 1,000 dong, about four cents\n\ntotal = usd_balance + vnd_balance     # 2000 of... what?', lang: 'python' },
+    { p: 'Nothing raises an error. The number 2000 travels through your system and is printed as $20.00 on a statement. This ' +
+         'is the most common money bug in companies that operate in more than one country.' },
+    { p: '**Problem three: not every currency has two decimal places.** The number of digits after the point is called the ' +
+         'currency\'s **exponent**, and it is set by an international standard, ISO 4217:' },
     { table: {
-      head: ['Part', 'In this example', 'What it does'],
+      head: ['Currency', 'Exponent', 'Smallest unit', '1,000 smallest units is'],
       rows: [
-        ['Scheme', '`https`', 'How to talk: the `s` means the conversation is encrypted'],
-        ['Host', '`api.frankfurter.app`', 'Which computer to ask'],
-        ['Path', '`/latest`', 'Which item on the menu: here, today\'s rates'],
-        ['Query parameters', '`?base=USD&symbols=EUR,GBP`', 'Your options for that item: rates measured in dollars, for euros and pounds only. `?` starts them, `&` separates them']
+        ['USD, EUR, GBP', '2', 'cent, cent, penny', '$10.00'],
+        ['JPY, VND, KRW', '0', 'the whole yen, dong, won', '1,000 yen'],
+        ['BHD, KWD, TND', '3', 'a thousandth of a dinar', '1.000 dinar']
       ]
     }},
-    { p: 'The response comes back as **JSON**, a way of writing data as plain text that almost every API uses:' },
-    { code: '{\n  "amount": 1.0,\n  "base": "USD",\n  "date": "2025-09-01",\n  "rates": { "EUR": 0.9123, "GBP": 0.7684 }\n}', lang: 'json', label: 'what comes back' },
-    { p: 'If that looks like a Python dictionary, it nearly is. Curly brackets become a dict, square brackets become a list, ' +
-         'and text and numbers stay what they are. `response.json()` does the conversion, and then you step down one level ' +
-         'per pair of square brackets: `data["rates"]` is the inner dict, and `data["rates"]["EUR"]` is `0.9123`.' },
-    { p: 'Every request also says what kind of action it is, with a word called the **method**:' },
-    { table: {
-      head: ['Method', 'Means', 'Used for'],
-      rows: [
-        ['`GET`', 'Read something', 'Fetching rates, prices, balances'],
-        ['`POST`', 'Create something', 'Making a payment, opening an account'],
-        ['`PUT` or `PATCH`', 'Replace or update', 'Editing a profile'],
-        ['`DELETE`', 'Remove', 'Closing a card']
-      ]
-    }},
-    { p: 'This level only uses `GET`, because reading market data is the safe half of the job. Notice the difference though: ' +
-         'asking for today\'s rates twice does no harm, while creating a payment twice charges someone twice. That is exactly ' +
-         'why level 4 needed idempotency keys for payments.' },
+    { p: 'Code that assumes "divide by 100 to display" shows 10.00 yen where it should show 1,000 yen. The fix for all three ' +
+         'problems is the same: stop passing bare numbers around, and build a **type** that carries the amount, the currency ' +
+         'and the rules together.' },
     { check: {
-      q: 'From that response, write the expression that gets 0.7684. Then say what `data["rates"]["JPY"]` does, given that ' +
-         'JPY was never in `symbols`.',
-      a: '`data["rates"]["GBP"]`. The JSON became a dict, and each pair of brackets steps down one level. Asking for JPY ' +
-         'raises `KeyError`, and that is the correct failure: the alternative, a quiet zero, would value a Japanese holding at ' +
-         'nothing and print it as a number. Use `data["rates"].get("JPY")` when you would rather handle the absence yourself, ' +
-         'and either way decide what a missing rate means before you multiply by it.'
+      q: 'A colleague says the float problem is theoretical, because their amounts are small and the error is in the ' +
+         'fourteenth decimal place. Give them a concrete reason to care.',
+      a: 'Two reasons, and neither needs a large amount. First, errors add up: a million additions of one cent produced an ' +
+         'error of 0.00000017 above, and a real system does far more arithmetic than that, on balances compared for exact ' +
+         'equality against a bank statement. A reconciliation that requires a difference of exactly zero fails on a difference ' +
+         'of 0.0000002, and somebody spends a day finding out why. Second, comparisons quietly go wrong: `0.1 + 0.2 == 0.3` ' +
+         'is `False`, so an `if balance == amount` that should be true is false, and a payment is refused for a reason no log ' +
+         'explains.'
     }},
 
-    { h: 'Status codes: how the request went' },
-    { p: 'Along with the data, every response carries a three digit number, the **status code**, that says how it went. You ' +
-         'have seen one already: a "404 page not found". The first digit tells you the most important thing, which is whose ' +
-         'problem it is:' },
+    { h: 'Integers or Decimal: pick one, and know why' },
+    { p: 'Python gives you two ways to hold money exactly, and professional codebases use both, in different places.' },
     { table: {
-      head: ['Code', 'Meaning', 'What you should do'],
+      head: ['', 'Integer minor units', '`Decimal`'],
       rows: [
-        ['`200`', 'OK, here is your data', 'Carry on'],
-        ['`400`', 'Bad request: what you sent makes no sense', 'Fix your code. Sending it again gets the same answer'],
-        ['`401` or `403`', 'Not allowed: key missing, wrong, or without permission', 'Check your key'],
-        ['`404`', 'Not found', 'Wrong path, or a currency or symbol they do not have'],
-        ['`429`', 'Too many requests', 'You are going too fast: wait, then slow down'],
-        ['`500`, `502`, `503`', 'Their server broke', 'Try again in a moment; it often fixes itself']
+        ['Holds', '`1999`, meaning $19.99', '`Decimal("19.99")`'],
+        ['Exact?', 'Yes: whole numbers are exact', 'Yes: it works in base ten, like a person'],
+        ['Speed', 'The fastest thing in the language', 'Roughly ten times slower'],
+        ['Good for', 'Storing and moving amounts: ledger columns, API fields', 'Percentages, tax, interest, conversion rates'],
+        ['Bad at', 'Anything with a fractional cent in the middle', 'Being fast in a hot loop']
       ]
     }},
-    { p: 'The rule of thumb: **codes in the 400s mean you are wrong, codes in the 500s mean they are wrong**. Retrying a 400 ' +
-         'is pointless, because nothing about your request changed. Retrying a 503 a few times usually works, because servers ' +
-         'restart and recover.' },
-    { check: {
-      q: 'Your job retries every failed call five times with backoff. Overnight it meets a `400` and a `503`, and retries ' +
-         'both the same way. Which one is your code making worse?',
-      a: 'The `400`. The server has told you the request itself is wrong, so the sixth identical request gets the identical ' +
-         'answer: you are using up your allowance of requests to be told off five extra times, and crowding out the `503` ' +
-         'retries that might have worked. Retry what can change on its own, meaning 500s and dropped connections. Fix what ' +
-         'cannot, meaning 400s, in the code. The exception is `429`, a 400-series code that means "slow down" rather than ' +
-         '"stop", and it is the one case where waiting is the whole fix.'
-    }},
-    { p: 'One more failure has no status code at all: the server accepts your request and then never answers. That is what ' +
-         'a **timeout** is for. It is how long you are willing to wait before giving up, and you set it on every request:' },
-    { code: 'r = requests.get(url, timeout=10)    # wait at most 10 seconds, then raise an error', lang: 'python' },
-    { warn: '`requests.get(url)` with no `timeout` will wait **forever** if the server never answers, because the requests ' +
-            'library has no default limit. Every request in real code has a timeout. No exceptions.' },
-    { check: {
-      q: 'A rate feed accepts your connection and then answers nothing at all, for hours. You called `requests.get(url)` ' +
-         'with no timeout. Describe what your app is doing.',
-      a: 'Waiting, for as long as the connection stays open. In a notebook that is one stuck cell. In a web app it is one ' +
-         'worker gone from the pool that handles visitors, then another on the next request, until none are left and the site ' +
-         'stops answering every user, for a reason that has nothing to do with them. `timeout=10` turns a silent hang into a ' +
-         '`requests.Timeout` error you can catch, log and recover from. That is the whole argument for the rule having no ' +
-         'exceptions.'
-    }},
+    { p: '**`Decimal`** is a number type in Python\'s standard library that stores digits in base ten, the way you write them ' +
+         'on paper, so `Decimal("0.1") + Decimal("0.2")` is exactly `Decimal("0.3")`. It is the right tool the moment a ' +
+         'calculation has a fractional cent in the middle of it, such as 8.25% tax on $19.99.' },
+    { warn: 'Never build a `Decimal` from a float. `Decimal(2.675)` is `2.674999999999999822...` because the float was already ' +
+            'wrong before `Decimal` saw it. Always build from a string or an integer: `Decimal("2.675")`.' },
+    { p: 'The rule this course uses, and that most payments companies use: **store and move integers, calculate in `Decimal`, ' +
+         'and come back to integers before anything is saved.**' },
 
-    { h: 'Rate limits, and backing off politely' },
-    { p: 'Free APIs cap how often you may call them, for example 30 requests a minute, the way a busy shop lets in only so ' +
-         'many customers at once. That cap is the **rate limit**. Go over it and you get a `429`, and keep hammering and some ' +
-         'providers block you for a while.' },
-    { p: 'The polite and effective response is **exponential backoff**: after each failure, wait twice as long as last time ' +
-         'before trying again. Here it is as a timeline, when all three attempts fail:' },
+    { h: 'Rounding is a decision, not a detail' },
+    { p: 'Any calculation with a percentage in it produces fractions of a cent, and you have to decide what happens to them. ' +
+         'Python\'s built-in `round` is not that decision, and it will surprise you:' },
+    { code: '>>> round(2.675, 2)\n2.67                # not 2.68: the float was really 2.674999999999999822', lang: 'python' },
+    { p: '`Decimal` makes the decision explicit with `quantize`, which means "give me this number with exactly this many ' +
+         'decimal places, rounded this way":' },
+    { code: 'from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN\n\nDecimal("2.665").quantize(Decimal("0.01"), ROUND_HALF_UP)     # 2.67\nDecimal("2.665").quantize(Decimal("0.01"), ROUND_HALF_EVEN)   # 2.66', lang: 'python' },
     { table: {
-      head: ['Time', 'What happens'],
+      head: ['Rule', 'What it does with an exact half', 'Where you meet it'],
       rows: [
-        ['0 s', 'Attempt 1 fails. Wait 1 second'],
-        ['1 s', 'Attempt 2 fails. Wait 2 seconds'],
-        ['3 s', 'Attempt 3 fails. Wait 4 seconds'],
-        ['7 s', 'Give up and move on to your fallback']
+        ['`ROUND_HALF_UP`', 'Always rounds away from zero: 2.665 becomes 2.67', 'What people expect. Common in retail pricing and tax'],
+        ['`ROUND_HALF_EVEN`', 'Rounds to the nearest even digit: 2.665 becomes 2.66, 2.675 becomes 2.68', 'The banking default, also called banker\'s rounding'],
+        ['`ROUND_DOWN`', 'Cuts the extra digits off', 'Interest some products pay. Read the contract']
       ]
     }},
-    { code: 'for attempt in range(3):\n    try:\n        r = requests.get(url, timeout=10)\n        r.raise_for_status()           # turns a 4xx or 5xx code into an error\n        return r.json()\n    except requests.RequestException:\n        time.sleep(2 ** attempt)        # 1s, 2s, 4s\nraise RuntimeError("giving up after 3 attempts")', lang: 'python' },
-    { money: 'A trading desk that hammers a rate-limited feed gets cut off exactly when markets are moving fast, which is the ' +
-             'moment the data matters most. Backing off is self-preservation.' },
+    { p: 'Why does banking prefer half-even? Because always rounding halves upward adds a tiny bias in one direction, and ' +
+         'across millions of rows that bias is real money moving to one side. Half-even sends half the ties up and half down, ' +
+         'so it cancels.' },
+    { p: 'Now the part that decides real invoices. Seven lines of $1.99, with 8.25% tax. Round each line, or round the ' +
+         'invoice once?' },
+    { code: 'per line:     7 x round(1.99 x 0.0825) = 7 x 0.16 = $1.12\nper invoice:  round(7 x 1.99 x 0.0825) = round(1.149225) = $1.15\n\nthree cents apart, on one small order', lang: 'text' },
+    { p: 'Neither is wrong as arithmetic. One of them is wrong for your business, because tax authorities, card networks and ' +
+         'accounting standards each say which they expect. What is always wrong is not knowing which one your code does.' },
     { check: {
-      q: 'Why wait 1, then 2, then 4 seconds rather than trying three times a second apart? And how long have you waited in ' +
-         'total if all three attempts fail?',
-      a: 'Seven seconds, which is 1 + 2 + 4. The doubling is the point. A `429` means too many requests are arriving too ' +
-         'fast, usually from many clients, not only you, and a fixed one second retry sends everybody back at the same moment ' +
-         'to cause the same jam again. Doubling gives the server room to recover and moves you further back in the queue each ' +
-         'time. Retrying hard against a rate limit is breaking the rate limit with extra steps.'
+      q: 'Your invoice shows three line totals that add up to $59.98, and an order total of $59.97. Both were computed with ' +
+         'the same rounding rule. Explain how that happens, and what you do about it.',
+      a: 'Each line was rounded before being added, and the order total was calculated from the unrounded amounts and rounded ' +
+         'once. Every cent is a legitimate rounding decision and the two paths disagree, which is normal, and is why the fix ' +
+         'is a rule rather than a bug fix. Pick one place where rounding happens, usually the line, and make the total the sum ' +
+         'of the rounded lines, so the invoice adds up in front of the customer. Then write a test that adds the lines and ' +
+         'asserts they equal the total, because this comes back every time somebody adds a discount.'
     }},
 
-    { h: 'Never trust a single live call' },
-    { p: 'An app that shows a blank screen when an API is slow is a broken app. So you build three layers of defence, and the ' +
-         'code tries them in order:' },
+    { h: 'Splitting money without losing a cent' },
+    { p: 'Three people share a $100.00 bill. In cents, 10000 divided by 3 is 3333 with 1 left over. If you round each share ' +
+         'you get 3333 three times, which is $99.99, and a cent has vanished. Money that vanishes breaks the level 4 rule ' +
+         'that a transaction sums to zero.' },
+    { p: 'The standard answer is the **largest remainder method**: give everybody their whole part, then hand out the leftover ' +
+         'units one at a time, starting with whoever was cut by the most:' },
+    { code: 'allocate(10000, [1, 1, 1])   ->  [3334, 3333, 3333]      sums to 10000\nallocate(5,     [3, 7])      ->  [2, 3]                  sums to 5\nallocate(1999,  [1, 2, 3])   ->  [333, 666, 1000]        sums to 1999', lang: 'text', label: 'allocation, in cents' },
+    { p: 'Read the middle line. Five cents split three to seven cannot be exact, so somebody gets two and somebody gets three, ' +
+         'and the rule decides who, the same way every time. Those are the two properties that matter: the shares always add ' +
+         'back to the original amount, and the same inputs always give the same answer.' },
+    { money: 'This exact function is in the public interface of every payments library worth using, because splitting a ' +
+             'payment between a merchant, a platform and a tax authority is the daily business of a payments company. ' +
+             'Interviewers ask for it because it is small enough for forty minutes and shows immediately whether a candidate ' +
+             'thinks about the leftover.' },
+    { check: {
+      q: 'A teammate implements the split as `[round(total * w / sum(weights)) for w in weights]`, and the tests pass. What ' +
+         'did the tests miss, and what would you add?',
+      a: 'They only tried amounts that divide evenly. As soon as the division has a remainder, rounding each share on its own ' +
+         'produces a set that does not add back to the total: $100.00 three ways gives $99.99, and other combinations give ' +
+         'more than the total, which is worse because it invents money. The test to add is a rule rather than another example: ' +
+         'for any amount and any weights, the shares must sum exactly to the amount. That one assertion, run against hundreds ' +
+         'of generated cases, is the subject of the next section.'
+    }},
+
+    { h: 'Testing money code: examples are not enough' },
+    { p: 'What you have written so far are **example tests**: with this input, expect that output. They are necessary, and ' +
+         'they share one weakness that the allocation bug shows: you only test the cases you thought of, and bugs live in the ' +
+         'cases you did not.' },
+    { p: '**Property-based testing** turns that around. You state a rule that must hold for every input, and a library ' +
+         'generates hundreds of inputs trying to break it. In Python that library is **Hypothesis**:' },
+    { code: 'from hypothesis import given, strategies as st\n\n@given(total=st.integers(min_value=0, max_value=10**9),\n       weights=st.lists(st.integers(min_value=1, max_value=1000), min_size=1, max_size=10))\ndef test_allocation_conserves_money(total, weights):\n    shares = allocate(total, weights)\n    assert sum(shares) == total          # nothing lost, nothing invented\n    assert len(shares) == len(weights)\n    assert all(s >= 0 for s in shares)', lang: 'python' },
+    { p: 'Run that and Hypothesis tries hundreds of combinations, including the ones you avoid by instinct: zero, a single ' +
+         'weight, a billion, weights of wildly different sizes. When it finds a failure it does something better than ' +
+         'reporting it: it **shrinks** the case, cutting it down to the smallest input that still fails, so you get ' +
+         '`total=1, weights=[1, 1]` instead of a wall of digits.' },
+    { table: {
+      head: ['Property', 'What it says'],
+      rows: [
+        ['`sum(allocate(t, w)) == t`', 'Splitting conserves money'],
+        ['`(a + b) - b == a`', 'Adding and subtracting undo each other'],
+        ['`Money.parse(str(m)) == m`', 'Formatting and parsing round trip'],
+        ['`m * 2 == m + m`', 'Multiplication agrees with repeated addition'],
+        ['`a + b == b + a`', 'Order does not change a total']
+      ]
+    }},
+    { tip: 'Keep both kinds. Example tests document intent, and a reviewer reads them to learn what the code is for. Property ' +
+           'tests hunt for bugs nobody imagined. Interviewers notice the second kind, because most candidates have never ' +
+           'written one.' },
+
+    { h: 'Type hints, and the checker that reads them' },
+    { p: 'Python does not make you say what type a value is, which is pleasant until a function receives a string where it ' +
+         'expected an amount. **Type hints** are annotations that say what you meant:' },
+    { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    ...', lang: 'python' },
+    { p: 'Python itself ignores them while running. A separate tool called **mypy** reads them and checks your whole codebase ' +
+         'for contradictions before you run anything:' },
+    { code: '$ mypy src/moneykit\nsrc/moneykit/allocation.py:14: error: Argument 1 to "allocate" has incompatible type "str"; expected "int"\nFound 1 error in 1 file (checked 6 source files)', lang: 'text' },
+    { p: 'For a library other people import this matters more than for a script: their editor reads your hints and offers the ' +
+         'right arguments, and their own checks catch their mistakes at the boundary with your code. Job descriptions that ' +
+         'say "strong Python" almost always mean typed Python with tests, not clever Python.' },
+
+    { h: 'A library, not a folder of files' },
+    { p: 'So far your code has been files you open. A **library** is code packaged so that other projects can install it and ' +
+         '`import` it without copying anything. In Python you declare one in a file called `pyproject.toml`:' },
+    { code: '[project]\nname = "moneykit"\nversion = "0.1.0"\nrequires-python = ">=3.11"\ndependencies = []                 # a money library should need nothing\n\n[project.optional-dependencies]\ndev = ["pytest", "hypothesis", "mypy", "ruff", "pytest-cov"]\n\n[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"', lang: 'toml', label: 'pyproject.toml' },
+    { p: 'Then `pip install -e ".[dev]"` installs your own package in **editable** mode: the code stays where it is, your ' +
+         'edits take effect immediately, and `import moneykit` works from any folder. That one command is how almost every ' +
+         'Python repository you will ever join expects to be set up.' },
+    { p: 'The version number is a promise in three parts, called **semantic versioning**:' },
+    { table: {
+      head: ['What changed', 'Version goes', 'Because'],
+      rows: [
+        ['You fixed a bug, nothing else', '0.1.0 to 0.1.1', 'Callers can upgrade without reading anything'],
+        ['You added something new', '0.1.1 to 0.2.0', 'New things exist, old things still work'],
+        ['You renamed or removed something', '0.2.0 to 1.0.0', 'Callers must change their code, so warn them loudly']
+      ]
+    }},
+    { check: {
+      q: 'You rename `Money.cents` to `Money.minor_units` because it reads better, bump the version from 0.3.1 to 0.3.2, and ' +
+         'release. Three services at your company use the library. What happens, and what should you have done?',
+      a: 'Every service that reads `.cents` breaks the moment it upgrades, and because you only changed the last number, ' +
+         'automatic upgrades pick it up without anybody reading a note. That is what the version number is for: a rename is a ' +
+         'breaking change and belongs in a new major version. The kinder path is to add `minor_units`, keep `.cents` working ' +
+         'as an alias, say in the changelog that it is going away, and remove it in 1.0.0. Adding is safe; removing and ' +
+         'renaming are not.'
+    }},
+
+    { h: 'The tools a backend team assumes you use' },
+    { p: 'Four tools, one job each. Nobody will teach you these on your first day, and every repository you join has them.' },
+    { table: {
+      head: ['Tool', 'What it does', 'Why anyone cares'],
+      rows: [
+        ['**ruff**', 'Reads your code for style problems and likely bugs, and fixes many of them', 'Ends arguments about formatting, catches unused and shadowed names'],
+        ['**mypy**', 'Checks that your type hints are consistent', 'Finds "a string reached a function expecting an int" before a customer does'],
+        ['**pytest**', 'Runs your tests and reports what failed', 'The one command that says whether a change is safe'],
+        ['**GitHub Actions**', 'Runs all of the above on a clean machine on every push', 'Stops a merge that would break the library, including your own']
+      ]
+    }},
+    { p: 'The pipeline is the piece worth understanding, because it turns habits into guarantees. One file in your repository ' +
+         'says what to run, and GitHub runs it on a fresh machine every time anybody pushes:' },
+    { code: 'name: ci\non: [push, pull_request]\njobs:\n  check:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with: { python-version: "3.12" }\n      - run: pip install -e ".[dev]"\n      - run: ruff check .\n      - run: mypy src/moneykit --strict\n      - run: pytest -q --cov=moneykit --cov-fail-under=95', lang: 'yaml', label: '.github/workflows/ci.yml' },
+    { p: 'The clean machine is the point. "It works on my laptop" usually means something is installed on your laptop that is ' +
+         'written down nowhere, and a pipeline finds that on the first run.' },
+    { check: {
+      q: 'Your tests pass locally and the pipeline fails with `ModuleNotFoundError: No module named hypothesis`. What does ' +
+         'that tell you about your project, and where exactly is the fix?',
+      a: 'Hypothesis is installed on your machine but is not written down as a dependency, so the clean machine does not have ' +
+         'it. The fix is in `pyproject.toml`, in the `dev` list, not in the pipeline file: the pipeline is right and your ' +
+         'project was lying about what it needs. This is the whole value of a clean environment. Every undeclared assumption ' +
+         'on your laptop is an incident waiting for the next person who clones the repository.'
+    }},
+
+    { h: 'What a reviewer sees' },
+    { p: 'This library is the first repository in your portfolio that a backend interviewer might actually open. They will ' +
+         'spend about two minutes. Here is what they look for, in order:' },
     { ol: [
-      '**Cache**: every time a call succeeds, save the answer together with the time you got it. Next time, if that saved ' +
-      'copy is recent enough, use it and skip the call entirely. "Recent enough" is a number you choose, called the ' +
-      '**freshness window**: exchange rates published once a day are fine an hour old.',
-      '**Retry**: if the call fails with a dropped connection or a 500-series code, try again a few times with backoff.',
-      '**Fallback**: if everything fails, use a copy of the data you shipped with the app, and **label it clearly as old**.'
+      '**Does the README say what it is in one line, and show one usage example?**',
+      '**Is there a tests folder, and does it contain properties as well as examples?**',
+      '**Is there a pipeline badge, and is it green?**',
+      '**Are the public functions typed, with short docstrings saying what they return?**',
+      '**Does the commit history show work, or one commit called "initial commit" with everything in it?**',
+      '**Is there a section saying what it does not do?** Rounding rules not implemented, currencies not supported.'
     ]},
-    { p: 'Here is a morning with a one hour freshness window:' },
-    { table: {
-      head: ['Time', 'What happens', 'What the user sees'],
-      rows: [
-        ['09:00', 'No saved copy. Call the API, it works, save the answer', 'Live rate, "as of 09:00"'],
-        ['09:40', 'Saved copy is 40 minutes old, inside the window. No call made', 'Same rate, "as of 09:00"'],
-        ['10:15', 'Saved copy is too old. Call the API: it is down. Three retries fail', 'Yesterday\'s bundled rate, "offline copy, 2025-09-01"']
-      ]
-    }},
-    { p: 'The label in the last column matters more than the code. A rate shown without its age is a problem waiting to happen. ' +
-         'Every number you show from someone else\'s data should say where it came from and when.' },
-    { check: {
-      q: 'The feed goes down, your fallback works exactly as designed, nothing crashes, and a member converts $5,000 on the ' +
-         'rate you showed. Your code behaved correctly. What went wrong?',
-      a: 'The screen said nothing about the number being from yesterday, so the member read an old rate as a live one and ' +
-         'made a real decision on it. Not crashing was the easy half. The half that matters is one line of text next to the ' +
-         'figure: the source and the time, for example "ECB reference rate, 2025-09-01, 19 hours old". A user who sees that ' +
-         'can decide to wait. A user who sees a bare number cannot, and they will be right to blame you.'
-    }},
-
-    { h: 'Keys are passwords: keep them out of your code' },
-    { p: 'Many APIs ask for a **key**, a long random string that proves the request comes from you. It usually also decides ' +
-         'who gets billed, so anybody holding your key can run up your bill. Treat it exactly like a password.' },
-    { p: 'The safe place for a key is an **environment variable**: a value your computer hands to a program when it starts, ' +
-         'kept outside your code files. Your code asks for it by name, so the key itself never appears in anything you save or ' +
-         'share. In a notebook, where that is awkward, you type it in each session with `getpass`, which hides what you type:' },
-    { code: 'import os\nfrom getpass import getpass\n\n# Use the environment variable if it exists, otherwise ask, and never save it in the notebook\nAPI_KEY = os.environ.get("MARKET_API_KEY") or getpass("API key: ")', lang: 'python' },
-    { table: {
-      head: ['Do', 'Do not'],
-      rows: [
-        ['Read it from an environment variable', 'Paste the key into a cell you will commit'],
-        ['Type it with `getpass` in a notebook', 'Put it in a web address you print or log'],
-        ['List `.env` in `.gitignore` so git never saves it', 'Send it to a teammate in a chat message'],
-        ['Cancel the key and make a new one the moment it leaks', 'Assume deleting it from the file removes it. It does not']
-      ]
-    }},
-    { warn: 'Deleting a key from a file does **not** remove it from git history: every earlier version of the file is still ' +
-            'stored and readable. If a key is ever committed to a public repository, cancel it at the provider immediately. ' +
-            'Automated programs scan public code for keys all day and can find one within minutes.' },
-    { check: {
-      q: 'You pasted a key into a notebook and pushed it. An hour later you notice, delete the line, and push again. Is the ' +
-         'key safe?',
-      a: 'No. The commit that carried it is still in the history, and anybody can read it there, so a deleted line proves ' +
-         'nothing. Public repositories are scanned all day by programs that do nothing else, and an hour is a long time. The ' +
-         'fix is to cancel the key at the provider and create a new one, today, before anything else. Cleaning the history ' +
-         'afterwards is tidy, but the key is already spent, and no amount of tidying makes it unspent.'
-    }},
-
-    { h: 'Exchange rates: which way round?' },
-    { p: 'An exchange rate is always about two currencies. `EUR/USD = 1.0961` means one euro costs 1.0961 dollars. The first ' +
-         'currency, the one you are pricing, is the **base**. The second, the one the price is written in, is the **quote**. ' +
-         'Reading a rate the wrong way round is the most common currency bug there is.' },
-    { p: 'The rates in this level all use the dollar as the base: "1 USD buys 0.9123 EUR". So the direction of your sum ' +
-         'depends on which way you are going:' },
-    { table: {
-      head: ['You have', 'You want', 'Do this', 'Result'],
-      rows: [
-        ['$250', 'Euros', 'Multiply: 250 x 0.9123', '228.075 EUR'],
-        ['250 EUR', 'Dollars', 'Divide: 250 / 0.9123', '$274.03'],
-        ['$10', 'Vietnamese dong', 'Multiply: 10 x 25,480', '254,800 VND']
-      ]
-    }},
-    { p: 'And if you want euros to pounds but only have rates against the dollar, go through the dollar. The rate you get ' +
-         'that way is called a **cross rate**:' },
-    { code: '# rates against USD:  EUR 0.9123   GBP 0.7684\n\neur_to_gbp = 0.7684 / 0.9123        # 0.842267 pounds per euro', lang: 'python' },
-    { tip: 'Before trusting any conversion, ask which number should be bigger. If $1 buys 25,480 dong, then $10 must be ' +
-           'hundreds of thousands of dong. If your answer is 0.0004, you divided when you should have multiplied.' },
-    { check: {
-      q: 'USD is the base and 1 USD buys 0.9123 EUR. A member holds 250 EUR and asks what it is worth in dollars. Work it ' +
-         'out, and say how you would catch yourself getting it backwards.',
-      a: '250 / 0.9123 = $274.03. You divide because the rate is written per dollar and you are going the other way. The ' +
-         'check needs no formula at all: a euro is worth more than a dollar here, so the dollar figure has to be the bigger ' +
-         'one. Multiplying instead gives about $228, roughly $46 short, and it looks perfectly reasonable on screen, which is ' +
-         'exactly why this bug reaches real users. Every conversion gets a "does this point the right way" glance before it ' +
-         'ships.'
-    }},
-    { check: {
-      q: 'You hold only USD quotes: EUR 0.9123 and GBP 0.7684. Convert 1,000 EUR to GBP two ways, through dollars and ' +
-         'through the cross rate, and account for any difference.',
-      a: 'Through dollars: 1,000 / 0.9123 = $1,096.13, then x 0.7684 = £842.27. Through the cross rate: 0.7684 / 0.9123 = ' +
-         '0.842267 per euro, so 1,000 x 0.842267 = £842.27. The same answer, because the cross rate is those two steps with ' +
-         'the dollars cancelled out. Round the cross rate to 0.8423 first and you get £842.30, three pence out, and on a ' +
-         'million euro transfer the same rounding is off by £33. Keep full precision through the calculation and round once, ' +
-         'at the end, when you show it.'
-    }},
-
-    { h: 'The spread: why you never get the rate on the news' },
-    { p: 'A currency dealer quotes two prices, not one. The **bid** is what they will pay you for a euro. The **ask** is what ' +
-         'they will charge you for one. The gap between them is the **spread**, and it is how the dealer earns a living. The ' +
-         'number on the news is the **mid-market rate**, exactly halfway between the two.' },
-    { table: {
-      head: ['Quote', 'EUR/USD', 'Selling 1,000 EUR gets you'],
-      rows: [
-        ['Bid (dealer buys from you)', '1.0950', '$1,095.00'],
-        ['Mid-market (the news)', '1.0961', '$1,096.10, but nobody trades here'],
-        ['Ask (dealer sells to you)', '1.0972', '']
-      ]
-    }},
-    { p: 'Selling 1,000 euros at the bid gets you $1.10 less than the headline rate suggests, and that $1.10 is the dealer\'s ' +
-         'income. Apps that promise "the real exchange rate" usually mean they convert at mid-market and charge a separate, ' +
-         'stated fee instead of hiding it in the spread.' },
-    { check: {
-      q: 'A news site says EUR/USD is 1.0961. An app advertises "the real exchange rate" and the member ends up with less ' +
-         'than 1.0961 dollars per euro. Who is lying?',
-      a: 'Nobody, necessarily. 1.0961 is the mid-market rate, the halfway point between what dealers pay and what they ' +
-         'charge, and nobody actually trades at it. The member dealt at the dealer\'s price, and the gap to the middle is the ' +
-         'dealer\'s income. An honest app quotes mid-market and shows its own fee as a separate line, so the two add up to what ' +
-         'lands in the account. A dishonest one hides the fee inside a worse rate and calls the result "no fees". What you owe ' +
-         'the member is the amount they will actually receive, not a rate that looks good next to the news.'
-    }},
-
-    { h: 'No data source covers everything' },
-    { p: 'The free rates API in this level publishes the **European Central Bank reference rates**, around 30 currencies. ' +
-         'USD, EUR, GBP, JPY, SGD and INR are in it. **VND is not**, and neither are most African, Middle Eastern and smaller ' +
-         'Asian currencies.' },
-    { p: 'That is normal, and it is a design decision rather than a bug. When your source does not cover a currency someone ' +
-         'holds, you have three choices. Leave the holding out, which makes the total too small. Value it at zero, which is ' +
-         'worse, because it puts a number on screen that says the money is gone. Or **use a second source for that one ' +
-         'currency and label the row** so the reader can see where it came from. Real systems do the third, which is why ' +
-         'professional valuation tables have a "source" column.' },
-    { check: {
-      q: 'A member holds 5,000,000 VND and your feed does not quote it. Take each of the three options in turn and say what ' +
-         'the portfolio total reads.',
-      a: 'At 25,480 dong to the dollar the holding is worth about $196.23. Leave it out and the total is short by that much, ' +
-         'with nothing on screen to say so. Value it at zero and the total is short by the same amount, except now a row says ' +
-         'the member\'s money is worth nothing, which they will notice and disbelieve. Use a second source for that one row, ' +
-         'label it, and the total is right while the reader can see where the odd figure came from. The first two options are ' +
-         'quiet, and quiet is exactly what you do not want: the third is the only one that survives somebody checking your work.'
-    }},
-    { money: 'Mixing sources is the normal state of financial data: a finance team\'s report routinely combines a live feed, ' +
-             'a file from a broker and a rate somebody typed in by hand. The discipline is not avoiding the mix. It is ' +
-             'labelling it.' }
+    { money: 'A small library, complete and tested, beats a large application that half works. The reviewer is not asking ' +
+             '"is this impressive". They are asking "would I merge this person\'s pull request without rewriting it".' }
   ],
 
   tutorial: {
-    intro: 'New notebook: `finquest-level-05.ipynb`. `requests` is preinstalled in Colab. Both APIs here are free and need ' +
-           'no key, so you can run every cell immediately.',
+    intro: 'On your own machine this time, not a notebook: a library is a project with a folder structure. If level 4 was the ' +
+           'last thing you did in Colab, this is the step across. You need Python 3.11 or newer, an editor, and a terminal. ' +
+           'Every command below is meant to be typed, in order.',
     steps: [
       {
-        t: 'Your first API call',
+        t: 'Make the project and its environment',
         blocks: [
-          { code: 'import requests\n\nr = requests.get("https://api.frankfurter.app/latest",\n                 params={"base": "USD", "symbols": "EUR,GBP,JPY"},\n                 timeout=10)\n\nprint(r.status_code)        # 200\nprint(r.url)                # requests built the query string for you\ndata = r.json()\nprint(data)', lang: 'python' },
-          { p: 'Passing `params` as a dict is safer than gluing the URL together yourself: requests escapes special characters ' +
-               'correctly. And `timeout=10` is not optional.' },
-          { code: 'print(data["base"])              # USD\nprint(data["date"])              # the date these rates are from\nprint(data["rates"]["EUR"])      # 0.9123', lang: 'python' }
+          { p: 'A **virtual environment** is a private folder of libraries for one project, so two projects can use different ' +
+               'versions of the same thing without fighting. Make one, switch into it, and keep it out of git.' },
+          { code: 'mkdir moneykit && cd moneykit\ngit init\npython -m venv .venv\n\n# Windows\n.venv\\Scripts\\activate\n# macOS or Linux\nsource .venv/bin/activate\n\nprintf ".venv/\\n__pycache__/\\n*.egg-info/\\n.coverage\\n" > .gitignore', lang: 'bash' },
+          { p: 'Your prompt now starts with `(.venv)`. That is how you know which environment a command will affect, and ' +
+               'forgetting it causes half of all "but I installed it" conversations.' }
         ],
-        check: 'You printed a live EUR rate and the date it belongs to.'
+        check: 'The prompt shows (.venv), and git status lists only .gitignore.'
       },
       {
-        t: 'Check the response before you trust it',
+        t: 'Declare the package',
         blocks: [
-          { p: '`raise_for_status()` turns any 4xx/5xx into an exception so a bad response cannot slip through as data.' },
-          { code: 'r = requests.get("https://api.frankfurter.app/latest",\n                 params={"base": "XYZ"}, timeout=10)\nprint(r.status_code)         # 404. XYZ is not a currency\n\ntry:\n    r.raise_for_status()\nexcept requests.HTTPError as err:\n    print("API said no:", err)', lang: 'python' },
-          { warn: 'Without `raise_for_status()`, calling `.json()` on an error response either throws a confusing JSON error ' +
-                  'or hands you an error object that your code treats as rates.' }
+          { code: 'moneykit/\n  pyproject.toml\n  README.md\n  src/moneykit/__init__.py\n  src/moneykit/currency.py\n  src/moneykit/money.py\n  src/moneykit/allocation.py\n  src/moneykit/errors.py\n  tests/test_money.py\n  tests/test_allocation.py\n  tests/test_properties.py', lang: 'text', label: 'the shape to build' },
+          { p: 'Write the `pyproject.toml` from the knowledge section, then install the package into your environment in ' +
+               'editable mode:' },
+          { code: 'pip install -e ".[dev]"\npython -c "import moneykit; print(moneykit.__file__)"', lang: 'bash' },
+          { tip: 'The `src/` folder is a deliberate habit. It makes it impossible to import your package by accident from the ' +
+                 'folder you are standing in, so your tests exercise the installed package exactly as a user would.' }
         ],
-        check: 'A bad currency code gives you a handled error message instead of a crash.'
+        check: 'import moneykit works from any directory, and the path it prints is inside src/.'
       },
       {
-        t: 'Wrap it in a function that cannot hang',
+        t: 'The currency table',
         blocks: [
-          { code: 'import time\n\ndef fetch_json(url, params=None, attempts=3, timeout=10):\n    """GET JSON with retries and exponential backoff. Raises on final failure."""\n    last_error = None\n    for attempt in range(attempts):\n        try:\n            r = requests.get(url, params=params, timeout=timeout)\n            r.raise_for_status()\n            return r.json()\n        except requests.RequestException as err:\n            last_error = err\n            if attempt < attempts - 1:\n                time.sleep(2 ** attempt)          # 1s, 2s\n    raise RuntimeError(f"failed after {attempts} attempts: {last_error}")\n\n\nrates = fetch_json("https://api.frankfurter.app/latest", {"base": "USD"})\nprint(len(rates["rates"]), "currencies")', lang: 'python' },
-          { p: '`requests.RequestException` is the parent of timeouts, connection errors, and HTTP errors, so one `except` ' +
-               'covers every network failure mode.' }
+          { p: 'Currencies differ in how many decimal places they have, so that belongs in data, not in `/ 100` scattered ' +
+               'through your code.' },
+          { code: 'from dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass Currency:\n    code: str           # "USD"\n    exponent: int       # 2\n    symbol: str = ""\n\nCURRENCIES = {\n    "USD": Currency("USD", 2, "$"),\n    "EUR": Currency("EUR", 2, "\\u20ac"),\n    "GBP": Currency("GBP", 2, "\\u00a3"),\n    "JPY": Currency("JPY", 0, "\\u00a5"),\n    "VND": Currency("VND", 0, "\\u20ab"),\n    "BHD": Currency("BHD", 3, ""),\n}', lang: 'python' },
+          { p: '`@dataclass(frozen=True)` writes the boilerplate for a small value type and makes it **immutable**: once ' +
+               'created it cannot be changed. That matters for money, because a value that can change underneath you is a ' +
+               'value two parts of your program can disagree about.' }
         ],
-        check: 'fetch_json returns a dict, and raises a clear RuntimeError if you point it at a dead URL.'
+        check: 'CURRENCIES["JPY"].exponent is 0, and assigning to a Currency field raises FrozenInstanceError.'
       },
       {
-        t: 'Cache to disk so you stop re-asking',
+        t: 'The Money type',
         blocks: [
-          { code: 'import json, os\nfrom datetime import datetime, timedelta\n\nCACHE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\ndef load_cache():\n    if not os.path.exists(CACHE):\n        return None\n    with open(CACHE, "r", encoding="utf-8") as fh:\n        blob = json.load(fh)\n    age = datetime.now() - datetime.fromisoformat(blob["fetched_at"])\n    return blob if age < MAX_AGE else None\n\ndef save_cache(payload):\n    blob = {"fetched_at": datetime.now().isoformat(), "payload": payload}\n    with open(CACHE, "w", encoding="utf-8") as fh:\n        json.dump(blob, fh, indent=2)', lang: 'python' },
-          { p: '`with open(...)` closes the file for you even if something throws. `json.dump` writes, `json.load` reads. ' +
-               'In Colab the file lives in the session and disappears on restart, which is fine, that is what a cache is.' }
+          { code: 'from decimal import Decimal, ROUND_HALF_UP\n\n@dataclass(frozen=True)\nclass Money:\n    minor_units: int          # 1999 means $19.99\n    currency: Currency\n\n    @classmethod\n    def parse(cls, text: str, code: str) -> "Money":\n        """Money.parse("19.99", "USD") -> Money(1999, USD)."""\n        cur = CURRENCIES[code]\n        scaled = Decimal(text) * (10 ** cur.exponent)\n        if scaled != scaled.to_integral_value():\n            raise InvalidAmount(f"{text} has more places than {cur.code} allows")\n        return cls(int(scaled), cur)\n\n    def __add__(self, other: "Money") -> "Money":\n        self._same_currency(other)\n        return Money(self.minor_units + other.minor_units, self.currency)\n\n    def _same_currency(self, other: "Money") -> None:\n        if self.currency != other.currency:\n            raise CurrencyMismatch(f"{self.currency.code} and {other.currency.code}")\n\n    def __str__(self) -> str:\n        units = Decimal(self.minor_units) / (10 ** self.currency.exponent)\n        return f"{self.currency.symbol}{units:,.{self.currency.exponent}f}"', lang: 'python' },
+          { p: 'Writing `__add__` is what makes `a + b` work on your own type. Calling `_same_currency` inside it is what ' +
+               'makes the multi-currency bug impossible rather than unlikely. Add `__sub__`, `__mul__` by an integer, ' +
+               '`__neg__` and the comparisons the same way.' },
+          { warn: 'Do not add a `__float__` method, however convenient it looks. The moment somebody can turn your Money into ' +
+                  'a float, every guarantee in this library becomes optional.' }
         ],
-        check: 'Running your fetch twice writes fx_cache.json once and reuses it the second time.'
+        check: 'Money.parse("19.99", "USD") + Money.parse("0.01", "USD") prints $20.00, adding USD to VND raises, and parse("19.999", "USD") raises.'
       },
       {
-        t: 'Three layers: cache, live, snapshot',
+        t: 'Allocation, the function interviewers ask for',
         blocks: [
-          { p: 'This function is the shape of every resilient data client you will ever write. Note that it always reports ' +
-               '**where** the numbers came from.' },
-          { code: 'SNAPSHOT_URL = "{{RAW}}/data/level-05-fx-snapshot.json"\n\ndef get_rates(base="USD"):\n    """Return (rates_dict, source_label, as_of_date)."""\n    cached = load_cache()\n    if cached and cached["payload"]["base"] == base:\n        p = cached["payload"]\n        return p["rates"], "cache", p["date"]\n\n    try:\n        live = fetch_json("https://api.frankfurter.app/latest", {"base": base})\n        save_cache(live)\n        return live["rates"], "live", live["date"]\n    except RuntimeError as err:\n        print("live feed unavailable:", err)\n\n    snap = fetch_json(SNAPSHOT_URL)          # bundled fallback\n    return snap["rates"], "STALE SNAPSHOT", snap["date"]\n\n\nrates, source, as_of = get_rates("USD")\nprint(f"{len(rates)} rates from {source}, as of {as_of}")', lang: 'python' },
-          { tip: 'To test the fallback without unplugging your wifi, temporarily point the live URL at ' +
-                 '`https://api.frankfurter.app/nope` and watch it degrade gracefully.' }
+          { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    """Split total into len(weights) parts, in proportion, losing nothing."""\n    if not weights:\n        raise ValueError("need at least one weight")\n    if any(w < 0 for w in weights):\n        raise ValueError("weights cannot be negative")\n\n    weight_sum = sum(weights)\n    shares = [total * w // weight_sum for w in weights]        # the whole parts\n    remainder = total - sum(shares)                            # what is left over\n\n    # hand the leftover units to whoever was cut by the most\n    order = sorted(range(len(weights)),\n                   key=lambda i: (-((total * weights[i]) % weight_sum), i))\n    for i in order[:remainder]:\n        shares[i] += 1\n    return shares', lang: 'python' },
+          { code: '>>> allocate(10000, [1, 1, 1])\n[3334, 3333, 3333]\n>>> allocate(5, [3, 7])\n[2, 3]\n>>> allocate(1999, [1, 2, 3])\n[333, 666, 1000]', lang: 'python' },
+          { p: 'Then wrap it on `Money`, so callers work in money rather than integers: `price.allocate([1, 1, 1])` returning ' +
+               'a list of `Money`.' }
         ],
-        check: 'You saw all three paths work: live first, cache second, and snapshot when the live URL is broken.'
+        check: 'All three examples match, and the shares always add back to the input.'
       },
       {
-        t: 'Convert money correctly',
+        t: 'Property tests that hunt',
         blocks: [
-          { code: 'def convert(amount, frm, to, rates, base="USD"):\n    """Convert between any two currencies quoted against a common base."""\n    if frm == to:\n        return amount\n    table = dict(rates)\n    table[base] = 1.0                       # the base is always 1 of itself\n    if frm not in table or to not in table:\n        raise KeyError(f"no rate for {frm} or {to}")\n    in_base = amount / table[frm]           # to base currency\n    return in_base * table[to]              # out to the target\n\n\nprint(round(convert(250, "EUR", "USD", rates), 2))\nprint(round(convert(250, "EUR", "GBP", rates), 2))     # cross rate\nprint(round(convert(100, "USD", "USD", rates), 2))     # 100.0', lang: 'python' },
-          { p: 'Going *through the base* handles every pair with one line of logic, including the base itself. ' +
-               'Adding `table[base] = 1.0` is the trick that prevents a `KeyError` on USD -> EUR.' }
+          { code: 'from hypothesis import given, strategies as st\n\namounts = st.integers(min_value=0, max_value=10**12)\nweight_lists = st.lists(st.integers(min_value=1, max_value=10**6), min_size=1, max_size=12)\n\n@given(total=amounts, weights=weight_lists)\ndef test_allocation_conserves(total, weights):\n    assert sum(allocate(total, weights)) == total\n\n@given(total=amounts, weights=weight_lists)\ndef test_allocation_is_deterministic(total, weights):\n    assert allocate(total, weights) == allocate(total, weights)\n\n@given(a=amounts, b=amounts)\ndef test_add_then_subtract_returns_original(a, b):\n    usd = CURRENCIES["USD"]\n    assert (Money(a, usd) + Money(b, usd)) - Money(b, usd) == Money(a, usd)', lang: 'python' },
+          { p: 'Run `pytest`. If a property fails, read the shrunk example Hypothesis prints: it is the smallest input that ' +
+               'still breaks, and it usually tells you the bug without further thought.' },
+          { tip: 'Run it once with `--hypothesis-show-statistics` to see how many cases ran and how many were thrown away. If ' +
+                 'most inputs are rejected, your generators are too narrow and the tests are weaker than they look.' }
         ],
-        check: 'convert(250, "EUR", "USD") is larger than 250 and convert(100, "USD", "USD") is exactly 100.'
+        check: 'pytest runs both example and property tests, and every property passes.'
       },
       {
-        t: 'A second source: crypto, and a portfolio table',
+        t: 'Types, style, coverage',
         blocks: [
-          { code: 'coins = fetch_json("https://api.coingecko.com/api/v3/simple/price",\n                   {"ids": "bitcoin,ethereum", "vs_currencies": "usd"})\nprint(coins)          # {"bitcoin": {"usd": 64210}, "ethereum": {"usd": 2480}}\n\nbtc_usd = coins["bitcoin"]["usd"]', lang: 'python' },
-          { p: 'Different API, different JSON shape. That is normal. Read the structure, then index it. ' +
-               'Build the portfolio table with pandas from level 3:' },
-          { code: 'import pandas as pd\n\nholdings = [\n    {"asset": "Cash EUR", "currency": "EUR", "units": 1200},\n    {"asset": "Cash JPY", "currency": "JPY", "units": 90000},\n    {"asset": "Bitcoin",  "currency": "BTC", "units": 0.05},\n]\n\nrows = []\nfor h in holdings:\n    if h["currency"] == "BTC":\n        value = h["units"] * btc_usd\n    else:\n        value = convert(h["units"], h["currency"], "USD", rates)\n    rows.append({**h, "value_usd": round(value, 2)})\n\ndf = pd.DataFrame(rows)\ndf["weight"] = df["value_usd"] / df["value_usd"].sum()\nprint(df.to_string(index=False))\nprint(f"\\nTotal: ${df[\'value_usd\'].sum():,.2f}   source: {source} ({as_of})")', lang: 'python' },
-          { p: '`{**h, "value_usd": value}` copies a dict and adds a key: a neat way to build result rows without mutating ' +
-               'the original data.' }
+          { code: 'ruff check . --fix\nmypy src/moneykit --strict\npytest -q --cov=moneykit --cov-report=term-missing', lang: 'bash' },
+          { p: '`--strict` makes mypy demand a type on everything, which is right for a small library and too strong for a ' +
+               'large old codebase. Coverage shows which lines no test ever ran; aim high here precisely because the library ' +
+               'is small enough that there is no excuse.' },
+          { warn: 'High coverage means every line ran, not that every line is correct. A test that calls a function and ' +
+                  'asserts nothing gives full coverage and catches nothing. Coverage finds untested code; properties find bugs.' }
         ],
-        check: 'A portfolio table prints with USD values, weights summing to 1.0, and a source stamp.'
+        check: 'ruff is clean, mypy --strict reports no errors, and coverage is above 95%.'
+      },
+      {
+        t: 'The pipeline, and the badge',
+        blocks: [
+          { p: 'Add the workflow file from the knowledge section, push, and watch it run on GitHub under the Actions tab. ' +
+               'Then break something on purpose, push, and watch it go red. That red is the point of the whole exercise.' },
+          { code: '# README.md, under the title\n![ci](https://github.com/<you>/moneykit/actions/workflows/ci.yml/badge.svg)', lang: 'text' },
+          { p: 'Finish the README with one sentence saying what the library is, a five line usage example, the install ' +
+               'command, how to run the tests, and a short "what this does not do yet" section.' }
+        ],
+        check: 'The badge is green on GitHub, and a deliberate bug turns it red within a minute.'
       }
     ]
   },
 
   glossary: [
-    { t: 'REST API', d: 'A set of URLs returning data, usually JSON, over HTTP.' },
-    { t: 'Endpoint', d: 'One specific URL path of an API, such as /latest.' },
-    { t: 'Query parameter', d: 'A key=value pair after ? that filters or configures the request.' },
-    { t: 'JSON', d: 'Text format of objects and arrays that maps directly to Python dicts and lists.' },
-    { t: 'Status code', d: 'The 3-digit result of an HTTP request. 4xx is your fault, 5xx is theirs.' },
-    { t: 'Timeout', d: 'The maximum time a request may wait before failing. Always set one.' },
-    { t: 'Rate limit', d: 'The cap on how many requests you may make in a period. Exceeding it returns 429.' },
-    { t: 'Exponential backoff', d: 'Waiting 1s, 2s, 4s between retries so a struggling service can recover.' },
-    { t: 'Cache', d: 'A stored previous response reused while it is fresh enough.' },
-    { t: 'Base / quote', d: 'In EUR/USD, EUR is the base and USD the quote: one EUR costs 1.09 USD.' },
-    { t: 'Cross rate', d: 'A rate between two currencies derived through a common third currency.' },
-    { t: 'Bid / ask / spread', d: 'What a dealer pays, what they charge, and the gap they earn.' },
-    { t: 'Mid-market rate', d: 'The midpoint of bid and ask: a reference price, not a price you can trade at.' },
-    { t: 'Environment variable', d: 'A value supplied by the environment, used to keep secrets out of source code.' }
+    { t: 'Float', d: 'A number with a decimal point stored in binary. Fast, and never exact for most decimal amounts.' },
+    { t: 'Minor units', d: 'The smallest unit of a currency, such as cents. Stored as whole numbers, which are exact.' },
+    { t: 'Exponent', d: 'How many decimal places a currency has: 2 for USD, 0 for JPY and VND, 3 for BHD.' },
+    { t: 'Decimal', d: 'A Python type that stores numbers in base ten, so decimal arithmetic is exact. Build it from strings.' },
+    { t: 'quantize', d: 'Decimal\'s method for rounding to a fixed number of places with a stated rule.' },
+    { t: 'ROUND_HALF_UP', d: 'Ties round away from zero. What most people expect, and common in retail and tax.' },
+    { t: 'ROUND_HALF_EVEN', d: 'Ties round to the nearest even digit, so the bias cancels. The banking default.' },
+    { t: 'Allocation', d: 'Splitting an amount in proportion without losing or inventing a unit, by largest remainder.' },
+    { t: 'Immutable', d: 'A value that cannot be changed after it is created. `@dataclass(frozen=True)` makes one.' },
+    { t: 'Type hint', d: 'An annotation saying what type a value is. Ignored while running, checked by mypy.' },
+    { t: 'mypy', d: 'A type checker that reads your hints and reports contradictions without running the code.' },
+    { t: 'ruff', d: 'A fast linter and formatter: style problems and likely bugs, many fixed automatically.' },
+    { t: 'Property-based testing', d: 'Stating a rule that must hold for all inputs and letting a tool generate them. Hypothesis.' },
+    { t: 'Shrinking', d: 'What Hypothesis does after a failure: cuts the input down to the smallest one that still fails.' },
+    { t: 'pyproject.toml', d: 'The file that declares a Python project: name, version, dependencies, build system.' },
+    { t: 'Editable install', d: '`pip install -e .`, so the package is importable everywhere while the code stays where you edit it.' },
+    { t: 'Semantic versioning', d: 'Major.minor.patch, where the major number changes when callers must change their code.' },
+    { t: 'CI', d: 'Continuous integration: a pipeline that runs your checks on a clean machine on every push.' }
   ],
 
   quiz: [
-    { q: "In `https://api.frankfurter.app/latest?base=USD&symbols=EUR`, which part is the query string?",
+    { q: "Why can a float not be trusted to hold $19.99?",
       options: [
-        "https",
-        "api.frankfurter.app",
-        "base=USD&symbols=EUR",
-        "/latest"
+        "Python floats cannot hold numbers above 1,000,000",
+        "Floats round every result to two places",
+        "Most decimal fractions have no exact binary form, so the stored value is slightly off",
+        "Floats are limited to six decimal places"
       ],
       answer: 2,
-      why: "Everything after the ? is the query string: key=value pairs joined by &, used to filter or configure the request." },
+      why: "The error is tiny and it accumulates, and it breaks exact comparisons such as a reconciliation that must come to zero." },
 
-    { q: "What does `response.json()` return in Python?",
+    { q: "What does `Decimal(2.675)` produce?",
       options: [
-        "A dict (or list) built from the JSON body",
-        "A string of JSON text",
-        "A pandas DataFrame",
-        "The status code"
+        "2.674999999999999822..., because the float was already inexact",
+        "Exactly 2.675",
+        "2.68",
+        "A TypeError"
       ],
       answer: 0,
-      why: "It parses the body into native Python objects (JSON objects become dicts, arrays become lists) so you can index straight into it." },
+      why: "Decimal faithfully copies the broken float. Always build from a string: `Decimal(\"2.675\")`." },
 
-    { q: "You receive HTTP 429. What is the correct response?",
+    { q: "Which of these currencies has an exponent of 0?",
       options: [
-        "Retry immediately in a tight loop",
-        "Fix your query parameters",
-        "Rotate your API key",
-        "Back off: wait, then retry more slowly, because you have hit the rate limit"
+        "USD",
+        "BHD",
+        "EUR",
+        "JPY"
       ],
       answer: 3,
-      why: "429 means too many requests. Retrying immediately makes it worse and can earn a temporary ban. Exponential backoff is the standard fix." },
+      why: "Yen and dong have no smaller unit in use, so dividing by 100 to display them is wrong by a factor of a hundred." },
 
-    { q: "Which status code means the problem is in your request rather than their server?",
+    { q: "ROUND_HALF_EVEN is the banking default because:",
       options: [
-        "500",
-        "502",
-        "400",
-        "503"
+        "It is faster to compute",
+        "Regulators require it in every country",
+        "Always rounding ties upward adds a small bias that becomes real money over millions of rows",
+        "It always rounds in the bank's favour"
       ],
       answer: 2,
-      why: "4xx codes are client errors: bad parameters, missing auth, unknown resource. Retrying them unchanged will never succeed." },
+      why: "Half the ties go up and half go down, so the bias cancels instead of accumulating." },
 
-    { q: "Why must every production `requests.get` have a timeout?",
+    { q: "Seven lines of $1.99 at 8.25% tax give $1.12 rounded per line and $1.15 rounded once at the end. Which is correct?",
       options: [
-        "To reduce bandwidth costs",
-        "Because without one the call can hang indefinitely and freeze your app",
-        "Because the API requires it",
-        "To avoid rate limits"
+        "Per line, always",
+        "Whichever your tax rules require, decided once and covered by a test",
+        "Neither: the tax rate must be rounded first",
+        "Per invoice, always"
       ],
       answer: 1,
-      why: "A server that accepts a connection and never replies will block your thread forever. Requests has no default timeout. You must set it." },
+      why: "Both are legitimate arithmetic. What is always wrong is not knowing which one your code does." },
 
-    { q: "What does `raise_for_status()` do?",
+    { q: "What does `allocate(10000, [1, 1, 1])` return, in cents?",
       options: [
-        "Raises an exception if the status code indicates an error",
-        "Retries the request",
-        "Prints the status code",
-        "Converts the response to JSON"
+        "[3334, 3333, 3333]",
+        "[3333, 3333, 3333]",
+        "[3334, 3334, 3332]",
+        "[3333.33, 3333.33, 3333.33]"
       ],
       answer: 0,
-      why: "It turns 4xx and 5xx into an HTTPError so a failed response cannot be quietly processed as if it were data." },
+      why: "The leftover cent goes to the share cut by the most, and the parts still add up to exactly 10000." },
 
-    { q: "What is exponential backoff?",
+    { q: "The essential property of an allocation function is:",
       options: [
-        "Reducing the timeout on each retry",
-        "Waiting progressively longer between retries: 1s, 2s, 4s",
-        "Switching to a backup API immediately",
-        "Requesting more data with each attempt"
+        "No share is ever zero",
+        "The shares sum exactly to the amount being split",
+        "Every share is the same size",
+        "Shares are always rounded up"
       ],
       answer: 1,
-      why: "Growing delays give a struggling or rate-limiting service room to recover instead of being hammered by a retry storm." },
+      why: "Anything else loses or invents money, and a transaction that does not sum to zero is invalid, as level 4 showed." },
 
-    { q: "Your FX app cannot reach the live API. What is the best behaviour?",
+    { q: "What does property-based testing add that example tests cannot?",
       options: [
-        "Show a blank screen until it recovers",
-        "Use the most recent cached or bundled rates and label them clearly as stale",
-        "Use rates of 1.0 for everything as a placeholder",
-        "Retry in a loop until it succeeds"
+        "Faster test runs",
+        "It generates hundreds of inputs, including ones you never thought of, and shrinks a failure to the smallest case",
+        "It proves the code is correct",
+        "It removes the need for a type checker"
       ],
       answer: 1,
-      why: "Degrade, do not disappear, but never present old data as current. Every displayed rate should carry its source and age." },
+      why: "Example tests document intent; property tests hunt. Neither proves correctness, but the second finds real bugs." },
 
-    { q: "Where should an API key live?",
+    { q: "`@dataclass(frozen=True)` on Money gives you:",
       options: [
-        "Hardcoded in the script so it always works",
-        "In the repository README for the team",
-        "In the URL, so it is easy to inspect",
-        "In an environment variable or a getpass prompt, never committed"
+        "Faster attribute access",
+        "Automatic currency conversion",
+        "Thread safety across the whole program",
+        "A value that cannot be changed after creation, so two parts of a program cannot disagree about it"
       ],
       answer: 3,
-      why: "Keys are credentials. Committed keys are found by scanners within minutes, and deleting the line does not remove it from git history." },
+      why: "Immutability is why passing Money around is safe. Operations return new values instead of editing old ones." },
 
-    { q: "You accidentally committed a key to a public repo and deleted it in the next commit. What now?",
+    { q: "Why should Money not have a `__float__` method?",
       options: [
-        "Nothing, the deletion removed it",
-        "Make the repository private and keep the key",
-        "Rename the variable",
-        "Revoke and rotate the key immediately; it is still in the history"
+        "Python forbids it on frozen dataclasses",
+        "It would be slow",
+        "Floats cannot represent currencies with exponent 0",
+        "Because any caller could then turn an exact amount back into an inexact float, and every guarantee becomes optional"
       ],
       answer: 3,
-      why: "Git keeps every version. The only safe assumption is that the key is compromised the moment it is pushed." },
+      why: "A type protects a rule only while there is no easy way around it." },
 
-    { q: "Rates are quoted against USD and EUR = 0.9123. How do you convert 250 EUR into USD?",
+    { q: "What does mypy do?",
       options: [
-        "250 / 0.9123",
-        "250 * 0.9123",
-        "250 * (1 - 0.9123)",
-        "250 + 0.9123"
+        "Reads your type hints and reports contradictions without running the code",
+        "Speeds up Python by compiling the type hints",
+        "Enforces a code style",
+        "Runs your tests"
       ],
       answer: 0,
-      why: "The rate says 1 USD buys 0.9123 EUR, so going the other way you divide: 250 / 0.9123 = $274.03. Getting this backwards is the classic FX bug." },
+      why: "Python ignores hints while running. A separate checker is what turns them into a safety net." },
 
-    { q: "With USD-based rates EUR = 0.9123 and GBP = 0.7684, what is the EUR to GBP cross rate?",
+    { q: "Your tests pass locally and the pipeline fails with a missing module. Where is the fix?",
       options: [
-        "0.9123 + 0.7684",
-        "0.9123 * 0.7684",
-        "0.7684 / 0.9123",
-        "0.9123 / 0.7684"
+        "On the pipeline machine: pre-install common libraries",
+        "Nowhere: pin the pipeline to your local Python version",
+        "In pyproject.toml: the project failed to declare a dependency it needs",
+        "In the pipeline file: install the module there"
       ],
       answer: 2,
-      why: "Go through the base: EUR to USD is divide by 0.9123, USD to GBP is multiply by 0.7684, which simplifies to 0.7684 / 0.9123 = 0.8423." },
+      why: "The clean machine is right. Every undeclared assumption on your laptop is an incident for whoever clones it next." },
 
-    { q: "What is the spread in an FX quote?",
+    { q: "You rename a public attribute and release it as a patch version. What is wrong?",
       options: [
-        "The fee charged by the regulator",
-        "The range of rates across different banks",
-        "The gap between the bid and the ask, which is the dealer's margin",
-        "The difference between today's and yesterday's rate"
+        "Renames require a new package name",
+        "Nothing, as long as the tests pass",
+        "A rename breaks callers, so it belongs in a major version, with the old name kept as an alias first",
+        "Patch versions cannot contain code changes"
       ],
       answer: 2,
-      why: "Bid is what a dealer pays you, ask is what they charge you. You never trade at the mid-market rate news sites display." },
+      why: "Adding is safe; removing and renaming are not. The version number is how callers know which one happened." },
 
-    { q: "Why add `table[base] = 1.0` inside a convert function?",
+    { q: "Full test coverage means:",
       options: [
-        "So converting to or from the base currency works instead of raising KeyError",
-        "To normalise all the other rates",
-        "To round the result",
-        "Because APIs always omit the first currency"
+        "Every line of code ran during the tests",
+        "Every line of code is correct",
+        "The type checker passed",
+        "Every possible input was tried"
       ],
       answer: 0,
-      why: "The API omits the base from its rates map, since a currency is trivially 1 of itself. Adding it makes one code path handle every pair." },
+      why: "A test that asserts nothing still produces coverage. Coverage finds untested code; properties find bugs." },
 
-    { q: "Which order gives the most resilient data client?",
+    { q: "Why put the package under a `src/` folder?",
       options: [
-        "Live call, then cache, then snapshot",
-        "Fresh cache, then live call with retries, then bundled snapshot",
-        "Snapshot, then cache, then live",
-        "Live call only, with an error message on failure"
+        "To keep the repository tidy",
+        "So tests exercise the installed package instead of accidentally importing the folder you are standing in",
+        "It makes imports faster",
+        "pyproject.toml requires it"
       ],
       answer: 1,
-      why: "Check the cache first to avoid the call entirely, go live when it is stale, and fall back to a labelled snapshot only when everything else fails." }
+      why: "It removes a whole class of \"works in the repository, fails once installed\" surprises." }
   ],
 
   project: {
-    title: 'Multi-currency portfolio valuation service',
-    story: 'The society holds cash in four currencies plus a little crypto, and right now nobody can say what the ' +
-           'treasury is worth. Build the valuation service, and make sure it still works on the conference wifi that ' +
-           'blocks half the internet.',
-    scope: 'Uses this level plus level 3 (pandas) and level 2 (formatting): requests with timeout, retries, JSON, ' +
-           'file caching, try/except, and a DataFrame for the output. No API key is required anywhere.',
+    title: 'moneykit: the library every later level imports',
+    story: 'Write the money library that levels 6 to 20 will actually use. It has to be exact, it has to refuse to mix ' +
+           'currencies, it has to split amounts without losing a cent, and somebody who has never spoken to you has to be ' +
+           'able to install it from GitHub and use it. This is the first repository on your CV that a backend reviewer will ' +
+           'open.',
+    scope: 'Uses levels 1 to 4 plus this level. The package itself depends on the standard library only: pytest, Hypothesis, ' +
+           'mypy and ruff are development dependencies. No database, no network.',
     dataset: '{{RAW}}/data/level-05-fx-snapshot.json',
     requirements: [
-      'A `fetch_json(url, params=None, attempts=3, timeout=10)` helper with `raise_for_status` and exponential backoff',
-      'A disk cache written as JSON with a `fetched_at` timestamp and a configurable max age',
-      'A `get_rates(base)` returning `(rates, source, as_of)` and trying cache, then live, then the bundled snapshot',
-      'The snapshot path must be exercised: prove it works by pointing the live URL at a dead endpoint',
-      'A `convert(amount, frm, to, rates, base)` handling same-currency, base-to-x, x-to-base, and cross rates',
-      'A `get_crypto_prices(ids)` call to CoinGecko that fails soft: if it errors, crypto is valued at 0 with a clear warning',
-      'Per-currency fallback: the live feed does not quote VND, so that holding must be valued from the snapshot and labelled, not dropped and not silently zero',
-      'A `source` column on every row of the output showing where that particular rate came from',
-      'A portfolio defined as a list of dicts with at least 5 holdings across 4+ currencies plus one crypto asset',
-      'A `value_portfolio(holdings, base)` returning a DataFrame with asset, currency, units, unit value, value in base, and weight',
-      'Weights that sum to 1.0 (to 6 decimal places) and a total row',
-      'A `report(...)` printing the table, the total, and a clearly formatted data-source stamp naming source and as-of date',
-      'Graceful handling of an unknown currency code: a clear message, not a traceback',
-      'A short markdown cell listing every failure mode you handle and what the user sees in each case',
-      'Saved to your portfolio repo as `level-05-fx-portfolio.ipynb`'
+      'A `src/moneykit` package installable with `pip install -e ".[dev]"` and importable from any directory',
+      'A frozen `Currency` type with at least USD, EUR, GBP, JPY, VND and BHD, carrying the ISO 4217 exponent',
+      'A frozen `Money` type holding integer minor units and a currency, with add, subtract, multiply by an integer, negate, compare and format',
+      'Adding or comparing two different currencies raises `CurrencyMismatch`, with a test for each',
+      '`Money.parse("19.99", "USD")` and `Money.from_minor(1999, "USD")`, where parse rejects more decimal places than the currency allows',
+      'Formatting that respects the exponent: $19.99, 1,000 yen, 1.000 dinar',
+      '`allocate(total, weights)` by largest remainder, and `Money.allocate` returning Money objects',
+      '`Money.percentage(rate, rounding)` using Decimal inside, with the rounding rule as an argument rather than a hidden default',
+      'Conversion between currencies at a given rate, recording the rate used on the result, tested against the shipped FX snapshot',
+      'Example tests for every public function, including the three allocation cases from this level',
+      'At least five Hypothesis properties, including conservation under allocation and a format then parse round trip',
+      'mypy --strict clean, ruff clean, coverage above 95%, all three enforced by a GitHub Actions pipeline',
+      'A README with one line of purpose, a usage example, install and test commands, and a limitations section',
+      'A CHANGELOG.md with a 0.1.0 entry, and a version number that follows semantic versioning',
+      'The repository public on GitHub as `moneykit`, with a green pipeline badge'
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest level 5: Multi-currency portfolio valuation"""\n\nimport json\nimport os\nimport time\nfrom datetime import datetime, timedelta\n\nimport pandas as pd\nimport requests\n\nFX_URL = "https://api.frankfurter.app/latest"\nCRYPTO_URL = "https://api.coingecko.com/api/v3/simple/price"\nSNAPSHOT_URL = "{{RAW}}/data/level-05-fx-snapshot.json"\nCACHE_FILE = "fx_cache.json"\nMAX_AGE = timedelta(hours=6)\n\nPORTFOLIO = [\n    {"asset": "Operating cash", "currency": "USD", "units": 4200},\n    {"asset": "Event float",    "currency": "EUR", "units": 1500},\n    {"asset": "Sponsor escrow", "currency": "GBP", "units": 800},\n    {"asset": "Travel fund",    "currency": "JPY", "units": 250000},\n    {"asset": "Local reserve",  "currency": "VND", "units": 12000000},\n    {"asset": "Bitcoin",        "currency": "BTC", "units": 0.05},\n]\n\n\ndef fetch_json(url, params=None, attempts=3, timeout=10):\n    """GET JSON with retries and exponential backoff. Raise on final failure."""\n    # TODO\n    pass\n\n\ndef load_cache():\n    """Return the cached payload if it is younger than MAX_AGE, else None."""\n    # TODO\n    pass\n\n\ndef save_cache(payload):\n    # TODO\n    pass\n\n\ndef get_rates(base="USD"):\n    """Return (rates, source, as_of). Try cache -> live -> snapshot."""\n    # TODO\n    pass\n\n\ndef get_crypto_prices(ids=("bitcoin",), vs="usd"):\n    """Return {id: price}. Must fail soft, never crash the valuation."""\n    # TODO\n    pass\n\n\ndef convert(amount, frm, to, rates, base="USD"):\n    """Convert through the base currency. Handle frm == to."""\n    # TODO\n    pass\n\n\ndef value_portfolio(holdings, rates, crypto, base="USD"):\n    """Return a DataFrame with value_base and weight columns."""\n    # TODO\n    pass\n\n\ndef report(holdings=PORTFOLIO, base="USD"):\n    """Print the table, the total, and the data-source stamp."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    report()\n'
+      code: '"""moneykit: exact money arithmetic for people who get paid to be right.\n\nLayout to build:\n  src/moneykit/__init__.py      public exports only\n  src/moneykit/currency.py      Currency, CURRENCIES, ISO 4217 exponents\n  src/moneykit/money.py         Money: parse, format, arithmetic, comparisons\n  src/moneykit/allocation.py    allocate() by largest remainder\n  src/moneykit/errors.py        MoneyError, CurrencyMismatch, InvalidAmount\n  tests/                        examples, properties, and the three worked cases\n"""\n\nfrom dataclasses import dataclass\nfrom decimal import Decimal, ROUND_HALF_UP\n\n\nclass MoneyError(Exception):\n    """Base class for everything this library refuses to do."""\n\n\nclass CurrencyMismatch(MoneyError):\n    pass\n\n\nclass InvalidAmount(MoneyError):\n    pass\n\n\n@dataclass(frozen=True)\nclass Currency:\n    code: str\n    exponent: int\n    symbol: str = ""\n\n\n@dataclass(frozen=True)\nclass Money:\n    minor_units: int\n    currency: Currency\n\n    @classmethod\n    def parse(cls, text: str, code: str) -> "Money":\n        """Money.parse("19.99", "USD") -> Money(1999, USD). Reject "19.999"."""\n        # TODO\n        raise NotImplementedError\n\n    def allocate(self, weights: list[int]) -> list["Money"]:\n        """Split this amount in proportion, losing nothing."""\n        # TODO\n        raise NotImplementedError\n\n    def percentage(self, rate: Decimal, rounding: str = ROUND_HALF_UP) -> "Money":\n        """A percentage of this amount, rounded on purpose."""\n        # TODO\n        raise NotImplementedError\n\n\ndef allocate(total: int, weights: list[int]) -> list[int]:\n    """Largest remainder. sum(allocate(t, w)) == t must hold for every input."""\n    # TODO\n    raise NotImplementedError\n'
     },
     tests: [
-      'fetch_json against a 404 URL raises RuntimeError after its retries rather than hanging',
-      'Every requests.get call in your file passes a timeout: grep your own code to confirm',
-      'get_rates returns source "live" first, then "cache" on an immediate second call',
-      'With the live URL broken, get_rates returns the snapshot and source says STALE',
-      'convert(100, "USD", "USD", rates) == 100 exactly',
-      'convert(250, "EUR", "USD", rates) is about 274 with snapshot rates (250 / 0.9123)',
-      'convert(250, "EUR", "GBP", rates) is about 210.6 with snapshot rates',
-      'convert(10, "USD", "VND", rates) is about 254,800 with snapshot rates',
-      'convert(5, "USD", "XXX", rates) raises a handled error with a readable message',
-      'With live rates (which omit VND) the VND holding is still valued, its row says source = snapshot, and the total does not silently lose it',
-      'Portfolio weights sum to 1.0 to six decimal places',
-      'Killing your network mid-run still produces a full report, labelled stale'
+      'Money.parse("19.99", "USD").minor_units == 1999',
+      'Money.parse("1000", "JPY").minor_units == 1000, and printing it shows 1,000 rather than 10.00',
+      'Money.parse("19.999", "USD") raises InvalidAmount',
+      'USD + EUR raises CurrencyMismatch, and so does comparing them',
+      'allocate(10000, [1, 1, 1]) == [3334, 3333, 3333]',
+      'allocate(5, [3, 7]) == [2, 3]',
+      'allocate(1999, [1, 2, 3]) == [333, 666, 1000]',
+      'Property: for any total and any weights, the shares sum exactly to the total',
+      'Property: allocate is deterministic, the same inputs always give the same answer',
+      'Property: (a + b) - b == a for any two amounts in one currency',
+      'Property: Money.parse(str(m)) == m for every currency in the table',
+      '8.25% of $19.99 is $1.65, and the rounding rule is an argument the caller can see rather than a hidden default',
+      'Converting $100.00 to VND at 25,480 gives 2,548,000 dong, and the result records the rate used',
+      'mypy --strict, ruff and pytest all pass in the pipeline on a clean machine'
     ],
     rubric: [
-      { pts: 25, t: 'Resilience', d: 'Cache, retry, and snapshot all demonstrably work; no path can hang or crash the report.' },
-      { pts: 20, t: 'Correct conversion', d: 'All four conversion directions right, including cross rates and the base-currency case.' },
-      { pts: 20, t: 'Honest presentation', d: 'Source and as-of date always shown, per row where sources differ; stale data is labelled as stale.' },
-      { pts: 15, t: 'Error handling', d: 'Unknown currencies, dead endpoints, and crypto failures produce clear messages, not tracebacks.' },
-      { pts: 10, t: 'Secret hygiene', d: 'No keys anywhere; if you add a keyed API, it reads from the environment.' },
-      { pts: 10, t: 'Shipped', d: 'Runs top to bottom in a fresh session and is committed to your portfolio repo.' }
+      { pts: 25, t: 'Correct by construction', d: 'Immutable types, integer storage, Decimal only inside calculations, currency mixing impossible rather than unlikely.' },
+      { pts: 25, t: 'Allocation and rounding', d: 'Largest remainder implemented and proved, rounding rules explicit arguments, the exponent respected everywhere.' },
+      { pts: 20, t: 'Tested like money code', d: 'Examples plus at least five properties, with the shrunk failure from a deliberate bug shown in the README or a commit.' },
+      { pts: 15, t: 'Shipped as a library', d: 'Editable install works from a clean clone, mypy --strict and ruff clean, pipeline green, semantic version and changelog.' },
+      { pts: 15, t: 'Readable by a stranger', d: 'README understood in two minutes, typed public functions with docstrings, and an honest limitations section.' }
     ],
     stretch: [
-      'Add a `--base` style parameter so the whole report can be produced in EUR or VND',
-      'Apply a 0.5% spread to every conversion and show mid-market vs what the member actually receives',
-      'Fetch a 30-day history from /2025-08-01..2025-08-31 and chart one currency pair over time',
-      'Persist the cache to a CSV as well, so the report can run entirely offline on a second machine'
+      'Add `Money.split_evenly(n)` and prove with a property that it agrees with `allocate` for equal weights',
+      'Add a currency with an exponent of 4 and find every place in your code that assumed 2',
+      'Benchmark integer arithmetic against Decimal over a million operations, and put the numbers in the README',
+      'Accept "$19.99", "19,99 EUR" and "1.000 BHD" on input, with a property that every format you produce can be parsed back',
+      'Publish to TestPyPI, then install it into a fresh virtual environment and import it'
     ],
     solutionPath: 'solutions/level-05'
   },
 
   faq: [
-    { q: 'My request hangs forever',
-      a: 'You forgot timeout=. Requests has no default. Add timeout=10 to every call, and wrap it in try/except requests.RequestException.' },
-    { q: 'I get a 404 from the FX API',
-      a: 'Usually an invalid currency code in base or symbols. Codes are three-letter ISO 4217, uppercase: USD, EUR, VND. Use raise_for_status to surface it clearly.' },
-    { q: 'KeyError: "USD" inside convert',
-      a: 'The API omits the base currency from its rates map. Add table[base] = 1.0 to your copy of the rates before looking anything up.' },
-    { q: 'My converted amounts are tiny / enormous',
-      a: 'You multiplied where you should divide. With USD-based rates, going x -> USD divides by the rate, USD -> x multiplies. Sanity check against a known pair.' },
-    { q: 'How do I test the offline fallback?',
-      a: 'Point the live URL at a nonsense path such as /nope for one run. Your retries should fail, the snapshot should load, and the report should say STALE.' },
-    { q: 'CoinGecko returns 429',
-      a: 'That is the free rate limit. Back off, cache the crypto price like you cache FX, and make the crypto call fail soft so the rest of the report still prints.' },
-    { q: 'The API returns no rate for VND',
-      a: 'It never will: the feed publishes the 29-currency ECB reference set and VND is not in it. That is the point of ' +
-         'that holding. Catch the KeyError, fall back to the bundled snapshot rate for that one currency, and label the row ' +
-         'as snapshot-sourced.' },
-    { q: 'Should I commit the cache file?',
-      a: 'No. Add fx_cache.json to .gitignore: it is derived data that goes stale. Commit only the snapshot, which is deliberately versioned.' }
+    { q: 'Why not just use an existing library like py-moneyed?',
+      a: 'In a job, you would. Here the point is that you can read one, argue with its rounding choices, and fix it. Build yours, then read theirs and list three differences in your README.' },
+    { q: 'Integers or Decimal for storage? I have seen both.',
+      a: 'Integers for anything stored or sent: a database column, an API field, a ledger entry. Decimal inside a calculation that has a fractional cent in the middle of it. The mistake is letting a Decimal reach a database column, or a float reach either.' },
+    { q: 'My allocation gives a different answer from a colleague\'s for the same input',
+      a: 'You break ties differently. Both can be correct as long as each is deterministic and conserves the total, but a payments system needs one rule written down, because a refund has to reverse the exact split that happened.' },
+    { q: 'Do I really need Hypothesis for a library this small?',
+      a: 'It finds the allocation bug in about four lines. It is also a strong signal in an interview, because most candidates have never written a property test, and the ones who have think differently about failure.' },
+    { q: 'mypy --strict is fighting me',
+      a: 'On a small library that is a feature. Fix the annotations rather than adding ignores, and if you must ignore one, put the reason in the comment. On a large old codebase the usual approach is to turn strictness on one module at a time.' },
+    { q: 'How long should this take?',
+      a: 'A focused weekend for the library, and an evening for the pipeline and the README. If it takes longer, the usual reason is allocation, which is exactly the part interviewers like, because it is harder than it looks.' },
+    { q: 'What do I say about this in an interview?',
+      a: 'Two sentences: you built the money type your other projects import, and it refuses to mix currencies or lose a cent when splitting. Then offer the allocation function, because it is concrete and most candidates have only ever divided by three.' }
   ]
 });

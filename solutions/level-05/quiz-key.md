@@ -1,4 +1,4 @@
-# Level 5: Market data and APIs: quiz answer key
+# Level 5: The money library everything else imports: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. In `https://api.frankfurter.app/latest?base=USD&symbols=EUR`, which part is the query string?
+### 1. Why can a float not be trusted to hold $19.99?
 
-- A. https
-- B. api.frankfurter.app
-- **C. base=USD&symbols=EUR** ✅
-- D. /latest
+- A. Python floats cannot hold numbers above 1,000,000
+- B. Floats round every result to two places
+- **C. Most decimal fractions have no exact binary form, so the stored value is slightly off** ✅
+- D. Floats are limited to six decimal places
 
-**Why:** Everything after the ? is the query string: key=value pairs joined by &, used to filter or configure the request.
+**Why:** The error is tiny and it accumulates, and it breaks exact comparisons such as a reconciliation that must come to zero.
 
-### 2. What does `response.json()` return in Python?
+### 2. What does `Decimal(2.675)` produce?
 
-- **A. A dict (or list) built from the JSON body** ✅
-- B. A string of JSON text
-- C. A pandas DataFrame
-- D. The status code
+- **A. 2.674999999999999822..., because the float was already inexact** ✅
+- B. Exactly 2.675
+- C. 2.68
+- D. A TypeError
 
-**Why:** It parses the body into native Python objects (JSON objects become dicts, arrays become lists) so you can index straight into it.
+**Why:** Decimal faithfully copies the broken float. Always build from a string: `Decimal("2.675")`.
 
-### 3. You receive HTTP 429. What is the correct response?
+### 3. Which of these currencies has an exponent of 0?
 
-- A. Retry immediately in a tight loop
-- B. Fix your query parameters
-- C. Rotate your API key
-- **D. Back off: wait, then retry more slowly, because you have hit the rate limit** ✅
+- A. USD
+- B. BHD
+- C. EUR
+- **D. JPY** ✅
 
-**Why:** 429 means too many requests. Retrying immediately makes it worse and can earn a temporary ban. Exponential backoff is the standard fix.
+**Why:** Yen and dong have no smaller unit in use, so dividing by 100 to display them is wrong by a factor of a hundred.
 
-### 4. Which status code means the problem is in your request rather than their server?
+### 4. ROUND_HALF_EVEN is the banking default because:
 
-- A. 500
-- B. 502
-- **C. 400** ✅
-- D. 503
+- A. It is faster to compute
+- B. Regulators require it in every country
+- **C. Always rounding ties upward adds a small bias that becomes real money over millions of rows** ✅
+- D. It always rounds in the bank's favour
 
-**Why:** 4xx codes are client errors: bad parameters, missing auth, unknown resource. Retrying them unchanged will never succeed.
+**Why:** Half the ties go up and half go down, so the bias cancels instead of accumulating.
 
-### 5. Why must every production `requests.get` have a timeout?
+### 5. Seven lines of $1.99 at 8.25% tax give $1.12 rounded per line and $1.15 rounded once at the end. Which is correct?
 
-- A. To reduce bandwidth costs
-- **B. Because without one the call can hang indefinitely and freeze your app** ✅
-- C. Because the API requires it
-- D. To avoid rate limits
+- A. Per line, always
+- **B. Whichever your tax rules require, decided once and covered by a test** ✅
+- C. Neither: the tax rate must be rounded first
+- D. Per invoice, always
 
-**Why:** A server that accepts a connection and never replies will block your thread forever. Requests has no default timeout. You must set it.
+**Why:** Both are legitimate arithmetic. What is always wrong is not knowing which one your code does.
 
-### 6. What does `raise_for_status()` do?
+### 6. What does `allocate(10000, [1, 1, 1])` return, in cents?
 
-- **A. Raises an exception if the status code indicates an error** ✅
-- B. Retries the request
-- C. Prints the status code
-- D. Converts the response to JSON
+- **A. [3334, 3333, 3333]** ✅
+- B. [3333, 3333, 3333]
+- C. [3334, 3334, 3332]
+- D. [3333.33, 3333.33, 3333.33]
 
-**Why:** It turns 4xx and 5xx into an HTTPError so a failed response cannot be quietly processed as if it were data.
+**Why:** The leftover cent goes to the share cut by the most, and the parts still add up to exactly 10000.
 
-### 7. What is exponential backoff?
+### 7. The essential property of an allocation function is:
 
-- A. Reducing the timeout on each retry
-- **B. Waiting progressively longer between retries: 1s, 2s, 4s** ✅
-- C. Switching to a backup API immediately
-- D. Requesting more data with each attempt
+- A. No share is ever zero
+- **B. The shares sum exactly to the amount being split** ✅
+- C. Every share is the same size
+- D. Shares are always rounded up
 
-**Why:** Growing delays give a struggling or rate-limiting service room to recover instead of being hammered by a retry storm.
+**Why:** Anything else loses or invents money, and a transaction that does not sum to zero is invalid, as level 4 showed.
 
-### 8. Your FX app cannot reach the live API. What is the best behaviour?
+### 8. What does property-based testing add that example tests cannot?
 
-- A. Show a blank screen until it recovers
-- **B. Use the most recent cached or bundled rates and label them clearly as stale** ✅
-- C. Use rates of 1.0 for everything as a placeholder
-- D. Retry in a loop until it succeeds
+- A. Faster test runs
+- **B. It generates hundreds of inputs, including ones you never thought of, and shrinks a failure to the smallest case** ✅
+- C. It proves the code is correct
+- D. It removes the need for a type checker
 
-**Why:** Degrade, do not disappear, but never present old data as current. Every displayed rate should carry its source and age.
+**Why:** Example tests document intent; property tests hunt. Neither proves correctness, but the second finds real bugs.
 
-### 9. Where should an API key live?
+### 9. `@dataclass(frozen=True)` on Money gives you:
 
-- A. Hardcoded in the script so it always works
-- B. In the repository README for the team
-- C. In the URL, so it is easy to inspect
-- **D. In an environment variable or a getpass prompt, never committed** ✅
+- A. Faster attribute access
+- B. Automatic currency conversion
+- C. Thread safety across the whole program
+- **D. A value that cannot be changed after creation, so two parts of a program cannot disagree about it** ✅
 
-**Why:** Keys are credentials. Committed keys are found by scanners within minutes, and deleting the line does not remove it from git history.
+**Why:** Immutability is why passing Money around is safe. Operations return new values instead of editing old ones.
 
-### 10. You accidentally committed a key to a public repo and deleted it in the next commit. What now?
+### 10. Why should Money not have a `__float__` method?
 
-- A. Nothing, the deletion removed it
-- B. Make the repository private and keep the key
-- C. Rename the variable
-- **D. Revoke and rotate the key immediately; it is still in the history** ✅
+- A. Python forbids it on frozen dataclasses
+- B. It would be slow
+- C. Floats cannot represent currencies with exponent 0
+- **D. Because any caller could then turn an exact amount back into an inexact float, and every guarantee becomes optional** ✅
 
-**Why:** Git keeps every version. The only safe assumption is that the key is compromised the moment it is pushed.
+**Why:** A type protects a rule only while there is no easy way around it.
 
-### 11. Rates are quoted against USD and EUR = 0.9123. How do you convert 250 EUR into USD?
+### 11. What does mypy do?
 
-- **A. 250 / 0.9123** ✅
-- B. 250 * 0.9123
-- C. 250 * (1 - 0.9123)
-- D. 250 + 0.9123
+- **A. Reads your type hints and reports contradictions without running the code** ✅
+- B. Speeds up Python by compiling the type hints
+- C. Enforces a code style
+- D. Runs your tests
 
-**Why:** The rate says 1 USD buys 0.9123 EUR, so going the other way you divide: 250 / 0.9123 = $274.03. Getting this backwards is the classic FX bug.
+**Why:** Python ignores hints while running. A separate checker is what turns them into a safety net.
 
-### 12. With USD-based rates EUR = 0.9123 and GBP = 0.7684, what is the EUR to GBP cross rate?
+### 12. Your tests pass locally and the pipeline fails with a missing module. Where is the fix?
 
-- A. 0.9123 + 0.7684
-- B. 0.9123 * 0.7684
-- **C. 0.7684 / 0.9123** ✅
-- D. 0.9123 / 0.7684
+- A. On the pipeline machine: pre-install common libraries
+- B. Nowhere: pin the pipeline to your local Python version
+- **C. In pyproject.toml: the project failed to declare a dependency it needs** ✅
+- D. In the pipeline file: install the module there
 
-**Why:** Go through the base: EUR to USD is divide by 0.9123, USD to GBP is multiply by 0.7684, which simplifies to 0.7684 / 0.9123 = 0.8423.
+**Why:** The clean machine is right. Every undeclared assumption on your laptop is an incident for whoever clones it next.
 
-### 13. What is the spread in an FX quote?
+### 13. You rename a public attribute and release it as a patch version. What is wrong?
 
-- A. The fee charged by the regulator
-- B. The range of rates across different banks
-- **C. The gap between the bid and the ask, which is the dealer's margin** ✅
-- D. The difference between today's and yesterday's rate
+- A. Renames require a new package name
+- B. Nothing, as long as the tests pass
+- **C. A rename breaks callers, so it belongs in a major version, with the old name kept as an alias first** ✅
+- D. Patch versions cannot contain code changes
 
-**Why:** Bid is what a dealer pays you, ask is what they charge you. You never trade at the mid-market rate news sites display.
+**Why:** Adding is safe; removing and renaming are not. The version number is how callers know which one happened.
 
-### 14. Why add `table[base] = 1.0` inside a convert function?
+### 14. Full test coverage means:
 
-- **A. So converting to or from the base currency works instead of raising KeyError** ✅
-- B. To normalise all the other rates
-- C. To round the result
-- D. Because APIs always omit the first currency
+- **A. Every line of code ran during the tests** ✅
+- B. Every line of code is correct
+- C. The type checker passed
+- D. Every possible input was tried
 
-**Why:** The API omits the base from its rates map, since a currency is trivially 1 of itself. Adding it makes one code path handle every pair.
+**Why:** A test that asserts nothing still produces coverage. Coverage finds untested code; properties find bugs.
 
-### 15. Which order gives the most resilient data client?
+### 15. Why put the package under a `src/` folder?
 
-- A. Live call, then cache, then snapshot
-- **B. Fresh cache, then live call with retries, then bundled snapshot** ✅
-- C. Snapshot, then cache, then live
-- D. Live call only, with an error message on failure
+- A. To keep the repository tidy
+- **B. So tests exercise the installed package instead of accidentally importing the folder you are standing in** ✅
+- C. It makes imports faster
+- D. pyproject.toml requires it
 
-**Why:** Check the cache first to avoid the call entirely, go live when it is stale, and fall back to a labelled snapshot only when everything else fails.
+**Why:** It removes a whole class of "works in the repository, fails once installed" surprises.
