@@ -3,7 +3,7 @@
   <img src="assets/img/brand/fq-logo-ink.png" alt="FinQuest F(q) logo" width="360">
 </picture>
 
-# FinQuest, a fintech training arcade
+# FinQuest
 
 A twenty level fintech course built around projects that runs in a browser tab. Each level teaches the
 knowledge, walks you through the tools step by step, drills you with 15 questions, then hands you a
