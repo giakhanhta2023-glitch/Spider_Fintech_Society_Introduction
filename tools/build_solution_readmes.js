@@ -138,19 +138,30 @@ const NOTES = {
     ]
   },
   7: {
-    files: [['`risk_dashboard.py`', 'returns, volatility, Sharpe, drawdown, correlation, VaR, charts']],
-    run: 'python risk_dashboard.py',
+    files: [
+      ['`app/main.py`', 'the routes, the middleware, and the app'],
+      ['`app/models.py`', 'pydantic models: every numeric field bounded at both ends'],
+      ['`app/errors.py`', 'problem() and the handlers that rewrite framework errors into it'],
+      ['`app/auth.py`', 'bearer keys, stored as sha256 hashes, checked before any database work'],
+      ['`app/transfers.py`', 'the write path: lookup, checks, both entries in one transaction, saved response'],
+      ['`tests/`', 'TestClient tests, one per status code, plus the three idempotency cases']
+    ],
+    run: 'export DATABASE_URL=... && fastapi dev app/main.py   then   pytest -q',
     design: [
-      'Volatility is annualized with `sqrt(252)`, not 252. Variance adds over time; standard deviation is its square root. Using 252 overstates risk roughly sixteenfold.',
-      'The table reports the arithmetic mean **and** the CAGR side by side, with the gap in its own column. On `CRYPTOZ` that gap is 32 points: the clearest possible demonstration of volatility drag.',
-      '`portfolio_returns` asserts the weights sum to 1. Weights summing to 0.9 produce no error and scale every number in the report down by 10%.',
-      'VaR is always reported next to expected shortfall. VaR gives the threshold and is silent about how bad the tail gets; reporting it alone is how institutions got surprised in 2008.',
-      'The conclusion recommends the mix with the tolerable drawdown rather than the best Sharpe, and says what the analysis cannot tell you. That paragraph is the point of the level.'
+      'Three idempotency cases, not one. A new key does the work and returns 201. The same key with the same body replays the saved response with 200 and an Idempotent-Replay header. The same key with a different body returns 409, because that is a bug in the caller and telling them on the second request is kinder than telling them at month end.',
+      'The response is saved, not rebuilt. A replay returns the original id and the original timestamp, because a retry that returns a slightly different answer is worse than one that fails.',
+      'One error shape across the whole API. The framework produces its own errors in a different shape, so exception handlers rewrite them, and every error carries a stable code a program can branch on plus a request id a human can search for.',
+      'Authentication runs before anything touches the database. Measured on the reference service, an unauthenticated request costs 6.1 ms while anything reaching the database costs 200 ms or more, so an unauthenticated flood is cheap to refuse.',
+      'Pagination is keyset, with a capped limit and one extra row fetched to answer has_more without a count query. Measured on 400,000 rows: offset 300000 read 300,020 rows in 63.259 ms, the cursor read 20 rows in 1.365 ms.',
+      'Every field has a maximum as well as a minimum. A cap on the amount is what refuses a test script with one extra zero.',
+      'The latency measurement is in the README because it is the honest finding of the level: a new connection per request cost 202.7 ms median against 62.3 ms on a connection already open, with the SQL itself under a millisecond. The query was never the problem.'
     ],
     mistakes: [
-      ['Volatility enormous', 'Multiplied by 252 instead of `sqrt(252)`.'],
-      ['Everything is `NaN`', 'You skipped `.dropna()` after `pct_change()`.'],
-      ['Portfolio numbers ~10% off', 'Weights do not sum to 1.']
+      ['A retry creates a second transfer', 'The key is being stored after the write instead of checked before it, or the lookup and the insert are not in one transaction.'],
+      ['The replay returns a different timestamp', 'The response is being rebuilt rather than returned from what was saved.'],
+      ['Validation errors look different from your other errors', 'The framework handled them. Add exception handlers for RequestValidationError and HTTPException.'],
+      ['A deep page is slow', 'Offset pagination. Switch to a cursor and prove it with two EXPLAIN plans.'],
+      ['Everything is slow and the SQL is fast', 'A connection is being opened per request. Add a pool, and measure again before and after.']
     ]
   },
   8: {

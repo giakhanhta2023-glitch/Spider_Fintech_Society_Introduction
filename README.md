@@ -64,7 +64,7 @@ model backed tutor.
 | 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |
 | 5 | The money library everything else imports | An exact Money library, tested and packaged | Decimal, Hypothesis, mypy, CI |
 | 6 | The ledger in Postgres | A ledger schema, measured with EXPLAIN | SQL, constraints, indexes, migrations |
-| 7 | Risk and return | Portfolio risk dashboard | numpy, volatility, drawdown |
+| 7 | The payments API other systems depend on | An HTTP API over the ledger | FastAPI, idempotency, pagination |
 | 8 | Fraud detection and decision thresholds | Fraud scoring engine | scikit-learn, precision and recall |
 | 9 | Shipping a fintech service | A loan advisor anyone can open | Streamlit, pytest, deployment |
 | 10 | Compliance, architecture and the capstone | NeoBank analytics platform | packages, reconciliation |

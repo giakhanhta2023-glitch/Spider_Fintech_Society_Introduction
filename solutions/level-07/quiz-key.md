@@ -1,4 +1,4 @@
-# Level 7: Risk and return: quiz answer key
+# Level 7: The payments API other systems depend on: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Why is `.dropna()` needed after `prices.pct_change()`?
+### 1. Where does an idempotency key belong in an HTTP request?
 
-- **A. The first row has no previous price, so it is NaN and would poison every later statistic** ✅
-- B. To remove negative returns
-- C. To remove weekends
-- D. Because pandas requires it before groupby
+- **A. In a header, because it describes the request rather than being data** ✅
+- B. In the URL path
+- C. In the JSON body, next to the amount
+- D. In a cookie
 
-**Why:** pct_change cannot compute a change for the first row. A single NaN propagates through mean, std, and every downstream number.
+**Why:** Data goes in the body, everything about the request goes in a header. The same rule puts the API key in a header.
 
-### 2. Three consecutive daily returns of +10%, -10%, +10% give a total of:
+### 2. A retry arrives with the same idempotency key and the same body. Your API should return:
 
-- A. +10%
-- B. +33.1%
-- **C. +8.9%** ✅
-- D. +30%
+- A. 201 and a second transfer
+- B. 500, so the caller stops
+- **C. 200 and the saved response from the first attempt** ✅
+- D. 409, because the key was used
 
-**Why:** 1.1 x 0.9 x 1.1 = 1.089. Returns compound rather than add, which is why you use cumprod on (1 + r) instead of a sum.
+**Why:** Same key, same body is a retry. Return exactly what you returned the first time, down to the id and timestamp.
 
-### 3. How do you annualize daily volatility?
+### 3. The same idempotency key arrives with a different body. That means:
 
-- **A. Multiply by sqrt(252)** ✅
-- B. Divide by 252
-- C. Multiply by 252
-- D. Multiply by 365
+- **A. The caller has a bug, and 409 tells them early** ✅
+- B. The key expired
+- C. The first request must be replaced
+- D. Both should be processed
 
-**Why:** Variance scales with time, so standard deviation scales with its square root: about 15.87x. Using 252 overstates risk roughly sixteenfold.
+**Why:** Silently returning the old response hides their bug until the end of the month, when the records do not match.
 
-### 4. CRYPTOZ has an annualized mean return of 39.1% but a CAGR of 6.4%. What explains the gap?
+### 4. Why store a fingerprint of the request body next to the key?
 
-- A. Inflation
-- B. Trading fees
-- **C. Volatility drag, large swings make the compounded result fall short of the average** ✅
-- D. A calculation error
+- A. To detect tampering in transit
+- B. To allow the response to be regenerated
+- **C. Because it is the only way to tell a retry from a different request sent under the same key** ✅
+- D. To save space
 
-**Why:** A 50% loss requires a 100% gain to recover. The bigger the swings, the further compounding lags the arithmetic mean, which is why CAGR is the honest headline.
+**Why:** The key alone cannot distinguish the second case from the third.
 
-### 5. What does the Sharpe ratio measure?
+### 5. An account has $5.00 and a transfer of $10,000 arrives. The right status is:
 
-- A. The probability of a loss
-- **B. Return above the risk-free rate per unit of volatility** ✅
-- C. The worst drop from a peak
-- D. Total return over the period
+- A. 400, because the request was wrong
+- **B. 422, with a stable code such as insufficient_funds** ✅
+- C. 404, because the money is not there
+- D. 500, because the transfer failed
 
-**Why:** It makes a calm 8% and a wild 20% comparable by dividing excess return by the volatility endured to earn it.
+**Why:** The request was well formed; the state refuses it. 500 would make well behaved callers retry forever.
 
-### 6. An asset has a Sharpe ratio of -0.04. What does that mean?
+### 6. Why does an error need a `code` field as well as a `message`?
 
-- **A. It returned less than the risk-free rate while still being volatile** ✅
-- B. The calculation is invalid
-- C. It lost money every day
-- D. Its volatility was negative
+- **A. Because a program can branch on a code and cannot branch on a sentence that may be reworded** ✅
+- B. Because HTTP requires it
+- C. For translation into other languages
+- D. To keep responses small
 
-**Why:** Negative Sharpe means cash would have beaten it. The holder took real risk (a 33% drawdown here) and was paid less than a government bill.
+**Why:** Codes are part of your contract. Messages are for the human reading the logs afterwards.
 
-### 7. How is maximum drawdown calculated?
+### 7. Your handwritten errors use `{"error": {...}}` and the framework's use `{"detail": ...}`. Why does that matter?
 
-- A. The standard deviation of negative returns
-- **B. The minimum of (equity curve / running peak - 1)** ✅
-- C. The largest single-day loss
-- D. The difference between the highest and lowest price
+- A. The framework shape is faster to parse
+- **B. Callers have to handle two shapes from one API and will get it wrong, so exception handlers should rewrite the framework errors into your shape** ✅
+- C. It does not: both are JSON
+- D. It only affects the generated docs
 
-**Why:** Compare each point against the highest value seen so far (cummax) and take the worst result. It measures peak-to-trough pain, not one bad day.
+**Why:** One API, one error shape. This is exactly the kind of thing found by running your own service rather than reading about it.
 
-### 8. Why is maximum drawdown often more useful than volatility when talking to an investor?
+### 8. Validation with pydantic happens:
 
-- **A. It describes the worst moment they would have lived through, which is what makes people sell** ✅
-- B. It is required by regulators
-- C. It is always smaller than volatility
-- D. It is easier to compute
+- **A. Before your endpoint code runs, returning 422 with the field, the rule and the value sent** ✅
+- B. Only when you call a validate() function
+- C. In the database
+- D. After your endpoint code runs
 
-**Why:** Investors abandon strategies during drawdowns, not because of standard deviations. Drawdown is the most behaviourally honest single risk number.
+**Why:** Bad input never reaches your logic, and the caller gets every problem at once rather than one per round trip.
 
-### 9. CRYPTOZ has the highest Sharpe ratio and the worst drawdown (-88.6%). What does this show?
+### 9. Why cap an amount field with a maximum as well as a minimum?
 
-- A. The Sharpe calculation must be wrong
-- B. Drawdown is irrelevant when Sharpe is high
-- **C. No single ratio captures risk: Sharpe rewards average efficiency and says nothing about the worst path** ✅
-- D. The asset is risk-free
+- A. Databases cannot store large integers
+- B. To make the OpenAPI document smaller
+- **C. Because a test script with one extra zero should be refused rather than executed** ✅
+- D. Because HTTP limits number size
 
-**Why:** Sharpe uses the whole distribution symmetrically. An -88.6% fall would have removed most real investors from the strategy long before the recovery.
+**Why:** Every amount field in a payments API has an upper bound that somebody chose deliberately.
 
-### 10. The four assets have an average individual volatility of 34.6%, and an equally weighted portfolio of them has 27.1%. Why?
+### 10. Why store `sha256(api_key)` rather than the key?
 
-- A. Because equal weighting always reduces returns
-- B. A calculation error, the portfolio must equal the average
-- C. Because the portfolio has fewer observations
-- **D. Imperfect correlation: assets do not fall at the same moment, so the swings partly offset** ✅
+- A. To support key rotation
+- B. Hashes are faster to compare
+- C. Because keys are too long to store
+- **D. So a stolen copy of your key table contains no working keys, while you can still check every request** ✅
 
-**Why:** This is diversification, measured. Only perfectly correlated assets (+1) give a portfolio volatility equal to the weighted average.
+**Why:** You hash what arrives and compare hashes. The original is never needed again.
 
-### 11. Which asset contributes most to diversification in this dataset?
+### 11. Measured on 400,000 rows, `offset 300000 limit 20` read 300,020 rows in 63 ms and a cursor read 20 rows in 1.4 ms. The structural problem with offset is:
 
-- A. TECHX, because it has the highest return
-- **B. GOLDF, because its correlation with everything else is near zero** ✅
-- C. CRYPTOZ, because it is the most volatile
-- D. BANKCO, because it is a bank
+- A. It cannot be used with an index
+- **B. Cost grows with the page number, and inserts shift every later page** ✅
+- C. It always returns rows in the wrong order
+- D. It cannot express a page size
 
-**Why:** GOLDF correlates at 0.13-0.16 with the others, so it moves when they do not. Low correlation, not low volatility, is what diversifies.
+**Why:** A cursor costs the same on page 1 and page 10,000, and is anchored to a real row so it cannot drift.
 
-### 12. What is the crucial caveat about historical correlations?
+### 12. How do you know whether there is another page, without a second count query?
 
-- A. They cannot be computed on daily data
-- B. They are always negative
-- **C. They tend to rise toward 1 in a crisis, exactly when diversification is needed** ✅
-- D. They only apply to equities
+- A. Run count(*) with the same filter
+- B. Compare the page size to the table size
+- **C. Ask for one more row than the page size, and drop it before answering** ✅
+- D. Return has_more: true always
 
-**Why:** In a panic everything is sold at once. Portfolios built on calm-period correlations lose their protection on the day it matters most.
+**Why:** One extra row answers the question exactly, at no meaningful cost.
 
-### 13. A daily VaR at 95% of -2.6% means:
+### 13. What is the point of returning a request id on every response?
 
-- A. You will lose 2.6% every day
-- B. The maximum possible loss is 2.6%
-- C. You have a 2.6% chance of losing everything
-- **D. On 95% of days the loss is smaller than 2.6%** ✅
+- A. It identifies the customer
+- B. It is required by the HTTP specification
+- C. It makes responses cacheable
+- **D. A partner can quote it and you find the exact request in one search instead of an afternoon** ✅
 
-**Why:** VaR is a threshold on the distribution, not a maximum and not a forecast. It is silent about how bad the other 5% of days get.
+**Why:** Log it on every line about that request, and accept an inbound one so an id survives across services.
 
-### 14. What does expected shortfall add to VaR?
+### 14. Validation fails in 4.3 ms and anything touching the database takes 200 ms or more, while the SQL itself runs in under a millisecond. The time is going into:
 
-- A. A confidence interval on the estimate
-- **B. The average loss on the days that breach VaR: the size of the tail** ✅
-- C. A longer time horizon
-- D. An adjustment for inflation
+- A. The web framework
+- **B. Opening a new database connection per request: measured 202.7 ms median against 62.3 ms on a connection already open** ✅
+- C. JSON parsing
+- D. Writing the response
 
-**Why:** VaR gives the threshold; expected shortfall (CVaR) gives the average severity beyond it. Reporting only VaR hides the tail that actually causes failures.
+**Why:** A connection pool removes the handshake from every request. Optimising the query would have gained nothing.
 
-### 15. Before computing a weighted portfolio return, what should you assert?
+### 15. What does FastAPI's TestClient give you?
 
-- A. That there are exactly 252 observations
-- B. That the assets are uncorrelated
-- C. That all returns are positive
-- **D. That the weights sum to 1.0** ✅
+- A. Automatic test generation from OpenAPI
+- B. A mock database
+- C. A load testing tool
+- **D. It calls your application in the same process, so the whole suite runs in seconds with no server** ✅
 
-**Why:** Weights summing to 0.9 silently scale every result down by 10% without any error being raised. A single assert line catches it immediately.
+**Why:** No ports, no startup, no flakiness. Every status code your API can return becomes a fast test.
