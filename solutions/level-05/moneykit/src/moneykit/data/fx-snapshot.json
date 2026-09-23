@@ -1,0 +1,13 @@
+{
+  "base": "USD",
+  "as_of": "2025-01-02",
+  "note": "A frozen synthetic snapshot for tests. Not live pricing, and not to be used for anything real.",
+  "rates": {
+    "USD": "1",
+    "EUR": "0.9512",
+    "GBP": "0.7943",
+    "JPY": "157.21",
+    "VND": "25480",
+    "BHD": "0.3760"
+  }
+}

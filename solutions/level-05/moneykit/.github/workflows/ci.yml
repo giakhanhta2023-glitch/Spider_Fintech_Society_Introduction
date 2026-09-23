@@ -1,0 +1,39 @@
+name: ci
+
+# Runs on every pull request, not only on main, because finding a break after
+# the merge means main is already broken. Level 17 measures why the order of
+# these steps matters: the cheap checks go first so a formatting mistake fails
+# in twenty seconds rather than after the test suite.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Types
+        run: mypy --strict src tests
+
+      - name: Tests, doctests and coverage
+        run: pytest
