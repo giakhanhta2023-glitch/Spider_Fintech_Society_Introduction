@@ -1,4 +1,4 @@
-# Level 13: The log is the truth, the balance is an opinion: quiz answer key
+# Level 13: The table that outgrew the machine: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Which of these is an event rather than a command?
+### 1. What is partition pruning?
 
-- A. SetBalance
-- B. FreezeAccount
-- **C. MoneyDeposited** ✅
-- D. TransferMoney
+- A. Rebalancing rows between partitions
+- B. Compressing partitions that are rarely read
+- **C. The planner skipping partitions that cannot contain matching rows** ✅
+- D. Deleting old partitions on a schedule
 
-**Why:** Events are facts in the past tense. The other three are instructions, and an instruction can be refused, which means it is a command.
+**Why:** Measured here: 4,729 pages touched on the plain table against 396 on the partitioned one.
 
-### 2. What makes the (stream, seq) unique constraint the whole concurrency story?
+### 2. Removing one month of payments: DELETE took 47.2 ms and 2,947 kB of log, DROP partition took 0.9 ms and 5,400 bytes. What else differed?
 
-- A. It sorts the events for reading
-- B. It compresses the stream
-- C. It lets two writers append at once
-- **D. Two writers who read the same version cannot both append the next one** ✅
+- A. The delete returned the disk space, the drop did not
+- B. Both returned the space
+- C. Neither returned any space
+- **D. The drop returned all the space immediately, the delete returned none** ✅
 
-**Why:** One insert wins and the other gets a unique violation, which is the signal to read again and redo the decision against the new state.
+**Why:** A delete marks rows dead and leaves the table the same size. That is why delete-based retention bloats forever.
 
-### 3. An append fails with ConcurrencyError. What must the caller do?
+### 3. What does partitioning make worse?
 
-- A. Increment the sequence and retry
-- B. Fall back to a lock
-- **C. Re-read the stream, redo the decision, and append after the new last sequence** ✅
-- D. Retry the same append immediately
+- A. Retention and archiving
+- B. Insert throughput, severely
+- **C. Queries that do not mention the partition key, and planning time** ✅
+- D. Queries that filter on the partition key
 
-**Why:** Retrying the same append writes a decision made against a state that no longer exists. That is the lost update in a new costume.
+**Why:** Measured: one index scan became ten, and planning went from 0.188 ms to 0.898 ms, more than the execution time.
 
-### 4. What is a projection?
+### 4. Why must the partition key appear in every unique index?
 
-- **A. State computed by folding events in order** ✅
-- B. A forecast of future balances
-- C. A database view over the snapshots
-- D. A copy of the event table
+- **A. Because each partition has its own index, so uniqueness can only be enforced within a partition unless the key is included** ✅
+- B. For performance
+- C. It does not have to
+- D. Because Postgres requires primary keys to be composite
 
-**Why:** Same events, same order, same result. That purity is what makes rebuilding it from zero a meaningful test.
+**Why:** Which means a unique reference becomes unique on the pair, and level 9 idempotency needs rethinking.
 
-### 5. The replay test fails: the rebuilt balances differ from the live table. Which one do you trust?
+### 5. Adding a column with `default 'standard'` took 0.6 ms. Adding one with `default gen_random_uuid()` took 1,526 ms and 70 MB of log. Why?
 
-- **A. The log, and you rebuild the projection** ✅
-- B. Whichever is larger
-- C. The live table, because it has been serving traffic
-- D. Neither, until an auditor decides
+- **A. A constant default is stored once in the catalog, but a volatile default needs a different value per row, so the whole table is rewritten** ✅
+- B. The second statement was not indexed
+- C. The uuid type is slower to write
+- D. gen_random_uuid() is a slow function
 
-**Why:** The events are the record of what happened. A projection is a summary of them, and a summary that disagrees with its source is simply wrong.
+**Why:** One word in the migration, three orders of magnitude, and an ACCESS EXCLUSIVE lock for the whole rewrite.
 
-### 6. How do you answer "what was this balance on 31 March"?
+### 6. A four minute reporting query is running. Your one second ALTER TABLE starts. What happens to ordinary queries on that table?
 
-- A. Subtract this year's transactions from today's balance
-- **B. Fold the events up to that date** ✅
-- C. Restore a database backup
-- D. Keep a monthly balance table
+- A. They fail immediately
+- **B. They queue behind the waiting ALTER, so the table is unusable for four minutes** ✅
+- C. They are routed to the replica
+- D. They run normally, because the ALTER is waiting
 
-**Why:** Time travel is the same fold with a filter, which is the single most useful thing an event log gives you.
+**Why:** Postgres lock queues are fair. The migration has not touched a row and the product is already down.
 
-### 7. You add a fee field to an event type. What keeps the events already in the log working?
+### 7. What does `set lock_timeout = '3s'` at the top of a migration do?
 
-- A. A migration that rewrites the old events
-- **B. An upcast on read that fills the new field with a default** ✅
-- C. Deleting events older than the change
-- D. A second events table
+- A. Limits how long the migration itself may run
+- **B. Makes the migration fail fast rather than waiting for a lock and building a queue behind it** ✅
+- C. Forces the migration to use a weaker lock
+- D. Retries the migration for three seconds
 
-**Why:** Upcast on read, never in storage. Rewriting stored events means you can no longer prove what the system was told at the time.
+**Why:** Failing is fine. Queueing is not. Your deploy tool can retry a failure; it cannot undo an outage.
 
-### 8. What is a snapshot allowed to be?
+### 8. The six steps of expand and contract, in order:
 
-- A. A backup of the read model
-- B. A replacement for the events before it
-- **C. A cache that the system must work correctly without** ✅
-- D. The source of truth for old periods
+- A. Add, switch reads, dual write, backfill, drop, verify
+- B. Dual write, add, verify, backfill, drop, switch reads
+- **C. Add, dual write, backfill, verify, switch reads, drop the old** ✅
+- D. Add, backfill, switch reads, dual write, verify, drop
 
-**Why:** Delete every snapshot and every answer must still be correct, only slower. A snapshot that is load bearing is a stored state that can drift.
+**Why:** Every step reversible on its own, which is the entire point of doing six deploys instead of one.
 
-### 9. A colleague proposes deleting events older than the latest snapshot to save space. What have they proposed?
+### 9. The one statement backfill took 5,622 ms; batches of 10,000 took 5,980 ms. Why prefer the slower one?
 
-- **A. A balance column with extra steps** ✅
-- B. A faster replay
-- C. Standard practice in event sourcing
-- D. A reasonable retention policy
+- **A. The longest lock held drops from 5,622 ms to 280 ms, and it can be paused or resumed** ✅
+- B. It is more atomic
+- C. It avoids bloating the table
+- D. It produces less write ahead log
 
-**Why:** You lose replay, rebuilds after a bug, questions about that period, and any proof for an auditor. Space is solved by compression and cheaper storage, not by deletion.
+**Why:** Same log, same bloat, 6% slower. What changes is lock duration and blast radius.
 
-### 10. Why does personal data not belong inside events?
+### 10. Why walk the primary key instead of using `offset` in a backfill?
 
-- A. It makes the table large
-- B. Because events must be under 1KB
-- **C. Because the log is append only, and erasure requests require deletion** ✅
-- D. JSONB cannot hold unicode names
+- A. offset is not supported in updates
+- B. They are equivalent
+- **C. Because offset makes the database count through and discard every skipped row, so each batch gets slower and the job degrades into quadratic time** ✅
+- D. Because offset requires an index
 
-**Why:** Reference the person by an opaque id and keep them in a normal table you can delete from. Decide it before the first event, because afterwards it is a rewrite.
+**Why:** The same quadratic trap as the missing index in level 6, in a different disguise.
 
-### 11. What does CQRS name?
+### 11. Why keep `and fee_minor is null` in the backfill predicate?
 
-- **A. Separating the write path from the read path** ✅
-- B. A snapshotting strategy
-- C. A message queue protocol
-- D. A consistency level for distributed databases
+- **A. To make the job idempotent, so it can be restarted, rerun, or accidentally run twice** ✅
+- B. Because the column is nullable
+- C. To avoid locking rows
+- D. To make the update faster
 
-**Why:** Commands append events, queries read projections. The name is in the job description; the idea is a handful of lines.
+**Why:** Resumability is the property you traded whole-job atomicity for. The predicate is what delivers it.
 
-### 12. Which of these is the strongest reason to choose event sourcing?
+### 12. Why `is distinct from` rather than `<>` in the verification query?
 
-- A. It is faster than a normalised schema
-- B. It avoids writing tests
-- C. It removes the need for a database
-- **D. The history is the product, and corrections have to stay visible** ✅
+- A. It is faster
+- B. They behave identically
+- C. Because the column is numeric
+- **D. Because `null <> anything` evaluates to null rather than true, so a plain comparison silently skips the rows the backfill missed** ✅
 
-**Why:** Ledgers, orders and trades are histories. A settings page is not, and paying this complexity for one is a bad trade.
+**Why:** And the rows it skips are exactly the ones you are looking for.
 
-### 13. Why should append not decide whether a transfer is allowed?
+### 13. A merchant issues a refund, the page reloads, and the refund is missing. What happened?
 
-- A. Because validation is slow
-- **B. Because the decision belongs to the command handler, and mixing them makes the log untrustworthy** ✅
-- C. Because appends must be async
-- D. Because the database cannot express the rule
+- A. The transaction was rolled back
+- **B. The write went to the primary and the read went to a replica that had not caught up** ✅
+- C. The write failed silently
+- D. The cache was stale
 
-**Why:** Events are facts. Validation lives in the handler that turns a command into an event, and keeping them apart is what lets a reader trust the log.
+**Why:** Read your own writes goes to the primary. So does anything that decides money.
 
-### 14. What is eventual consistency in this design?
+### 14. One backfill produced 180 MB of write ahead log. Why does that matter beyond disk?
 
-- A. Snapshots may be stale
-- B. Events can arrive out of order
-- C. Two projections may disagree forever
-- **D. A read model can be a moment behind the log** ✅
+- A. It increases the table size
+- B. It slows down the backfill
+- C. It blocks vacuum
+- **D. Every byte ships to every replica and every change data capture consumer, so lag climbs while it replays** ✅
 
-**Why:** Fine for a report, not for a balance check inside a command. A command reads its own stream, which is always current.
+**Why:** Which is why the batched loop sleeps between batches: to produce log no faster than replicas can consume it.
 
-### 15. Level 11 took a row lock, this level uses a version number. What is the trade?
+### 15. When is change data capture the better choice over an outbox?
 
-- A. Version numbers require a single writer
-- **B. Locks make the loser wait, optimistic concurrency makes the loser retry** ✅
-- C. Locks are always slower
-- D. Locks work only in Postgres
+- A. When you need exactly once delivery
+- **B. When something needs a copy of your tables, such as a warehouse, a search index or an analytics store** ✅
+- C. When other services need to react to business events
+- D. Always, because it needs no application code
 
-**Why:** Pick the lock when the conflict is the normal case, and the version when it is rare, because a retry costs nothing if it almost never happens.
+**Why:** Outbox for things that react, change data capture for things that copy. The second couples consumers to your table layout.

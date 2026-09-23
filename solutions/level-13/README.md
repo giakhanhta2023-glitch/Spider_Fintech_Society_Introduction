@@ -1,6 +1,6 @@
-# Level 13: The log is the truth, the balance is an opinion
+# Level 13: The table that outgrew the machine
 
-> **The event sourced account service** · build project · difficulty 9/10
+> **payments-at-scale: partition it, migrate it, and let nobody notice** · build project · difficulty 9/10
 
 ## Read this second
 
@@ -10,64 +10,74 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The society's treasurer asks a question the level 11 ledger cannot answer: what did every member owe at the end of last term. Rebuild the account service so that the log is the record, every balance is derived, and any question about any past moment is one fold away.
+You have five million payments in one table and a column that has to change. Partition the table, run a full expand and contract migration with a batched backfill, and do all of it with a load generator hammering the database, proving zero failed requests from start to finish.
 
-**Scope:** Uses this level plus level 11 (Postgres, transactions, unique constraints) and level 9 (tests, layout). No framework and no message broker: the point is that event sourcing is a table and a fold, and that you can see every part of it.
+**Scope:** Postgres only. No new services. The deliverable is the measurements and the migration scripts, and the acceptance test is the load generator: if it records a single failure, the migration is wrong.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `schema.sql` | events, snapshots, balances, and the revoked permissions |
-| `es/log.py` | append with an expected sequence, read, ConcurrencyError |
-| `es/projections.py` | apply and project, pure and testable without a database |
-| `es/commands.py` | the handlers that validate, append, and re-decide on a collision |
-| `tests/test_replay.py` | the rebuilt read model against the live one |
+| `bench/baseline.sql` | the plain table, measured before anything changed |
+| `partition/create.sql` | monthly partitions, and the job that makes next month |
+| `partition/compare.md` | pruning and the cost of pruning, with both plans |
+| `migrate/001_expand.sql` | the nullable column, instant at any size |
+| `migrate/backfill.py` | batched, key walking, resumable, with a sleep |
+| `migrate/verify.sql` | the disagreement count that has to be zero |
+| `load/generator.py` | the writer and reader that run through the whole migration |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-docker run --name fq-es -e POSTGRES_PASSWORD=es -e POSTGRES_DB=es -p 5432:5432 -d postgres:16 && pip install -r requirements.txt && pytest -q
+psql -f bench/baseline.sql && python -m load.generator & python -m migrate.backfill
 ```
 
 ## Why the solution is shaped this way
 
-- `append` does not validate anything. Events are facts, so the only thing that can refuse them is the command handler that decides whether the fact should happen, and keeping the two apart is what lets a reader trust the log.
-- Concurrency is the unique constraint on (stream, seq). A collision sends the handler back to the top to read and decide again, never straight back to the append, because the second version would be a decision made against a state that no longer exists.
-- `apply` and `project` take plain dictionaries and return plain dictionaries. Most of the test suite needs no database at all, which is the practical benefit of a pure fold.
-- Old event versions are upcast on read. Nothing rewrites a stored event, because the point of the log is being able to prove what the system was told at the time.
-- The snapshot test deletes every snapshot and asserts no answer changed. A snapshot that is load bearing is a stored state that can drift, which is the thing this design exists to avoid.
+- Partitioning is presented with both halves. The monthly aggregate went from 4,729 pages touched to 396 and from 19.7 ms to 13.7 ms, because a month is physically one table rather than rows scattered across the heap.
+- And the cost, measured on the same data: a lookup by merchant went from one index scan to ten, and planning time from 0.188 ms to 0.898 ms, which is more than the query takes to execute. The README says which queries got worse and why the trade still pays.
+- Retention is the real argument. Deleting one month took 47.2 ms, produced 2,947 kB of write ahead log and returned no disk. Dropping the partition took 0.9 ms, produced 5,400 bytes and returned all 5,336 kB immediately.
+- The five migrations are measured with the lock each one takes. Adding a column with a constant default took 0.6 ms; the same line with gen_random_uuid() took 1,526 ms and 70 MB of log, because a volatile default rewrites the table under ACCESS EXCLUSIVE.
+- Every migration file starts with lock_timeout and statement_timeout. The repository reproduces the lock queue on purpose: a long reader, a blocked migration, and a third session that cannot run a plain select.
+- The backfill compares one statement against batches of 10,000. Same log, same bloat, 6% slower, and the longest lock held drops from 5,622 ms to 280 ms. The predicate keeps `fee_minor is null` so the job is idempotent and survives being killed.
+- Verification uses `is distinct from` rather than `<>`, because null comparisons are null, so a plain comparison skips exactly the rows the backfill missed.
+- The acceptance test is the load generator: the full migration runs under continuous traffic and the report states failures and p99 latency, before and during.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| The retry loop double spends | It is retrying the append rather than the decision. Go back to reading the stream. |
-| Replay does not match the live model | Trust the log and rebuild. Then find the write path that changed the projection without an event. |
-| A version 1 event crashes the projection | The upcast is missing or runs after the apply. Upcast on read, before anything folds it. |
+| The endpoint got slower after partitioning | It does not filter on the partition key, so it scans every partition and pays the planning cost too. |
+| Inserts failed at midnight on the first | Nobody created next month partition. Automate it and alert when fewer than two future months exist. |
+| A one second migration took the site down for four minutes | It queued behind a long reader, and everything else queued behind it. lock_timeout prevents this. |
+| The backfill died at hour five and undid everything | One transaction instead of batches. Atomicity across the whole job is not the property you need. |
+| Each backfill batch was slower than the last | offset, which counts through every skipped row. Walk the primary key instead. |
+| A refund vanished after the page reloaded | The read went to a replica that had not caught up. Read your own writes goes to the primary. |
 
 ## Self-checks the solution satisfies
 
-- Appending twice at the same expected_seq raises ConcurrencyError exactly once
-- apply() and project() run on a plain list of dictionaries with no database
-- A withdrawal larger than the balance raises before any event is appended
-- balance_at returns the correct figure at three moments, including one before the account existed
-- Rebuilding the balances table from the log reproduces it exactly
-- A version 1 MoneyTransferred event projects the same balance after version 2 ships
-- Deleting every snapshot changes no answer the service gives
-- Two threads withdrawing 80 from 100 leave one success, one refusal, and no gap in the sequence numbers
-- The application role cannot UPDATE or DELETE an event, proved by a test that expects the failure
+- The partitioned table returns identical results to the plain one for every baseline query
+- A monthly aggregate touches one partition, and the plan proves it
+- Dropping a month returns the disk immediately, and deleting a month does not
+- Inserting a payment dated next month succeeds, because the partition already exists
+- The future partition check fails when fewer than two future months exist
+- A migration blocked on a lock gives up within lock_timeout instead of queueing
+- The backfill can be killed at any point and restarted with no duplicated work
+- Running the backfill twice changes nothing the second time
+- The verification query returns zero after the backfill and after new writes
+- A load generator running through the entire migration records zero failed requests
+- The p99 latency during the migration is reported honestly, whatever it is
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | The log is the truth | Nothing updates or deletes an event, corrections are events, and the replay test passes. |
-| 20 | Concurrency handled | Optimistic append, and handlers that re-read and re-decide rather than retrying blindly. |
-| 20 | Projections are pure | apply and project touch nothing but their arguments, and are tested without a database. |
-| 20 | Time and versions | balance_at works at arbitrary moments, old event versions still project, and snapshots are provably only a cache. |
-| 15 | Shipped | Runs from a clean clone, tests pass, and the README says what the events hold and what they deliberately do not. |
+| 25 | Partitioning, both sides | Pruning proved and the cost measured, including planning time, with a written trade-off. |
+| 20 | Retention | Drop against delete measured, future partitions automated, and the alert that catches the gap. |
+| 20 | Migrations understood | The five costs measured, the lock queue reproduced, and timeouts in every migration. |
+| 20 | The backfill | Batched, key walking, idempotent, resumable after a kill, verified with a query that returns zero. |
+| 15 | Nobody noticed | Load generator through the whole migration with zero failures and an honest latency report. |
 
 ---
 

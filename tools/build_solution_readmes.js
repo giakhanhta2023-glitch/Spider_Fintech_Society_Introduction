@@ -300,27 +300,34 @@ const NOTES = {
   },
   13: {
     files: [
-      ['`schema.sql`', 'events, snapshots, balances, and the revoked permissions'],
-      ['`es/log.py`', 'append with an expected sequence, read, ConcurrencyError'],
-      ['`es/projections.py`', 'apply and project, pure and testable without a database'],
-      ['`es/commands.py`', 'the handlers that validate, append, and re-decide on a collision'],
-      ['`tests/test_replay.py`', 'the rebuilt read model against the live one']
+      ['`bench/baseline.sql`', 'the plain table, measured before anything changed'],
+      ['`partition/create.sql`', 'monthly partitions, and the job that makes next month'],
+      ['`partition/compare.md`', 'pruning and the cost of pruning, with both plans'],
+      ['`migrate/001_expand.sql`', 'the nullable column, instant at any size'],
+      ['`migrate/backfill.py`', 'batched, key walking, resumable, with a sleep'],
+      ['`migrate/verify.sql`', 'the disagreement count that has to be zero'],
+      ['`load/generator.py`', 'the writer and reader that run through the whole migration']
     ],
-    run: 'docker run --name fq-es -e POSTGRES_PASSWORD=es -e POSTGRES_DB=es -p 5432:5432 -d postgres:16 && pip install -r requirements.txt && pytest -q',
+    run: 'psql -f bench/baseline.sql && python -m load.generator & python -m migrate.backfill',
     design: [
-      '`append` does not validate anything. Events are facts, so the only thing that can refuse them is the command handler that decides whether the fact should happen, and keeping the two apart is what lets a reader trust the log.',
-      'Concurrency is the unique constraint on (stream, seq). A collision sends the handler back to the top to read and decide again, never straight back to the append, because the second version would be a decision made against a state that no longer exists.',
-      '`apply` and `project` take plain dictionaries and return plain dictionaries. Most of the test suite needs no database at all, which is the practical benefit of a pure fold.',
-      'Old event versions are upcast on read. Nothing rewrites a stored event, because the point of the log is being able to prove what the system was told at the time.',
-      'The snapshot test deletes every snapshot and asserts no answer changed. A snapshot that is load bearing is a stored state that can drift, which is the thing this design exists to avoid.'
+      'Partitioning is presented with both halves. The monthly aggregate went from 4,729 pages touched to 396 and from 19.7 ms to 13.7 ms, because a month is physically one table rather than rows scattered across the heap.',
+      'And the cost, measured on the same data: a lookup by merchant went from one index scan to ten, and planning time from 0.188 ms to 0.898 ms, which is more than the query takes to execute. The README says which queries got worse and why the trade still pays.',
+      'Retention is the real argument. Deleting one month took 47.2 ms, produced 2,947 kB of write ahead log and returned no disk. Dropping the partition took 0.9 ms, produced 5,400 bytes and returned all 5,336 kB immediately.',
+      'The five migrations are measured with the lock each one takes. Adding a column with a constant default took 0.6 ms; the same line with gen_random_uuid() took 1,526 ms and 70 MB of log, because a volatile default rewrites the table under ACCESS EXCLUSIVE.',
+      'Every migration file starts with lock_timeout and statement_timeout. The repository reproduces the lock queue on purpose: a long reader, a blocked migration, and a third session that cannot run a plain select.',
+      'The backfill compares one statement against batches of 10,000. Same log, same bloat, 6% slower, and the longest lock held drops from 5,622 ms to 280 ms. The predicate keeps `fee_minor is null` so the job is idempotent and survives being killed.',
+      'Verification uses `is distinct from` rather than `<>`, because null comparisons are null, so a plain comparison skips exactly the rows the backfill missed.',
+      'The acceptance test is the load generator: the full migration runs under continuous traffic and the report states failures and p99 latency, before and during.'
     ],
     mistakes: [
-      ['The retry loop double spends', 'It is retrying the append rather than the decision. Go back to reading the stream.'],
-      ['Replay does not match the live model', 'Trust the log and rebuild. Then find the write path that changed the projection without an event.'],
-      ['A version 1 event crashes the projection', 'The upcast is missing or runs after the apply. Upcast on read, before anything folds it.']
+      ['The endpoint got slower after partitioning', 'It does not filter on the partition key, so it scans every partition and pays the planning cost too.'],
+      ['Inserts failed at midnight on the first', 'Nobody created next month partition. Automate it and alert when fewer than two future months exist.'],
+      ['A one second migration took the site down for four minutes', 'It queued behind a long reader, and everything else queued behind it. lock_timeout prevents this.'],
+      ['The backfill died at hour five and undid everything', 'One transaction instead of batches. Atomicity across the whole job is not the property you need.'],
+      ['Each backfill batch was slower than the last', 'offset, which counts through every skipped row. Walk the primary key instead.'],
+      ['A refund vanished after the page reloaded', 'The read went to a replica that had not caught up. Read your own writes goes to the primary.']
     ]
   },
-
   14: {
     files: [
       ['`scorecard/binning.py`', 'woe_table, fit_binning, transform, and the unseen value counter'],

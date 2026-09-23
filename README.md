@@ -70,7 +70,7 @@ model backed tutor.
 | 10 | The processor says one thing, your ledger says another | A reconciliation engine | matching, breaks, fees, payouts |
 | 11 | The event you thought you published | An outbox, idempotent consumers, partitioning | Kafka, at-least-once, replay |
 | 12 | The payout that half happened | A saga with compensation and a sweeper | Distributed transactions, recovery |
-| 13 | The log is the truth, the balance is an opinion | An event sourced account service | event sourcing, CQRS, replay |
+| 13 | The table that outgrew the machine | Partition it, migrate it, backfill it live | Partitioning, migrations, replicas |
 | 14 | The scorecard a regulator can read | An application scorecard with reason codes | WOE, information value, model docs |
 | 15 | Fraud detection with a stopwatch running | A fraud decision service under 100ms | serving, feature stores, drift |
 | 16 | The backtest that does not lie to you | A backtest engine with walk forward | costs, overfitting, bias |
