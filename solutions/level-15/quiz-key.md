@@ -1,4 +1,4 @@
-# Level 15: Fraud detection with a stopwatch running: quiz answer key
+# Level 15: The keys to the money: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Why is p99 latency the number that matters rather than the average?
+### 1. What belongs in a threat model that most people leave out?
 
-- A. Because p99 is always lower than the mean
-- B. Because averages are hard to compute in production
-- **C. Because the one customer in a hundred waiting two seconds is standing at a till** ✅
-- D. Because regulators require percentile reporting
+- A. The compliance framework
+- B. A list of technologies used
+- **C. What you are deliberately choosing not to defend against** ✅
+- D. The incident response phone tree
 
-**Why:** An average hides the tail, and the tail is the experience people complain about and abandon carts over.
+**Why:** It tells a reader where the gaps are on purpose, which is more useful than a claim of being secure.
 
-### 2. Scoring a logistic regression at serving time is best done by:
+### 2. A secret was committed and then deleted in a later commit. What is its status?
 
-- A. Calling predict_proba on a one row data frame
-- B. Querying a model server over HTTP
-- **C. A dot product and a sigmoid over a plain vector** ✅
-- D. Re-fitting on recent data per request
+- A. Safe, because it is no longer in the current code
+- B. Safe once the branch is deleted
+- **C. Still leaked, because the history contains it, so it must be rotated** ✅
+- D. Safe if the repository is private
 
-**Why:** Measured on this course's model: about 0.10 ms through scikit-learn against about 0.003 ms as arithmetic. The overhead is data frame shaped and does not belong in a request path.
+**Why:** Revoke first, investigate second. Every minute spent assessing is a minute the key still works.
 
-### 3. How is a one hour transaction count computed at decision time?
+### 3. Which mechanism lets the network itself prove which service is calling?
 
-- A. A full table scan with an index hint
-- **B. From counters kept in expiring buckets as transactions arrive** ✅
-- C. By re-reading the training data
-- D. A query over the transaction table filtered by customer
+- A. A JWT
+- **B. Mutual TLS** ✅
+- C. IP allowlisting
+- D. An API key in a header
 
-**Why:** Small writes on the way in beat a large read on the way out, and bucket expiry means no cleanup job.
+**Why:** Both sides present certificates during the handshake, so a caller without one never reaches your code.
 
-### 4. What is training and serving skew?
+### 4. Why must you pin the algorithm when verifying a JWT?
 
-- **A. A feature meaning something different in training than it does in production** ✅
-- B. Latency differences between environments
-- C. The gap between train and test accuracy
-- D. The model drifting as the population changes
+- **A. Because otherwise an attacker chooses it, setting it to none or signing an HS256 token with your public key** ✅
+- B. To support key rotation
+- C. Because libraries require it
+- D. For performance
 
-**Why:** The model is fine and every prediction is subtly wrong. One implementation of each feature, called by both paths, is the structural fix.
+**Why:** Algorithm confusion. Never read the algorithm from the token you are trying to verify.
 
-### 5. Why must a velocity feature exclude the transaction being scored?
+### 5. A token is valid, correctly signed, unexpired, and issued by you. Is the request authorised?
 
-- **A. Because including it uses information from the moment being predicted and inflates the training signal** ✅
-- B. Because Redis cannot increment and read atomically
-- C. Because the counter has not been written yet
-- D. To save a millisecond
+- **A. No: a signature proves who, never what they may do. The scope for the specific action still has to be checked** ✅
+- B. Only if it has an audience claim
+- C. Only if it is RS256
+- D. Yes, that is what verification means
 
-**Why:** Point in time correctness. The signal looks strong offline and vanishes live, which is the same trap as level 8 leakage.
+**Why:** Authentication and authorisation are separate questions, and conflating them is a common breach.
 
-### 6. Offline AUC is 0.97 and the live model catches almost nothing. What do you check first?
+### 6. Verification cost measured: HS256 79.9 us, RS256 141.5 us, ES256 239.7 us. What is surprising?
 
-- A. Whether the database is slow
-- B. Whether the threshold is too high
-- **C. Whether the features computed live match the features computed in training** ✅
-- D. Whether to add more trees
+- A. That elliptic curve is the cheapest
+- B. That all three are the same
+- **C. That verifying an RSA signature is cheaper than verifying an elliptic curve one** ✅
+- D. That HMAC is the slowest
 
-**Why:** Recompute the features offline for transactions already decided live and compare field by field. A difference names itself.
+**Why:** RSA verification uses a tiny public exponent. RSA signing is the expensive direction, not verifying.
 
-### 7. What does shadow mode tell you that an offline test cannot?
+### 7. Why does envelope encryption exist?
 
-- A. The true fraud rate
-- B. Whether the candidate would have caught fraud you approved
-- C. The optimal threshold
-- **D. How the candidate behaves on live traffic, including its latency and how much review volume it would create** ✅
+- A. Because AES is slow
+- B. Because it is required by PCI
+- C. To support multiple algorithms
+- **D. Because a call to the key service costs milliseconds while local encryption costs microseconds, so you do far fewer calls, and rotation then touches only the wrapped keys** ✅
 
-**Why:** What it cannot tell you is the second option, because you approved those transactions and may never learn they were bad.
+**Why:** Measured: 20,000 calls and 160 s, against 200 calls and 1.7 s. Rotation went from 127 ms plus a full rewrite to 1 ms.
 
-### 8. A review threshold sends 1.2% of traffic to a queue, and volume doubles. Which response is the one that happens by accident?
+### 8. Local AES-256-GCM encrypted a card number in 2.8 microseconds. What does that tell you?
 
-- A. Pausing the campaign
-- **B. The backlog being auto approved because nobody decided** ✅
-- C. Raising the threshold deliberately
-- D. Hiring more reviewers
+- A. That the measurement is wrong
+- **B. That the cost is in the key service round trip, not the cryptography, so the design question is how few calls you can make** ✅
+- C. That encryption is the bottleneck
+- D. That you should use a weaker cipher
 
-**Why:** And it is the worst, because the cases auto approved are the ones the model was least sure about. Raising the threshold on purpose, with the expected loss written down, is the honest move.
+**Why:** 358,539 records per second on one core. The 8 ms network call is a thousand times more expensive.
 
-### 9. Why do rules sit on top of the model rather than being replaced by it?
+### 9. Which may never be stored after authorisation, in any form?
 
-- **A. Because some decisions are not statistical: a stolen card is declined whatever the score says** ✅
-- B. Because regulators ban model only decisions
-- C. Because models cannot read card status
-- D. Because rules are more accurate
+- **A. The CVV** ✅
+- B. The expiry date
+- C. The last four digits
+- D. The BIN
 
-**Why:** The model orders the uncertain middle. Rules handle the certain ends, and the split is what makes both explainable.
+**Why:** Not encrypted, not hashed, not "temporarily". Not at all.
 
-### 10. Which monitoring signal is available immediately after a decision?
+### 10. What does tokenisation actually buy you?
 
-- A. Confirmed fraud losses
-- B. Recall
-- **C. Input drift on each feature** ✅
-- D. Chargebacks
+- A. Encryption of the card number
+- B. Compliance with GDPR
+- **C. That only one system holds card numbers, so the number of systems in PCI scope collapses** ✅
+- D. Faster lookups
 
-**Why:** The real label arrives weeks later through disputes, which is exactly why input and prediction drift are watched from the first minute.
+**Why:** Seven systems in scope becoming one is the difference between an audit of a week and one of a quarter.
 
-### 11. Card present drops from 61% to 4% at 09:12 and holds. The first move is:
+### 11. Why must a token carry no information about the PAN?
 
-- A. Retrain on the new distribution
-- **B. Treat it as a data incident and page the owner of that feed** ✅
-- C. Lower the decline threshold
-- D. Ignore it until chargebacks confirm harm
+- A. To keep it short
+- **B. Because a token that is derived from the PAN turns one key compromise into every card** ✅
+- C. For database indexing
+- D. Because the standard says so
 
-**Why:** A step change at a precise minute is upstream, not behavioural. Meanwhile the model is scoring nearly everything as card not present, and approvals are about to collapse.
+**Why:** Random identifier, mapping in the vault, meaningless anywhere else.
 
-### 12. What does a PSI of 0.31 on a feature mean?
+### 12. What must be inside the signed string of a webhook signature?
 
-- A. The feature has become more predictive
-- **B. The distribution has moved far enough that the model was built on different traffic** ✅
-- C. Thirty one percent of values are missing
-- D. The model has a bug
+- A. The parsed JSON
+- **B. The timestamp and the raw body bytes** ✅
+- C. The receiver identifier
+- D. The URL
 
-**Why:** Under 0.10 stable, 0.10 to 0.25 watch, above 0.25 act. Same statistic as the scorecard monitoring in level 14.
+**Why:** Raw bytes, because re-serialising changes them; the timestamp, because without it a captured request replays forever.
 
-### 13. Why ship a model as JSON coefficients rather than a pickled object?
+### 13. The timing leak in `==` could not be reproduced: 112.7 ns differing at the first byte against 98.5 ns at the last. What is the right conclusion?
 
-- A. Because scikit-learn cannot be installed in production
-- B. Because pickles cannot hold floats
-- C. JSON is faster to parse
-- **D. Because it is auditable, diffable, version stamped and cannot execute code** ✅
+- A. The measurement was wrong and should be discarded
+- B. Use a slower comparison to mask the timing
+- C. Timing attacks are a myth, so use ==
+- **D. No leak was visible at this length in this interpreter, and compare_digest costs only 60 ns more, so use it because it is free rather than because you have seen the attack** ✅
 
-**Why:** Unpickling a file runs whatever is inside it, and a coefficient you cannot read in a diff is a coefficient nobody reviews.
+**Why:** And reporting the failed reproduction honestly is a stronger interview answer than repeating the advice.
 
-### 14. What has to be defined before a kill switch is real?
+### 14. What is the right way to keep card numbers out of logs?
 
-- A. The name of the configuration key
-- B. Who is allowed to flip it
-- C. How fast it propagates
-- **D. What the system does when the model is off** ✅
+- A. A denylist of fields to redact
+- B. Reviewing log lines in code review
+- C. Turning off logging on payment endpoints
+- **D. An allowlist of what may be logged, plus a test that asserts the PAN never appears** ✅
 
-**Why:** Approving everything is a fraud decision and declining everything is a business decision. Decide in advance, write it in the runbook, and drill it.
+**Why:** A denylist only removes the fields somebody thought of. The test fails in the pull request that would leak.
 
-### 15. Why log the feature vector, the score and the model version with every decision?
+### 15. What makes an audit log trustworthy against an insider?
 
-- **A. So a decision from three weeks ago can be reconstructed and explained** ✅
-- B. To retrain on it later
-- C. Because the regulator requires all logs to be kept
-- D. For the metrics dashboard
+- **A. The application not having permission to update or delete from it** ✅
+- B. Encrypting it
+- C. Writing it asynchronously
+- D. Storing it in a separate table
 
-**Why:** Somebody will ask why a transaction was declined. Without the inputs and the version, the honest answer is that you do not know.
+**Why:** If a service can edit its own audit trail, it does not have one. A separate role with insert and select is ten minutes of work.

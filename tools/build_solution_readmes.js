@@ -330,50 +330,65 @@ const NOTES = {
   },
   14: {
     files: [
-      ['`scorecard/binning.py`', 'woe_table, fit_binning, transform, and the unseen value counter'],
-      ['`scorecard/model.py`', 'fit, evaluate, scale_to_points, build_card'],
-      ['`scorecard/reasons.py`', 'reason codes in words, ranked by points lost'],
-      ['`scorecard/fairness.py`', 'approval rate and bad rate of the approved, by group'],
-      ['`MODEL.md`', 'the document a validator reads before the code']
+      ['`lab/generate.py`', 'open loop arrivals, Poisson, fire and forget'],
+      ['`lab/report.py`', 'percentiles, goodput, status codes, median of three runs'],
+      ['`svc/cache.py`', 'Redis, single flight, and the list of what is never cached'],
+      ['`svc/limiter.py`', 'a token bucket in Lua, atomic, keyed per customer'],
+      ['`svc/breaker.py`', 'closed, open, half open, with the thresholds explained'],
+      ['`svc/shed.py`', 'a queue depth limit and a 503 with Retry-After'],
+      ['`BUDGET.md`', 'the latency budget, with measured numbers beside each line']
     ],
-    run: 'pip install -r requirements.txt && python -m scorecard.build && pytest -q',
+    run: 'docker compose up -d redis && python -m lab.generate --rps 100 --seconds 15 && python -m lab.report',
     design: [
-      'Everything is learned on the training half: the bin edges, the WOE maps, the coefficients and the cut off. The test half is read once, at the end, which is the only way the reported Gini means anything.',
-      'Thin bins are merged before fitting. A bin holding ninety of eight thousand applications gives a WOE that will swing at the next refit, and coarse classing exists to trade separation for stability.',
-      'Age and region are dropped whatever their information value. One is protected in most jurisdictions and the other reconstructs it, and the fairness test is on outcomes rather than on which columns were fed in.',
-      'The card is additive by construction, so a reason code is arithmetic: compare each variable against the best achievable bin and rank the gaps. That is what makes an adverse action notice possible at all.',
-      'MODEL.md is a deliverable, not documentation of a deliverable. Definitions, the card, both Ginis, the fairness numbers and the PSI thresholds, because the model has to be defensible when its author has left.'
+      'The load generator is open loop on purpose. A closed loop generator slows down when the service does, so it can never offer more than the service can take, and every overload number it produces is fiction.',
+      'Capacity is computed before anything is measured: 8 workers over a 70 ms mean service time is 114 requests per second. Every other number in the report is quoted as a percentage of it.',
+      'The sweep is the centrepiece. p50 58.0 ms and p99 265.6 ms at 35% of capacity, against p50 220.2 ms and p99 594.3 ms at 95%, with the work per request unchanged. Latency is flat and then it is a wall.',
+      'Queue time and service time are recorded separately, which is what lets the README say that the tail at low load is the dependency and the tail at high load is the queue. They need different fixes.',
+      'Caching is reported honestly. At an 80% hit ratio the median fell to 15.7 ms while the p99 stayed at 256.6 ms, because the one request in five that misses still pays the full price including the slow path.',
+      'The limiter refuses in microseconds rather than queueing, which is why a fast no is worth building. Offered 250 requests per second against a limit of 100: 1,223 served at 101 a second with a p99 of 304.2 ms, and 2,043 refused with a 429 in microseconds, having taken no worker.',
+      'Shedding is argued with goodput rather than throughput. At twice capacity, accepting everything gave a p99 of 2,972.1 ms for responses nobody was still waiting for; shedding at a queue depth of 20 gave 116 successful responses per second at a p99 of 461.3 ms.'
     ],
     mistakes: [
-      ['Gini above 0.9 on an application model', 'Something in the features was not knowable at decision time. Look for a variable that only exists because the account already went bad.'],
-      ['A coefficient with the wrong sign', 'Two correlated variables fighting. Drop one rather than shipping a card that says more income raises risk.'],
-      ['Infinite WOE', 'A bin with no bads or no goods. Merge it with a neighbour rather than adding a constant to hide it.']
+      ['The load test shows no overload at any rate', 'A closed loop generator. It waits for each response, so it cannot offer more than the service can serve.'],
+      ['Mean latency is fine and users complain', 'A tail problem. A handful of very slow requests barely move an average, and a page making twenty calls hits p99 18% of the time.'],
+      ['The cache did not help the p99', 'It is not supposed to directly. Misses still pay full price. The tail improves only when the cache takes enough load off the workers to stop the queue forming.'],
+      ['An outage got worse after retries were added', 'Retries multiply load on the thing that is already failing. Backoff, jitter and a retry budget, or do not retry.'],
+      ['One customer degraded everybody', 'A global rate limit instead of a per customer one.'],
+      ['Requests succeeded but nobody was waiting', 'Throughput measured instead of goodput. A response after the caller gave up is not a success.']
     ]
   },
-
   15: {
     files: [
-      ['`fraud/features.py`', 'one definition per feature, called by training and by serving'],
-      ['`fraud/train.py`', 'the only file that imports sklearn; writes model.json'],
-      ['`fraud/score.py`', 'dot product and sigmoid, no dependencies'],
-      ['`fraud/policy.py`', 'the three bands, the hard rules, and the queue capacity rule'],
-      ['`bench.py`', 'p50, p95, p99 and max over two thousand decisions']
+      ['`THREAT_MODEL.md`', 'assets, attackers, controls, and what is not defended'],
+      ['`SCOPE.md`', 'who can see a card number, before and after the vault'],
+      ['`vault/keys.py`', 'the key service simulator, 8 ms a call, master key unreachable'],
+      ['`vault/envelope.py`', 'data keys, wrapping, AES-GCM with the record id bound in'],
+      ['`vault/tokens.py`', 'random tokens, the mapping, BIN and last four as separate fields'],
+      ['`vault/rotate.py`', 'rewrap data keys, two versions live, retire the old one'],
+      ['`api/auth.py`', 'OAuth2 client credentials, and verification done fully'],
+      ['`api/webhooks.py`', 'sign, verify, rotate the secret, reject replays'],
+      ['`obs/logging.py`', 'an allowlist, plus the test that fails when a PAN leaks']
     ],
-    run: 'pip install -r requirements.txt && python -m fraud.train && pytest -q && python bench.py',
+    run: 'python -m vault.bench && pytest -q tests/test_no_pan_in_logs.py tests/test_forgery.py',
     design: [
-      'Training and serving call the same feature function. The equality test between the two vectors is the most valuable test in the suite, because skew produces a model that is fine, data that is fine, and predictions that are quietly wrong.',
-      'The model ships as JSON coefficients with a version. A pickle executes whatever is inside it, cannot be diffed in review, and drags scikit-learn into the request path for about thirty times the scoring cost.',
-      'Velocity is an interface. Tests run over a dictionary with no container, production swaps in Redis with one constructor argument, and the service never knows which it has.',
-      'The policy names review capacity out loud. A threshold that sends more cases to the queue than the team can clear is a threshold that auto approves the backlog, and that decision should be made by a person rather than by a Tuesday.',
-      'Every decision logs the feature vector, the score and the model version, because the question three weeks later is why this transaction was declined, and the honest answer without those three is that nobody knows.'
+      'The threat model is written first and everything else refers to it. The section that gets read is the one naming what is deliberately not defended, because it tells a reviewer where to look.',
+      'Envelope encryption is justified with arithmetic rather than habit. Encrypting 20,000 card numbers with one key service call each is 20,000 calls and 160 seconds; with data keys it is 200 calls and 1.7 seconds.',
+      'Local cryptography turns out not to be the cost at all: AES-256-GCM encrypted a card number in 2.8 microseconds, which is 358,539 a second on one core. The 8 ms network call is a thousand times more expensive, and the design exists to make fewer of them.',
+      'Rotation is the part that separates reading about envelopes from having done it. Rewrapping 200 data keys took 1 ms. Re-encrypting 20,000 records took 127 ms of cryptography plus a rewrite of every row, which is the level 13 backfill with all of its locks and log volume.',
+      'Tokens are random and mean nothing. The scope table is the deliverable: seven components that could see a card number became one, and every audit of the other six stops being necessary.',
+      'Token verification is costed because it sits on the hot path: HS256 79.9 us, RS256 141.5 us, ES256 239.7 us per verification, which is 8%, 14% and 24% of a core at a thousand requests per second. Verifying RSA is cheaper than verifying an elliptic curve, which surprises most people.',
+      'The timing attack on `==` could not be reproduced: 112.7 ns when the secret differed at the first byte against 98.5 ns at the last, with the sign the wrong way round. compare_digest costs 60 ns more and is used anyway, because it is free and it removes a dependency on an implementation detail. The failed reproduction is reported rather than hidden.'
     ],
     mistakes: [
-      ['p50 fast, p99 terrible', 'It is waiting, not computing. Look for a pool, a cache miss falling through to a full scan, or a call without a timeout.'],
-      ['Great offline, useless live', 'Recompute the features offline for transactions already decided live and compare field by field. Skew names itself.'],
-      ['Velocity counts the current transaction', 'The window must end strictly before the event being scored, or the signal inflates in training and vanishes in production.']
+      ['A valid token let a caller do the wrong thing', 'Authentication checked, authorisation not. A signature proves who, never what they may do.'],
+      ['A token from another service was accepted', 'No audience check. Every token says what it is for.'],
+      ['An attacker signed their own token', 'The algorithm was read from the token. Pin it in the code, always.'],
+      ['Rotation meant rewriting every card row', 'Data keys not used, so the master key is encrypting records directly.'],
+      ['A ciphertext was moved between rows and still decrypted', 'No context bound into the additional authenticated data.'],
+      ['A card number appeared in the logs', 'A denylist of fields to redact. Allowlist what may be logged, and test it.'],
+      ['The audit log had a gap', 'The application role could delete from it, so it was never an audit log.']
     ]
   },
-
   16: {
     files: [
       ['`engine/core.py`', 'run, metrics and break_even_cost'],

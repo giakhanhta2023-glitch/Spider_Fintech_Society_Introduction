@@ -1,6 +1,6 @@
-# Level 15: Fraud detection with a stopwatch running
+# Level 15: The keys to the money
 
-> **The fraud decision service** · build project · difficulty 9/10
+> **card-vault: one service that can see a card number** · build project · difficulty 9/10
 
 ## Read this second
 
@@ -10,66 +10,81 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The payments service from level 12 is going live with real members, and it needs a fraud decision on every transfer in under a hundred milliseconds. Build the service: features from counters, a model shipped as data, a policy that knows what a review costs, and the monitoring that tells you when it has stopped working.
+Build the vault your payments system stores nothing sensitive without. Envelope encryption over a key service you cannot read the master key out of, tokens that mean nothing, a master key rotation that never touches a card row, authenticated callers, signed webhooks, and a scope document that shows how much of your system you just took out of PCI scope.
 
-**Scope:** Uses this level plus level 8 (the model and the cost thinking), level 12 (FastAPI, errors, request ids) and level 14 (PSI). scikit-learn for training only: the request path must not import it.
+**Scope:** Uses the level 7 API and the level 6 database. All card numbers are published test numbers. The key service is a local simulator with a latency dial. The deliverable includes the threat model and the scope table, which are read more often than the code.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `fraud/features.py` | one definition per feature, called by training and by serving |
-| `fraud/train.py` | the only file that imports sklearn; writes model.json |
-| `fraud/score.py` | dot product and sigmoid, no dependencies |
-| `fraud/policy.py` | the three bands, the hard rules, and the queue capacity rule |
-| `bench.py` | p50, p95, p99 and max over two thousand decisions |
+| `THREAT_MODEL.md` | assets, attackers, controls, and what is not defended |
+| `SCOPE.md` | who can see a card number, before and after the vault |
+| `vault/keys.py` | the key service simulator, 8 ms a call, master key unreachable |
+| `vault/envelope.py` | data keys, wrapping, AES-GCM with the record id bound in |
+| `vault/tokens.py` | random tokens, the mapping, BIN and last four as separate fields |
+| `vault/rotate.py` | rewrap data keys, two versions live, retire the old one |
+| `api/auth.py` | OAuth2 client credentials, and verification done fully |
+| `api/webhooks.py` | sign, verify, rotate the secret, reject replays |
+| `obs/logging.py` | an allowlist, plus the test that fails when a PAN leaks |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-pip install -r requirements.txt && python -m fraud.train && pytest -q && python bench.py
+python -m vault.bench && pytest -q tests/test_no_pan_in_logs.py tests/test_forgery.py
 ```
 
 ## Why the solution is shaped this way
 
-- Training and serving call the same feature function. The equality test between the two vectors is the most valuable test in the suite, because skew produces a model that is fine, data that is fine, and predictions that are quietly wrong.
-- The model ships as JSON coefficients with a version. A pickle executes whatever is inside it, cannot be diffed in review, and drags scikit-learn into the request path for about thirty times the scoring cost.
-- Velocity is an interface. Tests run over a dictionary with no container, production swaps in Redis with one constructor argument, and the service never knows which it has.
-- The policy names review capacity out loud. A threshold that sends more cases to the queue than the team can clear is a threshold that auto approves the backlog, and that decision should be made by a person rather than by a Tuesday.
-- Every decision logs the feature vector, the score and the model version, because the question three weeks later is why this transaction was declined, and the honest answer without those three is that nobody knows.
+- The threat model is written first and everything else refers to it. The section that gets read is the one naming what is deliberately not defended, because it tells a reviewer where to look.
+- Envelope encryption is justified with arithmetic rather than habit. Encrypting 20,000 card numbers with one key service call each is 20,000 calls and 160 seconds; with data keys it is 200 calls and 1.7 seconds.
+- Local cryptography turns out not to be the cost at all: AES-256-GCM encrypted a card number in 2.8 microseconds, which is 358,539 a second on one core. The 8 ms network call is a thousand times more expensive, and the design exists to make fewer of them.
+- Rotation is the part that separates reading about envelopes from having done it. Rewrapping 200 data keys took 1 ms. Re-encrypting 20,000 records took 127 ms of cryptography plus a rewrite of every row, which is the level 13 backfill with all of its locks and log volume.
+- Tokens are random and mean nothing. The scope table is the deliverable: seven components that could see a card number became one, and every audit of the other six stops being necessary.
+- Token verification is costed because it sits on the hot path: HS256 79.9 us, RS256 141.5 us, ES256 239.7 us per verification, which is 8%, 14% and 24% of a core at a thousand requests per second. Verifying RSA is cheaper than verifying an elliptic curve, which surprises most people.
+- The timing attack on `==` could not be reproduced: 112.7 ns when the secret differed at the first byte against 98.5 ns at the last, with the sign the wrong way round. compare_digest costs 60 ns more and is used anyway, because it is free and it removes a dependency on an implementation detail. The failed reproduction is reported rather than hidden.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| p50 fast, p99 terrible | It is waiting, not computing. Look for a pool, a cache miss falling through to a full scan, or a call without a timeout. |
-| Great offline, useless live | Recompute the features offline for transactions already decided live and compare field by field. Skew names itself. |
-| Velocity counts the current transaction | The window must end strictly before the event being scored, or the signal inflates in training and vanishes in production. |
+| A valid token let a caller do the wrong thing | Authentication checked, authorisation not. A signature proves who, never what they may do. |
+| A token from another service was accepted | No audience check. Every token says what it is for. |
+| An attacker signed their own token | The algorithm was read from the token. Pin it in the code, always. |
+| Rotation meant rewriting every card row | Data keys not used, so the master key is encrypting records directly. |
+| A ciphertext was moved between rows and still decrypted | No context bound into the additional authenticated data. |
+| A card number appeared in the logs | A denylist of fields to redact. Allowlist what may be logged, and test it. |
+| The audit log had a gap | The application role could delete from it, so it was never an audit log. |
 
 ## Self-checks the solution satisfies
 
-- features() gives identical vectors when called from the training replay and from the live path, on a sample of 1,000 transactions
-- No feature changes if a transaction dated after the one being scored is added to the history
-- model.json scores a row within 1e-9 of the fitted scikit-learn model
-- The request path imports neither sklearn nor pandas, asserted by inspecting sys.modules after a decision
-- last_hour() matches a brute force count over replayed history, and buckets older than the window are gone
-- A hard rule declines regardless of a low score
-- A review band score is approved instead when the queue is over capacity, and the reason says so
-- p99 over 2,000 decisions is under the budget in the README
-- Shadow mode logs both decisions and never lets the candidate change the response
-- PSI is under 0.01 against the baseline itself and over 0.25 when a feature is shifted deliberately
-- With MODEL_MODE off the service still returns a decision, from rules alone
+- The master key cannot be obtained through any public function of the key service
+- A ciphertext moved to a different record fails to decrypt
+- Encrypting 20,000 records with envelopes makes two orders of magnitude fewer key service calls
+- After a master key rotation, records written before it still decrypt
+- A master key rotation updates no card row
+- Two tokens for the same card are identical if stable tokens are chosen, and the token reveals nothing about the PAN
+- Detokenisation without the required scope raises rather than returning a card number
+- A token issued for another audience is rejected by the vault
+- A JWT with the algorithm set to none is rejected
+- An expired token is rejected even though the signature is valid
+- A client with no certificate cannot complete the TLS handshake with the vault
+- A webhook with an edited body fails verification
+- A webhook replayed after the window fails verification
+- A webhook signed with the previous secret succeeds during the rotation window and fails after it
+- No test PAN appears anywhere in captured log output, while the BIN and last four do
+- The application database role cannot delete from the audit table
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | Fast enough, and proved | A stated budget, a benchmark, and a test that fails when p99 exceeds it. |
-| 20 | No skew | One feature implementation, a point in time test, and an equality test between the training and serving vectors. |
-| 20 | A policy, not a threshold | Three bands with costs behind them, rules above the model, and queue capacity handled explicitly. |
-| 20 | Operable | Shadow mode, drift monitoring, a kill switch with a tested fallback, and a decision log that can reconstruct any decision. |
-| 15 | Shipped | Runs from a clean clone, tests pass, README has the budget table and the runbook. |
+| 20 | The thinking | A threat model with a real "not defending" section, and a scope table that shows the change. |
+| 25 | Envelope encryption | Bound context, measured call counts, and a rotation that touches no card row. |
+| 20 | The vault | Meaningless tokens, a single detokenisation path, scope enforced, the rest of the system converted. |
+| 20 | Authentication | Full JWT verification, mutual TLS proven at the handshake, signed webhooks with forgery tests. |
+| 15 | Containment | Allowlist logging with a failing-when-broken test, and an audit log the application cannot edit. |
 
 ---
 

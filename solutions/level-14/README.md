@@ -1,6 +1,6 @@
-# Level 14: The scorecard a regulator can read
+# Level 14: The p99 you promised
 
-> **The application scorecard** · build project · difficulty 9/10
+> **latency-lab: the p99 you can defend** · build project · difficulty 9/10
 
 ## Read this second
 
@@ -10,66 +10,75 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-A credit union will lend to members and wants a scorecard they can put in front of their regulator. They need the card, the numbers behind it, the reasons an applicant is told when they are declined, and the plan for noticing when it stops working.
+Take a payments endpoint, put it under honest load, and find out what it actually does. Then make it meet a latency target you write down in advance, using caching, a rate limiter, timeouts, a circuit breaker and load shedding, and prove each one with a before and after.
 
-**Scope:** Uses this level plus level 6 (credit ratios and the five Cs), level 8 (splitting, thresholds, precision and recall) and level 3 (pandas). pandas, numpy and scikit-learn only: no boosting library, because the deliverable is a card rather than a score.
+**Scope:** Build on the level 7 API and the level 8 load work. Redis runs in Docker with one command. The deliverable is a latency report with measurements for every claim, and a stated load at which you meet your budget.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `scorecard/binning.py` | woe_table, fit_binning, transform, and the unseen value counter |
-| `scorecard/model.py` | fit, evaluate, scale_to_points, build_card |
-| `scorecard/reasons.py` | reason codes in words, ranked by points lost |
-| `scorecard/fairness.py` | approval rate and bad rate of the approved, by group |
-| `MODEL.md` | the document a validator reads before the code |
+| `lab/generate.py` | open loop arrivals, Poisson, fire and forget |
+| `lab/report.py` | percentiles, goodput, status codes, median of three runs |
+| `svc/cache.py` | Redis, single flight, and the list of what is never cached |
+| `svc/limiter.py` | a token bucket in Lua, atomic, keyed per customer |
+| `svc/breaker.py` | closed, open, half open, with the thresholds explained |
+| `svc/shed.py` | a queue depth limit and a 503 with Retry-After |
+| `BUDGET.md` | the latency budget, with measured numbers beside each line |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-pip install -r requirements.txt && python -m scorecard.build && pytest -q
+docker compose up -d redis && python -m lab.generate --rps 100 --seconds 15 && python -m lab.report
 ```
 
 ## Why the solution is shaped this way
 
-- Everything is learned on the training half: the bin edges, the WOE maps, the coefficients and the cut off. The test half is read once, at the end, which is the only way the reported Gini means anything.
-- Thin bins are merged before fitting. A bin holding ninety of eight thousand applications gives a WOE that will swing at the next refit, and coarse classing exists to trade separation for stability.
-- Age and region are dropped whatever their information value. One is protected in most jurisdictions and the other reconstructs it, and the fairness test is on outcomes rather than on which columns were fed in.
-- The card is additive by construction, so a reason code is arithmetic: compare each variable against the best achievable bin and rank the gaps. That is what makes an adverse action notice possible at all.
-- MODEL.md is a deliverable, not documentation of a deliverable. Definitions, the card, both Ginis, the fairness numbers and the PSI thresholds, because the model has to be defensible when its author has left.
+- The load generator is open loop on purpose. A closed loop generator slows down when the service does, so it can never offer more than the service can take, and every overload number it produces is fiction.
+- Capacity is computed before anything is measured: 8 workers over a 70 ms mean service time is 114 requests per second. Every other number in the report is quoted as a percentage of it.
+- The sweep is the centrepiece. p50 58.0 ms and p99 265.6 ms at 35% of capacity, against p50 220.2 ms and p99 594.3 ms at 95%, with the work per request unchanged. Latency is flat and then it is a wall.
+- Queue time and service time are recorded separately, which is what lets the README say that the tail at low load is the dependency and the tail at high load is the queue. They need different fixes.
+- Caching is reported honestly. At an 80% hit ratio the median fell to 15.7 ms while the p99 stayed at 256.6 ms, because the one request in five that misses still pays the full price including the slow path.
+- The limiter refuses in microseconds rather than queueing, which is why a fast no is worth building. Offered 250 requests per second against a limit of 100: 1,223 served at 101 a second with a p99 of 304.2 ms, and 2,043 refused with a 429 in microseconds, having taken no worker.
+- Shedding is argued with goodput rather than throughput. At twice capacity, accepting everything gave a p99 of 2,972.1 ms for responses nobody was still waiting for; shedding at a queue depth of 20 gave 116 successful responses per second at a p99 of 461.3 ms.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| Gini above 0.9 on an application model | Something in the features was not knowable at decision time. Look for a variable that only exists because the account already went bad. |
-| A coefficient with the wrong sign | Two correlated variables fighting. Drop one rather than shipping a card that says more income raises risk. |
-| Infinite WOE | A bin with no bads or no goods. Merge it with a neighbour rather than adding a constant to hide it. |
+| The load test shows no overload at any rate | A closed loop generator. It waits for each response, so it cannot offer more than the service can serve. |
+| Mean latency is fine and users complain | A tail problem. A handful of very slow requests barely move an average, and a page making twenty calls hits p99 18% of the time. |
+| The cache did not help the p99 | It is not supposed to directly. Misses still pay full price. The tail improves only when the cache takes enough load off the workers to stop the queue forming. |
+| An outage got worse after retries were added | Retries multiply load on the thing that is already failing. Backoff, jitter and a retry budget, or do not retry. |
+| One customer degraded everybody | A global rate limit instead of a per customer one. |
+| Requests succeeded but nobody was waiting | Throughput measured instead of goodput. A response after the caller gave up is not a success. |
 
 ## Self-checks the solution satisfies
 
-- The book is 8,000 applications with a 9.99% bad rate
-- The DTI table has five bins with bad rates rising from about 3.6% to about 24.5%, and IV near 0.609
-- Prior defaults has IV near 0.340 and income near 0.304
-- Age and region both come out under 0.01 and are excluded from the model
-- Test AUC is about 0.77 and Gini about 0.54, with a train to test gap under 0.03
-- Every coefficient in the final model has the sign the WOE construction implies
-- factor is 28.854 and offset is 487.1 for PDO 20 at 600 points and 50 to 1 odds
-- Summing the card points for any applicant reproduces the score from the model within a point
-- The band table shows bad rates falling as the score rises, with no reversals
-- reason_codes returns at most four reasons, all with a positive points gap, ordered largest first
-- psi() returns near zero when a distribution is compared with itself
+- The generator maintains its target rate even when the service slows down
+- p99 is flat at a third of capacity and has clearly departed from flat near capacity
+- Queue time and service time sum to the measured latency for every request
+- Cache hits are served without touching the backend, and the hit ratio is reported
+- Expiring a hot key under load triggers the expensive work exactly once
+- The limiter allows a burst of exactly the bucket size, then enforces the steady rate
+- An abusive customer receives 429s while a second customer is unaffected
+- Every outbound call has a timeout shorter than the inbound deadline
+- With retries and no budget, the service receives measurably more requests than were offered
+- With a retry budget, retries stay under the configured share of traffic
+- The breaker opens after the configured failures and closes again once the dependency recovers
+- At twice capacity, shedding keeps p99 of successes within the target
+- Every number in the README can be reproduced by a command in the README
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | Correct technique | WOE and IV computed right, bins fitted on train only, monotonic where it matters, thin bins merged. |
-| 20 | An honest result | Both halves reported, the gap small, the Gini plausible, and the leakage question asked of the strongest variable. |
-| 20 | A usable card | Points scaled with stated constants, printed per bin, and reproducing the model score when summed. |
-| 20 | Decisions somebody can defend | Reason codes in words, a fairness comparison with numbers, and a cut off framed as a business decision rather than an accuracy maximum. |
-| 15 | Documented | MODEL.md covers definitions, the card, performance, fairness and monitoring. A validator could read it without you. |
+| 20 | Honest measurement | Open loop, percentiles, goodput, medians of repeated runs, reproducible commands. |
+| 20 | Understanding the tail | Capacity arithmetic, the sweep, queue time separated from service time, both kinds of tail named. |
+| 20 | Cache | Hit ratios measured, single flight proven, and a written rule for what is never cached. |
+| 20 | Protection | Limiter, timeouts, backoff with jitter, retry budget, circuit breaker, all demonstrated. |
+| 20 | Shedding and the budget | Goodput at twice capacity, and a latency budget with measured numbers beside it. |
 
 ---
 

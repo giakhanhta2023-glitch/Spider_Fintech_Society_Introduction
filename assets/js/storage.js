@@ -23,7 +23,7 @@
       test: function (s) { return countWhere(s, function (l) { return l.quizPassed; }) >= total(); } },
     { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Finish every build',
       test: function (s) { return countWhere(s, function (l) { return l.projectDone; }) >= total(); } },
-    { id: 'cfo', ico: '👑', name: 'Chief fintech officer', hint: 'Clear the whole course',
+    { id: 'cfo', ico: '👑', name: 'Principal engineer', hint: 'Clear the whole course',
       test: function (s) { return clearedCount(s) >= total(); } }
   ];
 

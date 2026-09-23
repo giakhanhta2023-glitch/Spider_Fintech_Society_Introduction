@@ -1,5 +1,11 @@
 # The advanced track, levels 11 to 20
 
+> **Superseded.** This was the plan for levels 11 to 20 before the course was
+> pointed at one job: backend engineer at a payments company. The current plan is
+> [the backend track](backend-track.md), and the shipped levels follow that. Kept
+> here because a few of its ideas, such as event sourcing and the credit scorecard,
+> are worth returning to later.
+
 Levels 1 to 10 take somebody from no Python to a deployed app. They are enough to
 get an internship interview. They are not enough to get hired into a fintech
 engineering or risk team, because every one of those builds runs in a notebook

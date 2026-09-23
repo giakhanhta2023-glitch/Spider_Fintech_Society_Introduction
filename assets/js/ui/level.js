@@ -450,7 +450,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
       (res.badges || []).forEach((b, i) =>
         setTimeout(() => toast(`Badge unlocked: ${b.name}`), 700 * (i + 1)));
       if (level.id === 10) {
-        setTimeout(() => toast('Course complete. You are a chief fintech officer.', 'moss'), 1400);
+        setTimeout(() => toast('Course complete. You are a principal engineer.', 'moss'), 1400);
       }
     }
     refresh();

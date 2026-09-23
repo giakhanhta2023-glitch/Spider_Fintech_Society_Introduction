@@ -71,8 +71,8 @@ model backed tutor.
 | 11 | The event you thought you published | An outbox, idempotent consumers, partitioning | Kafka, at-least-once, replay |
 | 12 | The payout that half happened | A saga with compensation and a sweeper | Distributed transactions, recovery |
 | 13 | The table that outgrew the machine | Partition it, migrate it, backfill it live | Partitioning, migrations, replicas |
-| 14 | The scorecard a regulator can read | An application scorecard with reason codes | WOE, information value, model docs |
-| 15 | Fraud detection with a stopwatch running | A fraud decision service under 100ms | serving, feature stores, drift |
+| 14 | The p99 you promised | Measure the tail, then cache, limit and shed | Latency, Redis, load shedding |
+| 15 | The keys to the money | A card vault with envelope encryption | Tokenisation, OAuth2, mTLS, PCI scope |
 | 16 | The backtest that does not lie to you | A backtest engine with walk forward | costs, overfitting, bias |
 | 17 | Weights, and the risk they actually carry | A portfolio and risk engine | optimisation, risk parity, VaR |
 | 18 | Three banks, three shapes, one account view | An open banking aggregator | OAuth2, consent, normalisation |
