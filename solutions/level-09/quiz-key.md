@@ -1,4 +1,4 @@
-# Level 9: Shipping a fintech service: quiz answer key
+# Level 9: The life of a card payment: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Why keep calculations in finance.py rather than inside app.py?
+### 1. At the moment an authorisation is approved, how much money has moved?
 
-- A. Streamlit cannot do arithmetic
-- B. GitHub requires multiple files
-- **C. Pure functions can be tested, reused, and audited without running the interface** ✅
-- D. It makes the app load faster
+- A. The full amount, from the customer to the merchant
+- B. Half, with the rest at settlement
+- **C. None. The issuer has set it aside and promised it is there** ✅
+- D. The amount minus fees
 
-**Why:** A calculation containing st.write() is welded to the UI forever. Separated, the engine can be unit-tested in milliseconds and reused by an API later.
+**Why:** Which is exactly why your ledger writes no entries at authorisation. It writes them at capture.
 
-### 2. What happens when a user moves a slider in a Streamlit app?
+### 2. In the shipped week, 841 approved authorisations worth $74,230.57 ended in `expired`. What does that mean happened?
 
-- A. The page reloads and state is lost
-- **B. The entire script runs again from the top** ✅
-- C. A callback function fires and nothing else runs
-- D. Only the affected widget updates
+- A. The issuer reversed them
+- **B. The merchant never captured them, so the holds fell off after seven days** ✅
+- C. They were charged back
+- D. The customers cancelled
 
-**Why:** Streamlit re-executes the whole file on every interaction. It keeps the code simple, and it is exactly why slow operations must be cached.
+**Why:** The customer saw money held for a week for a sale that never completed. A rising expiry count means a broken checkout.
 
-### 3. What is `@st.cache_data` for?
+### 3. Your ledger writes entries at authorisation instead of capture. What breaks?
 
-- A. Encrypting sensitive data
-- B. Saving user input between sessions
-- C. Speeding up chart rendering
-- **D. Avoiding repeating slow work like file downloads on every re-run** ✅
+- A. Only the customer's statement
+- B. Nothing, as long as you reverse them later
+- C. Authorisations start being declined
+- **D. The ledger claims money the merchant may never receive, so reconciliation never matches and expired holds become fake revenue** ✅
 
-**Why:** Since the script re-runs constantly, uncached downloads or API calls would repeat on every slider move. Cache reads, never cache writes.
+**Why:** 4.88% of approvals in this week expired. That would be fake revenue somebody has to unwind by hand.
 
-### 4. Where should a deployed app get its API key?
+### 4. A capture for less than the authorised amount happens because:
 
-- A. From a text file committed beside the code
-- B. From a query parameter in the URL
-- C. Hardcoded in app.py
-- **D. From the platform's secrets store, read via st.secrets** ✅
+- A. The issuer reduced the approval
+- B. It is always an error
+- C. The customer paid partly in cash
+- **D. The order shipped in parts, an item was out of stock, or the authorisation included room for a tip** ✅
 
-**Why:** The secrets store injects values at runtime and keeps them out of the repository. A key in a URL ends up in logs and browser history.
+**Why:** 8.04% of captures here were partial, leaving $38,580.89 authorised and never taken.
 
-### 5. What does requirements.txt do?
+### 5. A customer cancels an order that has been authorised but not captured. You should:
 
-- **A. Tells the deployment platform exactly which libraries and versions to install** ✅
-- B. Documents the API endpoints
-- C. Configures the server's memory
-- D. Lists the features the app must have
+- **A. Void it** ✅
+- B. Let the hold expire
+- C. Capture then refund
+- D. Refund it
 
-**Why:** Without it the server has none of your libraries and the app fails on import. Most first deployment failures are a missing or wrong line in this file.
+**Why:** Faster for the customer and cheaper for the merchant, since refunds usually do not return the processing fee.
 
-### 6. Why use a virtual environment?
+### 6. Which decline code must never be retried?
 
-- A. Because Streamlit requires one
-- **B. To keep each project's libraries separate so upgrades cannot break other projects** ✅
-- C. To make Python run faster
-- D. To encrypt your source code
+- A. do_not_honor
+- **B. lost_or_stolen** ✅
+- C. insufficient_funds
+- D. velocity_exceeded
 
-**Why:** A library folder for each project means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable.
+**Why:** It is a hard decline. Retrying it wastes money, annoys the customer and counts against you with the networks.
 
-### 7. A user enters a loan of 0. What should happen?
+### 7. In this week, 74.2% of declines were soft, worth $167,410.94. What does that number justify building?
 
-- A. The app silently uses a default of 1000
-- B. A Python traceback appears on the page
-- **C. A clear error message is shown and the script stops before computing** ✅
-- D. The page reloads
+- A. A manual review queue for declines
+- B. A nightly retry of every failed payment
+- **C. A retry policy limited to soft declines, with a capped attempt count and growing delays** ✅
+- D. Nothing: declined is declined
 
-**Why:** Validate, message, st.stop(). A traceback exposes internals and tells the user nothing they can act on; a silent default produces answers to a question they did not ask.
+**Why:** Recovering soft declines is a product every payments company sells. Retrying hard declines is how you get fined.
 
-### 8. Why validate inside your functions as well as with widget min/max values?
+### 8. An authorisation request times out after 30 seconds. What is the correct state?
 
-- **A. Because the same function may later be called by an API or a test where no widget exists** ✅
-- B. Because Streamlit ignores min_value
-- C. Widgets are unreliable
-- D. To slow down malicious users
+- **A. unknown, until something tells you which it was** ✅
+- B. authorized, optimistically
+- C. failed
+- D. declined
 
-**Why:** Widget limits are a convenience of one particular interface. The engine must defend itself wherever it is called from.
+**Why:** If your model cannot hold "we do not know", your code will guess, and it guessed wrong 159 times in this week alone.
 
-### 9. What does `st.stop()` do?
+### 9. What makes a retry after a timeout safe?
 
-- A. Shuts down the server
-- B. Logs the user out
-- **C. Halts the current script run so nothing below it executes** ✅
-- D. Clears the cache
+- A. Waiting at least 60 seconds
+- B. Using a different card
+- **C. Sending your own reference with the original request, so the network can recognise the retry, plus a reversal before retrying** ✅
+- D. Checking the customer's balance first
 
-**Why:** It ends this run cleanly, leaving your error message on screen with no half-rendered charts underneath it.
+**Why:** Level 4's idempotency key, extended past your own database to the party you are calling.
 
-### 10. Which test is most valuable for a payment calculation?
+### 10. The difference between a refund and a chargeback is:
 
-- A. That the chart colours are correct
-- B. That the page loads under two seconds
-- **C. That a known input produces a known output, and that bad input raises** ✅
-- D. That the app opens without errors
+- A. The speed
+- B. Refunds are for cards, chargebacks for bank transfers
+- **C. A refund is the merchant agreeing; a chargeback is the cardholder's bank taking the money back whether the merchant agrees or not** ✅
+- D. The amount
 
-**Why:** Fixed known values catch silent maths regressions, and testing the refusals proves your validation actually fires. Both run in milliseconds without a browser.
+**Why:** And the merchant pays a dispute fee either way, win or lose.
 
-### 11. What does `pytest.raises(ValueError)` assert?
+### 11. This merchant's chargeback rate was 0.499% of captured payments. Why is the rate watched more closely than the amount?
 
-- **A. That the code inside the block does raise a ValueError** ✅
-- B. That the code never raises an error
-- C. That errors are logged
-- D. That ValueError is imported
+- **A. Because card networks run monitoring programmes, with fines and eventual loss of card acceptance above roughly 1%** ✅
+- B. Because the amount is always small
+- C. Because issuers set prices from it
+- D. Because rates are easier to compute
 
-**Why:** It is how you test refusals. If the block completes without raising, the test fails, which is exactly what you want when checking validation.
+**Why:** $6,152.18 is survivable. Losing the ability to accept cards is not.
 
-### 12. Your app works locally but fails on Streamlit Cloud. What do you check first?
+### 12. What does engineering owe the dispute process?
 
-- A. Your internet connection
-- **B. requirements.txt and the build log, which names the failing package** ✅
-- C. The GitHub repository description
-- D. The colour scheme
+- A. A support phone number
+- **B. Evidence gathered at the time and retrievable months later: authorisation response, delivery, device, terms accepted, timestamps** ✅
+- C. A lower decline rate
+- D. Faster refunds
 
-**Why:** The server starts empty. A library you installed locally but never listed is the most common cause, and the build log states exactly which one.
+**Why:** None of it can be collected after the dispute arrives, which is what makes it an engineering problem.
 
-### 13. Which best describes the client-server split for a Streamlit app?
+### 13. Which transition must the state machine refuse?
 
-- A. The server only serves static files
-- B. Both run the same code simultaneously
-- C. Your Python runs in the user's browser
-- **D. Your Python runs on the server; the browser only sends input and displays results** ✅
+- A. authorizing to declined
+- B. captured to refunded
+- C. authorized to voided
+- **D. captured to voided** ✅
 
-**Why:** That is why secrets can live server-side, and why the server must survive whatever a stranger types into the form.
+**Why:** The money has already moved. What the caller wants is a refund, and letting a void through would lie to the ledger.
 
-### 14. What belongs in .gitignore for this project?
+### 14. Why does every lifecycle event need its own idempotency key?
 
-- **A. .venv/ and __pycache__/** ✅
-- B. README.md
-- C. app.py and finance.py
-- D. requirements.txt
+- **A. Because each one is a network call that can time out and be retried, and a capture that runs twice charges the customer twice** ✅
+- B. Because the network rejects requests without one
+- C. Because the database requires unique keys
+- D. To make the events sortable
 
-**Why:** Ignore anything rebuildable or machine-specific. The virtual environment is hundreds of megabytes and reinstalls from requirements.txt in seconds.
+**Why:** Same bug as level 4, with a slower feedback loop and a customer in the middle.
 
-### 15. What is the most valuable thing to put at the top of your README?
+### 15. Why does your service store a token rather than the card number?
 
-- A. The install instructions for Python
-- **B. The live URL and a screenshot** ✅
-- C. Your full source code
-- D. A list of every function
+- A. To support multiple currencies
+- **B. Because the full number drags the whole system under PCI DSS, with the audits and breach exposure that follow** ✅
+- C. Tokens are shorter
+- D. Because the network rejects card numbers
 
-**Why:** A reviewer with thirty seconds clicks a link and looks at a picture. Everything else in the README is for the people who stay.
+**Why:** Keep a token, the last four digits and the expiry for display. Level 15 builds the vault that issues the token.

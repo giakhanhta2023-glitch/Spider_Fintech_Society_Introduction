@@ -1,552 +1,623 @@
 /* =========================================================================
-   LEVEL 9: Shipping a fintech service
+   LEVEL 9: the life of a card payment
    ========================================================================= */
 FQ.registerLevel({
   id: 9,
-  codename: 'deploy',
-  title: 'Shipping a fintech service',
-  tagline: 'Turn your notebook into something with a real address, so anyone can open it and use it.',
-  difficulty: 9,
-  minutes: 210,
-  tags: ['Streamlit', 'deployment', 'validation', 'testing'],
-  summary: 'Eight levels of analysis have lived inside your notebooks. This level moves the code into a real application ' +
-           'with inputs, validation, tests, and a public address, and yes, this is where you finally set up a proper editor.',
+  codename: 'card-lifecycle',
+  title: 'The life of a card payment',
+  tagline: 'Authorise, capture, void, refund, chargeback, expire. Six words that decide whether a merchant gets paid, and the domain knowledge that separates a generic backend candidate from one a payments company wants.',
+  difficulty: 8,
+  minutes: 420,
+  tags: ['payments', 'state machines', 'declines', 'chargebacks'],
+  summary: 'A card payment is not one event. It is a hold, then a capture, then money actually moving days later, with a ' +
+           'dozen ways to fall off the path. This level builds the service that tracks it, against a week of real shaped ' +
+           'card traffic: 20,000 authorisations, 37,987 events, and the 159 requests where the network never answered and ' +
+           'nobody knows whether the customer was charged.',
 
   objectives: [
-    'Explain the client-server model and where your code runs',
-    'Separate pure calculation from interface so both can be tested',
-    'Build a multi-input web app with Streamlit',
-    'Validate every user input and fail with a message instead of a traceback',
-    'Write tests that run without a browser',
-    'Manage dependencies with requirements.txt and deploy to a public URL'
+    'Name every party in a card payment and say what each one does',
+    'Separate authorisation, capture and settlement, and say when money actually moves',
+    'Decide what your ledger writes at each stage, and what it must not write',
+    'Read a decline code and know which ones may be retried',
+    'Handle the request that timed out, where the state is genuinely unknown',
+    'Model the whole lifecycle as a state machine that refuses impossible moves',
+    'Explain a chargeback, and what engineering owes the dispute process'
   ],
 
   knowledge: [
-    { h: 'A notebook is not a product' },
-    { p: 'For eight levels your code has lived in notebooks. A notebook is brilliant for exploring: you try something, see the ' +
-         'result, try something else. It is terrible for handing to anyone. Its cells only work in the order you ran them, ' +
-         'which lives in your head. There is nowhere for a stranger to type their own numbers. And "just open Colab and run ' +
-         'cell 7" is not something you can ask a customer.' },
-    { p: 'An **application** turns that around. It waits for someone to give it input, checks the input makes sense, does the ' +
-         'calculation, and shows the answer, for anyone, in any order, as many times as they like. Putting it on a computer ' +
-         'the public can reach is called **deploying** it.' },
+    { h: 'Who is actually in the room' },
+    { p: 'Somebody taps a card in a shop. Five parties are involved, and a backend engineer at a payments company works for ' +
+         'one of them while talking to the other four:' },
     { table: {
-      head: ['Notebook', 'Application'],
+      head: ['Party', 'Who they are', 'What they do'],
       rows: [
-        ['You are the only user', 'Anyone with the link is a user'],
-        ['You change inputs by editing code', 'Users type inputs into a form'],
-        ['A crash is a red cell you ignore', 'A crash is somebody unable to use your product'],
-        ['Cell order is in your head', 'Every path has to work in any order'],
-        ['Runs on your machine', 'Runs on a server somewhere else']
+        ['**Cardholder**', 'The person paying', 'Presents the card'],
+        ['**Merchant**', 'The shop', 'Asks for the money'],
+        ['**Acquirer**', 'The merchant\'s payment company: Stripe, Adyen, Checkout', 'Takes the request and gets an answer. **This is usually you**'],
+        ['**Card network**', 'Visa, Mastercard, Amex', 'Routes the message to the right bank and sets the rules'],
+        ['**Issuer**', 'The bank that gave the cardholder the card', 'Decides yes or no, and holds the money']
       ]
     }},
-    { p: 'The last row hides the biggest change. The moment strangers can type into your code, they will type things you ' +
-         'never imagined. Here is the level 6 payment formula meeting a user who enters a loan term of 0 years:' },
-    { code: 'monthly_payment(250000, 0.055, 0)\n\nTraceback (most recent call last):\n  ...\nZeroDivisionError: float division by zero', lang: 'python' },
-    { p: 'That wall of error text is a **traceback**: Python explaining where it crashed. It is useful to you and meaningless, ' +
-         'even alarming, to a customer.' },
-    { check: {
-      q: 'Your notebook has computed the right payment a hundred times. The deployed app shows a stranger a traceback the ' +
-         'first afternoon, because they typed a term of 0 years. Which piece of code was wrong?',
-      a: 'Neither, in the sense that the arithmetic never changed. A term of zero makes n zero, so `(1 + i) ** -n` is 1, the ' +
-         'bottom of the fraction is 0, and Python refuses to divide by it. In a notebook that input never arrives, because you ' +
-         'are the only user and you know what the function expects. The app is the same function with the audience widened ' +
-         'to everyone, and the work the notebook let you skip is exactly the work that failed: deciding what happens when the ' +
-         'input is impossible.'
-    }},
+    { p: 'The message goes merchant, acquirer, network, issuer, and the answer comes back the same way, in under a second. ' +
+         'Your service sits in the middle, and everything in this level is about what you record while that happens.' },
 
-    { h: 'Where your code actually runs' },
-    { p: 'Level 5 introduced the client and the server from the other side, when your code was the one asking. Now your code ' +
-         'is the one answering. The **client** is the user\'s browser: it sends a request and draws whatever comes back. The ' +
-         '**server** is the computer running your Python. Your code never runs on the user\'s machine.' },
-    { code: 'their browser  --- "here are my numbers" --->  server running your Python\n               <--- a page with the answer ---      (and your data, and your keys)', lang: 'text' },
-    { p: 'That one fact explains two things. It is why your API key is safe on the server: the browser only ever receives the ' +
-         'finished page. And it is why the server has to protect itself: anything a stranger can type arrives at your code.' },
-    { p: 'Servers come in two common shapes:' },
+    { h: 'Two steps that people think are one' },
+    { p: 'The most common misunderstanding in payments: a card payment has **two** separate steps, and they can be hours or ' +
+         'days apart.' },
     { table: {
-      head: ['Shape', 'What it sends back', 'Use it when'],
+      head: ['Step', 'What it means', 'Has money moved?'],
       rows: [
-        ['**Web app**, for example with Streamlit', 'A page a person looks at', 'The user is a person who wants an answer'],
-        ['**API**, for example with FastAPI', 'JSON that another program reads', 'The user is another system']
+        ['**Authorisation**', 'The issuer sets the amount aside and promises it is there', 'No. The customer sees it as pending'],
+        ['**Capture**', 'The merchant says "take it": now it is a real charge', 'In your books, yes'],
+        ['**Settlement**', 'The banks actually move funds between themselves, usually a day or two later', 'Yes, for real']
       ]
     }},
-    { p: 'This level builds a **web app** with **Streamlit**, a Python library that turns a script into a web page with ' +
-         'sliders, boxes and charts, without you writing any HTML. Seeing a stranger use your loan calculator is a better first ' +
-         'experience than reading JSON. Level 12 builds an API.' },
-    { check: {
-      q: 'A member says the app is slow and asks whether a faster laptop would fix it. Answer them, and say what the answer ' +
-         'means for where you can keep an API key.',
-      a: 'A faster laptop will not help. Their browser sends a request and draws the page that comes back; every line of your ' +
-         'Python runs on the server, so the delay is in your code, your data sources, or the network in between. What would ' +
-         'help is saving the slow load so it is not repeated, making fewer calls, or a server closer to the user. The same ' +
-         'fact is why a key read on the server is safe and a key in the browser\'s code is public: whatever reaches the ' +
-         'client belongs to the client.'
-    }},
-
-    { h: 'Keep the maths away from the buttons' },
-    { p: 'The most important decision in this level is how you split your files. The calculations go in one file, the ' +
-         'screen in another, and the tests in a third:' },
-    { code: 'finance.py       <- the calculations. No printing, no buttons, no files\napp.py           <- the Streamlit page. Imports finance, calls it, shows the result\ntest_finance.py  <- the tests. Imports finance only, and needs no browser', lang: 'text', label: 'project layout' },
-    { p: 'Everything in `finance.py` should be a **pure function**: it takes some values in, returns a value out, and does ' +
-         'nothing else along the way. No printing, no saving, no talking to the screen. Anything a function does besides ' +
-         'returning its answer is called a **side effect**. Compare:' },
-    { code: '# pure: numbers in, number out\ndef monthly_payment(principal, annual_rate, years):\n    ...\n    return payment\n\n# not pure: welded to one screen\ndef monthly_payment(principal, annual_rate, years):\n    ...\n    st.write(f"Your payment is {payment}")      # a side effect\n    return payment', lang: 'python' },
-    { p: 'The pure version can be tested in one line, reused by an API next month, and understood without running the app. ' +
-         'The second one only works inside a Streamlit page.' },
-    { check: {
-      q: 'Someone adds an `st.write()` inside `monthly_payment` so the working shows on screen. Name two things that function ' +
-         'can no longer do.',
-      a: 'It can no longer be tested without Streamlit running, because calling it outside a Streamlit page misbehaves. And ' +
-         'it can no longer be called in a loop: build a 360 row schedule and you have written to the page 360 times. A third ' +
-         'follows for free: it cannot be reused behind an API tomorrow, which is usually the next thing anyone asks for. A ' +
-         'calculation that writes to a screen has chosen one screen forever.'
-    }},
-    { money: 'In regulated finance this split is not just tidiness. The calculation code is the part that gets audited, its ' +
-             'exact version recorded, and tested heavily. It has to be readable on its own, with no screen code in the way.' },
-
-    { h: 'Check everything a stranger can type' },
-    { p: 'Your users will enter a negative loan, a 900% rate, a zero term, and letters where a number should be. Every one of ' +
-         'those must produce a clear message, never a traceback. Checking input before using it is called **validation**.' },
-    { p: 'Do it in two places. In the calculation, raise an error with a plain explanation, so the rule protects every caller:' },
-    { code: 'def monthly_payment(principal, annual_rate, years):\n    if principal <= 0:\n        raise ValueError("Loan amount must be greater than zero.")\n    if years < 1:\n        raise ValueError("The term must be at least one year.")\n    ...', lang: 'python' },
-    { p: 'And on the page, catch that error and show it kindly, then stop drawing the rest of the page:' },
-    { code: 'try:\n    payment = monthly_payment(principal, rate, years)\nexcept ValueError as err:\n    st.error(str(err))         # a red box with the message, not a traceback\n    st.stop()\n\nif years > 40:\n    st.warning("Terms over 40 years are unusual. Check this is what you meant.")', lang: 'python' },
+    { p: 'This level ships a week of a merchant\'s card traffic: 20,000 authorisation attempts and 37,987 events in all. ' +
+         'Here is what happened to them:' },
     { table: {
-      head: ['Input', 'What to check'],
+      head: ['Outcome', 'Count', 'Share'],
       rows: [
-        ['Loan amount', 'Above zero, and below some sensible maximum'],
-        ['Interest rate', 'Between 0% and about 50%, and handle exactly 0% separately'],
-        ['Term', 'At least one period, and not absurdly long'],
-        ['Extra payment', 'Not negative, and warn if it is bigger than the payment itself'],
-        ['Income', 'Above zero before you divide by it. Never divide by something a user typed without checking']
+        ['Approved', '17,216', '86.08% of attempts'],
+        ['Declined', '2,625', '13.12% of attempts'],
+        ['**Timed out**', '**159**', '**0.80% of attempts**'],
+        ['Of the approved: captured', '15,842', '92.02%'],
+        ['Of the approved: voided', '533', '3.10%'],
+        ['Of the approved: hold expired, never captured', '841', '4.88%']
       ]
     }},
-    { warn: 'The limits you set on an input box, such as `min_value` and `max_value`, only protect that one box. Put the real ' +
-            'check in the function too, because the same function may later be called from somewhere with no box at all.' },
+    { p: 'Read the last row. **841 authorisations, worth $74,230.57, were approved and then nothing happened.** The customer ' +
+         'saw money held against their card for a week for a sale the merchant never completed. That is a real and common ' +
+         'failure, and it is your service\'s job to make it visible.' },
+    { p: 'And the timing of capture matters more than people expect:' },
+    { code: 'capture delay, from authorisation to capture\n  median  8.6 hours\n  p90    30.8 hours\n  max   141.0 hours   (just under six days)\n  82.0% captured within 24 hours', lang: 'text', label: 'measured over 15,842 captures' },
     { check: {
-      q: 'Your loan amount box is `st.number_input("Loan", min_value=1000.0, max_value=2000000.0)`. Is the loan amount ' +
-         'validated?',
-      a: 'On that one screen, yes. In your program, no. The rule lives in the box, so every other caller of `monthly_payment` ' +
-         'has no rule at all: a test, a scheduled job, an API next month, or the same page after somebody removes a limit they ' +
-         'did not understand. Put the check in the function, where it raises `ValueError`, and keep the box limits as a ' +
-         'convenience that stops most people from seeing the error at all.'
+      q: 'A customer calls, furious: your merchant charged them twice, once on Monday and once on Tuesday, for one order. ' +
+         'The merchant swears there was only one sale. Before looking at anything, what are the two most likely ' +
+         'explanations?',
+      a: 'First, and most likely, there is one charge and one hold. The Monday item is the authorisation the customer sees ' +
+         'as pending, and the Tuesday item is the capture that became the real charge, so the same money appears twice on ' +
+         'their app until the hold falls off. Nothing is wrong, and the explanation is needed anyway. Second, there really ' +
+         'were two authorisations: a first attempt that timed out and a retry, where the network approved both. That is the ' +
+         'case the rest of this level is about, and it is why an idempotency key has to travel all the way to the network ' +
+         'rather than stopping at your own database.'
     }},
 
-    { h: 'Make it install the same way everywhere' },
-    { p: 'Your app uses other people\'s code: Streamlit, pandas, numpy. Those are its **dependencies**. The server that runs ' +
-         'your app starts completely empty, so it needs a list of exactly what to install. That list is a text file called ' +
-         '`requirements.txt`, and the server installs everything on it, and nothing else:' },
-    { code: 'streamlit==1.38.0\npandas==2.2.2\nnumpy==1.26.4\nmatplotlib==3.9.2', lang: 'text', label: 'requirements.txt' },
-    { p: 'The `==2.2.2` part **pins** a version: install exactly this one. Leave it out and the server installs whatever is ' +
-         'newest on the day it builds, which means an app nobody touched can break after a library changes.' },
-    { p: 'On your own computer, a **virtual environment** keeps each project\'s libraries in its own folder, so upgrading ' +
-         'pandas for one project cannot break another. Create it once per project:' },
-    { code: 'python -m venv .venv                 # make the private folder\n\n# Windows\n.venv\\Scripts\\activate\n# macOS or Linux\nsource .venv/bin/activate\n\npip install -r requirements.txt      # install exactly the list', lang: 'bash' },
-    { check: {
-      q: 'The app runs locally and the deployment log says `ModuleNotFoundError: No module named pandas`. You definitely have ' +
-         'pandas installed. What is going on, and what does that say about pinning versions?',
-      a: 'Installed on your laptop, where nobody else runs the app. The server started empty and installed exactly what ' +
-         '`requirements.txt` listed, and pandas is not on the list, so it is not there. What is installed on your machine is ' +
-         'invisible to the server. The same reasoning argues for pinning: `pandas` with no version installs whatever is newest ' +
-         'on build day, so an app that was never edited can break on a Tuesday. `pandas==2.2.2` builds the same thing in six ' +
-         'months as it does today.'
-    }},
-    { tip: 'Add `.venv/` to your `.gitignore`. It is hundreds of megabytes that anyone can rebuild from `requirements.txt` in ' +
-           'thirty seconds.' },
+    { h: 'What your ledger writes, and when' },
+    { p: 'This is where level 4 and level 6 meet the real world. The rule is simple and gets broken constantly:' },
+    { ul: [
+      '**Authorisation writes no ledger entries.** No money has moved. What you write is a record of the hold: an amount, an expiry, and a reference from the network.',
+      '**Capture writes the entries.** Customer out, merchant in, fee to your revenue account, summing to zero, exactly as in level 4.',
+      '**Void writes nothing** except a status change, because the hold never became money.',
+      '**Refund writes a new balanced transaction** in the opposite direction, never a deletion, exactly as in level 4.',
+      '**Chargeback writes a balanced transaction too**, and usually a second one for the dispute fee, which the merchant pays whether they win or lose.'
+    ]},
+    { warn: 'Writing entries at authorisation is the classic beginner mistake, and it is expensive: your ledger says the ' +
+            'merchant has money they will not receive, your reconciliation against the bank never matches, and the 4.88% of ' +
+            'holds that expire become fake revenue that somebody has to unwind by hand.' },
 
-    { h: 'Tests that run in a second' },
-    { p: 'You split the maths from the page precisely so you could do this. A **test** is a small function that calls your ' +
-         'code with inputs where you already know the right answer, and complains if the answer is different. `assert` is ' +
-         'Python\'s way of saying "this must be true, stop if it is not":' },
-    { code: 'from finance import monthly_payment\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\ndef test_zero_rate():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\ndef test_rejects_negative():\n    try:\n        monthly_payment(-100, 0.05, 10)\n    except ValueError:\n        return                      # good: it refused\n    raise AssertionError("should have refused a negative loan")', lang: 'python' },
-    { p: 'A tool called **pytest** finds every function whose name starts with `test_` and runs them all:' },
-    { code: '$ pytest\n...                                                    [100%]\n3 passed in 0.05s', lang: 'text' },
-    { p: 'Five hundredths of a second, versus a minute of clicking through the app by hand. The habit that matters most: ' +
-         '**every bug you fix gets a test**, so it cannot quietly come back.' },
+    { h: 'Partial capture, and money you never take' },
+    { p: 'A capture does not have to be for the authorised amount. In this week, **1,273 captures, 8.04% of them, were for ' +
+         'less than was authorised**, leaving **$38,580.89** authorised and never taken.' },
+    { p: 'That is normal, and it is why the feature exists:' },
+    { table: {
+      head: ['Situation', 'Why the capture is smaller'],
+      rows: [
+        ['An order ships in two parcels', 'You capture each part as it ships, because you may only charge for what you sent'],
+        ['An item is out of stock', 'The customer paid for three, you send two'],
+        ['A restaurant or taxi', 'The authorisation includes room for a tip; the capture is the real total'],
+        ['Fuel', 'The pump authorises a large round amount before knowing how much you take']
+      ]
+    }},
+    { p: 'So your data model needs an authorised amount and a captured amount as separate fields, and your rules need to ' +
+         'refuse a capture larger than the authorisation, which networks also refuse beyond a small percentage.' },
+
+    { h: 'Void or refund: the same money, different words' },
+    { p: 'Both give the customer their money back, and they are not interchangeable:' },
+    { table: {
+      head: ['', 'Void', 'Refund'],
+      rows: [
+        ['When', 'Before capture', 'After capture'],
+        ['What happens', 'The hold is released', 'A new payment in the opposite direction'],
+        ['The customer sees', 'The pending line disappears, often within days', 'A separate credit, often several days later'],
+        ['Your fees', 'Usually none', 'The original processing fee is usually not returned'],
+        ['In this week', '533 voids, $40,814.45', '692 refunds, $48,140.30']
+      ]
+    }},
+    { p: 'The rule to put in code: **if it has not been captured, void it.** It is faster for the customer and cheaper for ' +
+         'the merchant. A system that refunds where it could have voided is quietly costing its merchants money, and ' +
+         'nobody will tell you.' },
+
+    { h: 'Declines are not all the same' },
+    { p: 'Of 20,000 attempts, 2,625 were declined. The code the issuer sends back is the most useful field in the whole ' +
+         'response, and most systems ignore it:' },
+    { table: {
+      head: ['Decline code', 'Count', 'Share of declines', 'Retry later?'],
+      rows: [
+        ['`insufficient_funds`', '1,121', '42.7%', 'Yes, carefully: the money may arrive on payday'],
+        ['`do_not_honor`', '630', '24.0%', 'Yes, carefully: the issuer refused without saying why'],
+        ['`incorrect_cvc`', '292', '11.1%', 'No: the details are wrong, ask the customer'],
+        ['`expired_card`', '211', '8.0%', 'No: ask for a new card'],
+        ['`velocity_exceeded`', '196', '7.5%', 'Yes, later: too many attempts too fast'],
+        ['`lost_or_stolen`', '95', '3.6%', '**Never**'],
+        ['`pickup_card`', '80', '3.0%', '**Never**: the issuer is asking for the card to be taken']
+      ]
+    }},
+    { p: 'The split that matters is **hard** against **soft**. A hard decline will never succeed with the same card and ' +
+         'details: retrying it wastes money, annoys the customer, and counts against you with the networks. A soft decline ' +
+         'might succeed later.' },
+    { money: 'In this week, 1,947 declines (74.2%) were soft, worth **$167,410.94** of attempted sales. A sensible retry ' +
+             'policy on those is the single highest value feature in most subscription businesses, which is why "recovering ' +
+             'failed payments" is a product every payments company sells. This is also why the decline code has to be stored ' +
+             'on the payment, not logged and forgotten.' },
+    { warn: 'Retry rules are set by the card networks, not by you: there are limits on how many times and how often you may ' +
+            'retry the same declined payment, and exceeding them carries fines. Any retry you build needs a maximum attempt ' +
+            'count, a growing delay, and a permanent stop on hard declines.' },
     { check: {
-      q: '`test_zero_rate` says $12,000 over four years at 0% must be $250.00 a month. Why is that test worth more than the one ' +
-         'at 5.5%?',
-      a: 'Because you can check it without trusting the formula: $12,000 over 48 months with no interest is $250.00, and ' +
-         'anyone can see that. The 5.5% test tells you the code still does what it did, which is worth having, but the expected ' +
-         'number was found by running the code. The zero rate case is also the one the formula cannot handle, since the bottom ' +
-         'of the fraction becomes 0, so it is both the easiest test to verify and the most likely to be broken. Those two ' +
-         'properties together are what make a test worth writing.'
+      q: 'Your subscription service retries every failed charge nightly until it works. Three months in, your approval rate ' +
+         'is falling and the network has been in touch. What did you build wrong?',
+      a: 'You retried hard declines. A card reported lost or stolen, or an expired card, will never approve, so every night ' +
+         'you send the network a request you already know the answer to, and both the issuer and the network score you on ' +
+         'the share of your traffic that is refused. Falling approval rates across your whole book is the punishment, and ' +
+         'fines are the next one. The fix has three parts: classify every decline code as hard or soft, never retry a hard ' +
+         'one, and on soft ones use a small number of attempts with growing gaps, ideally timed for when money tends to ' +
+         'arrive rather than at midnight with everybody else.'
     }},
 
-    { h: 'Keys on a deployed app' },
-    { p: 'Level 5\'s rule still holds, keys never go in your code, with one addition. Hosting platforms give you a private ' +
-         'settings page for secrets. On Streamlit Cloud you paste the key there, and your code reads it through `st.secrets`. ' +
-         'It never appears in your repository.' },
-    { code: 'import streamlit as st\n\napi_key = st.secrets.get("MARKET_API_KEY")     # pasted into the platform\'s settings page\nif not api_key:\n    st.info("Running without a live market feed: using the saved snapshot data.")', lang: 'python' },
-    { p: 'Notice what happens when the key is missing: the app keeps working and says so. An app that crashes because an ' +
-         'optional key is missing is worse than one that does less and is honest about it.' },
+    { h: 'The 159 requests where nobody knows what happened' },
+    { p: 'This is the part that separates people who have worked on payments from people who have read about them. In this ' +
+         'week, **159 authorisation attempts, 0.80%, timed out**: your service sent the request, waited about 30 seconds, ' +
+         'and got nothing back.' },
+    { code: 'authorize  P010423  $71.40   timeout after 29,572 ms\n\n# and now: did the issuer approve it or not?', lang: 'text' },
+    { p: 'You genuinely do not know. The request may never have arrived. It may have been approved and the answer lost on ' +
+         'the way back, in which case the customer has a hold on their card and your system has no record of it. The money ' +
+         'at risk here is **$11,477.03**, and the wrong move in either direction is bad:' },
+    { table: {
+      head: ['If you assume it failed and retry', 'If you assume it succeeded'],
+      rows: [
+        ['The customer may be authorised twice, and see two holds', 'You may never take money for a real sale'],
+        ['They ring the merchant, who rings you', 'The merchant is short, and finds out at month end'],
+        ['Your ledger has a hold nobody is tracking', 'Your ledger has a payment the network never approved']
+      ]
+    }},
+    { p: 'There are three real defences, and a serious system has all three:' },
+    { ol: [
+      '**Send your own reference with every request.** Every network message carries an identifier you choose, so a retry of the same payment carries the same one and the issuer can recognise it. This is level 4\'s idempotency key, extended past your own database to the party you are calling.',
+      '**Send a reversal.** If you timed out and intend to retry, first tell the network to cancel anything it may have approved under that reference. It is a cheap message and it releases a hold that may not exist.',
+      '**Reconcile the next day.** The network sends a file of everything it thinks happened. Anything in that file you have no record of, or anything you have that is not in the file, is a break to investigate. That file, and that job, is level 10.'
+    ]},
     { check: {
-      q: 'The market key is missing on the deployed app. Is it better to raise an error, so the problem is visible, or to fall ' +
-         'back to the saved snapshot and carry on? Level 4 told you to fail loudly.',
-      a: 'Fall back, and put the reason on the page. Level 4 was about writing money into a ledger, where a quiet failure ' +
-         'leaves the books wrong. This key is optional: without it the app still teaches, on data it labels as a saved ' +
-         'snapshot, and every visitor can see what they are looking at. Change the situation and the answer changes with it. ' +
-         'If the key were what fetched somebody their own balance, carrying on quietly would be the worse choice, and the honest ' +
-         'move would be to say the balance is unavailable rather than show an old one.'
+      q: 'Your authorisation request times out. Your code catches the timeout, marks the payment as failed, and tells the ' +
+         'customer to try again. What has your system quietly done, and what should it have recorded instead?',
+      a: 'It has thrown away the only evidence that the attempt happened. If the issuer did approve it, there is now a hold ' +
+         'against the customer\'s card that nothing in your system knows about, and when tomorrow\'s file from the network ' +
+         'lists it, nobody can match it to anything. The state after a timeout is **unknown** rather than failed, and it ' +
+         'needs to be a state your model can hold. Record the attempt with the reference you sent, mark it unknown, send a ' +
+         'reversal if you are about to retry, and let the reconciliation job resolve it against the network\'s own record. ' +
+         '"Unknown" is an uncomfortable state to design for and it is the honest one.'
     }},
 
-    { h: 'Caching, because Streamlit reruns everything' },
-    { p: 'Streamlit has one surprising rule: every time a user moves a slider or clicks a button, **your whole script runs ' +
-         'again from the top**. That keeps things simple, but it means anything slow at the top, such as downloading a CSV, ' +
-         'happens again on every click.' },
-    { p: 'The fix is a **cache**: Streamlit remembers what a function returned for given inputs, and next time just hands ' +
-         'back the saved answer. `ttl` ("time to live") says how long to remember it:' },
-    { code: '@st.cache_data(ttl=3600)      # remember the answer for one hour\ndef load_prices(url):\n    return pd.read_csv(url, parse_dates=["date"])\n\n# first click:  downloads the file, however long that takes\n# next clicks:  returns the saved copy instantly, until the hour is up', lang: 'python' },
-    { check: {
-      q: 'You put `@st.cache_data` on a function that, inside it, records the member\'s calculation in a table. The member runs ' +
-         'the same calculation twice. How many rows land in the table?',
-      a: 'One. The second call has the same inputs, so Streamlit hands back the saved answer without running the function ' +
-         'at all, and the recording never happens. The app looks perfect, because the number on screen is right both times: ' +
-         'the only sign is a table that is quietly missing rows, which you discover weeks later when the counts do not add ' +
-         'up. Cache the function that reads the prices, never the one that records what happened.'
+    { h: 'Chargebacks: the customer\'s bank overrules everybody' },
+    { p: 'A **chargeback** is not a refund. A refund is the merchant agreeing. A chargeback is the cardholder telling their ' +
+         'own bank the charge was wrong, and that bank taking the money back from the merchant, whether or not the merchant ' +
+         'agrees.' },
+    { code: 'the customer disputes  ->  the issuer takes the money back  ->  the merchant may\n                                                              contest it with evidence\n                                                              (a "representment")\n                                                                     |\n                                                    the issuer decides, then\n                                                    either side may escalate', lang: 'text' },
+    { p: 'In this week there were **79 chargebacks, 0.499% of captured payments, worth $6,152.18**. That rate matters more ' +
+         'than the amount: the card networks run monitoring programmes, and a merchant whose chargeback rate goes above ' +
+         'roughly 0.9% to 1% of transactions enters a programme with fines attached, and can eventually lose the ability to ' +
+         'accept cards at all.' },
+    { p: 'What engineering owes the dispute process is evidence, gathered at the time and retrievable months later: the ' +
+         'authorisation response, the delivery confirmation, the IP address and device, the terms the customer accepted, and ' +
+         'the exact timestamps. None of that can be collected after the dispute arrives, which is why it is an engineering ' +
+         'problem rather than a support one.' },
+
+    { h: 'Where the week\'s money went' },
+    { p: 'Every number below comes from the shipped file, and a good service can produce this table on demand. It is also ' +
+         'the report a merchant actually wants:' },
+    { table: {
+      head: ['', 'Amount', 'Note'],
+      rows: [
+        ['Authorised', '$1,387,793.78', '17,216 approved authorisations'],
+        ['Captured', '$1,234,167.87', '88.9% of what was authorised'],
+        ['Refunded', '-$48,140.30', '692 refunds'],
+        ['Charged back', '-$6,152.18', '79 disputes'],
+        ['**Net to the merchant**', '**$1,179,875.39**', 'Before your fees'],
+        ['Expired, never captured', '$74,230.57', '841 holds that were simply abandoned'],
+        ['Voided', '$40,814.45', '533 cancelled before capture'],
+        ['Authorised above what was captured', '$38,580.89', 'On the 1,273 partial captures']
+      ]
     }},
-    { warn: 'Never cache anything that must be fresh for each user, and never cache a function that saves or changes ' +
-            'anything. Cache reading, not writing.' }
+    { p: 'The gap between the first two lines is the one to understand: **$153,625.91 was authorised and never captured**, ' +
+         'which is money the customers saw held against their cards and the merchant never received. Expiries, voids and ' +
+         'partial captures account for all of it, and a service that cannot explain that gap will be asked to.' },
+
+    { h: 'The whole thing as a state machine' },
+    { p: 'Level 7 introduced state machines. This is the one that matters in payments, and writing it down is what stops ' +
+         'the impossible moves that cause real incidents:' },
+    { code: '                  +--> declined (final)\n                  |\ncreated --> authorizing --> authorized --+--> captured --+--> refunded (final)\n                  |             |         |               |\n                  |             |         +--> expired    +--> charged_back (final)\n                  |             |              (final)\n                  |             +--> voided (final)\n                  |\n                  +--> unknown --> (reconciliation decides)', lang: 'text' },
+    { p: 'The transitions this refuses are all real bugs that have cost real money:' },
+    { table: {
+      head: ['Attempted move', 'Why it must be refused'],
+      rows: [
+        ['Capture an expired authorisation', 'The hold is gone. The network will refuse, and your ledger would have recorded money you cannot collect'],
+        ['Capture twice', 'The customer is charged twice for one sale'],
+        ['Void after capture', 'The money has moved. What you want is a refund'],
+        ['Refund more than was captured', 'You are sending the customer money they never paid'],
+        ['Anything at all after a chargeback', 'The dispute process owns it now']
+      ]
+    }},
+    { p: 'And every one of those events needs its own idempotency key, because each of them is a network call that can time ' +
+         'out and be retried. A capture that runs twice because your retry had no key is the same bug as level 4\'s double ' +
+         'charge, with a slower feedback loop.' },
+    { check: {
+      q: 'A partial capture of $30 happens on a $50 authorisation. Two days later the merchant asks to capture the other ' +
+         '$20. What should your service do, and what does that tell you about the data model?',
+      a: 'Usually refuse it, and the reason is the data model. Most networks and acquirers allow a single capture per ' +
+         'authorisation, so once you capture $30 the remaining $20 of the hold is released rather than saved for later, and ' +
+         'the honest answer is that the merchant needs a new authorisation for the second amount, which the customer may now ' +
+         'fail. Some acquirers do support multiple partial captures against one authorisation, which is exactly why this has ' +
+         'to be an explicit rule in your service rather than an assumption: the payment needs an authorised amount, a ' +
+         'captured amount, a remaining amount and a flag for whether more than one capture is allowed, and the state machine ' +
+         'has to read all four.'
+    }},
+
+    { h: 'What you store, and what you must not' },
+    { p: 'Your service stores the payment, its events and the references the network gave you. It does **not** store the ' +
+         'card number. The full number, called the **PAN**, drags your entire system into a security standard called PCI ' +
+         'DSS, as level 10 warned. What you keep instead is a **token**, an opaque id that stands in for the card, plus the ' +
+         'last four digits and the expiry for display.' },
+    { code: 'payment_id      P010423\ntoken           tok_9c1df0a4b2       <- stands in for the card\nlast4           4471\nauth_amount     7140\ncaptured        7140\nstate           captured\nnetwork_ref     8829174002          <- what the network calls it\nour_ref         idem_5f3a91         <- what we called it, sent with every message', lang: 'text' },
+    { p: 'Those last two fields are what make reconciliation possible. Level 15 builds the vault that issues the token.' }
   ],
 
   tutorial: {
-    intro: 'This is the level where you set up a real editor, and you get to choose how. Path A needs no installation at ' +
-           'all; Path B is the classic local setup. Both end with a deployed app.',
+    intro: 'You will build two things: a service that tracks payments through their lifecycle, and a fake card network to ' +
+           'talk to, because you cannot learn timeout handling against something that never times out. Python, the level 7 ' +
+           'API, the level 6 database. The week of card events ships with this level.',
     steps: [
       {
-        t: 'Choose your workspace: Codespaces or local',
+        t: 'Read the week and reproduce the headline numbers',
         blocks: [
-          { h4: 'Path A: GitHub Codespaces (browser, nothing to install)' },
-          { ol: [
-            'Create a new GitHub repository called `finquest-loan-advisor` with a README.',
-            'On the repo page click **Code -> Codespaces -> Create codespace on main**.',
-            'Wait about a minute. You now have VS Code in a browser tab, with Python already installed.',
-            'The terminal at the bottom is a normal shell: `python --version` should answer.'
-          ]},
-          { p: 'The free tier gives every GitHub account a generous monthly allowance of Codespaces hours: plenty for this ' +
-               'level. Stop the codespace when you finish and it stops consuming them.' },
-          { h4: 'Path B: local install' },
-          { ol: [
-            'Install Python from [python.org/downloads](https://python.org/downloads). **On Windows, tick "Add Python to PATH"** on the first screen: this one checkbox causes most beginner setup pain.',
-            'Install [VS Code](https://code.visualstudio.com) and its Python extension.',
-            'Clone your repo: **File -> Open Folder** after using GitHub Desktop, or `git clone <url>` in a terminal.',
-            'Verify with `python --version` in the VS Code terminal.'
-          ]},
-          { tip: 'Genuinely stuck on installation? Take Path A. It has no installation to be stuck on, and the rest of the ' +
-                 'level is identical. Setting up a local machine is a worthwhile skill, not a prerequisite for shipping.' }
+          { p: 'Before writing any service, load the event file and reproduce the figures from the knowledge section. If your ' +
+               'numbers do not match, your understanding of the data is wrong, and everything after this would be built on ' +
+               'it.' },
+          { code: 'import pandas as pd\n\nev = pd.read_csv("data/level-09-card-events.csv", parse_dates=["at"])\nauths = ev[ev.event == "authorize"]\nprint(auths.result.value_counts())\nprint(len(ev), "events across", ev.payment_id.nunique(), "payments")', lang: 'python' },
+          { code: 'approved    17216\ndeclined     2625\ntimeout       159\n37987 events across 20000 payments', lang: 'text' }
         ],
-        check: '`python --version` prints 3.10 or newer in your terminal, in either environment.'
+        check: 'You reproduce 86.08% approved, 92.02% of approved captured, and 0.499% chargebacks on captured.'
       },
       {
-        t: 'Set up the project',
+        t: 'The state machine, with its tests',
         blocks: [
-          { code: 'python -m venv .venv\nsource .venv/bin/activate        # Windows: .venv\\Scripts\\activate\npip install streamlit pandas numpy matplotlib\npip freeze > requirements.txt', lang: 'bash' },
-          { p: 'Then create these files:' },
-          { code: 'finquest-loan-advisor/\n  app.py              <- the interface\n  finance.py          <- the maths (pure functions)\n  test_finance.py     <- the tests\n  requirements.txt\n  .gitignore          <- contains.venv/ and __pycache__/\n  README.md', lang: 'text' },
-          { warn: 'If `streamlit` is "not recognised" after installing, your virtual environment is not active. The prompt ' +
-                  'should show `(.venv)`. Activate it again, or use `python -m streamlit run app.py`.' }
+          { p: 'Write the states and the legal transitions as data, then the one function that guards every change, exactly ' +
+               'as in level 7. Write the tests first: every illegal move in the knowledge table should raise.' },
+          { code: 'LEGAL = {\n    "created":     {"authorizing"},\n    "authorizing": {"authorized", "declined", "unknown"},\n    "authorized":  {"captured", "voided", "expired"},\n    "captured":    {"refunded", "charged_back"},\n    "unknown":     {"authorized", "declined"},      # reconciliation decides\n    "declined":    set(), "voided": set(), "expired": set(),\n    "refunded":    set(), "charged_back": set(),\n}', lang: 'python' },
+          { warn: 'Note that `unknown` is a state, not an error. If your model cannot hold "we do not know", your code will ' +
+                  'guess, and it will guess wrong 159 times a week.' }
         ],
-        check: 'The folder exists with all six files and `pip list` shows streamlit.'
+        check: 'Capturing an expired authorisation, voiding after capture and refunding twice all raise, with tests to prove it.'
       },
       {
-        t: 'Write the engine first (no UI anywhere)',
+        t: 'Build a network that misbehaves',
         blocks: [
-          { code: '"""finance.py: pure loan maths. No printing, no widgets, no I/O."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    """Equal payment that amortizes a loan to zero."""\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n    if annual_rate < 0:\n        raise ValueError("rate cannot be negative")\n    if years <= 0:\n        raise ValueError("term must be at least one period")\n\n    i = annual_rate / periods_per_year\n    n = int(years * periods_per_year)\n    if i == 0:\n        return principal / n\n    return principal * i / (1 - (1 + i) ** -n)\n\n\ndef schedule(principal, annual_rate, years, extra=0.0, periods_per_year=12):\n    """List of dicts: month, payment, interest, principal, balance."""\n    payment = monthly_payment(principal, annual_rate, years, periods_per_year)\n    i = annual_rate / periods_per_year\n    if extra < 0:\n        raise ValueError("extra payment cannot be negative")\n\n    balance = principal\n    rows = []\n    month = 0\n    while balance > 0.005 and month < 1200:\n        month += 1\n        interest = balance * i\n        principal_part = min(payment + extra - interest, balance)\n        if principal_part <= 0:\n            raise ValueError("payment does not cover the interest")\n        balance -= principal_part\n        rows.append({\n            "month": month,\n            "payment": round(interest + principal_part, 2),\n            "interest": round(interest, 2),\n            "principal": round(principal_part, 2),\n            "balance": round(max(balance, 0), 2),\n        })\n    return rows', lang: 'python' },
-          { p: 'Notice this file imports nothing but the standard library, raises on bad input, and returns plain data. ' +
-               'It could be dropped into an API, a batch job, or a test suite unchanged.' }
+          { p: 'A fake network with three dials: how often it declines, how slow it is, and how often it never answers. This ' +
+               'is the most valuable piece of test equipment in the whole course, because every interesting failure in ' +
+               'payments comes from the third dial.' },
+          { code: 'class FakeNetwork:\n    def __init__(self, decline_rate=0.13, timeout_rate=0.008, seed=9):\n        ...\n\n    def authorize(self, our_ref: str, amount_minor: int, token: str) -> dict:\n        """Returns {"result": "approved"|"declined", "network_ref": ..., "code": ...}\n        or raises NetworkTimeout. Remembers our_ref, so a retry with the same\n        reference returns the same answer rather than authorising twice."""', lang: 'python' },
+          { tip: 'Make the simulator remember references from the start. The whole point of the exercise is that a retry with ' +
+                 'the same reference is safe and a retry with a new one is a second hold on somebody\'s card.' }
         ],
-        check: 'python -c "import finance; print(finance.monthly_payment(250000, 0.055, 30))" prints 1419.47...'
+        check: 'Calling authorize twice with the same reference returns one approval and creates one hold in the simulator.'
       },
       {
-        t: 'Test it before you look at it',
+        t: 'Authorise, and write nothing to the ledger',
         blocks: [
-          { code: '"""test_finance.py"""\nimport pytest\nfrom finance import monthly_payment, schedule\n\n\ndef test_known_payment():\n    assert round(monthly_payment(250000, 0.055, 30), 2) == 1419.47\n\n\ndef test_zero_rate_splits_evenly():\n    assert round(monthly_payment(12000, 0.0, 4), 2) == 250.00\n\n\ndef test_schedule_ends_at_zero():\n    rows = schedule(20000, 0.07, 5)\n    assert len(rows) == 60\n    assert rows[-1]["balance"] == 0.0\n\n\ndef test_extra_payment_shortens_term():\n    assert len(schedule(20000, 0.07, 5, extra=100)) < 60\n\n\n@pytest.mark.parametrize("bad", [-1000, 0])\ndef test_rejects_bad_principal(bad):\n    with pytest.raises(ValueError):\n        monthly_payment(bad, 0.05, 10)', lang: 'python' },
-          { code: 'pip install pytest\npytest -q', lang: 'bash' },
-          { p: '`pytest.raises` asserts that an error *does* happen: testing the refusals matters as much as testing the ' +
-               'happy path. `parametrize` runs the same test for each value in the list.' }
+          { p: 'The endpoint: validate, create the payment, call the network with your own reference, store the result and ' +
+               'the network reference. On approval, record a hold with an expiry seven days out. Post **no** ledger entries.' },
+          { code: 'POST /v1/payments\n{"token": "tok_9c1df0a4b2", "amount_minor": 7140, "currency": "USD"}\n\n201 {"id": "P010423", "state": "authorized", "amount_minor": 7140,\n     "captured_minor": 0, "expires_at": "2026-05-11T19:04:12Z"}', lang: 'text' },
+          { p: 'Then prove it: after a hundred authorisations, the ledger has no entries and the sum of open holds equals what ' +
+               'the simulator thinks it is holding.' }
         ],
-        check: 'pytest reports 6 passed.'
+        check: 'A hundred approvals produce a hundred holds and zero ledger entries.'
       },
       {
-        t: 'Build the interface',
+        t: 'Capture, including partial',
         blocks: [
-          { code: '"""app.py: Streamlit interface."""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    principal = st.number_input("Amount borrowed", min_value=1000.0,\n                                max_value=5_000_000.0, value=250_000.0, step=1000.0)\n    rate_pct = st.slider("Interest rate (%)", 0.0, 25.0, 5.5, 0.1)\n    years = st.slider("Term (years)", 1, 40, 30)\n    extra = st.number_input("Extra monthly payment", min_value=0.0, value=0.0, step=50.0)\n\nrate = rate_pct / 100\n\nif extra > 0 and extra > monthly_payment(principal, rate, years) * 3:\n    st.warning("That extra payment is unusually large compared with the scheduled one.")\n\nbase = pd.DataFrame(schedule(principal, rate, years))\nfast = pd.DataFrame(schedule(principal, rate, years, extra=extra))\n\ncol1, col2, col3 = st.columns(3)\ncol1.metric("Monthly payment", f"${monthly_payment(principal, rate, years):,.2f}")\ncol2.metric("Total interest", f"${base[\'interest\'].sum():,.0f}")\ncol3.metric("Months to clear", len(fast),\n            delta=f"{len(fast) - len(base)} vs standard" if extra else None)\n\ntab1, tab2 = st.tabs(["Balance over time", "Full schedule"])\nwith tab1:\n    chart = pd.DataFrame({"standard": base["balance"]})\n    if extra > 0:\n        chart["with extra"] = fast["balance"]\n    st.line_chart(chart)\nwith tab2:\n    st.dataframe(fast, use_container_width=True, hide_index=True)\n    st.download_button("Download schedule (CSV)",\n                       fast.to_csv(index=False).encode("utf-8"),\n                       "schedule.csv", "text/csv")', lang: 'python' },
-          { code: 'streamlit run app.py', lang: 'bash' },
-          { p: 'Your browser opens on localhost. Move a slider and the whole script runs again. That is the Streamlit model, ' +
-               'and it is why slow work belongs behind `@st.cache_data`.' }
+          { p: 'Capture takes an optional amount. Refuse more than the authorised amount, refuse a second capture, and on ' +
+               'success post the balanced transaction from level 4: customer out, merchant in, fee to revenue.' },
+          { code: 'POST /v1/payments/P010423/capture\nIdempotency-Key: cap_7f10\n{"amount_minor": 5000}          # partial: $50 of a $71.40 hold\n\n200 {"state": "captured", "captured_minor": 5000, "released_minor": 2140}', lang: 'text' },
+          { p: 'Report `released_minor`, because the customer\'s bank will release that part of the hold and the merchant ' +
+               'should know they are not getting it. Across this week that figure totals $38,580.89.' }
         ],
-        check: 'The app runs, the metrics update as you move the sliders, and the CSV downloads.'
+        check: 'A partial capture posts entries for the captured amount only, and a second capture attempt returns 409.'
       },
       {
-        t: 'Handle the unhappy paths',
+        t: 'Void, refund, chargeback',
         blocks: [
-          { p: 'Wrap calls that can raise, and turn the error into a sentence a user understands.' },
-          { code: 'try:\n    base = pd.DataFrame(schedule(principal, rate, years))\nexcept ValueError as err:\n    st.error(f"Cannot build a schedule: {err}")\n    st.stop()          # nothing below this line runs', lang: 'python' },
-          { p: '`st.stop()` halts the script cleanly, leaving the error on screen and no half-drawn charts below it. ' +
-               'Try every bad input you can think of before you deploy. That is a real testing pass, not an optional one.' }
+          { p: 'One endpoint each, and the rule from the knowledge section in code: if it is not captured, a cancellation is ' +
+               'a void; if it is captured, it is a refund.' },
+          { code: 'def cancel(payment):\n    if payment.state == "authorized":\n        return void(payment)         # free, and faster for the customer\n    if payment.state == "captured":\n        return refund(payment)       # a new balanced transaction\n    raise IllegalTransition(payment.state)', lang: 'python' },
+          { p: 'Chargebacks arrive from outside rather than from the merchant, so model them as an inbound event: the money ' +
+               'goes back, a dispute fee is posted, and the payment reaches a final state.' }
         ],
-        check: 'No input combination produces a red Python traceback on the page.'
+        check: 'Cancelling an uncaptured payment voids it, cancelling a captured one refunds it, and both are visible in the ledger.'
       },
       {
-        t: 'Deploy to a public URL',
+        t: 'Expire the abandoned holds',
         blocks: [
-          { ol: [
-            'Commit and push everything to GitHub (in Codespaces: the Source Control panel; locally: `git add. && git commit -m "Loan advisor" && git push`).',
-            'Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.',
-            'Click **New app**, choose your repo, branch `main`, and main file `app.py`.',
-            'Click **Deploy**. The first build takes a couple of minutes while it installs requirements.txt.',
-            'You get a public URL. Open it on your phone: it works.'
-          ]},
-          { warn: 'Deployment failing is almost always requirements.txt: a missing package, or a version that does not exist ' +
-                  'on the platform\'s Python. Read the build log: it names the package on the failing line.' },
-          { p: 'Put the live URL at the top of your README with a screenshot. This is the single most valuable artefact ' +
-               'in your portfolio, because anyone can click it without reading a line of your code.' }
+          { p: 'A scheduled job moves authorisations older than seven days to `expired`. In this week it would have moved 841 ' +
+               'payments worth $74,230.57.' },
+          { code: 'update payments\n   set state = \'expired\'\n where state = \'authorized\'\n   and expires_at < now()\nreturning id, amount_minor;', lang: 'sql' },
+          { tip: 'Report what it did every day. A merchant whose expired holds are rising has a broken checkout, and you can ' +
+                 'see it before they can.' }
         ],
-        check: 'A stranger can open your URL on their phone and get a loan schedule.'
+        check: 'Running the job twice expires each payment once, and the second run reports zero.'
+      },
+      {
+        t: 'Resolve the unknowns',
+        blocks: [
+          { p: 'Make the simulator time out, and handle it properly: record the attempt with your reference, set the state to ' +
+               '`unknown`, and stop. Then write the resolver that asks the network what it thinks happened, which in this ' +
+               'level is the shipped event file standing in for tomorrow\'s report.' },
+          { code: 'for payment in payments_in_state("unknown"):\n    truth = network_report.get(payment.our_ref)\n    if truth is None:\n        mark(payment, "declined")            # the network never saw it\n    elif truth["result"] == "approved":\n        mark(payment, "authorized", network_ref=truth["network_ref"])\n    else:\n        mark(payment, "declined", code=truth["code"])', lang: 'python' },
+          { p: 'Then the number that matters: how many unknowns were actually approved. Those are holds against real ' +
+               'customers that your system would never have known about.' }
+        ],
+        check: 'Every unknown reaches a final state, and the count that turned out to be approved is reported.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Client / server', d: 'The browser sends requests; your Python runs on the server and responds.' },
-    { t: 'Pure function', d: 'Takes arguments, returns a value, no side effects. Easy to test and reuse.' },
-    { t: 'Streamlit', d: 'A Python library that turns a script into a web app by running it again on every interaction.' },
-    { t: 'Widget', d: 'An input control (slider, number box) whose value your script reads on each run.' },
-    { t: 'requirements.txt', d: 'The pinned list of libraries a deployment platform installs.' },
-    { t: 'Virtual environment', d: 'A library folder for each project, which isolates dependencies.' },
-    { t: 'Validation', d: 'Rejecting bad input with a clear message before it reaches the calculation.' },
-    { t: 'st.stop()', d: 'Halts the Streamlit script immediately, leaving the error visible.' },
-    { t: 'Caching', d: 'Storing the result of slow work so repeated runs skip it.' },
-    { t: 'Secrets store', d: 'A platform feature holding credentials outside your repository.' },
-    { t: 'pytest', d: 'The standard Python test runner; collects functions named test_*.' },
-    { t: 'Codespaces', d: 'A browser-based VS Code with a ready Python environment, requiring no local install.' },
-    { t: 'Build log', d: 'The deployment platform\'s output, where install failures are explained.' }
+    { t: 'Cardholder', d: 'The person paying with the card.' },
+    { t: 'Merchant', d: 'The business taking the payment.' },
+    { t: 'Acquirer', d: 'The merchant\'s payment company. Stripe, Adyen and Checkout are acquirers or work with one.' },
+    { t: 'Issuer', d: 'The bank that gave the cardholder their card, and decides whether to approve.' },
+    { t: 'Card network', d: 'Visa, Mastercard or Amex: routes messages between acquirer and issuer, and writes the rules.' },
+    { t: 'Authorisation', d: 'The issuer setting money aside and promising it is there. No money has moved.' },
+    { t: 'Hold', d: 'What the customer sees while an authorisation is outstanding: pending, not charged.' },
+    { t: 'Capture', d: 'The merchant claiming the authorised money. This is when your ledger writes entries.' },
+    { t: 'Settlement', d: 'Banks actually moving funds between themselves, usually a day or two after capture.' },
+    { t: 'Partial capture', d: 'Capturing less than was authorised. The rest of the hold is released.' },
+    { t: 'Void', d: 'Cancelling before capture. The hold is released and no money ever moved.' },
+    { t: 'Refund', d: 'Returning money after capture, as a new balanced transaction in the opposite direction.' },
+    { t: 'Chargeback', d: 'The cardholder\'s bank forcibly reversing a payment after a dispute.' },
+    { t: 'Representment', d: 'The merchant contesting a chargeback with evidence.' },
+    { t: 'Hard decline', d: 'A refusal that will never succeed with the same card. Never retry it.' },
+    { t: 'Soft decline', d: 'A refusal that might succeed later, such as insufficient funds.' },
+    { t: 'Decline code', d: 'The reason the issuer gave. The most useful field in the response and the most often ignored.' },
+    { t: 'Reversal', d: 'A message telling the network to cancel an authorisation it may have approved.' },
+    { t: 'Unknown state', d: 'What a timed out request leaves you in. Not failed, not approved: unknown, until reconciliation.' },
+    { t: 'PAN', d: 'The full card number. Storing it puts your system under PCI DSS, so you store a token instead.' },
+    { t: 'Token', d: 'An opaque id that stands in for a card, so your service never holds the number.' }
   ],
 
   quiz: [
-    { q: "Why keep calculations in finance.py rather than inside app.py?",
+    { q: "At the moment an authorisation is approved, how much money has moved?",
       options: [
-        "Streamlit cannot do arithmetic",
-        "GitHub requires multiple files",
-        "Pure functions can be tested, reused, and audited without running the interface",
-        "It makes the app load faster"
+        "The full amount, from the customer to the merchant",
+        "Half, with the rest at settlement",
+        "None. The issuer has set it aside and promised it is there",
+        "The amount minus fees"
       ],
       answer: 2,
-      why: "A calculation containing st.write() is welded to the UI forever. Separated, the engine can be unit-tested in milliseconds and reused by an API later." },
+      why: "Which is exactly why your ledger writes no entries at authorisation. It writes them at capture." },
 
-    { q: "What happens when a user moves a slider in a Streamlit app?",
+    { q: "In the shipped week, 841 approved authorisations worth $74,230.57 ended in `expired`. What does that mean happened?",
       options: [
-        "The page reloads and state is lost",
-        "The entire script runs again from the top",
-        "A callback function fires and nothing else runs",
-        "Only the affected widget updates"
+        "The issuer reversed them",
+        "The merchant never captured them, so the holds fell off after seven days",
+        "They were charged back",
+        "The customers cancelled"
       ],
       answer: 1,
-      why: "Streamlit re-executes the whole file on every interaction. It keeps the code simple, and it is exactly why slow operations must be cached." },
+      why: "The customer saw money held for a week for a sale that never completed. A rising expiry count means a broken checkout." },
 
-    { q: "What is `@st.cache_data` for?",
+    { q: "Your ledger writes entries at authorisation instead of capture. What breaks?",
       options: [
-        "Encrypting sensitive data",
-        "Saving user input between sessions",
-        "Speeding up chart rendering",
-        "Avoiding repeating slow work like file downloads on every re-run"
+        "Only the customer's statement",
+        "Nothing, as long as you reverse them later",
+        "Authorisations start being declined",
+        "The ledger claims money the merchant may never receive, so reconciliation never matches and expired holds become fake revenue"
       ],
       answer: 3,
-      why: "Since the script re-runs constantly, uncached downloads or API calls would repeat on every slider move. Cache reads, never cache writes." },
+      why: "4.88% of approvals in this week expired. That would be fake revenue somebody has to unwind by hand." },
 
-    { q: "Where should a deployed app get its API key?",
+    { q: "A capture for less than the authorised amount happens because:",
       options: [
-        "From a text file committed beside the code",
-        "From a query parameter in the URL",
-        "Hardcoded in app.py",
-        "From the platform's secrets store, read via st.secrets"
+        "The issuer reduced the approval",
+        "It is always an error",
+        "The customer paid partly in cash",
+        "The order shipped in parts, an item was out of stock, or the authorisation included room for a tip"
       ],
       answer: 3,
-      why: "The secrets store injects values at runtime and keeps them out of the repository. A key in a URL ends up in logs and browser history." },
+      why: "8.04% of captures here were partial, leaving $38,580.89 authorised and never taken." },
 
-    { q: "What does requirements.txt do?",
+    { q: "A customer cancels an order that has been authorised but not captured. You should:",
       options: [
-        "Tells the deployment platform exactly which libraries and versions to install",
-        "Documents the API endpoints",
-        "Configures the server's memory",
-        "Lists the features the app must have"
+        "Void it",
+        "Let the hold expire",
+        "Capture then refund",
+        "Refund it"
       ],
       answer: 0,
-      why: "Without it the server has none of your libraries and the app fails on import. Most first deployment failures are a missing or wrong line in this file." },
+      why: "Faster for the customer and cheaper for the merchant, since refunds usually do not return the processing fee." },
 
-    { q: "Why use a virtual environment?",
+    { q: "Which decline code must never be retried?",
       options: [
-        "Because Streamlit requires one",
-        "To keep each project's libraries separate so upgrades cannot break other projects",
-        "To make Python run faster",
-        "To encrypt your source code"
+        "do_not_honor",
+        "lost_or_stolen",
+        "insufficient_funds",
+        "velocity_exceeded"
       ],
       answer: 1,
-      why: "A library folder for each project means one project upgrading pandas cannot silently break another. Add .venv/ to .gitignore. It is rebuildable." },
+      why: "It is a hard decline. Retrying it wastes money, annoys the customer and counts against you with the networks." },
 
-    { q: "A user enters a loan of 0. What should happen?",
+    { q: "In this week, 74.2% of declines were soft, worth $167,410.94. What does that number justify building?",
       options: [
-        "The app silently uses a default of 1000",
-        "A Python traceback appears on the page",
-        "A clear error message is shown and the script stops before computing",
-        "The page reloads"
+        "A manual review queue for declines",
+        "A nightly retry of every failed payment",
+        "A retry policy limited to soft declines, with a capped attempt count and growing delays",
+        "Nothing: declined is declined"
       ],
       answer: 2,
-      why: "Validate, message, st.stop(). A traceback exposes internals and tells the user nothing they can act on; a silent default produces answers to a question they did not ask." },
+      why: "Recovering soft declines is a product every payments company sells. Retrying hard declines is how you get fined." },
 
-    { q: "Why validate inside your functions as well as with widget min/max values?",
+    { q: "An authorisation request times out after 30 seconds. What is the correct state?",
       options: [
-        "Because the same function may later be called by an API or a test where no widget exists",
-        "Because Streamlit ignores min_value",
-        "Widgets are unreliable",
-        "To slow down malicious users"
+        "unknown, until something tells you which it was",
+        "authorized, optimistically",
+        "failed",
+        "declined"
       ],
       answer: 0,
-      why: "Widget limits are a convenience of one particular interface. The engine must defend itself wherever it is called from." },
+      why: "If your model cannot hold \"we do not know\", your code will guess, and it guessed wrong 159 times in this week alone." },
 
-    { q: "What does `st.stop()` do?",
+    { q: "What makes a retry after a timeout safe?",
       options: [
-        "Shuts down the server",
-        "Logs the user out",
-        "Halts the current script run so nothing below it executes",
-        "Clears the cache"
+        "Waiting at least 60 seconds",
+        "Using a different card",
+        "Sending your own reference with the original request, so the network can recognise the retry, plus a reversal before retrying",
+        "Checking the customer's balance first"
       ],
       answer: 2,
-      why: "It ends this run cleanly, leaving your error message on screen with no half-rendered charts underneath it." },
+      why: "Level 4's idempotency key, extended past your own database to the party you are calling." },
 
-    { q: "Which test is most valuable for a payment calculation?",
+    { q: "The difference between a refund and a chargeback is:",
       options: [
-        "That the chart colours are correct",
-        "That the page loads under two seconds",
-        "That a known input produces a known output, and that bad input raises",
-        "That the app opens without errors"
+        "The speed",
+        "Refunds are for cards, chargebacks for bank transfers",
+        "A refund is the merchant agreeing; a chargeback is the cardholder's bank taking the money back whether the merchant agrees or not",
+        "The amount"
       ],
       answer: 2,
-      why: "Fixed known values catch silent maths regressions, and testing the refusals proves your validation actually fires. Both run in milliseconds without a browser." },
+      why: "And the merchant pays a dispute fee either way, win or lose." },
 
-    { q: "What does `pytest.raises(ValueError)` assert?",
+    { q: "This merchant's chargeback rate was 0.499% of captured payments. Why is the rate watched more closely than the amount?",
       options: [
-        "That the code inside the block does raise a ValueError",
-        "That the code never raises an error",
-        "That errors are logged",
-        "That ValueError is imported"
+        "Because card networks run monitoring programmes, with fines and eventual loss of card acceptance above roughly 1%",
+        "Because the amount is always small",
+        "Because issuers set prices from it",
+        "Because rates are easier to compute"
       ],
       answer: 0,
-      why: "It is how you test refusals. If the block completes without raising, the test fails, which is exactly what you want when checking validation." },
+      why: "$6,152.18 is survivable. Losing the ability to accept cards is not." },
 
-    { q: "Your app works locally but fails on Streamlit Cloud. What do you check first?",
+    { q: "What does engineering owe the dispute process?",
       options: [
-        "Your internet connection",
-        "requirements.txt and the build log, which names the failing package",
-        "The GitHub repository description",
-        "The colour scheme"
+        "A support phone number",
+        "Evidence gathered at the time and retrievable months later: authorisation response, delivery, device, terms accepted, timestamps",
+        "A lower decline rate",
+        "Faster refunds"
       ],
       answer: 1,
-      why: "The server starts empty. A library you installed locally but never listed is the most common cause, and the build log states exactly which one." },
+      why: "None of it can be collected after the dispute arrives, which is what makes it an engineering problem." },
 
-    { q: "Which best describes the client-server split for a Streamlit app?",
+    { q: "Which transition must the state machine refuse?",
       options: [
-        "The server only serves static files",
-        "Both run the same code simultaneously",
-        "Your Python runs in the user's browser",
-        "Your Python runs on the server; the browser only sends input and displays results"
+        "authorizing to declined",
+        "captured to refunded",
+        "authorized to voided",
+        "captured to voided"
       ],
       answer: 3,
-      why: "That is why secrets can live server-side, and why the server must survive whatever a stranger types into the form." },
+      why: "The money has already moved. What the caller wants is a refund, and letting a void through would lie to the ledger." },
 
-    { q: "What belongs in .gitignore for this project?",
+    { q: "Why does every lifecycle event need its own idempotency key?",
       options: [
-        ".venv/ and __pycache__/",
-        "README.md",
-        "app.py and finance.py",
-        "requirements.txt"
+        "Because each one is a network call that can time out and be retried, and a capture that runs twice charges the customer twice",
+        "Because the network rejects requests without one",
+        "Because the database requires unique keys",
+        "To make the events sortable"
       ],
       answer: 0,
-      why: "Ignore anything rebuildable or machine-specific. The virtual environment is hundreds of megabytes and reinstalls from requirements.txt in seconds." },
+      why: "Same bug as level 4, with a slower feedback loop and a customer in the middle." },
 
-    { q: "What is the most valuable thing to put at the top of your README?",
+    { q: "Why does your service store a token rather than the card number?",
       options: [
-        "The install instructions for Python",
-        "The live URL and a screenshot",
-        "Your full source code",
-        "A list of every function"
+        "To support multiple currencies",
+        "Because the full number drags the whole system under PCI DSS, with the audits and breach exposure that follow",
+        "Tokens are shorter",
+        "Because the network rejects card numbers"
       ],
       answer: 1,
-      why: "A reviewer with thirty seconds clicks a link and looks at a picture. Everything else in the README is for the people who stay." }
+      why: "Keep a token, the last four digits and the expiry for display. Level 15 builds the vault that issues the token." }
   ],
 
   project: {
-    title: 'Loan advisor, a web app you can share',
-    story: 'Everything you built in levels 2 and 6 is sitting in notebooks nobody else can run. Time to ship it: a ' +
-           'loan advisor a member can open on their phone, with your name on it.',
-    scope: 'Uses this level plus levels 2, 6, and 3: the amortization engine you already wrote, pandas for tables, ' +
-           'Streamlit for the interface, pytest for the tests. Nothing beyond that is required.',
+    title: 'card-lifecycle: the service that knows what state every payment is in',
+    story: 'Build the service a payments company runs: authorise through a network that sometimes lies to you, capture in ' +
+           'full or in part, void, refund, take chargebacks, expire abandoned holds, and resolve the requests that timed ' +
+           'out. Then produce the report that explains where a week of money went.',
+    scope: 'Uses levels 4 to 8: the ledger, the money library, the API and what you learned about retries. The card network ' +
+           'is a simulator you write, because no real one will time out on demand.',
+    dataset: '{{RAW}}/data/level-09-card-events.csv',
     requirements: [
-      'A repository named `finquest-loan-advisor` with app.py, finance.py, test_finance.py, requirements.txt, .gitignore and README.md',
-      'finance.py contains only pure functions: no Streamlit import anywhere in it',
-      '`monthly_payment`, `schedule`, `summarise`, `compare_terms`, and `affordability` all live in finance.py',
-      'Every public function raises ValueError with a readable message on invalid input',
-      'test_finance.py with at least 8 tests including known values, the zero-rate case, and at least two `pytest.raises` tests',
-      'All tests pass with `pytest -q` and the passing output is shown in your README',
-      'Sidebar inputs for amount, rate, term, extra payment, and monthly income',
-      'Three headline metrics using `st.metric`: monthly payment, total interest, months to clear',
-      'A chart of balance over time showing standard vs overpaid when an extra payment is entered',
-      'A tab or expander with the full schedule table and a CSV download button',
-      'An affordability panel showing DTI with a comfortable / stretched / high-risk band',
-      'Every invalid input handled with `st.error` and `st.stop()`: no traceback is ever visible on the page',
-      'A visible disclaimer that the tool is educational and not financial advice',
-      '`@st.cache_data` used on at least one genuinely slow operation, with a comment explaining why',
-      'Deployed to Streamlit Community Cloud with a working public URL',
-      'README with the live URL, a screenshot, what it does, how to run it locally, and what you would build next'
+      'An analysis that reproduces the headline figures from the shipped week: 86.08% approved, 92.02% of approvals captured, 0.499% chargebacks on captured, and the money table',
+      'A state machine as data, with one guard function, and a test for every illegal transition in the level',
+      '`unknown` as a first class state that a timed out request lands in',
+      'A card network simulator with configurable decline rate, latency and timeout rate, that remembers references so a retry with the same reference does not authorise twice',
+      'POST /v1/payments to authorise, writing a hold and no ledger entries',
+      'POST /v1/payments/{id}/capture supporting a partial amount, posting a balanced ledger transaction, and reporting the released amount',
+      'Void and refund behind one cancel rule: uncaptured is a void, captured is a refund',
+      'An inbound chargeback handler that reverses the money and posts the dispute fee',
+      'A scheduled job that expires authorisations older than seven days and reports what it did',
+      'Decline handling that stores the code, classifies hard against soft, and refuses to retry a hard decline',
+      'A retry policy for soft declines with a capped attempt count and growing delays',
+      'A resolver that settles every unknown payment against the network report, and counts how many were actually approved',
+      'Idempotency on every event, not only authorisation',
+      'A merchant report: authorised, captured, refunded, charged back, net, expired, voided, and the authorised-but-never-captured gap',
+      'The repository public on GitHub as `card-lifecycle`'
     ],
     starter: {
       lang: 'python',
-      code: '"""app.py: FinQuest level 9 starter.\nKeep every calculation in finance.py. This file is interface only.\n"""\nimport pandas as pd\nimport streamlit as st\n\nfrom finance import monthly_payment, schedule, summarise, affordability\n\nst.set_page_config(page_title="Loan Advisor", page_icon="\\U0001F4B0", layout="wide")\nst.title("Loan Advisor")\nst.caption("Educational tool built for the Spider Fintech Society. Not financial advice.")\n\nwith st.sidebar:\n    st.header("Your loan")\n    # TODO: number_input / slider for amount, rate, term, extra, income\n\n# TODO: validate inputs -> st.error(...) + st.stop()\n\n# TODO: build the schedules (standard and with extra)\n\n# TODO: three st.metric headline numbers\n\n# TODO: tabs -> balance chart, full schedule + download button\n\n# TODO: affordability panel with DTI banding\n'
+      code: '"""FinQuest level 9: the life of a card payment.\n\nLayout:\n  cards/states.py      the state machine and its one guard\n  cards/network.py     the simulator: declines, latency, timeouts, references\n  cards/payments.py    authorise, capture, void, refund, chargeback\n  cards/expiry.py      the job that releases abandoned holds\n  cards/resolve.py     settle every unknown against the network report\n  cards/report.py      where the week\'s money went\n"""\n\nclass IllegalTransition(Exception):\n    pass\n\n\nclass NetworkTimeout(Exception):\n    """The network did not answer. The state is unknown, not failed."""\n\n\nLEGAL = {\n    "created":     {"authorizing"},\n    "authorizing": {"authorized", "declined", "unknown"},\n    "authorized":  {"captured", "voided", "expired"},\n    "captured":    {"refunded", "charged_back"},\n    "unknown":     {"authorized", "declined"},\n    "declined": set(), "voided": set(), "expired": set(),\n    "refunded": set(), "charged_back": set(),\n}\n\nHARD_DECLINES = {"incorrect_cvc", "expired_card", "lost_or_stolen", "pickup_card"}\n\n\ndef move(payment, to_state: str) -> None:\n    """The only place a payment\'s state changes."""\n    # TODO\n    raise NotImplementedError\n\n\ndef authorize(payment, network, our_ref: str):\n    """Call the network. On timeout, land in unknown with the reference recorded."""\n    # TODO\n    raise NotImplementedError\n\n\ndef capture(payment, amount_minor: int | None = None):\n    """Full or partial. Posts the ledger entries. Reports what was released."""\n    # TODO\n    raise NotImplementedError\n'
     },
     tests: [
-      'monthly_payment(250000, 0.055, 30) == 1419.47 to 2dp',
-      'monthly_payment(12000, 0.0, 4) == 250.00 exactly',
-      'monthly_payment(-1000, 0.05, 10) raises ValueError',
-      'monthly_payment(1000, 0.05, 0) raises ValueError',
-      'schedule(20000, 0.07, 5) has 60 rows and a final balance of 0.0',
-      'schedule(20000, 0.07, 5, extra=100) has fewer than 60 rows',
-      'schedule(..., extra=-50) raises ValueError',
-      'grep finance.py for "streamlit" returns nothing',
-      'pytest -q passes with at least 8 tests',
-      'The deployed URL loads and responds to slider changes',
-      'Entering a zero loan amount shows a friendly error, not a traceback'
+      'The analysis reproduces 17,216 approvals, 15,842 captures, 841 expiries and 79 chargebacks',
+      'Capturing an expired authorisation raises IllegalTransition',
+      'Capturing twice raises, and the second attempt returns 409 through the API',
+      'Voiding a captured payment raises, and cancelling it refunds instead',
+      'Refunding more than was captured raises',
+      'Authorising posts no ledger entries, and capturing posts a transaction that sums to zero',
+      'A partial capture of 5000 on a 7140 authorisation reports 2140 released',
+      'A retry to the simulator with the same reference produces one hold, not two',
+      'A timed out authorisation leaves the payment in unknown with the reference stored',
+      'The resolver moves every unknown to a final state and reports how many were approved',
+      'A hard decline is never retried, and a soft decline is retried at most the configured number of times',
+      'The expiry job is safe to run twice and reports zero the second time',
+      'The money report adds up: captured minus refunds minus chargebacks equals the net figure'
     ],
     rubric: [
-      { pts: 25, t: 'It is live', d: 'A public URL a stranger can open and use on a phone.' },
-      { pts: 20, t: 'Separation', d: 'finance.py is pure and importable with no UI dependency; app.py holds no maths.' },
-      { pts: 20, t: 'Tests', d: 'At least 8 meaningful tests including refusals; all passing.' },
-      { pts: 15, t: 'Robustness', d: 'No input combination produces a traceback; every error is a sentence.' },
-      { pts: 10, t: 'Usefulness', d: 'Metrics, chart, schedule, download and affordability all present and clear.' },
-      { pts: 10, t: 'README', d: 'Live URL, screenshot, local run instructions, and honest next steps.' }
+      { pts: 25, t: 'The lifecycle is real', d: 'Every state, every legal move, every illegal move refused with a test, and unknown modelled properly.' },
+      { pts: 20, t: 'The ledger is right', d: 'Nothing at authorisation, balanced entries at capture, refunds as new transactions, partial captures handled.' },
+      { pts: 20, t: 'Failure handled', d: 'A simulator that times out, references that make retries safe, and a resolver that settles the unknowns.' },
+      { pts: 20, t: 'Declines understood', d: 'Codes stored, hard and soft separated, a retry policy with limits, and the recoverable value reported.' },
+      { pts: 15, t: 'Explained to a merchant', d: 'The money report, the authorised-but-never-captured gap, and a README that reads like a product.' }
     ],
     stretch: [
-      'Add a second page with the level 2 savings projector using st.navigation or a page selector',
-      'Add st.session_state so a user can save and compare up to three scenarios side by side',
-      'Rebuild the same engine behind a FastAPI endpoint and call it from the app: one engine, two interfaces',
-      'Add a GitHub Action that runs pytest on every push and shows a passing badge in the README'
+      'Add multiple partial captures against one authorisation, behind a flag, and write down which acquirers allow it',
+      'Add a representment flow: attach evidence to a chargeback and model the outcome',
+      'Add 3-D Secure as a step before authorisation and measure how it changes approvals and liability',
+      'Add incremental authorisation, where a hotel raises a hold as a stay lengthens',
+      'Model a network outage: 40% timeouts for ten minutes, and show your service recovers with no double charges'
     ],
     solutionPath: 'solutions/level-09'
   },
 
   faq: [
-    { q: 'I cannot install Python / PATH errors on Windows',
-      a: 'Use GitHub Codespaces instead: VS Code in a browser tab with Python already installed. If you retry the installer, tick "Add Python to PATH" on the first screen.' },
-    { q: 'streamlit: command not found',
-      a: 'Your virtual environment is not active (the prompt should show (.venv)), or streamlit was installed elsewhere. Activate it, or run python -m streamlit run app.py.' },
-    { q: 'My app is very slow',
-      a: 'Streamlit re-runs the whole script on every interaction. Put @st.cache_data on any download or heavy computation, and keep the uncached path small.' },
-    { q: 'Deployment fails on Streamlit Cloud',
-      a: 'Read the build log: it names the failing package. Usually requirements.txt is missing a library or pins a version that is unavailable. Regenerate it with pip freeze inside a clean environment.' },
-    { q: 'Should finance.py import streamlit?',
-      a: 'No. That is the one rule that keeps the engine testable and reusable. If a calculation needs to report a problem, raise ValueError and let app.py turn it into st.error.' },
-    { q: 'How many tests are enough?',
-      a: 'Cover each public function with one known-value test and one refusal test, then add a test for every bug you fix. Eight is the floor for this project, not the target.' },
-    { q: 'A user typed something that crashed the app',
-      a: 'Wrap the call in try/except ValueError, show st.error with the message, then st.stop(). Then add a test reproducing that input so it cannot come back.' }
+    { q: 'Why build a fake network instead of using a real sandbox?',
+      a: 'Because no sandbox will time out 0.8% of the time on demand, and the timeout is the interesting case. Build the simulator, then point the same code at a real test environment afterwards if you want.' },
+    { q: 'Should the authorisation hold be in the ledger at all?',
+      a: 'Not as entries, because no money has moved. Holds belong in their own table, and some systems mirror them in a memo-only ledger that is never summed into a balance. What breaks everything is posting them as real entries.' },
+    { q: 'How long is an authorisation good for?',
+      a: 'It depends on the card scheme and the merchant type, commonly around seven days and sometimes as little as one. This level uses seven. In a real system it is a field, not a constant.' },
+    { q: 'Do I need to handle 3-D Secure?',
+      a: 'Not in this level. Know what it is: an extra check with the cardholder\'s bank before authorisation, which typically raises approval rates and moves liability for fraud to the issuer. It is in the stretch list.' },
+    { q: 'What is the difference between an acquirer and a processor?',
+      a: 'The acquirer holds the relationship with the card networks and the merchant\'s funds; the processor moves the messages. Many companies do both, which is why the words get used interchangeably. In an interview, say which one you mean.' },
+    { q: 'My resolver leaves some unknowns unresolved',
+      a: 'Then the network report has no record of your reference, which is the case where the request never arrived. Mark it declined, and make sure your reference was sent on the first attempt rather than generated on the retry.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'Two things. That you built the unknown state on purpose, because a timeout is not a failure, and how you resolve it the next day. And the decline numbers: 74.2% of declines were soft, worth $167,410.94, which is the difference between a system that refuses payments and one that recovers them.' }
   ]
 });

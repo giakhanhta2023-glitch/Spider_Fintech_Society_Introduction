@@ -191,23 +191,29 @@ const NOTES = {
   },
   9: {
     files: [
-      ['`finance.py`', 'pure loan maths: imports no UI, prints nothing'],
-      ['`app.py`', 'the Streamlit interface: contains no formulas'],
-      ['`test_finance.py`', '22 tests, no browser required'],
-      ['`requirements.txt`', 'pinned dependencies for deployment']
+      ['`cards/states.py`', 'the state machine as data, plus the one guard every change goes through'],
+      ['`cards/network.py`', 'the simulator: declines, latency, timeouts, and references it remembers'],
+      ['`cards/payments.py`', 'authorise, capture including partial, void, refund, chargeback'],
+      ['`cards/expiry.py`', 'the job that releases holds nobody captured'],
+      ['`cards/resolve.py`', 'settling every unknown against the network report'],
+      ['`cards/report.py`', 'where the week of money went']
     ],
-    run: 'pip install -r requirements.txt && pytest -q && streamlit run app.py',
+    run: 'python -m cards.analyse && pytest -q && python -m cards.report',
     design: [
-      'The separation is the lesson. `finance.py` imports no UI library, so it can be tested in milliseconds, reused behind an API, and read by someone who has never seen Streamlit.',
-      'Every public function raises `ValueError` with a sentence a user could read. `app.py` catches those and turns them into `st.error(...)` followed by `st.stop()`: no traceback ever reaches the page.',
-      'Validation lives in the functions, not only in the widget limits. `min_value` is a property of one interface; the engine has to defend itself wherever it is called from.',
-      '`@st.cache_data` wraps the schedule builder because Streamlit re-runs the entire script on every slider move, and a 40-year schedule is 480 rows each time.',
-      'Nine of the 22 tests assert refusals. Testing that validation fires matters as much as testing the happy path.'
+      'Authorisation writes a hold and no ledger entries, because no money has moved. Capture writes the balanced transaction. That one rule is what keeps the ledger reconcilable, and it is the rule beginners break: 4.88% of approvals in the shipped week expired uncaptured, and posting entries at authorisation would have turned $74,230.57 of them into revenue that has to be unwound by hand.',
+      'unknown is a state, not an error. A timed out request has not failed and has not succeeded, and a model that cannot say so will guess. In this week it would have guessed 159 times, with $11,477.03 at stake.',
+      'Every message carries our own reference, so a retry after a timeout is recognisable to the network rather than a second hold on somebody card. The simulator remembers references on purpose, so the difference is visible in a test.',
+      'Cancelling is one rule with two implementations: uncaptured is a void, captured is a refund. A system that refunds where it could have voided is costing its merchants the processing fee quietly, and nobody complains because nothing looks broken.',
+      'Decline codes are stored on the payment and classified hard or soft. 74.2% of the declines in this week were soft, worth $167,410.94, and retrying the other 25.8% is how a merchant loses approval rate and collects fines.',
+      'Partial capture is modelled with separate authorised and captured amounts, and the released remainder is reported back, because the customer sees that hold disappear and the merchant needs to know it is not coming.',
+      'The report reconciles: authorised $1,387,793.78, captured $1,234,167.87, refunds $48,140.30, chargebacks $6,152.18, net $1,179,875.39, and the $153,625.91 gap explained entirely by expiries, voids and partial captures.'
     ],
     mistakes: [
-      ['`streamlit: command not found`', 'The virtual environment is not active. The prompt should show `(.venv)`.'],
-      ['Works locally, fails when deployed', 'Almost always `requirements.txt`. Read the build log: it names the package.'],
-      ['The app is slow', 'Uncached work re-running on every interaction.']
+      ['Reconciliation never balances', 'Entries were posted at authorisation. Only capture moves money.'],
+      ['A timeout produced two holds', 'The retry generated a new reference. Send the same one, and a reversal before retrying.'],
+      ['Approval rate falls over weeks', 'Hard declines are being retried. Classify the codes and stop on the hard ones.'],
+      ['A capture succeeded after expiry', 'The state machine is not consulting the expiry, or the expiry job never ran.'],
+      ['Refund amounts drift above the capture', 'Refunds are being summed against the authorised amount instead of the captured one.']
     ]
   },
   10: {

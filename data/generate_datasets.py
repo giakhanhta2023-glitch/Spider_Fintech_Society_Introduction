@@ -611,6 +611,114 @@ def gen_loadtest():
     print(f"{path.name}: {len(rows)} requests, {bad} failed ({bad / len(rows):.2%})")
 
 
+# ---------------------------------------------------------------------------
+# LEVEL 9: a day of card authorisations and everything that happened next
+# ---------------------------------------------------------------------------
+def gen_card_events():
+    """One merchant, one week, every event in the life of each payment.
+
+    Shaped like a real card book: most authorisations are approved and then
+    captured within a day, a few are captured for less than was authorised, a
+    few are voided, some holds expire untouched, a small share are refunded,
+    and a very small share come back as chargebacks. A handful of requests time
+    out, which is the case that costs engineers their afternoon: the network
+    may or may not have approved them.
+    """
+    rng = random.Random(SEED + 9)
+
+    DECLINE_CODES = [
+        ("insufficient_funds", 0.42, True),    # retryable later: the money may arrive
+        ("do_not_honor", 0.24, True),          # issuer said no without saying why
+        ("incorrect_cvc", 0.11, False),
+        ("expired_card", 0.08, False),
+        ("velocity_exceeded", 0.08, True),
+        ("lost_or_stolen", 0.04, False),
+        ("pickup_card", 0.03, False),
+    ]
+    codes = [c for c, _, _ in DECLINE_CODES]
+    weights = [w for _, w, _ in DECLINE_CODES]
+
+    start = datetime(2026, 5, 4, 0, 0)          # a Monday
+    rows = []
+    payment = 0
+
+    def add(payment_id, at, event, amount, result="", code="", latency_ms=""):
+        rows.append({
+            "event_id": f"E{len(rows):06d}",
+            "payment_id": payment_id,
+            "at": at.strftime("%Y-%m-%dT%H:%M:%S"),
+            "event": event,
+            "amount_minor": amount,
+            "result": result,
+            "decline_code": code,
+            "latency_ms": latency_ms,
+        })
+
+    for _ in range(20000):
+        payment += 1
+        pid = f"P{payment:06d}"
+
+        # busier in the evening, quieter overnight
+        day = rng.randint(0, 6)
+        hour = rng.choices(range(24),
+                           weights=[2, 1, 1, 1, 1, 2, 4, 7, 9, 10, 11, 12,
+                                    13, 12, 11, 11, 12, 14, 16, 15, 12, 9, 6, 3])[0]
+        at = start + timedelta(days=day, hours=hour, minutes=rng.randint(0, 59),
+                               seconds=rng.randint(0, 59))
+        amount = int(round(abs(rng.lognormvariate(8.6, 0.9))))      # cents
+        amount = max(amount, 150)
+
+        roll = rng.random()
+        if roll < 0.0072:
+            # the network never answered: state unknown until reconciliation
+            add(pid, at, "authorize", amount, "timeout", "", rng.randint(28000, 31000))
+            continue
+        if roll < 0.0072 + 0.1284:
+            code = rng.choices(codes, weights=weights)[0]
+            add(pid, at, "authorize", amount, "declined", code, rng.randint(90, 900))
+            continue
+
+        add(pid, at, "authorize", amount, "approved", "", rng.randint(80, 1200))
+
+        outcome = rng.random()
+        if outcome < 0.031:
+            add(pid, at + timedelta(minutes=rng.randint(2, 240)), "void", amount)
+            continue
+        if outcome < 0.031 + 0.048:
+            # nobody ever captured it: the hold expires after seven days
+            add(pid, at + timedelta(days=7), "expire", amount)
+            continue
+
+        # captured, usually within a day, occasionally much later
+        delay = timedelta(hours=rng.choices([2, 8, 20, 30, 70, 140],
+                                            weights=[34, 30, 18, 10, 6, 2])[0],
+                          minutes=rng.randint(0, 59))
+        captured = amount
+        if rng.random() < 0.081:
+            captured = int(amount * rng.uniform(0.35, 0.92))        # partial capture
+        capture_at = at + delay
+        add(pid, capture_at, "capture", captured)
+
+        after = rng.random()
+        if after < 0.0412:
+            refund = captured if rng.random() < 0.72 else int(captured * rng.uniform(0.2, 0.8))
+            add(pid, capture_at + timedelta(days=rng.randint(1, 20)), "refund", refund)
+        elif after < 0.0412 + 0.0054:
+            add(pid, capture_at + timedelta(days=rng.randint(10, 60)), "chargeback", captured)
+
+    rows.sort(key=lambda r: (r["at"], r["event_id"]))
+    path = OUT / "level-09-card-events.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+
+    auths = [r for r in rows if r["event"] == "authorize"]
+    approved = sum(1 for r in auths if r["result"] == "approved")
+    print(f"{path.name}: {len(rows)} events, {len(auths)} authorisations, "
+          f"{approved} approved ({approved / len(auths):.1%})")
+
+
 def gen_fx_snapshot():
     import json
     snapshot = {
@@ -635,5 +743,6 @@ if __name__ == "__main__":
     gen_bank_exports()
     gen_aml()
     gen_loadtest()
+    gen_card_events()
     gen_fx_snapshot()
     print("done, all datasets are synthetic")
