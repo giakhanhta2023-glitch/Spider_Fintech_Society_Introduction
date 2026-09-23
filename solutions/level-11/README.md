@@ -1,6 +1,6 @@
-# Level 11: The ledger that survives two writers
+# Level 11: The event you thought you published
 
-> **The ledger service** · build project · difficulty 8/10
+> **outbox: events that cannot be lost, consumers that cannot double count** · build project · difficulty 8/10
 
 ## Read this second
 
@@ -10,63 +10,73 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The society is going to run a tab for its events: members top up, buy things, and get refunded, and nobody is going to accept "the spreadsheet says so". Build the ledger underneath it, in Postgres, so that two people spending at the same moment is a solved problem rather than a story.
+Take the level 9 payment service and make it publish events properly. Measure what the naive version loses, fix it with an outbox, deal with the duplicates that appear, choose a partition key and prove it matters, then rebuild a projection from the log.
 
-**Scope:** Uses this level plus level 4 (double entry, minor units, reversal) and level 9 (a project layout, a virtual environment, tests). Postgres, psycopg, pytest. No ORM and no web framework: level 12 puts an API in front of this, and mixing the two is how people end up unable to say which layer broke.
+**Scope:** Uses levels 6, 7 and 9. Kafka or Redpanda in Docker if you can run it; a Postgres table as the log if you cannot, since every pattern here is yours to implement rather than the broker's.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `schema.sql` | tables, constraints, the deferred balancing trigger, the balance trigger |
-| `ledger/db.py` | connection and schema loading, nothing else |
-| `ledger/core.py` | open_account, post, transfer, reverse, balance, statement |
-| `ledger/audit.py` | reconcile, and the global sum that must be zero |
-| `tests/test_concurrency.py` | two threads spending the same money, which fails without the lock |
+| `events/outbox.py` | the event written inside the business transaction |
+| `events/publisher.py` | batched, skip locked, safe to run twice over |
+| `events/consumer.py` | idempotent handling with a processed_event table |
+| `events/partition.py` | the one line that decides what stays in order |
+| `events/dlq.py` | retries, then a dead letter with the error and the offset |
+| `bench/dual_write.py` | the experiment that justifies the whole pattern |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-docker run --name fq-ledger -e POSTGRES_PASSWORD=ledger -e POSTGRES_DB=ledger -p 5432:5432 -d postgres:16 && pip install -r requirements.txt && pytest -q
+python -m bench.dual_write && python -m events.publisher && python -m events.consumer --replay
 ```
 
 ## Why the solution is shaped this way
 
-- The balancing rule lives in a deferred constraint trigger rather than in `post`. Python still checks, for a better error, but the guarantee is the one that holds for psql, a migration and the second service somebody writes next year.
-- Idempotency is a unique index and a caught `UniqueViolation`, not a select followed by an insert. The select version passes every test that runs one request at a time and double charges the first time two arrive together.
-- `transfer` locks the accounts it touches in account id order before it reads a balance. Consistent ordering is what stops two transfers deadlocking on each other.
-- Every public function takes a connection rather than making one, so the tests can run a whole scenario inside a transaction and roll it back, and so level 12 can hand it a pooled connection.
-- Nothing updates or deletes an entry. A wrong transfer is reversed, and the grants in `schema.sql` make that a property of the role rather than a habit of the author.
+- The dual write experiment stays in the repository, because the pattern is only convincing next to the thing it replaces. Measured: 400 payments, 380 events published, 20 lost forever at a 5% crash rate, with no error anywhere.
+- The outbox row is written in the same transaction as the payment, so the two cannot disagree. The same experiment then loses nothing and delivers 3.50% of events twice, which is the trade the pattern is making on purpose.
+- The publisher uses for update skip locked and a partial index on unpublished rows. The index matters the way the level 6 foreign key index mattered: without it every poll scans a table that only grows.
+- Batch size is the performance story. 400 events took 30,473 ms one row at a time and 116 ms in batches of 500, a factor of 265 with no change to the query or the network. Round trips, not work.
+- Consumers are idempotent two ways, deliberately: a processed_event table for work with side effects, and an upsert keyed by payment id where the projection can simply be written again. The README says which to use where.
+- The partition key is chosen and then proved. Over the level 9 stream in 4 partitions: keyed by payment id, zero events out of order; keyed at random, 4,577 out of order affecting 4,534 of 17,216 multi event payments, which is 26.3%.
+- Replay is the acceptance test. The projection is truncated, the offset reset, the stream replayed, and the result compared row for row against what was there before.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| Every transfer fails with "does not balance" | The trigger is not deferred. It needs `deferrable initially deferred`, so it runs at commit rather than after the first leg. |
-| The concurrency test passes without the lock | The threads are not overlapping. Sleep between reading the balance and writing, and give each thread its own connection. |
-| `current transaction is aborted` | An earlier statement in the same transaction failed. Use `conn.transaction()` blocks so the rollback happens for you. |
+| Events are missing downstream | Dual write. The publish is outside the transaction that wrote the business data. |
+| Totals are double counted after a redeploy | A consumer that increments rather than sets, with no processed_event marker. |
+| A capture arrives before its authorisation | Partitioned by something other than the payment. Ordering only holds within a partition. |
+| The publisher slows down as the table grows | No partial index on unpublished rows, so every poll scans everything. |
+| Replaying sent four months of emails again | Side effects and projections in the same consumer. Separate them before resetting any offset. |
 
 ## Self-checks the solution satisfies
 
-- Applying the schema twice leaves the same tables and no error
-- A transfer of 2,500 cents with a 50 cent fee writes three entries summing to zero
-- An unbalanced insert is refused by the trigger at commit, and leaves no rows behind
-- A transfer from an account with 1,000 cents for 2,000 cents raises before any row is written
-- The same idempotency key twice returns one transaction id and leaves one set of entries
-- Two threads each spending 40,000 cents from an account holding 50,000 end with exactly one success and one refusal
-- Reversing a transfer returns both balances to their earlier values and leaves the original entries in place
-- reconcile() is empty and the sum of every entry in the ledger is 0, after every test in the suite
+- The dual write experiment loses events at approximately the injected crash rate
+- A rolled back business transaction leaves no row in the outbox
+- The publisher sends every unpublished row and marks it, leaving none behind
+- Two publishers running at once never publish the same row
+- A crash between sending and marking produces duplicates and no losses
+- The idempotent consumer applied to the same event twice changes the projection once
+- Replaying the entire stream twice leaves the projection byte for byte identical
+- Partitioning by payment id gives zero out of order events across the level 9 stream
+- Partitioning at random gives thousands, affecting roughly a quarter of multi event payments
+- An order dependent consumer fails under the random key and passes under the payment key
+- A poison event reaches the dead letter table after the configured attempts and does not block the partition
+- Replaying a dead letter after the fix produces correct totals with no double counting
+- A full rebuild from offset zero reproduces the projection exactly
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | Correct under concurrency | The double spend test fails with the lock removed and passes with it. Locks are taken in a consistent order. |
-| 20 | The database enforces the rules | Balancing, non zero amounts, account existence and idempotency are constraints, not if statements. |
-| 20 | Atomic writes | Every write path is one transaction. A failure part way through leaves nothing behind, and there is a test that proves it. |
-| 20 | Auditability | Append only, reversal rather than deletion, a working reconciliation, and a statement anybody could read. |
-| 15 | Shipped | Runs from a clean clone with docker run and pytest. The README explains the schema and says what the service does not do. |
+| 25 | The problem measured | Dual write losses and outbox duplicates, both measured with your own numbers and both in the README. |
+| 25 | Delivery handled honestly | Outbox in one transaction, skip locked publisher, idempotent consumers, and an explanation of at least once. |
+| 20 | Ordering understood | The partitioning experiment, a consumer that shows the difference, and a stated key with its trade-off. |
+| 15 | Failure handled | Retries with backoff, a dead letter table with the error, and a replay that does not double count. |
+| 15 | Replayable | A projection rebuilt from zero, and a written answer on which consumers are dangerous to replay. |
 
 ---
 

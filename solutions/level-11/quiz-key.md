@@ -1,4 +1,4 @@
-# Level 11: The ledger that survives two writers: quiz answer key
+# Level 11: The event you thought you published: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. What does atomicity guarantee for a two leg transfer?
+### 1. What is the main difference between a log and a queue?
 
-- A. The entries are written in the order you sent them
-- **B. Both entries are written or neither is** ✅
-- C. No other transaction can read the account
-- D. The transfer completes within one millisecond
+- A. A log can only have one consumer
+- **B. In a log the event stays after being read, and each consumer tracks its own position** ✅
+- C. A queue guarantees ordering and a log does not
+- D. A log is faster
 
-**Why:** Atomicity is all or nothing. It says nothing about speed, visibility to others, or ordering, which are the other three letters and the isolation level.
+**Why:** Which is what makes replay and independent consumers possible. A queue is for work; a log is for facts.
 
-### 2. Why can a CHECK constraint not enforce that the entries of a transaction sum to zero?
+### 2. Your code commits a payment and then publishes an event, with a 5% chance of dying in between. Measured over 400 payments, what happened?
 
-- **A. Because CHECK sees one row at a time and this is a rule about a group of rows** ✅
-- B. Because CHECK only runs on update
-- C. Because CHECK cannot use arithmetic
-- D. Because the sum is not known until the transaction commits
+- **A. 20 events were lost forever, with no error anywhere** ✅
+- B. Nothing: the database rolls back
+- C. 20 events were delivered twice
+- D. The broker retried them
 
-**Why:** A CHECK is evaluated per row against that row. The balancing rule is about every entry sharing a transaction id, which needs a trigger that can run at commit.
+**Why:** No alert, no way to find them except by reconciling two systems, which should not be how you learn about it.
 
-### 3. What does `deferrable initially deferred` change about a constraint trigger?
+### 3. Publishing before committing instead is:
 
-- **A. It runs the trigger once at commit rather than after each row** ✅
-- B. It makes the trigger optional
-- C. It runs the trigger before the insert instead of after
-- D. It disables the trigger inside transactions
+- **A. Worse: you announce payments that may never exist, and you cannot unsend an event** ✅
+- B. The correct fix
+- C. Equivalent
+- D. Only safe with a queue
 
-**Why:** Without it the trigger fires after the first leg, when the transaction is deliberately unbalanced, and every transfer fails.
+**Why:** Fraud, analytics and the merchant all act on something your database never recorded.
 
-### 4. Two sessions read a balance of $100 and each spends $80 under read committed. What happens?
+### 4. The outbox pattern works because:
 
-- A. The second session reads $20 because the first is in progress
-- B. The second session blocks until the first commits
-- **C. Both succeed and the account ends at minus $60** ✅
-- D. Postgres aborts the second with a serialization failure
+- A. It deduplicates events
+- B. The broker becomes transactional
+- **C. The event is written to the same database in the same transaction as the business change, so both happen or neither does** ✅
+- D. It retries the publish until it works
 
-**Why:** Read committed gives each statement a consistent view and says nothing about a decision made between two statements. This is the lost update, and it is the default behaviour.
+**Why:** One system, one transaction. A separate publisher then moves the events out of the table.
 
-### 5. What does `select ... for update` do?
+### 5. With the outbox, the measured result was zero lost and 3.50% delivered twice. Why not mark rows as sent before publishing?
 
-- **A. Takes an exclusive lock on the rows read until the transaction ends** ✅
-- B. Upgrades the transaction to serializable
-- C. Caches the rows for faster reads
-- D. Marks rows as needing an update later
+- **A. Because crashing between the mark and the send loses the event permanently, which is the problem you just fixed** ✅
+- B. Because the index would not be used
+- C. It would break ordering
+- D. It would be slower
 
-**Why:** The lock makes a second writer wait rather than act on a balance that is about to change. It serialises spending per account, which is the cost.
+**Why:** Duplicates are defensible because the fix lives in one place you control: the consumer.
 
-### 6. What must a caller be able to do before you choose serializable isolation over a row lock?
+### 6. What makes a consumer idempotent?
 
-- A. Disable all triggers
-- **B. Retry the transaction when it aborts** ✅
-- C. Hold the connection open for longer
-- D. Run inside a single process
+- A. Acknowledging quickly
+- **B. Recording the event id and doing the work in one transaction, so a repeat does nothing** ✅
+- C. Using a dead letter queue
+- D. Processing events in order
 
-**Why:** Serializable detects the conflict and aborts one side. Without a retry, one of your users just got an error instead of a payment, and a retry that is not idempotent double charges.
+**Why:** That is how an at-least-once delivery becomes an exactly-once effect, which is the only version that exists.
 
-### 7. Why is a unique index the right way to make a write idempotent?
+### 7. A log guarantees ordering:
 
-- A. It is faster than a dictionary lookup
-- B. It gives a better error message
-- **C. The check and the write are one operation, so two racing requests cannot both pass** ✅
-- D. It compresses the key column
+- A. Across the whole topic
+- B. Only if you enable it
+- **C. Within a partition only** ✅
+- D. Only for a single consumer
 
-**Why:** Select then insert leaves a gap between the two statements wide enough for exactly the retry you are protecting against.
+**Why:** Which is what makes the partition key a design decision rather than a detail.
 
-### 8. A transfer inserts the transaction row, then the process is killed before the commit. What is in the database?
+### 8. Measured over 37,987 real events in 4 partitions, partitioning at random instead of by payment id caused:
 
-- A. The transaction row, with no entries
-- **B. Nothing from that transfer** ✅
-- C. Whatever was flushed to disk at the time
-- D. A locked row that must be cleaned up by hand
+- A. No difference
+- **B. Events out of order for 26.3% of multi event payments** ✅
+- C. Slower consumers
+- D. Duplicate delivery
 
-**Why:** Uncommitted work is rolled back when the connection dies. The visible difference between a crash before and after the commit is the caller's problem, not the database's.
+**Why:** Captures before authorisations, refunds before captures. Invisible on one consumer and constant under load.
 
-### 9. Why store money as `bigint` in minor units rather than `numeric` or `float`?
+### 9. The cost of partitioning by a narrow key such as account id is:
 
-- A. Because bigint uses less storage than any alternative
-- **B. Because floats cannot represent most decimals exactly, and integers of cents cannot drift** ✅
-- C. Because numeric cannot be summed
-- D. Because bigint is the only type Postgres indexes
+- A. Consumers cannot be idempotent
+- **B. A very busy account creates a hot partition that one consumer must handle alone** ✅
+- C. Ordering is no longer guaranteed
+- D. Events can be lost
 
-**Why:** numeric is exact too and is a defensible choice; float is not. Integer minor units keep the arithmetic exact and match what the payment rails send.
+**Why:** Pick the narrowest key that still gives the order you actually need.
 
-### 10. Why does this schema have no `balance` column at the start?
+### 10. You run six consumers in one group on a topic with four partitions. What happens?
 
-- A. Because the balance belongs in the application cache
-- B. Because balances change too often to store
-- C. Because Postgres cannot sum a column quickly
-- **D. Because a stored balance is a second answer to a question the entries already answer** ✅
+- A. The group rebalances into six partitions
+- B. Throughput rises by 50%
+- C. Each consumer gets two thirds of a partition
+- **D. Two consumers sit idle, because a partition goes to exactly one consumer in the group** ✅
 
-**Why:** Two sources of truth eventually disagree. You add the column when the sum is too slow, and you accept a reconciliation job on the same day.
+**Why:** More parallelism needs more partitions, and the partition count is chosen up front and awkward to change.
 
-### 11. What should the reconciliation query return on a healthy ledger?
+### 11. Which lag measurement should you alert on?
 
-- **A. Nothing** ✅
-- B. The total balance
-- C. One row per account
-- D. Every transaction from the last day
+- **A. Lag in seconds, because it says how out of date the world is** ✅
+- B. Neither: alert on consumer restarts
+- C. Lag in events, because it counts work
+- D. Both, with the same threshold
 
-**Why:** It selects accounts whose cached balance disagrees with their entries. A row means drift, and the job exists so that you find it rather than a customer.
+**Why:** "The fraud consumer is nine minutes behind" is actionable. "The fraud consumer is 40,000 events behind" depends on the rate.
 
-### 12. Why run the application as a role with no UPDATE or DELETE on the entries table?
+### 12. Publishing 400 events took 30,473 ms one row at a time and 116 ms in batches of 500. What does that teach?
 
-- A. It makes inserts faster
-- B. It reduces the size of the write ahead log
-- C. Because Postgres requires separate roles for triggers
-- **D. Because append only is then a property of the system rather than a promise in a comment** ✅
+- A. The database was warming up
+- B. Batches use less memory
+- C. The index was missing
+- **D. When per item work is tiny, count the round trips before optimising anything else** ✅
 
-**Why:** If the connection that posts entries can also rewrite them, the audit trail depends on everyone remembering not to. Permissions survive new colleagues.
+**Why:** 265 times faster with no change to the query, the database or the network.
 
-### 13. Two transfers lock the same two accounts in opposite orders. What happens?
+### 13. An event fails every time it is processed. The right handling is:
 
-- A. The locks merge into one
-- B. Both wait forever
-- **C. The database detects a deadlock and aborts one of them** ✅
-- D. Postgres escalates to a table lock
+- A. Skip it and log a warning
+- B. Retry forever, so nothing is lost
+- **C. A few retries with growing delays, then move it to a dead letter table with the error, and carry on** ✅
+- D. Restart the consumer
 
-**Why:** Deadlock detection resolves it by killing a victim. Taking locks in a consistent order, usually by account id, means it does not happen.
+**Why:** Retrying forever blocks the partition and everything behind it. Skipping silently is data loss.
 
-### 14. What does `%s` do in a psycopg query?
+### 14. Before replaying four months of events through a consumer, the thing to check is:
 
-- A. Formats the value into the SQL string before sending it
-- B. Marks the column as a string type
-- **C. Sends the value to the server separately from the statement** ✅
-- D. Escapes quotes in the value
+- A. The partition count
+- B. The broker version
+- **C. Whether the consumer does anything besides write to a table, such as sending email** ✅
+- D. The retention setting
 
-**Why:** The statement and the values travel separately, so a value can never become SQL. That is the whole of injection defence, and f-strings undo it.
+**Why:** Replaying four months of emails to real customers in ten minutes is the classic replay disaster.
 
-### 15. Your ledger is correct but a balance query on a hot account has become slow. What is the first thing to check?
+### 15. Why does every event carry an `event_id` generated when it is created rather than when it is published?
 
-- A. Whether the disk is full
-- B. Whether to shard the table
-- C. Whether to switch to serializable
-- **D. Whether there is an index on entries(account_id)** ✅
+- A. To sort events
+- B. To support partitioning
+- C. Because the broker requires it
+- **D. So a republished event keeps the same id, which is what lets consumers recognise a duplicate** ✅
 
-**Why:** Summing one account means finding its rows. Without the index that is a scan of every entry ever written, and the fix is one line before any of the interesting answers.
+**Why:** An id generated at publish time changes on every retry, which defeats the whole idempotency scheme.

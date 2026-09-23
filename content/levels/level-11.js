@@ -1,531 +1,579 @@
 /* =========================================================================
-   LEVEL 11: the ledger on a real database
+   LEVEL 11: events, the outbox, and the order things arrive in
    ========================================================================= */
 FQ.registerLevel({
   id: 11,
-  codename: 'postgres ledger',
-  title: 'The ledger that survives two writers',
-  tagline: 'Level 4 balanced the books in a Python list. Now two people spend the same money at the same moment, and the database has to be the thing that says no.',
+  codename: 'outbox',
+  title: 'The event you thought you published',
+  tagline: 'Commit to the database, then publish an event. One line of code between them, and 5% of your events never happen. This level measures that, fixes it with the outbox pattern, and then deals with the duplicates the fix creates.',
   difficulty: 8,
-  minutes: 240,
-  tags: ['Postgres', 'transactions', 'concurrency', 'SQL'],
-  summary: 'Every payments company runs on a ledger in a database, and every interview for those jobs asks what happens ' +
-           'when two requests hit one account at once. This level moves the level 4 ledger into Postgres, puts the balancing ' +
-           'invariant in the schema where the application cannot forget it, and then breaks it on purpose with two writers.',
+  minutes: 420,
+  tags: ['Kafka', 'outbox', 'idempotent consumers', 'ordering'],
+  summary: 'Every job description says "event-driven architecture" and almost every candidate means "we called a queue". ' +
+           'This level is the real thing: why a database write and a publish cannot both succeed, the outbox pattern that ' +
+           'fixes it, the duplicates that arrive afterwards, and what partitioning by the wrong key does to the order of ' +
+           'your payments. Measured on a real database and the level 9 event stream.',
 
   objectives: [
-    'Design a double entry schema with accounts, transactions and entries',
-    'Wrap a multi row write in one database transaction so it is all or nothing',
-    'Enforce the balancing invariant in the database rather than in the application',
-    'Explain read committed against serializable, and produce a lost update on purpose',
-    'Take a row lock with SELECT FOR UPDATE and say what it costs',
-    'Make a write idempotent with a unique index rather than with an if statement',
-    'Reconcile a cached balance against the entries that produced it'
+    'Say what a log is and how it differs from a queue',
+    'Use the words correctly: topic, partition, offset, consumer group, lag',
+    'Reproduce the dual write problem and measure what it loses',
+    'Implement the outbox pattern and show nothing is lost',
+    'Make a consumer idempotent, because delivery is at least once',
+    'Choose a partition key, and measure what the wrong one does to ordering',
+    'Handle a message that will never succeed, without blocking everything behind it',
+    'Rebuild state by replaying the log'
   ],
 
   knowledge: [
-    { h: 'What the Python list could not do' },
-    { p: 'The level 4 ledger was correct, and useless for a real business, for two reasons. It lived in one running Python ' +
-         'program, so everything vanished when the program stopped. And only one person could use it at a time, so the ' +
-         'question that decides whether a payments system works never came up: what happens when two payments touch the same ' +
-         'account in the same thousandth of a second?' },
-    { p: 'A **database** solves both. It is a program whose whole job is to store data safely on disk and let many users read ' +
-         'and change it at once without corrupting it. This level uses **Postgres**, the free database most fintech companies ' +
-         'run on. You talk to it in **SQL**, a language for asking a database to store and fetch data.' },
-    { p: 'A few words you need first:' },
+    { h: 'Why not just call the other service?' },
+    { p: 'Your payments service captures a payment. Five other things need to know: the ledger, the merchant\'s webhook, ' +
+         'the fraud system, the analytics pipeline, and the emails. The obvious approach is to call them:' },
+    { code: 'def capture(payment):\n    post_ledger_entries(payment)\n    notify_merchant(payment)        # their server is slow today\n    update_fraud_model(payment)     # this one is being deployed\n    send_receipt_email(payment)     # the email provider is down\n    record_analytics(payment)', lang: 'python' },
+    { p: 'Now your capture is as slow as the slowest of them and as reliable as the least reliable. Worse, when the email ' +
+         'provider fails, what should happen? The payment already went through. Rolling back is not possible and giving the ' +
+         'merchant an error is a lie.' },
+    { p: 'The alternative is to write down that it happened and let everybody else read it at their own pace:' },
+    { code: 'def capture(payment):\n    post_ledger_entries(payment)\n    publish("payment.captured", payment)     # and that is all', lang: 'python' },
+    { p: 'Five consumers read that event and do their own work. If the email service is down for an hour, it catches up ' +
+         'afterwards, and nothing else notices. That is what "event-driven" means, and everything below is the detail that ' +
+         'makes it work.' },
+
+    { h: 'A log, not a queue' },
+    { p: 'Two different things get called "a queue", and the difference matters:' },
     { table: {
-      head: ['Word', 'Plain meaning'],
+      head: ['', 'A queue', 'A log, such as Kafka'],
       rows: [
-        ['**Table**', 'Like a spreadsheet sheet: named columns, and one row per record'],
-        ['**Schema**', 'The design of your tables: which columns, what type each holds, and what rules they must follow'],
-        ['**Constraint**', 'A rule the database enforces on every row, whoever writes it. Break it and the write is refused'],
-        ['**Query**', 'A question or command sent to the database in SQL']
+        ['When a consumer reads a message', 'It is removed', 'It stays. The consumer just moves its own position forward'],
+        ['Several consumers', 'They share the work: each message goes to one', 'Each group reads everything, independently'],
+        ['Reading yesterday again', 'Impossible: it is gone', 'Move your position back and read it again'],
+        ['Good for', 'Work to be done once: send this email', 'Facts that happened: this payment was captured']
       ]
     }},
-    { p: 'One word needs special care, because it means two things in this level. In money, a **transaction** is an event ' +
-         'like "Alice paid Bob". In a database, a **transaction** is a group of changes that are saved together or not at ' +
-         'all. The good news is that one money transfer is exactly one database transaction, as you will see.' },
-    { p: 'Databases make four promises about transactions, known by their initials as **ACID**:' },
+    { p: 'Payments want a log. The fact that a payment was captured is something that is true rather than a task, and five ' +
+         'different systems need it for five different reasons. Here is the vocabulary, all of it:' },
     { table: {
-      head: ['Letter', 'The promise', 'What it means for a transfer'],
+      head: ['Word', 'What it means'],
       rows: [
-        ['**A**tomicity', 'All of it happens, or none of it does', 'Both entries are saved, or neither is'],
-        ['**C**onsistency', 'Every rule still holds when the change is saved', 'A transfer that does not balance cannot be saved'],
-        ['**I**solation', 'Two transactions running at once cannot see each other half finished', 'Two transfers cannot both spend the last $10'],
-        ['**D**urability', 'Once saved, it stays saved', 'A power cut a second later does not undo it']
+        ['**Topic**', 'A named stream of related events, such as `payments`'],
+        ['**Partition**', 'A topic is split into parts so it can scale. Order is guaranteed **within** a partition only'],
+        ['**Offset**', 'The position of an event in its partition: a number that only goes up'],
+        ['**Producer**', 'Something that writes events'],
+        ['**Consumer**', 'Something that reads them, remembering its own offset'],
+        ['**Consumer group**', 'A set of consumers sharing the partitions of a topic between them'],
+        ['**Lag**', 'How far behind a consumer is: the newest offset minus its own'],
+        ['**Retention**', 'How long events are kept before being deleted. Often days, sometimes forever']
       ]
     }},
+
+    { h: 'The bug in the two line version' },
+    { p: 'Look again at the fixed version, because it contains a real bug:' },
+    { code: 'post_ledger_entries(payment)     # writes to the database, commits\npublish("payment.captured", ...)  # sends to Kafka', lang: 'python' },
+    { p: 'Two systems, two separate writes, no shared transaction. This is the **dual write problem**, and it has two ' +
+         'failure modes. Crash after the commit and before the publish: the payment exists and nobody is told. Publish ' +
+         'first and crash before the commit: everybody is told about a payment that does not exist.' },
+    { p: 'How often does that actually matter? Measured, on a real database, 400 payments with a 5% chance of the process ' +
+         'dying between the two lines:' },
+    { code: '--- dual write: commit, then publish ---\n  payments written to the database : 400\n  events actually published        : 380\n  events lost forever              : 20  (5.00%)', lang: 'text', label: 'measured' },
+    { p: 'Twenty payments that happened and that nothing downstream will ever hear about. No error, no alert, no way to ' +
+         'find them later except by comparing the two systems, which is level 10\'s job and should not be how you discover ' +
+         'this.' },
+    { warn: 'Swapping the order does not fix it. Publishing first means the analytics, the fraud system and the merchant ' +
+            'all learn about a payment your database never recorded, which is worse: you cannot unsend an event.' },
+
+    { h: 'The outbox pattern' },
+    { p: 'The fix is to stop writing to two systems. Write the event into **the same database, in the same transaction** as ' +
+         'the payment, into a table called the outbox. Then a separate publisher reads that table and sends the events on:' },
+    { code: 'begin;\n  insert into entries ...                                   -- the payment\n  insert into outbox (topic, key, payload) values (...);   -- the event\ncommit;                                                     -- both, or neither', lang: 'sql' },
+    { code: 'create table outbox (\n  id           bigserial primary key,\n  topic        text        not null,\n  partition_key text       not null,        -- decides ordering, see below\n  payload      jsonb       not null,\n  created_at   timestamptz not null default now(),\n  published_at timestamptz                  -- null until it has been sent\n);\ncreate index outbox_unpublished on outbox (id) where published_at is null;', lang: 'sql' },
+    { p: 'The publisher is a small loop: read rows where `published_at is null`, send them, mark them sent. Same experiment ' +
+         'as before, same 5% crash rate, now with the outbox:' },
+    { code: '--- outbox: one transaction, then a publisher ---\n  payments written                 : 400\n  publish calls made               : 414\n  distinct events delivered        : 400\n  events lost forever              : 0\n  duplicate deliveries             : 14  (3.50%)\n  still unpublished at the end     : 0', lang: 'text', label: 'measured' },
+    { p: 'Nothing lost. But look at the fourth line: **14 events were delivered twice**. The publisher crashed after sending ' +
+         'and before marking them sent, so the next pass sent them again. You have traded a problem you cannot detect for ' +
+         'one you can.' },
     { check: {
-      q: 'Level 4 said a transaction that does not balance is invalid, and your Python checked that before saving. Why is the ' +
-         'same check in the database worth writing again?',
-      a: 'Because your Python is one door into the data, and a database has many. A one-off fix-up script, a colleague typing ' +
-         'SQL directly, a second service written next year, and a bug fix that adds a new way to write all skip your Python ' +
-         'entirely. A rule in the schema holds for every one of them, including the ones that do not exist yet. Checks in your ' +
-         'code give friendlier error messages and catch problems earlier; checks in the database are the ones that are actually ' +
-         'guarantees.'
+      q: 'Why can the publisher not mark the row as sent first, and then publish it? That would remove the duplicates.',
+      a: 'It would also bring back the lost events, in the same shape as the dual write. Marking first and crashing before ' +
+         'the send loses the event permanently, and nothing downstream will ever know it existed. Between losing events and ' +
+         'delivering some of them twice, delivering twice is the one you can defend, because the fix lives in one place you ' +
+         'control: the consumer ignores an event id it has already handled. That choice, made deliberately, is what "at ' +
+         'least once delivery" means, and it is what essentially every message system offers.'
     }},
 
-    { h: 'The design: three tables' },
-    { p: 'The ledger needs three tables. An **account** is somewhere money can sit. A **transaction** is one money event. An ' +
-         '**entry** is one line of that event: an account and an amount. Alice paying Bob $25 is one row in `transactions` and ' +
-         'two rows in `entries`, -2500 for Alice and +2500 for Bob. Amounts are whole cents, as in level 4, stored in a column ' +
-         'of type `bigint` (a whole number that can go very large).' },
-    { code: 'create table accounts (\n  id           bigserial primary key,\n  name         text        not null unique,\n  kind         text        not null check (kind in (\'customer\', \'revenue\', \'world\')),\n  allow_negative boolean   not null default false,\n  created_at   timestamptz not null default now()\n);\n\ncreate table transactions (\n  id              bigserial primary key,\n  memo            text        not null,\n  idempotency_key text        unique,          -- the retry guard, see below\n  created_at      timestamptz not null default now()\n);\n\ncreate table entries (\n  id             bigserial primary key,\n  transaction_id bigint      not null references transactions(id),\n  account_id     bigint      not null references accounts(id),\n  amount_cents   bigint      not null check (amount_cents <> 0),\n  created_at     timestamptz not null default now()\n);\n\ncreate index entries_account_idx on entries (account_id);', lang: 'sql', label: 'the whole ledger' },
-    { p: 'Read it one piece at a time:' },
+    { h: 'At least once means your consumer must be idempotent' },
+    { p: 'Given that duplicates will arrive, every consumer needs to be safe to run twice on the same event. The standard ' +
+         'way is a table of what has been processed, written in the same transaction as the work:' },
+    { code: 'create table processed_event (\n  consumer   text not null,\n  event_id   uuid not null,\n  handled_at timestamptz not null default now(),\n  primary key (consumer, event_id)\n);', lang: 'sql' },
+    { code: 'def handle(event):\n    with db.transaction():\n        try:\n            db.execute("insert into processed_event (consumer, event_id) values (%s, %s)",\n                       ("emailer", event.id))\n        except UniqueViolation:\n            return                      # already done: do nothing, acknowledge\n        do_the_actual_work(event)       # inside the same transaction', lang: 'python' },
+    { p: 'The insert and the work commit together, so either both happened or neither did. This gives you an **effect** that ' +
+         'happens exactly once, out of a delivery that happens at least once, which is the only version of "exactly once" ' +
+         'that exists in practice.' },
+    { p: 'Some work is naturally idempotent and needs no table: setting a status to `captured`, or an upsert that writes a ' +
+         'row keyed by payment id. Prefer those where you can. Sending an email is not one of them.' },
+
+    { h: 'Partitions, and the order things arrive in' },
+    { p: 'A topic is split into partitions so several consumers can work at once. The promise is narrow and exact: **events ' +
+         'within one partition are delivered in order. Across partitions, there is no promise at all.**' },
+    { p: 'Which means the partition key is a real design decision. Take the level 9 event stream, 37,987 events across ' +
+         '20,000 payments, spread over 4 partitions, with each partition consumed at its own speed:' },
     { table: {
-      head: ['Piece', 'What it does'],
+      head: ['Partition key', 'Events arriving out of order', 'Payments affected'],
       rows: [
-        ['`bigserial primary key`', 'Gives every row a unique number, 1, 2, 3, filled in automatically. The **primary key** is how you refer to one row'],
-        ['`not null`', 'This column can never be left empty'],
-        ['`references accounts(id)`', 'An entry can only point at an account that exists. This link is called a **foreign key**'],
-        ['`check (amount_cents <> 0)`', 'Refuses an entry of zero, which is always a bug'],
-        ['`unique`', 'No two rows may have the same value here. On the idempotency key, this is the retry guard'],
-        ['`timestamptz ... default now()`', 'Records the moment the row was written, with its time zone'],
-        ['`create index`', 'A lookup table, like the index at the back of a book, so finding one account\'s entries stays fast with a million rows']
+        ['**The payment id**', '**0**', '**0 of 17,216**'],
+        ['Anything else, such as round robin', '4,577', '4,534 of 17,216, or **26.3%**']
       ]
     }},
-    { warn: 'There is no `balance` column on `accounts`, on purpose. A balance is the sum of the entries, as in level 4. Store ' +
-            'it as well and you have two answers to the same question, which is the subject of the last section.' },
-
-    { h: 'One transfer, one database transaction' },
-    { p: 'Both entries of a transfer must be saved together. In SQL you start a database transaction with `begin`, make your ' +
-         'changes, and save them all at once with `commit`. If anything goes wrong in between, `rollback` throws every change ' +
-         'away, as if none of it happened.' },
-    { p: 'In Python, the psycopg library does this for you with a `with` block. Leave the block normally and it commits. Hit ' +
-         'an error inside it and it rolls back:' },
-    { code: 'with conn:                       # begin; then commit at the end, or rollback on an error\n    with conn.cursor() as cur:\n        cur.execute(\n            "insert into transactions (memo, idempotency_key) values (%s, %s) returning id",\n            (memo, key),\n        )\n        txn_id = cur.fetchone()[0]\n        cur.executemany(\n            "insert into entries (transaction_id, account_id, amount_cents) values (%s, %s, %s)",\n            [(txn_id, src_id, -amount), (txn_id, dst_id, amount)],\n        )', lang: 'python', label: 'all of it or none of it' },
-    { p: 'Notice the `%s` placeholders. They are not ordinary Python string formatting. psycopg sends the SQL and the values to ' +
-         'the database separately, so a value can never be mistaken for a command. That matters because of this:' },
-    { code: '# NEVER do this\nname = "Bob\'); delete from entries; --"\ncur.execute(f"insert into accounts (name) values (\'{name}\')")\n\n# the database receives:\n#   insert into accounts (name) values (\'Bob\'); delete from entries; --\')\n#   ...and deletes your whole ledger', lang: 'python' },
-    { warn: 'That attack is called **SQL injection**, and it is one of the most common security holes on the internet. The whole ' +
-            'defence is a habit: never build SQL by gluing strings together with f-strings or `+`. Always use placeholders.' },
+    { p: 'With the wrong key, a quarter of all payments had their events arrive in the wrong order: a capture before its ' +
+         'authorisation, a refund before the capture it refunds. A consumer that trusts the order will build nonsense, and ' +
+         'the bug appears only under load, only sometimes, and never on a developer machine with one consumer.' },
+    { p: 'The rule: **partition by the thing whose order matters**. For payments that is the payment id, or sometimes the ' +
+         'account id if you need ordering across a whole account.' },
+    { warn: 'Choosing a key is a trade. Everything with the same key lands on one partition, so a single very busy account ' +
+            'creates a hot partition that one consumer must handle alone. That is the price of ordering, and it is why you ' +
+            'pick the narrowest key that still gives the order you actually need.' },
     { check: {
-      q: 'Your transfer inserts the transaction row, inserts the first entry, and then the program is killed. What is in the ' +
-         'database when it comes back up?',
-      a: 'Nothing from that transfer. The inserts were inside a database transaction that never reached `commit`, so Postgres ' +
-         'throws them away when the connection dies: no transaction row, no entry, no half written transfer. That is atomicity, ' +
-         'and it is why the level 4 worry about a program dying between two entries stops being your problem. What is still your ' +
-         'problem is telling the caller it failed, because from outside, a crash just before the commit and just after it look ' +
-         'identical.'
+      q: 'Your consumer receives `payment.captured` for a payment it has never seen authorised, so it crashes. A colleague ' +
+         'suggests retrying the event until the authorisation arrives. What is wrong with that, and what are the two real ' +
+         'fixes?',
+      a: 'Retrying blocks the partition. That consumer now cannot process anything behind that event, so one out of order ' +
+         'message stops every other payment on the same partition, and if the authorisation went to a different partition ' +
+         'it may never arrive in time at all. The first fix is the cause: partition by payment id, so the authorisation and ' +
+         'the capture are on the same partition and cannot overtake each other, which measured at 0 violations against ' +
+         '26.3% of payments affected. The second is defensive: write consumers that tolerate events arriving out of order ' +
+         'where possible, by keying on the payment and treating the state as a set of facts rather than a sequence of ' +
+         'instructions.'
     }},
 
-    { h: 'Make the database enforce the balance rule' },
-    { p: 'The rule is that the entries of one money transaction add up to zero. A `check` constraint cannot express that, ' +
-         'because a check only ever looks at one row at a time, and this rule is about a group of rows. A **trigger** can. A ' +
-         'trigger is a small function the database runs automatically when something happens, here whenever an entry is ' +
-         'inserted:' },
-    { code: 'create or replace function entries_balance() returns trigger as $$\nbegin\n  if (select sum(amount_cents) from entries where transaction_id = new.transaction_id) <> 0 then\n    raise exception \'transaction % does not balance\', new.transaction_id;\n  end if;\n  return null;\nend;\n$$ language plpgsql;\n\ncreate constraint trigger entries_must_balance\n  after insert on entries\n  deferrable initially deferred        -- run the check at commit, not after each row\n  for each row execute function entries_balance();', lang: 'sql' },
-    { p: 'The line `deferrable initially deferred` is the part that matters. Think about the moment after the first entry is ' +
-         'inserted: Alice\'s -2500 is there and Bob\'s +2500 is not yet. The transaction is unbalanced, on purpose, for a moment. ' +
-         'Checked then, every transfer would fail. **Deferred** means "wait until commit, when every entry is in, then check".' },
-    { money: 'A ledger with this trigger cannot hold an unbalanced transaction, no matter which program wrote it or how buggy ' +
-             'that program was. Auditors ask for exactly this: not whether your code is careful, but whether the system could ' +
-             'even record money going missing.' },
+    { h: 'Consumers, groups, and how far behind you are' },
+    { p: 'A **consumer group** is how work gets shared: each partition of a topic is assigned to exactly one consumer in the ' +
+         'group. That gives two facts worth knowing before an interview:' },
+    { ul: [
+      '**More consumers than partitions does nothing.** Six consumers on four partitions means two sit idle. If you want ' +
+      'more parallelism, you need more partitions, and the number of partitions is chosen up front and awkward to change.',
+      '**Different groups are independent.** The emailer and the analytics pipeline each read everything, each with their ' +
+      'own position, so a slow emailer does not hold analytics back.'
+    ]},
+    { p: '**Lag** is the number that tells you whether any of this is working: how many events a consumer has not read yet. ' +
+         'Measure it two ways, because they answer different questions. Lag in **events** tells you how much work is ' +
+         'waiting. Lag in **seconds**, the age of the oldest unread event, tells you how out of date the world is, and it is ' +
+         'the one to put an alert on: "the fraud consumer is nine minutes behind" is a sentence somebody can act on.' },
 
-    { h: 'Two payments, one balance, the same moment' },
-    { p: 'Here is the failure that separates people who have run a ledger from people who have written one. An account holds ' +
-         '$100. Two transfers of $80 each arrive at the same moment, from two different requests, each handled by its own ' +
-         'connection to the database (each called a **session**):' },
-    { code: 'session A                          session B\n---------------------------------  ---------------------------------\nbegin;                             begin;\nselect sum(amount_cents)           select sum(amount_cents)\n  from entries                       from entries\n where account_id = 7;               where account_id = 7;\n-- 10000                            -- 10000\n-- 8000 <= 10000, fine              -- 8000 <= 10000, fine\ninsert ... -8000 ...                insert ... -8000 ...\ncommit;                            commit;\n\n-- balance is now -6000', lang: 'text', label: 'the lost update, step by step' },
-    { p: 'Both read the balance, both saw $100, both decided $80 was affordable, both saved. The account ends at **-$60**, ' +
-         'and each session believes it behaved perfectly. This is called a **lost update**, one kind of **race condition**: a ' +
-         'bug that only appears when two things happen at almost exactly the same time.' },
-    { p: 'Nothing here is a bug in your Python. Postgres\'s default **isolation level**, the setting for how much transactions ' +
-         'running at once can affect each other, is called `read committed`. It guarantees each individual query sees a ' +
-         'consistent picture. It says nothing about a decision you made in Python between two queries. There are three ways to ' +
-         'close the gap:' },
+    { h: 'Batching is most of the performance' },
+    { p: 'The publisher loop looks trivial, and how you write it changes the throughput by two orders of magnitude. Same ' +
+         '400 events, same database, only the batch size differs:' },
     { table: {
-      head: ['Fix', 'What it does', 'What it costs'],
+      head: ['Rows read and marked per round trip', 'Time for 400 events', 'Throughput'],
       rows: [
-        ['`select ... for update`', 'Locks the account\'s row. The second session has to wait until the first commits', 'Payments from one account happen one at a time'],
-        ['`serializable` isolation', 'Postgres notices the two sessions clashed and cancels one with an error', 'Your code must be ready to retry the cancelled one'],
-        ['A rule on a stored balance', 'The database refuses to let a balance go below zero', 'You need a stored balance to put the rule on']
+        ['1', '30,473 ms', '13 events/s'],
+        ['10', '3,083 ms', '130 events/s'],
+        ['100', '343 ms', '1,165 events/s'],
+        ['500', '116 ms', '**3,439 events/s**']
       ]
     }},
-    { p: 'The first fix, the **row lock**, is the most common. Here is the same race with it:' },
-    { code: '-- lock the account first, then decide\nselect id from accounts where id = %s for update;\nselect coalesce(sum(amount_cents), 0) from entries where account_id = %s;\n\n-- session A takes the lock, sees $100, spends $80, commits, releases the lock\n-- session B was waiting at the first line; now it runs, sees $20, and refuses', lang: 'sql' },
+    { p: '**265 times faster** from batching alone, with no change to the database, the query or the network. The work per ' +
+         'event never changed: what changed is the number of round trips, and a round trip to a database in another region ' +
+         'costs about 60 ms whatever it carries, as level 7 measured.' },
+    { p: 'This is the single most reliable performance lesson in backend work: when something is slow and the per item work ' +
+         'is tiny, count the round trips before you optimise anything else.' },
+
+    { h: 'The message that will never work' },
+    { p: 'Eventually a consumer meets an event it cannot process: a field it does not understand, a payment that was ' +
+         'deleted, a bug of your own. Retrying forever blocks the partition. Skipping silently loses data. The answer is a ' +
+         '**dead letter queue**: after a small number of attempts, move the event somewhere else with the error attached, ' +
+         'and carry on.' },
+    { code: 'attempts: 1 -> retry in 1s\n           2 -> retry in 2s\n           3 -> retry in 4s\n           4 -> give up: write to payments.dead with the error and the offset,\n                acknowledge the original, and move on', lang: 'text' },
+    { p: 'Then two rules make it useful rather than a bin. Somebody looks at it, on a schedule, because a dead letter queue ' +
+         'nobody reads is data loss with extra steps. And it must be **replayable**: once the bug is fixed, you feed those ' +
+         'events back through the consumer, which works precisely because the consumer is idempotent.' },
+
+    { h: 'Replay, and why the log is worth keeping' },
+    { p: 'Because a log keeps events rather than consuming them, a new consumer can start at the beginning and build its own ' +
+         'view of the world. That is the property that makes event systems genuinely powerful:' },
+    { ul: [
+      '**A new feature** can be built against six months of history rather than starting empty.',
+      '**A bug in a consumer** is fixed by correcting the code, resetting its position, and reprocessing. No migration, no ' +
+      'backfill script.',
+      '**A projection**, such as a merchant dashboard, can be rebuilt from scratch at any time, which means it is never the ' +
+      'thing you are afraid to touch.'
+    ]},
+    { p: 'Two conditions make replay safe, and both are things you have already built. Consumers must be idempotent, so ' +
+         'reprocessing does not double count. And retention must be long enough to contain what you might want to replay: ' +
+         'a seven day retention means a bug found on the eighth day is unfixable this way.' },
     { check: {
-      q: 'You add `for update` on the source account and the double spend stops. A colleague asks why you did not use ' +
-         '`serializable` instead, which needs no lock. Answer them.',
-      a: 'Both work, and they fail differently. `for update` makes the second transfer wait, then succeed or be refused on the ' +
-         'real balance, so the caller never sees a retry: the cost is that spending from one account now happens single file, ' +
-         'which matters for a very busy account like the fee income account. `serializable` lets both run and cancels one with ' +
-         'an error, which is cheaper when clashes are rare, but every caller has to be written to retry, and a retry that is not ' +
-         'idempotent charges somebody twice. Pick the lock when clashes are normal, and serializable with a retry loop when ' +
-         'they are rare.'
+      q: 'You fix a bug in the consumer that builds the merchant dashboard, reset its offset to the beginning, and replay ' +
+         'four months of events. What has to be true for the dashboard to come out correct, and what will go wrong if the ' +
+         'consumer also sends emails?',
+      a: 'The dashboard has to be rebuilt from the events rather than adjusted by them: a projection that sets a value, or ' +
+         'upserts a row keyed by payment id, replays cleanly, while one that increments a counter will count everything ' +
+         'twice. And the emails are the classic disaster: replaying four months of events through a consumer that sends ' +
+         'email sends four months of email again, in minutes, to real customers. That is why side effects that reach the ' +
+         'outside world belong in their own consumer with their own group, kept separate from the ones that only build ' +
+         'internal state, and why every replay starts with asking what this consumer does besides writing to a table.'
     }},
 
-    { h: 'Idempotency, done by the database' },
-    { p: 'Level 4 remembered idempotency keys in a Python dictionary. A database can do better: put a `unique` constraint on ' +
-         'the key column, and simply try to insert. If the key already exists, the database refuses the insert, and you look ' +
-         'up the original transaction instead:' },
-    { code: 'try:\n    txn_id = post_transfer(...)          # inserts with idempotency_key\nexcept psycopg.errors.UniqueViolation:\n    # this key was used before: by an earlier attempt of this same payment\n    txn_id = lookup_by_key(key)\nreturn txn_id', lang: 'python' },
-    { p: 'Why not the obvious way, "look for the key, and insert if it is not there"? Because there is a gap between the look ' +
-         'and the insert, and two retries of the same payment can both fit inside it:' },
-    { code: 'request 1                         request 2 (a retry, same key)\nselect ... where key = \'k9\'   ->  select ... where key = \'k9\'\n  -- not found                       -- not found\ninsert ... key = \'k9\'              insert ... key = \'k9\'\n  -- charged                         -- charged again', lang: 'text' },
-    { p: 'The unique constraint has no gap: checking and inserting are one operation inside the database, so exactly one of ' +
-         'the two can ever succeed.' },
-    { check: {
-      q: 'Why is "select where key = ..., and insert if there is no row" wrong, when it passes every test you can write for it?',
-      a: 'Because the failure needs two requests inside the same few thousandths of a second, and your tests run one at a time. ' +
-         'Both select, both find nothing, both insert, and you have charged the customer twice with code that reads as if it ' +
-         'checked. It is the same shape as the double spend above: a decision made between two statements is a decision made on ' +
-         'out-of-date information. The unique constraint has no gap, because the check and the write are one operation.'
-    }},
-
-    { h: 'The balance you show, and the balance that is true' },
-    { p: 'Adding up every entry is correct, and gets slower as the ledger grows: an account with a million entries means adding ' +
-         'a million numbers for every balance on screen. At some size you store a copy of the balance on the account row. From ' +
-         'that moment you have two numbers that are supposed to agree, and checking that they do is your job.' },
-    { code: 'alter table accounts add column balance_cents bigint not null default 0;\n\n-- keep it up to date in the same transaction as the entry\ncreate or replace function apply_entry() returns trigger as $$\nbegin\n  update accounts set balance_cents = balance_cents + new.amount_cents\n   where id = new.account_id;\n  return new;\nend;\n$$ language plpgsql;\n\ncreate trigger entries_apply after insert on entries\n  for each row execute function apply_entry();', lang: 'sql' },
-    { p: 'The trigger runs inside the same database transaction as the entry, so the stored balance and the entry are saved ' +
-         'together or not at all. That removes most ways for them to drift apart, but not every way, so a check still runs ' +
-         'every day. This query lists any account whose stored balance disagrees with its entries:' },
-    { code: 'select a.id, a.name, a.balance_cents, coalesce(sum(e.amount_cents), 0) as from_entries\n  from accounts a\n  left join entries e on e.account_id = a.id\n group by a.id\nhaving a.balance_cents <> coalesce(sum(e.amount_cents), 0);', lang: 'sql', label: 'the query that should return nothing' },
-    { check: {
-      q: 'That check returns nothing every morning for six months. What has it been worth?',
-      a: 'It has been worth the six months. A check that finds nothing is not a check that did nothing: it is the evidence that ' +
-         'the rule held, and it is the reason anybody can trust the balance column at all. The day it does return a row you ' +
-         'will know within hours instead of hearing it from a customer, and you will know which account and by how much. Cheap ' +
-         'jobs that usually print nothing are most of what running a system looks like.'
-    }},
-
-    { h: 'Only ever add, and make the database insist' },
-    { p: 'The ledger is a record of what happened, so nothing in it is ever changed or deleted. A wrong transfer is fixed with ' +
-         'a reversing transaction, exactly as in level 4, and the original stays visible forever.' },
-    { p: 'You can write that rule in a comment, or you can make the database enforce it. Databases have **roles**, named users ' +
-         'with specific permissions, and you can take away a role\'s permission to change or delete rows:' },
-    { code: 'revoke update, delete on entries, transactions from app_user;\ngrant insert, select on entries, transactions to app_user;', lang: 'sql' },
-    { p: 'Now the application, which connects as `app_user`, can add entries and read them, and physically cannot rewrite ' +
-         'history, even if a bug or an attacker tells it to.' },
-    { warn: 'This only works if the application really connects as that limited role, and changes to the table design run as a ' +
-            'different one. If the same connection details can both post entries and delete the table, "we never change ' +
-            'history" is a promise rather than a fact.' }
+    { h: 'The event itself is a contract' },
+    { p: 'Once another team consumes your event, its shape is a promise, exactly as an API response was in level 7. The same ' +
+         'rules apply, with one addition:' },
+    { code: '{\n  "event_id": "018f3a...",          <- unique, and stable across retries\n  "type": "payment.captured",\n  "version": 1,\n  "occurred_at": "2026-05-06T19:04:12Z",\n  "payment_id": "P010423",\n  "amount_minor": 7140,\n  "currency": "USD"\n}', lang: 'json' },
+    { ul: [
+      '**`event_id`** is what makes idempotent consumers possible. Generate it when the event is created, not when it is published, so a retry carries the same one.',
+      '**`occurred_at`** is when the thing happened, which is not when the event was published or consumed. Consumers that care about time need the first, and only the producer knows it.',
+      '**`version`** lets you change the shape later without breaking anybody, by publishing both versions for a while.',
+      '**Adding a field is safe. Removing or renaming one is not.** Consumers you have never met are reading this.'
+    ]},
+    { money: 'This is the level that makes "event-driven architecture" on a CV survive questioning. The interview follow up ' +
+             'is almost always one of three things: how do you avoid losing events between the database and the broker, ' +
+             'what do you do about duplicates, and how do you keep ordering. You now have a measured answer to all three.' }
   ],
 
   tutorial: {
-    intro: 'This level needs Postgres. Two ways in: Docker on your own machine, which is the version most jobs expect you to ' +
-           'know, or a free Neon branch in the browser if Docker will not run where you are. Everything after the first step ' +
-           'is identical. Work in a file rather than a notebook: this is a project, and level 9 set you up for it.',
+    intro: 'Two ways to run this. If Docker works for you, run Redpanda or Kafka locally and use the real thing. If it does ' +
+           'not, the same patterns work with a table as the log, and every idea transfers: the outbox, idempotent ' +
+           'consumers, partition keys and replay are all yours to write rather than the broker\'s. Build on the level 6 ' +
+           'database and the level 9 events.',
     steps: [
       {
-        t: 'Get a database and connect to it',
+        t: 'Reproduce the loss',
         blocks: [
-          { p: 'Docker is one command and gives you a real Postgres on your machine:' },
-          { code: 'docker run --name fq-ledger -e POSTGRES_PASSWORD=ledger \\\n  -e POSTGRES_DB=ledger -p 5432:5432 -d postgres:16\n\n# check it answers\ndocker exec -it fq-ledger psql -U postgres -d ledger -c "select version();"', lang: 'bash' },
-          { p: 'Then the driver, and a connection that reads its details from the environment rather than from the source:' },
-          { code: 'pip install "psycopg[binary]" python-dotenv\n\n# .env, and .env goes in .gitignore\nDATABASE_URL=postgresql://postgres:ledger@localhost:5432/ledger', lang: 'bash' },
-          { code: 'import os\nimport psycopg\nfrom dotenv import load_dotenv\n\nload_dotenv()\n\ndef connect():\n    """One connection. The caller owns the transaction."""\n    return psycopg.connect(os.environ["DATABASE_URL"])\n\nwith connect() as conn, conn.cursor() as cur:\n    cur.execute("select now()")\n    print(cur.fetchone()[0])', lang: 'python' },
-          { tip: 'No Docker? Create a free project at neon.tech, copy the connection string into the same `DATABASE_URL`, and ' +
-                 'every later step works unchanged. That is the whole point of a connection string.' }
+          { p: 'Before the fix, measure the problem. Write the naive version, inject a crash between the commit and the ' +
+               'publish, and count what never got published.' },
+          { code: 'for i in range(400):\n    with conn.cursor() as cur:\n        cur.execute("insert into demo_payments ...")\n    conn.commit()                      # the database has it\n    if rng.random() < 0.05:\n        continue                       # the process "dies" here\n    broker.publish(...)', lang: 'python' },
+          { code: 'payments written to the database : 400\nevents actually published        : 380\nevents lost forever              : 20  (5.00%)', lang: 'text' },
+          { p: 'Then try the other order, publishing before committing, and convince yourself it is worse.' }
         ],
-        check: 'A timestamp prints, and DATABASE_URL is in .env rather than in your code.'
+        check: 'You can state exactly how many events your naive version loses, and why swapping the order is not a fix.'
       },
       {
-        t: 'Create the schema',
+        t: 'Add the outbox',
         blocks: [
-          { p: 'Put the SQL in a file, `schema.sql`, and run it from Python. A schema you can recreate from a file is a schema ' +
-               'somebody else can run, which is the difference between a project and a thing on your laptop.' },
-          { code: 'def apply_schema(conn, path="schema.sql"):\n    with open(path, encoding="utf-8") as fh:\n        sql = fh.read()\n    with conn.cursor() as cur:\n        cur.execute(sql)\n    conn.commit()', lang: 'python' },
-          { p: 'Open the three accounts you will move money between. `world` is the outside, as in level 4, and it is the one ' +
-               'allowed to go negative.' },
-          { code: 'ACCOUNTS = [("world", "world", True), ("alice", "customer", False),\n            ("bob", "customer", False), ("fee_income", "revenue", True)]\n\nwith conn.cursor() as cur:\n    cur.executemany(\n        "insert into accounts (name, kind, allow_negative) values (%s, %s, %s) "\n        "on conflict (name) do nothing",\n        ACCOUNTS,\n    )\nconn.commit()', lang: 'python' }
+          { p: 'One table, one index, and the event written inside the same transaction as the payment. The partial index on ' +
+               'unpublished rows is what keeps the publisher fast when the table has millions of rows in it.' },
+          { code: 'create index outbox_unpublished on outbox (id) where published_at is null;', lang: 'sql' },
+          { warn: 'Without that partial index the publisher scans the whole outbox every few seconds looking for the few ' +
+                  'unpublished rows, which is level 6\'s unindexed foreign key all over again: fine at a thousand rows, ' +
+                  'fatal at ten million.' }
         ],
-        check: 'select count(*) from accounts returns 4, and running the script twice still returns 4.'
+        check: 'A payment and its event are written in one transaction, and rolling back loses both.'
       },
       {
-        t: 'Post one balanced transfer',
+        t: 'Write the publisher, and measure the batch size',
         blocks: [
-          { code: 'def post(conn, legs, memo, key=None):\n    """legs: [(account_name, signed_cents), ...]. One database transaction."""\n    if sum(amount for _, amount in legs) != 0:\n        raise ValueError("legs do not balance")\n\n    with conn.transaction():\n        with conn.cursor() as cur:\n            cur.execute(\n                "insert into transactions (memo, idempotency_key) values (%s, %s) returning id",\n                (memo, key),\n            )\n            txn_id = cur.fetchone()[0]\n            for name, amount in legs:\n                cur.execute(\n                    "insert into entries (transaction_id, account_id, amount_cents) "\n                    "select %s, id, %s from accounts where name = %s",\n                    (txn_id, amount, name),\n                )\n    return txn_id', lang: 'python' },
-          { p: '`conn.transaction()` is the begin and commit. Raise anywhere inside it, including from a constraint, and ' +
-               'nothing survives.' },
-          { code: 'post(conn, [("world", -50_000), ("alice", 50_000)], "opening balance")\npost(conn, [("alice", -2_500), ("bob", 2_450), ("fee_income", 50)], "alice pays bob")', lang: 'python' }
+          { code: 'select id, topic, partition_key, payload\n  from outbox\n where published_at is null\n order by id\n limit %s\n   for update skip locked;        -- so two publishers never send the same row', lang: 'sql' },
+          { p: '`for update skip locked` is the line that lets you run two publishers safely: each takes rows the other has ' +
+               'not locked, so they share the work without coordination.' },
+          { code: 'batch    1:  30473 ms for 400 events       13 events/s\nbatch   10:   3083 ms                     130 events/s\nbatch  100:    343 ms                   1,165 events/s\nbatch  500:    116 ms                   3,439 events/s', lang: 'text' },
+          { p: 'Reproduce that table with your own numbers. It is the most transferable thing in this level.' }
         ],
-        check: 'Alice holds 47,500 cents, Bob holds 2,450, fee income holds 50, and world holds -50,000.'
+        check: 'Two publishers running at once never publish the same row, and your batch table shows the same shape.'
       },
       {
-        t: 'Break it on purpose',
+        t: 'Prove the duplicates',
         blocks: [
-          { p: 'A test that has never seen the constraint refuse is not a test of the constraint. Take the Python guard out ' +
-               'of your head for a moment and send the database something that does not balance.' },
-          { code: 'from psycopg import errors\n\ntry:\n    with conn.transaction():\n        with conn.cursor() as cur:\n            cur.execute("insert into transactions (memo) values (\'broken\') returning id")\n            txn = cur.fetchone()[0]\n            cur.execute(\n                "insert into entries (transaction_id, account_id, amount_cents) "\n                "select %s, id, -1000 from accounts where name = \'alice\'",\n                (txn,),\n            )\n            # and no second leg\nexcept errors.RaiseException as err:\n    print("refused:", err)', lang: 'python' },
-          { p: 'The exception arrives at the commit rather than at the insert, because the trigger is deferred. That is worth ' +
-               'seeing once: the database let you write a half transaction and then refused to keep it.' }
+          { p: 'Inject a crash between sending and marking, run the publisher to completion, and count. You should lose ' +
+               'nothing and deliver some events twice.' },
+          { code: 'payments written                 : 400\ndistinct events delivered        : 400\nevents lost forever              : 0\nduplicate deliveries             : 14  (3.50%)', lang: 'text' },
+          { p: 'Write that pair of numbers in your README next to the dual write pair. Those four numbers are the argument ' +
+               'for the whole pattern.' }
         ],
-        check: 'The insert is refused, and select count(*) from entries is unchanged afterwards.'
+        check: 'Zero lost, some duplicates, and nothing left unpublished when the publisher stops.'
       },
       {
-        t: 'Produce a double spend, then stop it',
+        t: 'Make the consumer idempotent',
         blocks: [
-          { p: 'Two threads, one account, no lock. Run this and watch an account go negative that is not allowed to.' },
-          { code: 'import threading\n\ndef spend(amount):\n    with connect() as c:\n        with c.transaction():\n            with c.cursor() as cur:\n                cur.execute(\n                    "select coalesce(sum(amount_cents), 0) from entries "\n                    "where account_id = (select id from accounts where name = \'alice\')"\n                )\n                balance = cur.fetchone()[0]\n                if balance < amount:\n                    raise ValueError("insufficient funds")\n                import time; time.sleep(0.2)          # widen the gap on purpose\n                cur.execute(\n                    "insert into transactions (memo) values (\'race\') returning id"\n                )\n                txn = cur.fetchone()[0]\n                cur.executemany(\n                    "insert into entries (transaction_id, account_id, amount_cents) "\n                    "select %s, id, %s from accounts where name = %s",\n                    [(txn, -amount, "alice"), (txn, amount, "bob")],\n                )\n\nts = [threading.Thread(target=spend, args=(40_000,)) for _ in range(2)]\n[t.start() for t in ts]\n[t.join() for t in ts]', lang: 'python' },
-          { p: 'Now add the lock as the first statement of the transaction and run it again. The second thread stops at the ' +
-               'lock, waits for the first to commit, reads the balance that actually exists, and refuses itself.' },
-          { code: 'cur.execute("select id from accounts where name = \'alice\' for update")', lang: 'python' },
-          { warn: 'Always take locks in a consistent order, usually by account id. Two transfers locking the same two ' +
-                  'accounts in opposite orders deadlock, and Postgres resolves that by killing one of them.' }
+          { p: 'Build a consumer that maintains a projection: a table of payments by merchant with totals. Then make it safe ' +
+               'to run twice, and prove it by feeding it the same events again.' },
+          { code: 'with db.transaction():\n    try:\n        db.execute("insert into processed_event (consumer, event_id) values (%s, %s)",\n                   ("merchant_totals", event["event_id"]))\n    except UniqueViolation:\n        return                       # seen it: acknowledge and stop\n    apply(event)                     # same transaction as the marker', lang: 'python' },
+          { tip: 'Then try the other approach for comparison: make the projection an upsert keyed by payment id, so it is ' +
+                 'naturally idempotent and needs no marker table. Note in your README which one you would use where.' }
         ],
-        check: 'Without the lock the balance goes negative; with it, one transfer succeeds and the other raises insufficient funds.'
+        check: 'Replaying the entire stream twice leaves the projection identical to replaying it once.'
       },
       {
-        t: 'Make the retry safe',
+        t: 'Partition, and break the order on purpose',
         blocks: [
-          { code: 'def post_idempotent(conn, legs, memo, key):\n    try:\n        return post(conn, legs, memo, key=key)\n    except errors.UniqueViolation:\n        with conn.cursor() as cur:\n            cur.execute("select id from transactions where idempotency_key = %s", (key,))\n            return cur.fetchone()[0]', lang: 'python' },
-          { p: 'Call it twice with the same key and count the rows. One transaction, one pair of entries, the same id back ' +
-               'both times. That is the level 4 lesson with the gap closed.' }
+          { p: 'Spread the level 9 events over four partitions, consume each at a different speed, and count how often an ' +
+               'event for a payment arrives before an earlier one. Do it twice: keyed by payment id, and keyed at random.' },
+          { code: 'partition by payment id : 0 out of order,    0 of 17,216 payments affected\npartition at random     : 4,577 out of order, 4,534 payments affected (26.3%)', lang: 'text' },
+          { p: 'Then write the consumer that would break: one that refuses a capture for a payment it has not seen ' +
+               'authorised, and watch it fail only in the second configuration.' }
         ],
-        check: 'Two calls with one key give the same transaction id and leave exactly two entries behind.'
+        check: 'Your two runs show zero violations with the right key and thousands with the wrong one.'
       },
       {
-        t: 'Cache the balance and reconcile it',
+        t: 'Dead letter and replay',
         blocks: [
-          { p: 'Add the column and the trigger from the knowledge section, then write the check that proves they agree. Run ' +
-               'it after every test in your project.' },
-          { code: 'def reconcile(conn):\n    """Returns a list of accounts whose cached balance disagrees with their entries."""\n    with conn.cursor() as cur:\n        cur.execute(\n            "select a.name, a.balance_cents, coalesce(sum(e.amount_cents), 0) "\n            "  from accounts a left join entries e on e.account_id = a.id "\n            " group by a.id having a.balance_cents <> coalesce(sum(e.amount_cents), 0)"\n        )\n        return cur.fetchall()\n\nassert reconcile(conn) == [], "the cached balance has drifted"', lang: 'python' },
-          { tip: 'Also assert that the sum of every entry in the whole ledger is zero. Money is only ever moved, so the total ' +
-                 'of a correct ledger is zero at every moment, and that single number catches most of what can go wrong.' }
+          { p: 'Add an event your consumer cannot handle. Give it three attempts with growing delays, then move it to a dead ' +
+               'letter table with the error, the offset and the payload, and carry on.' },
+          { code: 'create table dead_letter (\n  id          bigserial primary key,\n  consumer    text        not null,\n  event_id    uuid        not null,\n  payload     jsonb       not null,\n  error       text        not null,\n  failed_at   timestamptz not null default now(),\n  replayed_at timestamptz\n);', lang: 'sql' },
+          { p: 'Then fix the bug, replay the dead letters through the same consumer, and confirm the projection is correct ' +
+               'and nothing was double counted.' }
         ],
-        check: 'reconcile returns an empty list, and the global sum of amount_cents is 0.'
+        check: 'A poison event does not block the partition, and replaying it after the fix produces the right totals.'
+      },
+      {
+        t: 'Rebuild everything from the log',
+        blocks: [
+          { p: 'The final exercise, and the one that shows the point. Delete the projection table entirely, reset the ' +
+               'consumer position to zero, and rebuild it from the events. Compare the result against what it was before.' },
+          { code: 'truncate merchant_totals;\nupdate consumer_offset set position = 0 where consumer = \'merchant_totals\';\n-- then run the consumer to the end', lang: 'sql' },
+          { p: 'Then answer the question in your README: which of your consumers would be dangerous to replay, and what you ' +
+               'would do about it before ever resetting an offset in production.' }
+        ],
+        check: 'The rebuilt projection matches the original exactly, row for row.'
       }
     ]
   },
 
   glossary: [
-    { t: 'ACID', d: 'Atomicity, consistency, isolation, durability: the four promises a database transaction makes.' },
-    { t: 'Transaction (database)', d: 'A group of statements that commit together or not at all. Not the same word as a money transaction, which is why this level names the table carefully.' },
-    { t: 'Entry (leg)', d: 'One row of one side of a money transaction: an account and a signed amount in minor units.' },
-    { t: 'Constraint', d: 'A rule the database enforces itself, for every writer, rather than trusting the application.' },
-    { t: 'Constraint trigger', d: 'A function the database runs on write. Deferred means it runs at commit, when all the rows of a transaction are present.' },
-    { t: 'Isolation level', d: 'How much two concurrent transactions are allowed to see of each other. Postgres defaults to read committed.' },
-    { t: 'Lost update', d: 'Two transactions read the same value, both decide on it, and the second overwrites the first. The classic double spend.' },
-    { t: 'SELECT FOR UPDATE', d: 'Locks the rows it reads until the transaction ends, so another writer waits rather than reading stale data.' },
-    { t: 'Serializable', d: 'The strictest isolation level: the result must match some order of running the transactions one at a time. Conflicts abort instead of waiting.' },
-    { t: 'Deadlock', d: 'Two transactions each holding a lock the other wants. The database kills one, so lock order matters.' },
-    { t: 'Unique index', d: 'A guarantee of at most one row per value. The correct way to make a write idempotent.' },
-    { t: 'Reconciliation', d: 'A scheduled comparison of two numbers that must agree, such as a cached balance and the entries under it.' },
-    { t: 'Append only', d: 'A table that is inserted into and never updated or deleted, enforced by permissions rather than by good intentions.' },
-    { t: 'SQL injection', d: 'Treating a value as part of the statement. Prevented by parameters, never by escaping by hand.' }
+    { t: 'Event', d: 'A record that something happened, published for anybody who cares to read.' },
+    { t: 'Log', d: 'An append-only ordered list of events, kept after reading, with each consumer tracking its own position.' },
+    { t: 'Topic', d: 'A named stream of related events.' },
+    { t: 'Partition', d: 'One part of a topic. Order is guaranteed within a partition and nowhere else.' },
+    { t: 'Partition key', d: 'The value that decides which partition an event goes to, and therefore what stays in order.' },
+    { t: 'Offset', d: 'An event\'s position within its partition.' },
+    { t: 'Consumer group', d: 'Consumers sharing the partitions of a topic. Each partition goes to exactly one of them.' },
+    { t: 'Lag', d: 'How far behind a consumer is, in events and in seconds. Alert on the seconds.' },
+    { t: 'Retention', d: 'How long the log keeps events before deleting them, which sets how far back you can replay.' },
+    { t: 'Dual write', d: 'Writing to two systems with no shared transaction. The bug this level measures.' },
+    { t: 'Outbox pattern', d: 'Writing the event into the same database transaction, and publishing it from there.' },
+    { t: 'At least once', d: 'The delivery guarantee you actually get: nothing is lost, some things arrive twice.' },
+    { t: 'Idempotent consumer', d: 'One that can process the same event twice with no extra effect.' },
+    { t: 'Exactly once effect', d: 'What idempotent consumers give you, and the only honest version of exactly once.' },
+    { t: 'Projection', d: 'A table built by consuming events, which can be rebuilt by replaying them.' },
+    { t: 'Replay', d: 'Reprocessing events from an earlier position, to rebuild state or fix a consumer bug.' },
+    { t: 'Dead letter queue', d: 'Where an event goes after repeated failures, so it stops blocking the partition.' },
+    { t: 'Poison message', d: 'An event that will never process successfully, whatever you do.' },
+    { t: 'skip locked', d: 'A Postgres clause letting several workers take different rows from the same table safely.' }
   ],
 
   quiz: [
-    { q: "What does atomicity guarantee for a two leg transfer?",
+    { q: "What is the main difference between a log and a queue?",
       options: [
-        "The entries are written in the order you sent them",
-        "Both entries are written or neither is",
-        "No other transaction can read the account",
-        "The transfer completes within one millisecond"
+        "A log can only have one consumer",
+        "In a log the event stays after being read, and each consumer tracks its own position",
+        "A queue guarantees ordering and a log does not",
+        "A log is faster"
       ],
       answer: 1,
-      why: "Atomicity is all or nothing. It says nothing about speed, visibility to others, or ordering, which are the other three letters and the isolation level." },
+      why: "Which is what makes replay and independent consumers possible. A queue is for work; a log is for facts." },
 
-    { q: "Why can a CHECK constraint not enforce that the entries of a transaction sum to zero?",
+    { q: "Your code commits a payment and then publishes an event, with a 5% chance of dying in between. Measured over 400 payments, what happened?",
       options: [
-        "Because CHECK sees one row at a time and this is a rule about a group of rows",
-        "Because CHECK only runs on update",
-        "Because CHECK cannot use arithmetic",
-        "Because the sum is not known until the transaction commits"
+        "20 events were lost forever, with no error anywhere",
+        "Nothing: the database rolls back",
+        "20 events were delivered twice",
+        "The broker retried them"
       ],
       answer: 0,
-      why: "A CHECK is evaluated per row against that row. The balancing rule is about every entry sharing a transaction id, which needs a trigger that can run at commit." },
+      why: "No alert, no way to find them except by reconciling two systems, which should not be how you learn about it." },
 
-    { q: "What does `deferrable initially deferred` change about a constraint trigger?",
+    { q: "Publishing before committing instead is:",
       options: [
-        "It runs the trigger once at commit rather than after each row",
-        "It makes the trigger optional",
-        "It runs the trigger before the insert instead of after",
-        "It disables the trigger inside transactions"
+        "Worse: you announce payments that may never exist, and you cannot unsend an event",
+        "The correct fix",
+        "Equivalent",
+        "Only safe with a queue"
       ],
       answer: 0,
-      why: "Without it the trigger fires after the first leg, when the transaction is deliberately unbalanced, and every transfer fails." },
+      why: "Fraud, analytics and the merchant all act on something your database never recorded." },
 
-    { q: "Two sessions read a balance of $100 and each spends $80 under read committed. What happens?",
+    { q: "The outbox pattern works because:",
       options: [
-        "The second session reads $20 because the first is in progress",
-        "The second session blocks until the first commits",
-        "Both succeed and the account ends at minus $60",
-        "Postgres aborts the second with a serialization failure"
+        "It deduplicates events",
+        "The broker becomes transactional",
+        "The event is written to the same database in the same transaction as the business change, so both happen or neither does",
+        "It retries the publish until it works"
       ],
       answer: 2,
-      why: "Read committed gives each statement a consistent view and says nothing about a decision made between two statements. This is the lost update, and it is the default behaviour." },
+      why: "One system, one transaction. A separate publisher then moves the events out of the table." },
 
-    { q: "What does `select ... for update` do?",
+    { q: "With the outbox, the measured result was zero lost and 3.50% delivered twice. Why not mark rows as sent before publishing?",
       options: [
-        "Takes an exclusive lock on the rows read until the transaction ends",
-        "Upgrades the transaction to serializable",
-        "Caches the rows for faster reads",
-        "Marks rows as needing an update later"
+        "Because crashing between the mark and the send loses the event permanently, which is the problem you just fixed",
+        "Because the index would not be used",
+        "It would break ordering",
+        "It would be slower"
       ],
       answer: 0,
-      why: "The lock makes a second writer wait rather than act on a balance that is about to change. It serialises spending per account, which is the cost." },
+      why: "Duplicates are defensible because the fix lives in one place you control: the consumer." },
 
-    { q: "What must a caller be able to do before you choose serializable isolation over a row lock?",
+    { q: "What makes a consumer idempotent?",
       options: [
-        "Disable all triggers",
-        "Retry the transaction when it aborts",
-        "Hold the connection open for longer",
-        "Run inside a single process"
+        "Acknowledging quickly",
+        "Recording the event id and doing the work in one transaction, so a repeat does nothing",
+        "Using a dead letter queue",
+        "Processing events in order"
       ],
       answer: 1,
-      why: "Serializable detects the conflict and aborts one side. Without a retry, one of your users just got an error instead of a payment, and a retry that is not idempotent double charges." },
+      why: "That is how an at-least-once delivery becomes an exactly-once effect, which is the only version that exists." },
 
-    { q: "Why is a unique index the right way to make a write idempotent?",
+    { q: "A log guarantees ordering:",
       options: [
-        "It is faster than a dictionary lookup",
-        "It gives a better error message",
-        "The check and the write are one operation, so two racing requests cannot both pass",
-        "It compresses the key column"
+        "Across the whole topic",
+        "Only if you enable it",
+        "Within a partition only",
+        "Only for a single consumer"
       ],
       answer: 2,
-      why: "Select then insert leaves a gap between the two statements wide enough for exactly the retry you are protecting against." },
+      why: "Which is what makes the partition key a design decision rather than a detail." },
 
-    { q: "A transfer inserts the transaction row, then the process is killed before the commit. What is in the database?",
+    { q: "Measured over 37,987 real events in 4 partitions, partitioning at random instead of by payment id caused:",
       options: [
-        "The transaction row, with no entries",
-        "Nothing from that transfer",
-        "Whatever was flushed to disk at the time",
-        "A locked row that must be cleaned up by hand"
+        "No difference",
+        "Events out of order for 26.3% of multi event payments",
+        "Slower consumers",
+        "Duplicate delivery"
       ],
       answer: 1,
-      why: "Uncommitted work is rolled back when the connection dies. The visible difference between a crash before and after the commit is the caller's problem, not the database's." },
+      why: "Captures before authorisations, refunds before captures. Invisible on one consumer and constant under load." },
 
-    { q: "Why store money as `bigint` in minor units rather than `numeric` or `float`?",
+    { q: "The cost of partitioning by a narrow key such as account id is:",
       options: [
-        "Because bigint uses less storage than any alternative",
-        "Because floats cannot represent most decimals exactly, and integers of cents cannot drift",
-        "Because numeric cannot be summed",
-        "Because bigint is the only type Postgres indexes"
+        "Consumers cannot be idempotent",
+        "A very busy account creates a hot partition that one consumer must handle alone",
+        "Ordering is no longer guaranteed",
+        "Events can be lost"
       ],
       answer: 1,
-      why: "numeric is exact too and is a defensible choice; float is not. Integer minor units keep the arithmetic exact and match what the payment rails send." },
+      why: "Pick the narrowest key that still gives the order you actually need." },
 
-    { q: "Why does this schema have no `balance` column at the start?",
+    { q: "You run six consumers in one group on a topic with four partitions. What happens?",
       options: [
-        "Because the balance belongs in the application cache",
-        "Because balances change too often to store",
-        "Because Postgres cannot sum a column quickly",
-        "Because a stored balance is a second answer to a question the entries already answer"
+        "The group rebalances into six partitions",
+        "Throughput rises by 50%",
+        "Each consumer gets two thirds of a partition",
+        "Two consumers sit idle, because a partition goes to exactly one consumer in the group"
       ],
       answer: 3,
-      why: "Two sources of truth eventually disagree. You add the column when the sum is too slow, and you accept a reconciliation job on the same day." },
+      why: "More parallelism needs more partitions, and the partition count is chosen up front and awkward to change." },
 
-    { q: "What should the reconciliation query return on a healthy ledger?",
+    { q: "Which lag measurement should you alert on?",
       options: [
-        "Nothing",
-        "The total balance",
-        "One row per account",
-        "Every transaction from the last day"
+        "Lag in seconds, because it says how out of date the world is",
+        "Neither: alert on consumer restarts",
+        "Lag in events, because it counts work",
+        "Both, with the same threshold"
       ],
       answer: 0,
-      why: "It selects accounts whose cached balance disagrees with their entries. A row means drift, and the job exists so that you find it rather than a customer." },
+      why: "\"The fraud consumer is nine minutes behind\" is actionable. \"The fraud consumer is 40,000 events behind\" depends on the rate." },
 
-    { q: "Why run the application as a role with no UPDATE or DELETE on the entries table?",
+    { q: "Publishing 400 events took 30,473 ms one row at a time and 116 ms in batches of 500. What does that teach?",
       options: [
-        "It makes inserts faster",
-        "It reduces the size of the write ahead log",
-        "Because Postgres requires separate roles for triggers",
-        "Because append only is then a property of the system rather than a promise in a comment"
+        "The database was warming up",
+        "Batches use less memory",
+        "The index was missing",
+        "When per item work is tiny, count the round trips before optimising anything else"
       ],
       answer: 3,
-      why: "If the connection that posts entries can also rewrite them, the audit trail depends on everyone remembering not to. Permissions survive new colleagues." },
+      why: "265 times faster with no change to the query, the database or the network." },
 
-    { q: "Two transfers lock the same two accounts in opposite orders. What happens?",
+    { q: "An event fails every time it is processed. The right handling is:",
       options: [
-        "The locks merge into one",
-        "Both wait forever",
-        "The database detects a deadlock and aborts one of them",
-        "Postgres escalates to a table lock"
+        "Skip it and log a warning",
+        "Retry forever, so nothing is lost",
+        "A few retries with growing delays, then move it to a dead letter table with the error, and carry on",
+        "Restart the consumer"
       ],
       answer: 2,
-      why: "Deadlock detection resolves it by killing a victim. Taking locks in a consistent order, usually by account id, means it does not happen." },
+      why: "Retrying forever blocks the partition and everything behind it. Skipping silently is data loss." },
 
-    { q: "What does `%s` do in a psycopg query?",
+    { q: "Before replaying four months of events through a consumer, the thing to check is:",
       options: [
-        "Formats the value into the SQL string before sending it",
-        "Marks the column as a string type",
-        "Sends the value to the server separately from the statement",
-        "Escapes quotes in the value"
+        "The partition count",
+        "The broker version",
+        "Whether the consumer does anything besides write to a table, such as sending email",
+        "The retention setting"
       ],
       answer: 2,
-      why: "The statement and the values travel separately, so a value can never become SQL. That is the whole of injection defence, and f-strings undo it." },
+      why: "Replaying four months of emails to real customers in ten minutes is the classic replay disaster." },
 
-    { q: "Your ledger is correct but a balance query on a hot account has become slow. What is the first thing to check?",
+    { q: "Why does every event carry an `event_id` generated when it is created rather than when it is published?",
       options: [
-        "Whether the disk is full",
-        "Whether to shard the table",
-        "Whether to switch to serializable",
-        "Whether there is an index on entries(account_id)"
+        "To sort events",
+        "To support partitioning",
+        "Because the broker requires it",
+        "So a republished event keeps the same id, which is what lets consumers recognise a duplicate"
       ],
       answer: 3,
-      why: "Summing one account means finding its rows. Without the index that is a scan of every entry ever written, and the fix is one line before any of the interesting answers." }
+      why: "An id generated at publish time changes on every retry, which defeats the whole idempotency scheme." }
   ],
 
   project: {
-    title: 'The ledger service',
-    story: 'The society is going to run a tab for its events: members top up, buy things, and get refunded, and nobody is ' +
-           'going to accept "the spreadsheet says so". Build the ledger underneath it, in Postgres, so that two people ' +
-           'spending at the same moment is a solved problem rather than a story.',
-    scope: 'Uses this level plus level 4 (double entry, minor units, reversal) and level 9 (a project layout, a virtual ' +
-           'environment, tests). Postgres, psycopg, pytest. No ORM and no web framework: level 12 puts an API in front of ' +
-           'this, and mixing the two is how people end up unable to say which layer broke.',
+    title: 'outbox: events that cannot be lost, consumers that cannot double count',
+    story: 'Take the level 9 payment service and make it publish events properly. Measure what the naive version loses, fix ' +
+           'it with an outbox, deal with the duplicates that appear, choose a partition key and prove it matters, then ' +
+           'rebuild a projection from the log.',
+    scope: 'Uses levels 6, 7 and 9. Kafka or Redpanda in Docker if you can run it; a Postgres table as the log if you ' +
+           'cannot, since every pattern here is yours to implement rather than the broker\'s.',
+    dataset: '{{RAW}}/data/level-09-card-events.csv',
     requirements: [
-      'schema.sql that creates accounts, transactions and entries, with the foreign keys, the amount check, the unique idempotency key, and the index on entries(account_id)',
-      'A deferred constraint trigger that refuses any transaction whose entries do not sum to zero',
-      'A ledger module with open_account, post, transfer, reverse, balance and statement, taking a connection rather than making one',
-      'transfer validates first and writes once: unknown account, zero or negative amount, and insufficient funds all raise before any row is written',
-      'transfer takes an optional fee and writes it as a third leg to fee_income',
-      'Every write is one database transaction, and a failure part way leaves nothing behind',
-      'Idempotency by unique index: the same key twice returns the same transaction id and writes one set of entries',
-      'Row locking so that two threads spending from one account cannot drive it negative, with the lock taken in account id order',
-      'reverse posts a mirror transaction and never updates or deletes an entry',
-      'reconcile() comparing every cached balance against its entries, plus an assertion that the whole ledger sums to zero',
-      'A pytest suite including a concurrency test that fails without the lock and passes with it',
-      'A README with the schema diagram in text, how to run it, and a limitations section',
-      'The repository in your GitHub portfolio as finquest-ledger-service'
+      'A measured dual write experiment: N payments, an injected crash rate, and a count of events lost forever',
+      'An outbox table written in the same transaction as the business change, with a partial index on unpublished rows',
+      'A publisher using `for update skip locked` so two publishers can run at once without sending the same row twice',
+      'A measured comparison of batch sizes, reporting time and throughput for at least four sizes',
+      'A crash injected between sending and marking, with the duplicate rate measured and reported',
+      'An idempotent consumer using a processed event table, and a second consumer made naturally idempotent with an upsert',
+      'A projection of merchant totals built entirely by consuming events',
+      'Proof that replaying the whole stream twice leaves the projection identical',
+      'A partitioning experiment over the level 9 events, keyed by payment id and keyed at random, reporting out of order events and payments affected',
+      'A consumer that depends on order, shown failing under the wrong partition key and passing under the right one',
+      'Retries with growing delays and a dead letter table holding the payload, the error and the offset',
+      'A replay of the dead letters after fixing the bug, with no double counting',
+      'A full rebuild: truncate the projection, reset the offset, replay, and compare row for row',
+      'A README with the four headline numbers (lost, duplicated, out of order, throughput) and a paragraph on which of your consumers would be dangerous to replay',
+      'The repository public on GitHub as `outbox`'
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest level 11: the ledger service.\n\nLayout:\n  schema.sql        the tables, constraints and triggers\n  ledger/db.py      connection and schema loading\n  ledger/core.py    open_account, post, transfer, reverse, balance, statement\n  ledger/audit.py   reconcile and the global sum\n  tests/            including test_concurrency.py\n"""\n\nimport os\nimport psycopg\nfrom psycopg import errors\n\n\ndef connect():\n    """A connection from DATABASE_URL. The caller owns the transaction."""\n    # TODO\n    pass\n\n\ndef apply_schema(conn, path="schema.sql"):\n    """Create the tables, constraints and triggers. Safe to run twice."""\n    # TODO\n    pass\n\n\ndef open_account(conn, name, kind="customer", allow_negative=False):\n    # TODO\n    pass\n\n\ndef post(conn, legs, memo, key=None):\n    """legs: [(account_name, signed_cents), ...]. One transaction, all or nothing."""\n    # TODO: validate the sum, insert the transaction row, insert every leg\n    pass\n\n\ndef transfer(conn, src, dst, amount_cents, memo="transfer", fee_cents=0, key=None):\n    """Validate everything, lock in account id order, then write once."""\n    # TODO\n    pass\n\n\ndef reverse(conn, transaction_id, memo=None):\n    """Post the mirror image. Never update, never delete."""\n    # TODO\n    pass\n\n\ndef balance(conn, account_name):\n    # TODO\n    pass\n\n\ndef statement(conn, account_name):\n    """Every entry for one account, oldest first, with a running balance."""\n    # TODO\n    pass\n\n\ndef reconcile(conn):\n    """Accounts whose cached balance disagrees with their entries. Empty is good."""\n    # TODO\n    pass\n\n\nif __name__ == "__main__":\n    with connect() as conn:\n        apply_schema(conn)\n        print("schema applied")\n'
+      code: '"""FinQuest level 11: events, the outbox, and ordering.\n\nLayout:\n  events/outbox.py     write the event in the business transaction\n  events/publisher.py  read unpublished rows, send, mark sent\n  events/consumer.py   idempotent handling, with a processed_event table\n  events/partition.py  choose a partition, and measure what that choice costs\n  events/dlq.py        retries, then a dead letter with the error attached\n  bench/dual_write.py  the experiment that shows why any of this is needed\n"""\n\nimport json\nimport uuid\n\n\ndef emit(cur, topic: str, partition_key: str, payload: dict) -> str:\n    """Write an event into the outbox. MUST be called inside the caller\'s transaction."""\n    event_id = str(uuid.uuid4())\n    # TODO: insert into outbox, returning event_id\n    raise NotImplementedError\n\n\ndef publish_batch(conn, broker, batch: int = 500) -> int:\n    """Take up to `batch` unpublished rows with skip locked, send them, mark them sent."""\n    # TODO\n    raise NotImplementedError\n\n\ndef handle(conn, consumer: str, event: dict) -> None:\n    """Idempotent: record the event id and do the work in one transaction."""\n    # TODO\n    raise NotImplementedError\n\n\ndef partition_for(key: str, partitions: int) -> int:\n    """Which partition an event goes to. This one line decides what stays in order."""\n    # TODO\n    raise NotImplementedError\n'
     },
     tests: [
-      'Applying the schema twice leaves the same tables and no error',
-      'A transfer of 2,500 cents with a 50 cent fee writes three entries summing to zero',
-      'An unbalanced insert is refused by the trigger at commit, and leaves no rows behind',
-      'A transfer from an account with 1,000 cents for 2,000 cents raises before any row is written',
-      'The same idempotency key twice returns one transaction id and leaves one set of entries',
-      'Two threads each spending 40,000 cents from an account holding 50,000 end with exactly one success and one refusal',
-      'Reversing a transfer returns both balances to their earlier values and leaves the original entries in place',
-      'reconcile() is empty and the sum of every entry in the ledger is 0, after every test in the suite'
+      'The dual write experiment loses events at approximately the injected crash rate',
+      'A rolled back business transaction leaves no row in the outbox',
+      'The publisher sends every unpublished row and marks it, leaving none behind',
+      'Two publishers running at once never publish the same row',
+      'A crash between sending and marking produces duplicates and no losses',
+      'The idempotent consumer applied to the same event twice changes the projection once',
+      'Replaying the entire stream twice leaves the projection byte for byte identical',
+      'Partitioning by payment id gives zero out of order events across the level 9 stream',
+      'Partitioning at random gives thousands, affecting roughly a quarter of multi event payments',
+      'An order dependent consumer fails under the random key and passes under the payment key',
+      'A poison event reaches the dead letter table after the configured attempts and does not block the partition',
+      'Replaying a dead letter after the fix produces correct totals with no double counting',
+      'A full rebuild from offset zero reproduces the projection exactly'
     ],
     rubric: [
-      { pts: 25, t: 'Correct under concurrency', d: 'The double spend test fails with the lock removed and passes with it. Locks are taken in a consistent order.' },
-      { pts: 20, t: 'The database enforces the rules', d: 'Balancing, non zero amounts, account existence and idempotency are constraints, not if statements.' },
-      { pts: 20, t: 'Atomic writes', d: 'Every write path is one transaction. A failure part way through leaves nothing behind, and there is a test that proves it.' },
-      { pts: 20, t: 'Auditability', d: 'Append only, reversal rather than deletion, a working reconciliation, and a statement anybody could read.' },
-      { pts: 15, t: 'Shipped', d: 'Runs from a clean clone with docker run and pytest. The README explains the schema and says what the service does not do.' }
+      { pts: 25, t: 'The problem measured', d: 'Dual write losses and outbox duplicates, both measured with your own numbers and both in the README.' },
+      { pts: 25, t: 'Delivery handled honestly', d: 'Outbox in one transaction, skip locked publisher, idempotent consumers, and an explanation of at least once.' },
+      { pts: 20, t: 'Ordering understood', d: 'The partitioning experiment, a consumer that shows the difference, and a stated key with its trade-off.' },
+      { pts: 15, t: 'Failure handled', d: 'Retries with backoff, a dead letter table with the error, and a replay that does not double count.' },
+      { pts: 15, t: 'Replayable', d: 'A projection rebuilt from zero, and a written answer on which consumers are dangerous to replay.' }
     ],
     stretch: [
-      'Add a materialised balance with a trigger and prove with a test that it never disagrees with the entries',
-      'Add multi currency: a currency column per account, and a rule that a transaction must balance within each currency',
-      'Write the same double spend test against serializable isolation with a retry loop, and measure which is faster under contention',
-      'Add a daily statement view in SQL rather than in Python'
+      'Run real Kafka or Redpanda in Docker and move your publisher onto it, keeping the same consumer code',
+      'Add change data capture with Debezium and compare it with the polling publisher: what each costs and what each guarantees',
+      'Measure consumer lag in both events and seconds, and build the alert you would actually page on',
+      'Add a schema registry, publish version 2 of an event alongside version 1, and migrate a consumer with neither side stopping',
+      'Add exactly once semantics with Kafka transactions, then write down honestly what it does and does not guarantee end to end'
     ],
     solutionPath: 'solutions/level-11'
   },
 
   faq: [
-    { q: 'Docker will not run on my machine',
-      a: 'Use a free Neon project instead: create one at neon.tech, copy the connection string into DATABASE_URL, and every step works unchanged. Postgres is Postgres.' },
-    { q: 'psycopg or psycopg2?',
-      a: 'psycopg version 3, installed as "psycopg[binary]". psycopg2 is the older one and most of the internet still talks about it; the API in this level is version 3.' },
-    { q: 'My trigger fires on the first leg and every transfer fails',
-      a: 'The trigger is not deferred. It needs to be a constraint trigger declared deferrable initially deferred, so it runs at commit when all the legs are present.' },
-    { q: 'The concurrency test passes even without the lock',
-      a: 'The two threads are not overlapping. Add a short sleep between reading the balance and writing the entry, which widens the gap the race needs. If it still passes, check that both threads have their own connection.' },
-    { q: 'I get "current transaction is aborted, commands ignored until end of transaction block"',
-      a: 'A statement failed earlier in the same transaction. Postgres refuses everything after that until you roll back. Use conn.transaction() blocks so the rollback happens for you.' },
-    { q: 'Should I use an ORM?',
-      a: 'Not here. The point of this level is what the database is doing, and an ORM is a layer over exactly that. Use one in a job, after you can say what it is generating.' },
-    { q: 'How do I put the connection string in GitHub Actions later?',
-      a: 'As a repository secret, read from the environment, never in the file. Level 5 covered the rule and level 20 covers the pipeline.' }
+    { q: 'Do I need Kafka to do this level?',
+      a: 'No. Every pattern here, the outbox, idempotent consumers, partition keys, dead letters and replay, is yours to implement. Kafka gives you durability and scale; a table gives you the same lessons on a laptop. If Docker works for you, use Redpanda, which is Kafka compatible and starts in one container.' },
+    { q: 'Is the outbox not just a queue in my database?',
+      a: 'Yes, and that is the point: it is a queue in the database that already holds your business data, which is why it can share a transaction with the write. It is a handover mechanism, not a replacement for the broker.' },
+    { q: 'What about change data capture instead?',
+      a: 'Reading the database\'s own replication log, with something like Debezium, is the other standard answer and avoids the polling. It gives you every change rather than the events you chose to publish, which is a different trade. Knowing both and being able to say which you would pick is a strong interview answer.' },
+    { q: 'How long should I keep events?',
+      a: 'Long enough to replay whatever you might need to rebuild, which for a payments company usually means months rather than days. Then ask the harder question: if your events contain personal data, retention interacts with the deletion rules from level 10.' },
+    { q: 'My publisher is slow',
+      a: 'Check the batch size first: 400 events took 30 seconds one at a time and 116 ms in batches of 500. Then check that the partial index on unpublished rows exists, because without it every poll scans the whole table.' },
+    { q: 'Two consumers keep processing the same event',
+      a: 'Either they are in different consumer groups, which is correct behaviour and probably what you want, or your publisher is not using `for update skip locked` and two publishers are sending the same row.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'Lead with the four numbers: 5% of events lost by the naive version, zero lost with the outbox, 3.5% delivered twice as a result, and 26.3% of payments out of order under the wrong partition key. Then say what each number made you build. That is a systems answer with evidence, which is rare.' }
   ]
 });

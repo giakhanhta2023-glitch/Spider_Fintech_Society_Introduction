@@ -68,7 +68,7 @@ model backed tutor.
 | 8 | Eight requests, one balance, minus $540 | A race reproduced, then fixed three ways | locking, isolation, pools |
 | 9 | The life of a card payment | A card lifecycle service and network simulator | authorise, capture, chargebacks |
 | 10 | The processor says one thing, your ledger says another | A reconciliation engine | matching, breaks, fees, payouts |
-| 11 | The ledger that survives two writers | A ledger service on Postgres | SQL, transactions, row locks |
+| 11 | The event you thought you published | An outbox, idempotent consumers, partitioning | Kafka, at-least-once, replay |
 | 12 | The payment API other people depend on | A payments service with webhooks | FastAPI, HMAC, state machines |
 | 13 | The log is the truth, the balance is an opinion | An event sourced account service | event sourcing, CQRS, replay |
 | 14 | The scorecard a regulator can read | An application scorecard with reason codes | WOE, information value, model docs |

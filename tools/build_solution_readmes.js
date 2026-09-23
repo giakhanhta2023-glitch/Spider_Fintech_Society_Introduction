@@ -246,27 +246,31 @@ const NOTES = {
   },
   11: {
     files: [
-      ['`schema.sql`', 'tables, constraints, the deferred balancing trigger, the balance trigger'],
-      ['`ledger/db.py`', 'connection and schema loading, nothing else'],
-      ['`ledger/core.py`', 'open_account, post, transfer, reverse, balance, statement'],
-      ['`ledger/audit.py`', 'reconcile, and the global sum that must be zero'],
-      ['`tests/test_concurrency.py`', 'two threads spending the same money, which fails without the lock']
+      ['`events/outbox.py`', 'the event written inside the business transaction'],
+      ['`events/publisher.py`', 'batched, skip locked, safe to run twice over'],
+      ['`events/consumer.py`', 'idempotent handling with a processed_event table'],
+      ['`events/partition.py`', 'the one line that decides what stays in order'],
+      ['`events/dlq.py`', 'retries, then a dead letter with the error and the offset'],
+      ['`bench/dual_write.py`', 'the experiment that justifies the whole pattern']
     ],
-    run: 'docker run --name fq-ledger -e POSTGRES_PASSWORD=ledger -e POSTGRES_DB=ledger -p 5432:5432 -d postgres:16 && pip install -r requirements.txt && pytest -q',
+    run: 'python -m bench.dual_write && python -m events.publisher && python -m events.consumer --replay',
     design: [
-      'The balancing rule lives in a deferred constraint trigger rather than in `post`. Python still checks, for a better error, but the guarantee is the one that holds for psql, a migration and the second service somebody writes next year.',
-      'Idempotency is a unique index and a caught `UniqueViolation`, not a select followed by an insert. The select version passes every test that runs one request at a time and double charges the first time two arrive together.',
-      '`transfer` locks the accounts it touches in account id order before it reads a balance. Consistent ordering is what stops two transfers deadlocking on each other.',
-      'Every public function takes a connection rather than making one, so the tests can run a whole scenario inside a transaction and roll it back, and so level 12 can hand it a pooled connection.',
-      'Nothing updates or deletes an entry. A wrong transfer is reversed, and the grants in `schema.sql` make that a property of the role rather than a habit of the author.'
+      'The dual write experiment stays in the repository, because the pattern is only convincing next to the thing it replaces. Measured: 400 payments, 380 events published, 20 lost forever at a 5% crash rate, with no error anywhere.',
+      'The outbox row is written in the same transaction as the payment, so the two cannot disagree. The same experiment then loses nothing and delivers 3.50% of events twice, which is the trade the pattern is making on purpose.',
+      'The publisher uses for update skip locked and a partial index on unpublished rows. The index matters the way the level 6 foreign key index mattered: without it every poll scans a table that only grows.',
+      'Batch size is the performance story. 400 events took 30,473 ms one row at a time and 116 ms in batches of 500, a factor of 265 with no change to the query or the network. Round trips, not work.',
+      'Consumers are idempotent two ways, deliberately: a processed_event table for work with side effects, and an upsert keyed by payment id where the projection can simply be written again. The README says which to use where.',
+      'The partition key is chosen and then proved. Over the level 9 stream in 4 partitions: keyed by payment id, zero events out of order; keyed at random, 4,577 out of order affecting 4,534 of 17,216 multi event payments, which is 26.3%.',
+      'Replay is the acceptance test. The projection is truncated, the offset reset, the stream replayed, and the result compared row for row against what was there before.'
     ],
     mistakes: [
-      ['Every transfer fails with "does not balance"', 'The trigger is not deferred. It needs `deferrable initially deferred`, so it runs at commit rather than after the first leg.'],
-      ['The concurrency test passes without the lock', 'The threads are not overlapping. Sleep between reading the balance and writing, and give each thread its own connection.'],
-      ['`current transaction is aborted`', 'An earlier statement in the same transaction failed. Use `conn.transaction()` blocks so the rollback happens for you.']
+      ['Events are missing downstream', 'Dual write. The publish is outside the transaction that wrote the business data.'],
+      ['Totals are double counted after a redeploy', 'A consumer that increments rather than sets, with no processed_event marker.'],
+      ['A capture arrives before its authorisation', 'Partitioned by something other than the payment. Ordering only holds within a partition.'],
+      ['The publisher slows down as the table grows', 'No partial index on unpublished rows, so every poll scans everything.'],
+      ['Replaying sent four months of emails again', 'Side effects and projections in the same consumer. Separate them before resetting any offset.']
     ]
   },
-
   12: {
     files: [
       ['`main.py`', 'the app, the routes and the request id middleware'],
