@@ -1,491 +1,642 @@
 /* =========================================================================
-   LEVEL 16: backtesting without fooling yourself
+   LEVEL 16: the pager, and what it should be allowed to say
    ========================================================================= */
 FQ.registerLevel({
   id: 16,
-  codename: 'backtest',
-  title: 'The backtest that does not lie to you',
-  tagline: 'One line moved by one day turned a strategy that loses 26% into one that returns twenty one million percent. Every number in this level is measured, including that one.',
+  codename: 'observe',
+  title: 'The pager, and what it is allowed to wake you for',
+  tagline: 'A dashboard that is wrong by half, a p99 you cannot average, a metric that costs 244 MB because somebody added one label, and an alert that woke four people to tell them nothing. Then the version that works.',
   difficulty: 9,
-  minutes: 260,
-  tags: ['backtesting', 'lookahead', 'costs', 'overfitting'],
-  summary: 'Anybody can produce a rising equity curve. This level is about the four ways a backtest flatters itself, ' +
-           'measured on the level 7 prices: lookahead, costs, survivorship and the parameter search. Then the honest ' +
-           'alternative, walk forward, and the write up that says what would prove you wrong.',
+  minutes: 420,
+  tags: ['observability', 'SLOs', 'alerting', 'incident response', 'on-call'],
+  summary: 'Every payments job description says ownership and on-call, and almost every candidate answers with the names ' +
+           'of tools. This level is the engineering underneath: structured logs, metrics that do not bankrupt you, ' +
+           'percentiles aggregated correctly, traces, service level objectives with an error budget, alerts that page ' +
+           'for symptoms, a game day, and a postmortem worth reading. Every claim here was measured.',
 
   objectives: [
-    'Shift a signal correctly and show what happens when you do not',
-    'Model commission and slippage, and relate the damage to turnover',
-    'Explain survivorship and selection bias in the data you were handed',
-    'Search a parameter grid and measure how much of the best result was luck',
-    'Run a walk forward test and report it instead of a single split',
-    'Report the metrics that matter together rather than the one that looks best',
-    'Write the paragraph naming what would falsify the strategy'
+    'Choose between a log, a metric and a trace for a given question',
+    'Predict what a new label costs before you add it',
+    'Aggregate percentiles across instances without producing a fiction',
+    'Set histogram buckets for your own latencies rather than the defaults',
+    'Write an SLI and an SLO, and spend an error budget deliberately',
+    'Alert on burn rate so the pager means something',
+    'Run an incident and write a postmortem people will read'
   ],
 
   knowledge: [
-    { h: 'A backtest is a claim you cannot check' },
-    { p: 'A backtest says: if I had run this, that would have happened. Nobody can verify it, the data is the only witness, ' +
-         'and every mistake pushes the number the same direction, upward. That asymmetry is why this level exists, and it ' +
-         'is why quant interviews spend more time on how you avoided fooling yourself than on what you built.' },
-    { money: 'The single best answer to "tell me about a project" in a quant interview is a backtest with a written list of ' +
-             'the biases it avoids and a number attached to each. It says you know what the job is.' },
-
-    { h: 'Lookahead: the one line that decides everything' },
-    { p: 'You can only act on what you knew. A signal computed from today\'s close is acted on with tomorrow\'s return, which ' +
-         'in code is one `shift(1)` and in results is the difference between a strategy and a fantasy.' },
-    { code: 'position = signal.shift(1)        # decided yesterday, applied today\nstrategy = position * returns', lang: 'python' },
-    { p: 'Here is the measurement, on TECHX from the level 7 dataset. The rule is the simplest one there is: hold the asset ' +
-         'when the daily return is positive.' },
+    { h: 'Three kinds of telemetry, three different jobs' },
+    { p: 'People say "observability" and mean a vendor. Underneath there are three signals, and picking the wrong one is ' +
+         'most of what makes monitoring expensive and useless at the same time:' },
     { table: {
-      head: ['Rule', 'Total return over three years', 'Sharpe'],
+      head: ['Signal', 'Answers', 'Cost grows with', 'Bad at'],
       rows: [
-        ['Decide using **today\'s** return, act **today**', '**+21,745,676%**', '**21.47**'],
-        ['The same rule, shifted one day', '-26.05%', '-0.15']
+        ['**Log**', '"What exactly happened in this one request?"', 'Traffic, directly', 'Counting anything, and trend over time'],
+        ['**Metric**', '"How many, how fast, how often, right now?"', 'Distinct label combinations', 'Telling you about one specific request'],
+        ['**Trace**', '"Where did those 400 ms actually go?"', 'Traffic, unless sampled', 'Being cheap enough to keep all of']
       ]
     }},
-    { p: 'The first row is not a good strategy. It is a machine that already knows the answer, and the giveaway is the ' +
-         'Sharpe ratio: a real equity strategy lives between 0 and 2, so anything above about 3 is a bug until proven ' +
-         'otherwise. A Sharpe of 21 is arithmetic telling you that you cheated.' },
-    { check: {
-      q: 'Your monthly rebalance uses each month\'s closing price to pick next month\'s holdings, and the code runs on the ' +
-         'first of the month. Where is the lookahead, and is there any?',
-      a: 'There is none, if the close is genuinely available before you trade. The test is not whether a date looks like it ' +
-         'is in the past: it is whether the value was published before the moment you act on it. Month end closes are known ' +
-         'that evening, so trading the next morning is honest. The same code with a fundamental like quarterly earnings is ' +
-         'not, because those arrive weeks after the quarter they describe, and dating them to the quarter end gives your ' +
-         'strategy a month of foresight that nobody had.'
-    }},
+    { p: 'The rule that follows: **metrics tell you something is wrong, traces tell you where, logs tell you why.** An ' +
+         'alert fires on a metric. You open a trace to find the slow span. You read the logs of that one request to find ' +
+         'the reason. A team that tries to do all three with logs pays for the privilege and still cannot draw a graph.' },
 
-    { h: 'Costs, and the turnover that decides them' },
-    { p: 'Every trade pays. Commission is the visible part, the spread and slippage are the rest, and the total is usually ' +
-         'quoted in basis points of the amount traded. How often you pay it decides how much it costs you.' },
-    { code: 'turnover = position.diff().abs()               # 1.0 means fully in or out\nnet = gross - turnover * cost_bps / 10_000', lang: 'python' },
-    { table: {
-      head: ['Cost per trade', 'Daily flipper (248 turns a year)', 'Crossover (5.5 turns a year)'],
-      rows: [
-        ['0 bps', '-26.05%', '+33.26%'],
-        ['2 bps', '-36.63%', ''],
-        ['10 bps', '**-65.85%**', '+31.02%'],
-        ['25 bps', '', '+27.72%'],
-        ['50 bps', '', '**+22.38%**']
-      ]
-    }},
-    { p: 'Read the two columns against each other. Ten basis points, which is a modest retail cost, takes the fast strategy ' +
-         'from bad to catastrophic and barely touches the slow one. The same cost assumption is decisive for one and ' +
-         'irrelevant for the other, and the thing that decides which is turnover.' },
-    { check: {
-      q: 'A strategy returns 14% a year gross, turns over its whole portfolio twice a week, and you cannot find anybody who ' +
-         'will tell you the real cost. What do you do?',
-      a: 'Solve for the cost that kills it. Two turns a week is about 200 a year, so each basis point of round trip cost ' +
-         'takes roughly two percentage points a year off the return, which means the strategy stops making money somewhere ' +
-         'around seven basis points. Then ask whether seven is plausible, and for most instruments it is not: spreads ' +
-         'alone are wider than that. Reporting the break even cost is more useful than picking a number and defending it, ' +
-         'because it turns an argument about assumptions into one number a reader can judge.'
-    }},
-
-    { h: 'The data you were handed is not the data that existed' },
-    { p: 'Two biases live in the file rather than in your code, and neither is visible from inside it.' },
+    { h: 'Structured logs, and the correlation id' },
+    { p: 'A log line written for a human is unreadable by a machine, and by the time you need it, a machine is what is ' +
+         'reading. So logs are events with fields, not sentences:' },
+    { code: '# no\nlog.info(f"payment {pid} for merchant {m} failed after {ms}ms: {err}")\n\n# yes\nlog.info("payment_failed", payment_id=pid, merchant_id=m,\n         duration_ms=ms, error_code=err.code, request_id=ctx.request_id)', lang: 'python' },
+    { p: 'The second one can be filtered, counted, grouped and alerted on. The first can be grepped, badly, by somebody ' +
+         'who guesses the wording. Three rules make the difference:' },
     { ul: [
-      '**Survivorship**: a list of today\'s index members backtested over ten years contains only the companies that lasted. Every failure was removed from the file and from your result, and the effect is worth a percentage point or two a year on equity studies.',
-      '**Selection**: the sample you were given because it is clean, free or convenient. Three years of four assets that all still trade, as in this course, is a demonstration set rather than evidence.'
+      '**One event per line, as JSON,** with a stable event name. `payment_failed` is a name you can query for a year; a sentence is not.',
+      '**A request id on everything,** generated at the edge, passed through every service and into every log line and span. Without it you cannot reconstruct one request, which is the only thing logs are good at.',
+      '**Allowlist the fields,** exactly as in level 15. Logging is where card numbers go to be leaked.'
     ]},
-    { p: 'You cannot fix either with better code. You name them in the write up, and where it matters you buy or build a ' +
-         'point in time universe that includes what has since been delisted.' },
-    { warn: 'The level 7 dataset is synthetic, four assets, three years, all of them alive at the end. Any result on it is ' +
-            'a demonstration of a method. Saying so is part of the exercise, and a reviewer who sees you say it will trust ' +
-            'the rest of the document more, not less.' },
+    { p: 'Then the part nobody plans: **volume**. At 200 requests a second with five log lines each and 250 bytes a line, ' +
+         'you are generating 250 kB a second, which is 21.6 GB a day and 7.9 TB a year, before anybody has a bad ' +
+         'day. At a typical fifty cents a gigabyte to ingest, that is about $3,900 a year to store logs nobody ' +
+         'reads, and ten times that if your traffic is ten times larger.' },
+    { tip: 'Sample the boring ones and keep all of the interesting ones. Every error, every slow request and every ' +
+           'request from a customer you are investigating; one in a hundred of the successful fast ones. That is usually ' +
+           'a ninety percent cut with no loss of debugging power, and it is ten lines of code in your logger.' },
 
-    { h: 'The parameter search that finds nothing' },
-    { p: 'Here is the most common way a good engineer produces a bad strategy. Take the crossover, try every sensible pair ' +
-         'of windows, keep the best. Seventy nine combinations, fitted on the first half of the sample and tested on the ' +
-         'second, with ten basis points of cost.' },
+    { h: 'Metrics, and the one label that cost 244 MB' },
+    { p: 'A metric is a number with labels. Each distinct combination of label values is a **series**, and the series ' +
+         'count is the product of every label\'s cardinality. That multiplication is where the accidents happen. The same ' +
+         'counter, measured with more labels each time:' },
     { table: {
-      head: ['', 'First half (chosen on)', 'Second half (held out)'],
+      head: ['Labels', 'Series', 'Memory', 'One scrape'],
       rows: [
-        ['Best combination, 30 and 80 days', '**Sharpe 2.18**', '**Sharpe -1.95**'],
-        ['Median across all 79', 'Sharpe 1.58', 'Sharpe -1.10'],
-        ['Correlation between the two columns', '', '**-0.57**']
+        ['service, endpoint, status', '100', '0.2 MB', '15 kB in 3.1 ms'],
+        ['+ region', '400', '0.8 MB', '71 kB in 13.1 ms'],
+        ['+ merchant_id, 50 merchants', '20,000', '25.5 MB', '4,166 kB in 777.8 ms'],
+        ['+ merchant_id, 500 merchants', '**200,000**', '**243.6 MB**', '**42 MB in 8,025.9 ms**']
       ]
     }},
-    { p: 'The best in sample setting was the worst kind of lucky, and the correlation is **negative**: across this grid, ' +
-         'doing better in the first half predicted doing worse in the second. None of the top five in sample beat the ' +
-         'median out of sample.' },
-    { p: 'That is not a quirk of this dataset. Search enough variations of anything on a finite sample and the winner is ' +
-         'mostly noise, because you are choosing the combination that best fits the accidents of that particular history. ' +
-         'The more combinations you try, the more certain that becomes.' },
+    { p: 'Read the last column rather than the memory. Prometheus scrapes every fifteen seconds by default, and that ' +
+         'scrape now takes **eight seconds**, of your service\'s own CPU, inside your own process, on the request path. ' +
+         'Monitoring has become the outage. And nothing warned anybody: the pull request added one label to one counter ' +
+         'and looked entirely reasonable.' },
+    { warn: 'Never put an unbounded value in a label. `payment_id`, `user_id`, `email`, a URL with an id in it, an error ' +
+            'message, a trace id. Each of those creates a series per value, forever, and the series do not go away when ' +
+            'the traffic does. That question belongs to logs or traces, which are built for it.' },
+    { p: 'What to measure is a solved problem, and both answers fit on a line. For anything serving requests, the **RED** ' +
+         'method: **R**ate, **E**rrors, **D**uration. For anything with a resource, the **USE** method: **U**tilisation, ' +
+         '**S**aturation, **E**rrors. Between them they cover almost every dashboard worth having.' },
     { check: {
-      q: 'Somebody shows you a strategy with an in sample Sharpe of 2.4 and asks what you want to know. Give three ' +
-         'questions, in order.',
-      a: 'How many variations did you try before this one, because a Sharpe of 2.4 means one thing after two attempts and ' +
-         'nothing after four hundred. What does it do on data you did not touch while choosing, and was that data really ' +
-         'untouched. And what is the turnover and the assumed cost, because the answer to the first two is uninteresting if ' +
-         'the strategy dies at five basis points. Notice that none of the three is about the strategy idea: the idea is ' +
-         'the part that is easy to have.'
+      q: 'A colleague wants `merchant_id` on the request counter so support can see one merchant\'s traffic. You know ' +
+         'what it costs. Refusing is easy and unhelpful, so what do you offer?',
+      a: 'Start by agreeing the need is real and separating it from the mechanism. Per merchant traffic is a question ' +
+         'about specific requests, which is what logs and traces are for: the request id and merchant id are already on ' +
+         'every log line, so support can filter there today at no cost to the metrics system. If a graph is genuinely ' +
+         'wanted, offer a bounded version: a label for the merchant *tier*, or the top twenty merchants by volume with ' +
+         'everything else bucketed as "other", which keeps the series count fixed while the merchant list changes. And ' +
+         'if per merchant time series are a real product requirement rather than a debugging convenience, that is a ' +
+         'different system, with an aggregation job and its own storage, sized on purpose rather than by accident.'
     }},
 
-    { h: 'Walk forward instead of one split' },
-    { p: 'A single split still bets everything on one period. Walk forward fits on a window, tests on the period ' +
-         'immediately after, then rolls both forward, so every test period is genuinely out of sample and you get a series ' +
-         'of results rather than one number.' },
-    { code: 'fit    2023-01 .. 2023-12   test  2024-01 .. 2024-03\nfit    2023-04 .. 2024-03   test  2024-04 .. 2024-06\nfit    2023-07 .. 2024-06   test  2024-07 .. 2024-09\n...\nreport: the test periods, joined end to end', lang: 'text' },
-    { ul: [
-      '**Anchored** keeps the start fixed and lets the window grow. **Rolling** keeps the window a fixed length and drops the oldest data, which is right when you think the world changes.',
-      'The result you report is the joined test periods, never the fits.',
-      'How stable the chosen parameters are between folds matters as much as the returns. Windows that jump from 5 and 20 to 35 and 90 and back are telling you there is nothing to choose.'
-    ]},
-    { p: 'Walk forward does not make overfitting impossible. It makes it visible, because a strategy that only works when ' +
-         'you get to pick the parameters afterwards will produce a series of mediocre test periods and one glorious fit.' },
-
-    { h: 'One number is never the answer' },
-    { p: 'Level 7 built the risk toolkit. A backtest report uses all of it, plus two that only exist when you are trading:' },
+    { h: 'You cannot average percentiles' },
+    { p: 'Ten instances behind a load balancer. Each reports its own p99. The dashboard averages them, because that is ' +
+         'what dashboards do. One instance is unhealthy and three times slower than the rest. Measured:' },
     { table: {
-      head: ['Metric', 'Says'],
+      head: ['', 'p99'],
       rows: [
-        ['CAGR', 'What it compounded at'],
-        ['Sharpe', 'Return per unit of volatility. Above 3 on equities, suspect a bug'],
-        ['Max drawdown', 'The worst moment, which is what decides whether anybody holds it'],
-        ['Turnover', 'How often you pay costs, and therefore how fragile the result is'],
-        ['Hit rate', 'Share of periods positive. Low with a good return means a few large wins'],
-        ['Time in market', 'A strategy invested 12% of the time is not comparable to buy and hold'],
-        ['Against a benchmark', 'Buy and hold returned 19.31% here with a 60.2% drawdown. Beat that, or say why not']
+        ['True p99 over all ten instances\' requests', '**393.4 ms**'],
+        ['The average of the ten instance p99s', '361.6 ms'],
+        ['The maximum of the ten instance p99s', '906.2 ms'],
+        ['The unhealthy instance on its own', '906.2 ms'],
+        ['A healthy instance', '301.1 ms']
       ]
     }},
-    { p: 'The crossover, correctly shifted and costed at ten basis points, returns 31.02% total against buy and hold\'s ' +
-         '19.31%, with a maximum drawdown of 28.2% against 60.2%. The return is the smaller half of that comparison: the ' +
-         'drawdown is what a person could actually live through.' },
-
-    { h: 'Write down what would prove you wrong' },
-    { p: 'Finish the report with the paragraph that separates research from marketing. It names the assumptions the result ' +
-         'depends on and the observation that would end it.' },
+    { p: 'The average reports 361.6 ms, which is lower than the truth and only 20% above a healthy instance, so it looks ' +
+         'like ordinary variation. Meanwhile one in ten of your customers is being served at 906 ms. **The average of ' +
+         'percentiles is not a percentile of anything**, and it reliably hides exactly the situation you built the ' +
+         'dashboard for.' },
+    { p: 'Two fixes, and you want both:' },
     { ul: [
-      'The cost assumption, and the break even cost at which the edge disappears.',
-      'The sample: what is in it, what is missing, and what period it covers.',
-      'How many variations were tried in total, including the ones you abandoned.',
-      'What live performance would have to look like, and for how long, before you stopped.'
+      '**Aggregate the histograms, not the quantiles.** Sum the bucket counts across instances first and take the quantile of the sum, which is what `histogram_quantile(0.99, sum(rate(...)) by (le))` does in Prometheus. That gives the true 393.4 ms.',
+      '**Also graph the maximum across instances,** and alert on it. The maximum found the sick instance immediately, at 906.2 ms, and that one line turns a mystery into a machine you can restart.'
     ]},
+
+    { h: 'And your histogram is probably lying' },
+    { p: 'A histogram does not store latencies. It stores counts per bucket, and the quantile is interpolated inside ' +
+         'whichever bucket the target falls in. So the buckets decide the accuracy, and the defaults were chosen for ' +
+         'nobody in particular. The same 500,000 latencies, two sets of buckets:' },
+    { table: {
+      head: ['Buckets', 'p99 reported', 'p99 actual', 'Error'],
+      rows: [
+        ['Prometheus defaults', '450.1 ms', '301.5 ms', '**+49.3%**'],
+        ['Tuned to this service', '306.3 ms', '301.5 ms', '+1.6%']
+      ]
+    }},
+    { p: 'Half of the reported p99 was an artefact of the bucket edges. With the defaults, the 99th percentile landed in ' +
+         'the bucket between 250 ms and 500 ms, and the interpolation across a gap that wide is a guess. A team watching ' +
+         'that dashboard would chase a latency problem that does not exist, or miss the moment a real one begins, ' +
+         'because a 50% error swamps the change they were looking for.' },
+    { tip: 'Pick buckets from your own measured distribution, tight around the region you care about and around your ' +
+           'target. If your p99 target is 300 ms, you want several edges between 200 ms and 400 ms. Doing this once, ' +
+           'with a histogram of your actual latencies in front of you, takes twenty minutes and fixes every graph you ' +
+           'will draw afterwards.' },
+
+    { h: 'Traces: where the time went' },
+    { p: 'A **trace** follows one request across every service it touches. Each unit of work is a **span**, with a start, ' +
+         'a duration, a parent, and attributes. Traces answer the question metrics cannot: the p99 is 400 ms, and the ' +
+         'trace says 310 ms of it was one fraud check that nobody suspected.' },
+    { code: 'trace 8f2c...  POST /payments                              412 ms\n  ├─ auth.verify_token                                 1 ms\n  ├─ db.select idempotency_keys                        4 ms\n  ├─ fraud.check                                     310 ms   <- there it is\n  │    └─ http POST fraud-svc/score                  308 ms\n  ├─ db.insert payments                                9 ms\n  ├─ ledger.post_entries                              71 ms\n  └─ outbox.write                                      6 ms', lang: 'text' },
+    { p: 'The mechanism you have to understand is **context propagation**: a trace id and the current span id travel with ' +
+         'the request, usually in a `traceparent` header, and every service passes them on. Miss one hop and the trace ' +
+         'breaks in half, which is the single most common problem with a new tracing setup. The same context carries the ' +
+         'request id into your logs, so a span and its log lines can be put side by side.' },
+    { p: 'Traces cost the same as logs, so they get sampled, and there are two ways:' },
+    { ul: [
+      '**Head sampling** decides at the start, before anything has happened. Cheap, and it throws away errors at exactly the same rate as successes, so at 1% sampling you keep 1% of your incidents.',
+      '**Tail sampling** buffers the spans and decides once the request is finished, so you can keep everything slow, everything that errored, and one in a hundred of the rest. More infrastructure, and it is the one you want.'
+    ]},
+
+    { h: 'Service level objectives, and what a budget is for' },
+    { p: 'Three words that get used interchangeably and are not:' },
+    { table: {
+      head: ['Term', 'Is', 'Example'],
+      rows: [
+        ['**SLI**', 'The measurement', 'Share of requests answered in under 300 ms with a 2xx'],
+        ['**SLO**', 'The target for that measurement', '99.9% over 30 days'],
+        ['**SLA**', 'The contract, with money attached', '99.5%, or the customer gets a refund']
+      ]
+    }},
+    { p: 'The SLO is chosen, and the thing it buys you is the **error budget**: the failure the target permits. Over ' +
+         'thirty days:' },
+    { table: {
+      head: ['Target', 'Budget', 'Which is'],
+      rows: [
+        ['99%', '1% of requests', '7 hours 12 minutes'],
+        ['99.9%', '0.1%', '43 minutes 12 seconds'],
+        ['99.95%', '0.05%', '21 minutes 36 seconds'],
+        ['99.99%', '0.01%', '4 minutes 19 seconds']
+      ]
+    }},
+    { p: 'Look at the last row before you promise it. Four minutes a month is less time than a deploy takes, less than a ' +
+         'failover, and less than one bad database migration. **Every nine costs roughly ten times more than the one ' +
+         'before**, and a target you cannot meet teaches everybody to ignore the dashboard.' },
+    { money: 'The budget is a decision rule, which is the part people miss. Budget remaining means ship: take the risk, ' +
+             'do the migration, run the experiment. Budget exhausted means stop feature work and spend the time on ' +
+             'stability. Written down in advance, it ends the argument between the people who want to ship and the ' +
+             'people who want it to stay up, because both sides already agreed the number.' },
+
+    { h: 'Alerting: the measurement that should change your mind' },
+    { p: 'Thirty days simulated minute by minute: 518.4 million requests, a quiet background error rate of about 0.05%, ' +
+         'two real incidents (90 minutes at 8% on day 5, 25 minutes at 35% on day 19) and two brief blips of two or ' +
+         'three minutes that nobody should be woken for. Availability came out at 99.9129%, which meets a 99.9% target ' +
+         'with 87% of the error budget spent.' },
+    { p: 'Two alerting strategies over exactly that month. One is the obvious threshold. The other is a **burn rate** ' +
+         'alert, which asks how fast the error budget is being consumed rather than what the error rate is:' },
+    { table: {
+      head: ['', 'Error rate above 1% for 5 minutes', 'Multiwindow burn rate'],
+      rows: [
+        ['Pages in the month', '4', '**2**'],
+        ['Real incidents caught', '2 of 2', '2 of 2'],
+        ['**False pages**', '**2**', '**0**'],
+        ['Detected the 8% incident after', '0 minutes', '10 minutes'],
+        ['Detected the 35% incident after', '0 minutes', '2 minutes']
+      ]
+    }},
+    { p: 'The threshold alert is faster and pages for things that do not matter. Two of its four pages were three minute ' +
+         'blips that had recovered before anybody opened a laptop, and a pager that is wrong half the time is a pager ' +
+         'people learn to ignore, which is how a real incident gets missed.' },
+    { p: 'The burn rate alert fired twice, both times for a real incident, and never otherwise. Its detection time is the ' +
+         'elegant part: **it found the 35% outage in 2 minutes and the 8% one in 10, without anybody configuring two ' +
+         'severities.** The worse the incident, the faster the budget burns, so the alert arrives sooner. Severity ' +
+         'scaling comes free.' },
+    { code: '# fast burn: 14.4x the budget rate over an hour, confirmed by a 5 minute window\n#   at 14.4x you would spend a 30 day budget in about 2 days -> page now\n# slow burn:  6x over six hours, confirmed by a 30 minute window\n#   slower, but still headed for an empty budget -> page, less urgently\n#\n# the short window is there so the alert stops when the incident does', lang: 'text' },
+    { p: 'The last comment matters more than it looks. Without a short confirming window, a one hour window keeps the ' +
+         'alert firing for an hour after the incident is over, and somebody eventually turns it off during the next one.' },
     { check: {
-      q: 'Your walk forward result is a Sharpe of 0.45 net of costs, which is worse than the single split you ran first. ' +
-         'Which do you put in the report?',
-      a: 'The walk forward, and the other one as well, with a sentence saying why they differ. The single split is a better ' +
-         'number produced by a weaker method, and a reader who later discovers you ran both and reported the flattering one ' +
-         'will not believe anything else in the document. Reporting the worse figure with the method that earned it is what ' +
-         'makes the 0.45 worth reading at all.'
-    }}
+      q: 'In the same month, the two incidents produced only 42% of all errors. The other 58% came from the ordinary ' +
+         'background rate of 0.05%, on days when nothing was wrong. What does that tell you, and what would you do?',
+      a: 'That most of the budget was spent by something nobody has ever investigated, because it never crossed any ' +
+         'threshold and never woke anybody. The two incidents are memorable and were 42%; the quiet constant failure was ' +
+         'the majority, and if the background rate doubled tomorrow it would still never page, it would simply halve ' +
+         'the budget available for real incidents. What to do is look at it: group those errors by endpoint, status and ' +
+         'customer, and they are usually a small number of causes, such as one client sending malformed requests, one ' +
+         'timeout set too tight, or a retry path that fails the first time by design. Fixing two of them is often worth ' +
+         'more budget than any amount of incident response, and it is work nobody is currently assigned because the ' +
+         'alerting is silent about it. This is also the argument for reviewing budget spend monthly rather than only ' +
+         'reacting to pages.'
+    }},
+
+    { h: 'Symptoms page, causes do not' },
+    { p: 'The rule that keeps the pager honest: **page for what the customer experiences, not for what a machine is ' +
+         'doing.** A disk at 91% is not an outage; it is a ticket. Payments failing is an outage.' },
+    { table: {
+      head: ['Page for this', 'Do not page for this'],
+      rows: [
+        ['Payment success rate below the objective', 'CPU above 80%'],
+        ['p99 latency above the objective', 'A single instance restarting'],
+        ['The payout queue growing without draining', 'Disk at 85%'],
+        ['Anything in a non final state for too long (level 12)', 'A deploy happening'],
+        ['Reconciliation breaks above the threshold (level 10)', 'A cache hit ratio falling']
+      ]
+    }},
+    { p: 'Everything in the right column becomes a dashboard panel or a ticket. They are useful during an incident and ' +
+         'they are not reasons to wake somebody, because none of them means a customer is affected and several of them ' +
+         'are normal. Every alert also needs one more thing before it may page: **a runbook** saying what the alert ' +
+         'means, what to check first, what to do, and who to escalate to. An alert with no runbook is a question mark ' +
+         'delivered at three in the morning.' },
+
+    { h: 'The incident, and the hour after it' },
+    { p: 'When it goes wrong, the failure mode is six people investigating the same thing and nobody talking to the ' +
+         'customer. So incidents have roles, even small ones:' },
+    { table: {
+      head: ['Role', 'Does', 'Does not'],
+      rows: [
+        ['Incident commander', 'Decides, assigns, keeps the timeline', 'Debug. The moment they debug, nobody is running it'],
+        ['Operations', 'Investigates and makes the changes', 'Talk to customers'],
+        ['Communications', 'Updates the status page and the internal channel', 'Wait for certainty before saying anything'],
+        ['Scribe', 'Writes down what happened and when, as it happens', 'Reconstruct it afterwards from memory']
+      ]
+    }},
+    { p: 'Two habits are worth more than any tooling. **Mitigate before diagnosing**: roll back, fail over, turn the ' +
+         'feature off, and find out why afterwards, because the customer is paying for every minute of your curiosity. ' +
+         'And **write the timeline while it happens**, because memory rearranges itself within hours and the timeline is ' +
+         'the entire value of the postmortem.' },
+    { p: 'The postmortem itself is blameless, and blameless has a technical meaning rather than a polite one: **you ' +
+         'assume everybody acted reasonably given what they knew at the time**, and you ask what made the wrong action ' +
+         'look right. "Engineer ran the wrong migration" is not a finding. "The migration tool defaults to production ' +
+         'and the confirmation prompt shows the database name in the same colour as everything else" is a finding, and ' +
+         'it produces a fix.' },
+    { ul: [
+      '**What happened,** as a timeline with timestamps, including when you noticed and how.',
+      '**Impact,** in customer terms and in numbers: how many payments, how much money, how long.',
+      '**Why,** several layers deep. The first answer is never the cause, it is the last thing that happened.',
+      '**What made it worse,** which is usually where the real lessons are: a missing alert, a stale runbook, an ambiguous dashboard.',
+      '**Actions,** each with one named owner and a date. Actions with no owner are a wish list.'
+    ]},
+
+    { h: 'The game day' },
+    { p: 'You do not know whether any of this works until something breaks, and choosing when it breaks is better than ' +
+         'being told. A **game day** is a scheduled, announced exercise where you break something on purpose and practise ' +
+         'the response.' },
+    { ul: [
+      'Stop the database. Does an alert fire, does the runbook match, does the service fail in the way you expected?',
+      'Add 500 ms of latency to a dependency. Do your timeouts hold, does the circuit breaker open (level 14), does the pager stay quiet if the customer is unaffected?',
+      'Fill the payout queue. Does the stuck detection from level 12 fire before a customer notices?',
+      'Revoke a credential. Does the service fail clearly, and is the runbook for rotating it correct?'
+    ]},
+    { p: 'The result to write down is not whether the system survived. It is **which alert did not fire, which runbook ' +
+         'was wrong, and how long it took to work out who to call.** Those are the three things that are always wrong the ' +
+         'first time, and finding them at two in the afternoon costs nothing.' }
   ],
 
   tutorial: {
-    intro: 'pandas and numpy, on the level 7 price file. The engine is deliberately small: signals, positions, costs, ' +
-           'metrics. Everything in this tutorial is measurable on that data, and every number quoted in the level came ' +
-           'from running it.',
+    intro: 'Instrument the service you already have from levels 7 and 14, then break it deliberately. The deliverables ' +
+           'that matter are the SLO document, the alert rules and the postmortem, because those are what an interviewer ' +
+           'has never seen from a candidate. Work in a repository called `payments-observability`.',
     steps: [
       {
-        t: 'Prices, returns, and a signal',
+        t: 'Structured logs with a request id',
         blocks: [
-          { code: 'import pandas as pd\nimport numpy as np\n\nURL = "{{RAW}}/data/level-07-prices.csv"\nprices = pd.read_csv(URL, parse_dates=["date"]).set_index("date")\nreturns = prices.pct_change().fillna(0)\n\ndef crossover(px, fast=20, slow=50):\n    """1 when the fast average is above the slow one, else 0."""\n    return (px.rolling(fast).mean() > px.rolling(slow).mean()).astype(int)', lang: 'python' }
+          { p: 'JSON, one event per line, a stable event name, and a request id generated at the edge and attached to ' +
+               'every line for the life of the request. Use a context variable so you are not passing it through every ' +
+               'function signature.' },
+          { code: 'log.info("payment_failed", payment_id=pid, merchant_id=m,\n         duration_ms=ms, error_code=err.code, request_id=ctx.request_id)', lang: 'python' },
+          { p: 'Then measure your own volume: bytes per line times lines per request times your request rate, in ' +
+               'gigabytes a day and dollars a year. Put the number in the README and add sampling until you are happy ' +
+               'with it.' }
         ],
-        check: 'The signal is 0 until the slow window fills, then flips between 0 and 1.'
+        check: 'Every log line from one request shares a request id, and you can state your log bill in dollars a year.'
       },
       {
-        t: 'The shift, and what it is worth',
+        t: 'RED metrics, and a cardinality budget',
         blocks: [
-          { code: 'def run(returns, signal, cost_bps=10):\n    position = signal.shift(1).fillna(0)          # the whole level, in one line\n    gross = position * returns\n    turnover = position.diff().abs().fillna(0)\n    net = gross - turnover * cost_bps / 10_000\n    return pd.DataFrame({"position": position, "gross": gross,\n                         "turnover": turnover, "net": net})', lang: 'python' },
-          { p: 'Then prove the shift matters. Run the same rule both ways and print the two totals side by side.' },
-          { code: 'ret = returns["TECHX"]\ncheating = (np.sign(ret) * ret)                  # decided with today\'s own return\nhonest = (np.sign(ret).shift(1).fillna(0) * ret)\n\nfor name, series in [("cheating", cheating), ("honest", honest)]:\n    print(f"{name:<9} total {(1 + series).prod() - 1:>14.2%}")', lang: 'python' },
-          { warn: 'You should see about +21,745,676% against about -26%. Keep that comparison in your README: it is the ' +
-                  'most persuasive single thing in the project.' }
+          { p: 'Rate, errors and duration for every endpoint. Then write down the series count your labels produce, and ' +
+               'reproduce what happens when somebody adds a high cardinality one.' },
+          { code: 'service, endpoint, status          100 series    0.2 MB   scrape  3.1 ms\n+ merchant_id (500 merchants)  200,000 series  243.6 MB   scrape  8,025.9 ms', lang: 'text' },
+          { p: 'An eight second scrape with a fifteen second interval is the moment monitoring becomes the outage. Add a ' +
+               'test that fails if the total series count goes above a number you choose.' }
         ],
-        check: 'The cheating version returns millions of percent and the honest one loses money, from the same rule.'
+        check: 'A pull request adding an unbounded label fails a test instead of reaching production.'
       },
       {
-        t: 'Metrics, in one function',
+        t: 'Fix the two lies in your latency graph',
         blocks: [
-          { code: 'def metrics(daily, benchmark=None, periods=252):\n    total = (1 + daily).prod() - 1\n    years = len(daily) / periods\n    cagr = (1 + total) ** (1 / years) - 1\n    vol = daily.std() * np.sqrt(periods)\n    sharpe = (daily.mean() * periods) / vol if vol else np.nan\n    curve = (1 + daily).cumprod()\n    drawdown = (curve / curve.cummax() - 1).min()\n    hit = (daily > 0).mean()\n    out = {"total": total, "cagr": cagr, "sharpe": sharpe,\n           "max_drawdown": drawdown, "hit_rate": hit}\n    if benchmark is not None:\n        out["excess_total"] = total - ((1 + benchmark).prod() - 1)\n    return out', lang: 'python' },
-          { tip: 'Print time in market and turnover next to these. A strategy flat two thirds of the time has a flattering ' +
-                 'Sharpe and a fraction of the exposure, and comparing it to buy and hold without saying so is misleading.' }
+          { p: 'First, aggregate histograms rather than averaging quantiles, and prove the difference by making one ' +
+               'instance slow on purpose.' },
+          { code: 'true p99 across ten instances     393.4 ms\naverage of the ten instance p99s  361.6 ms   <- hides it\nmax of the ten instance p99s      906.2 ms   <- finds it', lang: 'text' },
+          { p: 'Second, set your buckets from your own measured distribution, and show what the defaults were reporting.' },
+          { code: 'Prometheus defaults   p99 reported 450.1 ms   actual 301.5 ms   +49.3%\ntuned buckets         p99 reported 306.3 ms   actual 301.5 ms    +1.6%', lang: 'text' }
         ],
-        check: 'The 20/50 crossover, shifted and costed at 10 bps, gives about 31.02% total, Sharpe about 0.49, drawdown about -28%.'
+        check: 'Your dashboard p99 matches a p99 computed directly from raw timings, within a few percent.'
       },
       {
-        t: 'Cost sensitivity, not a cost assumption',
+        t: 'Trace one request end to end',
         blocks: [
-          { code: 'for bps in (0, 2, 5, 10, 25, 50):\n    result = run(ret, crossover(prices["TECHX"]), cost_bps=bps)\n    m = metrics(result["net"])\n    print(f"{bps:>3} bps  total {m[\'total\']:>8.2%}  sharpe {m[\'sharpe\']:>5.2f}")', lang: 'python' },
-          { p: 'Then find the cost at which the edge disappears and report that number. It is a single figure a reader can ' +
-               'judge against reality, which an assumption never is.' },
-          { code: 'def break_even_cost(returns, signal, hi=200):\n    for bps in range(0, hi):\n        if metrics(run(returns, signal, bps)["net"])["total"] <= 0:\n            return bps\n    return None', lang: 'python' }
+          { p: 'OpenTelemetry, spans around every outbound call and every database query, and context propagated across ' +
+               'services through the `traceparent` header. The acceptance test is a single trace showing the whole ' +
+               'payment across every service, with no break.' },
+          { p: 'Then add tail sampling: keep everything that errored, everything over your target, and one in a hundred ' +
+               'of the rest. Report what share of spans you kept.' },
+          { warn: 'Check the trace crosses your message queue too. A trace that stops at the outbox from level 11 is the ' +
+                  'usual outcome, because the context has to travel in the message rather than in a header.' }
         ],
-        check: 'The table shows the crossover surviving 50 bps while the daily flipper dies before 10.'
+        check: 'One trace shows the full path of a payment including the part that happens after the queue.'
       },
       {
-        t: 'Search the grid, and measure the damage',
+        t: 'Write the SLO document',
         blocks: [
-          { code: 'half = len(prices) // 2\nrows = []\nfor fast in range(5, 41, 5):\n    for slow in range(20, 121, 10):\n        if fast >= slow:\n            continue\n        net = run(ret, crossover(prices["TECHX"], fast, slow))["net"]\n        rows.append({"fast": fast, "slow": slow,\n                     "in_sample": metrics(net[:half])["sharpe"],\n                     "out_sample": metrics(net[half:])["sharpe"]})\n\ngrid = pd.DataFrame(rows)\nbest = grid.sort_values("in_sample", ascending=False).iloc[0]\nprint(best)\nprint("correlation:", round(grid.in_sample.corr(grid.out_sample), 2))', lang: 'python' },
-          { p: 'On this data: 79 combinations, the best in sample scores 2.18 and then -1.95 out of sample, and the ' +
-               'correlation between the two columns is -0.57. Write those three numbers in your README under a heading that ' +
-               'says what they mean.' }
+          { p: 'One page. For each of two or three user journeys: the SLI in precise words, the target, the window, the ' +
+               'budget in minutes, and what happens when it runs out.' },
+          { code: 'SLI     share of POST /payments answered in under 300 ms with a 2xx or 4xx\nSLO     99.9% over a rolling 30 days\nbudget  0.1%, which is 43 minutes 12 seconds\npolicy  budget under 25%: feature work pauses, reliability work only', lang: 'text' },
+          { tip: 'Counting 4xx as success is deliberate and worth a sentence in your document. A client sending ' +
+                 'malformed requests is not your service failing, and an SLI that counts it will send you chasing ' +
+                 'somebody else\'s bug.' }
         ],
-        check: 'The grid reproduces those figures, and the best in sample parameters lose money out of sample.'
+        check: 'Somebody outside your team can read the document and say whether you met the objective last month.'
       },
       {
-        t: 'Walk forward',
+        t: 'Burn rate alerts, replayed against a month',
         blocks: [
-          { code: 'def walk_forward(px, ret, fit_days=252, test_days=63, cost_bps=10):\n    """Fit the parameters on a window, test on the window after it, roll."""\n    results, chosen = [], []\n    start = 0\n    while start + fit_days + test_days <= len(px):\n        fit = slice(start, start + fit_days)\n        test = slice(start + fit_days, start + fit_days + test_days)\n\n        best, best_sharpe = None, -np.inf\n        for fast in range(5, 41, 5):\n            for slow in range(20, 121, 10):\n                if fast >= slow:\n                    continue\n                net = run(ret, crossover(px, fast, slow), cost_bps)["net"]\n                s = metrics(net.iloc[fit])["sharpe"]\n                if s > best_sharpe:\n                    best, best_sharpe = (fast, slow), s\n\n        net = run(ret, crossover(px, *best), cost_bps)["net"]\n        results.append(net.iloc[test])\n        chosen.append(best)\n        start += test_days\n\n    return pd.concat(results), chosen', lang: 'python' },
-          { p: 'Report the joined test periods and the list of chosen parameters. If the choice jumps around between folds, ' +
-               'say so: it is evidence that there is nothing to choose, and it is more useful than the return.' }
+          { p: 'Implement the multiwindow rule, then replay a month of synthetic traffic containing two real incidents ' +
+               'and a couple of harmless blips, and count pages.' },
+          { code: 'threshold, error rate > 1% for 5 min   4 pages   2 false   detects at 0 and 0 min\nmultiwindow burn rate                  2 pages   0 false   detects at 10 and 2 min', lang: 'text' },
+          { p: 'Note that the burn rate alert found the worse incident faster without anybody configuring severities. ' +
+               'Write that sentence in your README: it is the whole argument.' }
         ],
-        check: 'Walk forward returns one series covering the test windows only, plus the parameters chosen in each fold.'
+        check: 'Replaying the month produces no false pages and catches both incidents.'
       },
       {
-        t: 'The report',
+        t: 'A runbook per alert',
         blocks: [
-          { p: 'One function, one page of output, and the same shape every time so results are comparable.' },
-          { code: 'def report(name, net, benchmark, turnover, cost_bps, tried):\n    m = metrics(net, benchmark)\n    print(f"{name}\\n" + "=" * len(name))\n    print(f"  total          {m[\'total\']:>9.2%}   benchmark {(1 + benchmark).prod() - 1:>9.2%}")\n    print(f"  CAGR           {m[\'cagr\']:>9.2%}")\n    print(f"  Sharpe         {m[\'sharpe\']:>9.2f}")\n    print(f"  max drawdown   {m[\'max_drawdown\']:>9.2%}")\n    print(f"  hit rate       {m[\'hit_rate\']:>9.2%}")\n    print(f"  turnover/yr    {turnover:>9.1f}")\n    print(f"  cost assumed   {cost_bps:>9} bps")\n    print(f"  variations tried {tried:>7}")', lang: 'python' },
-          { tip: 'That last line is the one nobody prints and everybody should. It turns a Sharpe ratio into a claim with a ' +
-                 'denominator.' }
+          { p: 'No alert pages without one. Four sections: what this means in customer terms, the first three things to ' +
+               'check, the safe mitigations in order, and who to escalate to.' },
+          { p: 'Then the test that keeps them honest: a check that fails if any alert rule has no runbook link, and a ' +
+               'date on each runbook so a stale one is visible.' }
         ],
-        check: 'The report prints the same nine lines for any strategy, including how many variations were tried.'
+        check: 'Every alert links to a runbook, enforced by a test rather than by a convention.'
+      },
+      {
+        t: 'Run a game day and write the postmortem',
+        blocks: [
+          { p: 'Announce it, break something real, and time yourselves: how long until an alert fired, until somebody ' +
+               'understood it, until it was mitigated.' },
+          { code: 'broke          the ledger database, at 14:02\nalert fired    14:03:40   (payment success rate)\nunderstood     14:09      (runbook pointed at the wrong dashboard)\nmitigated      14:12      (failed over)\n\nfound: no alert on replication lag; runbook stale since March', lang: 'text' },
+          { p: 'Write the postmortem properly: timeline, impact in money and payments, several layers of why, what made ' +
+               'it worse, and actions with a named owner and a date. This document is the deliverable an interviewer ' +
+               'will actually read, because almost no candidate has one.' }
+        ],
+        check: 'The postmortem names at least two things that were wrong before the incident started.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Backtest', d: 'A simulation of a strategy on historical data. Every mistake in one pushes the result upward.' },
-    { t: 'Lookahead bias', d: 'Using information that was not available at the moment of the decision. Fixed with a shift, and worth millions of percent when it is not.' },
-    { t: 'Signal and position', d: 'The signal is the decision, the position is what you hold. The position is the signal shifted.' },
-    { t: 'Turnover', d: 'How much of the position changes. The multiplier on every cost assumption.' },
-    { t: 'Basis point', d: 'One hundredth of a percent. Costs are quoted in these, and 10 bps is 0.1%.' },
-    { t: 'Slippage', d: 'The gap between the price you assumed and the price you got. Part of the cost, and larger when you are in a hurry.' },
-    { t: 'Break even cost', d: 'The cost per trade at which the edge disappears. More useful to report than an assumed cost.' },
-    { t: 'Survivorship bias', d: 'Testing on the names that lasted, because the failures were removed from the file.' },
-    { t: 'Selection bias', d: 'Testing on the sample you were given because it was convenient, and treating the result as evidence.' },
-    { t: 'Overfitting', d: 'Choosing the variation that best fits the accidents of one sample. Guaranteed by a large enough search.' },
-    { t: 'In sample and out of sample', d: 'The data used to choose, and the data used to judge. Only the second is evidence.' },
-    { t: 'Walk forward', d: 'Fit on a window, test on the period after it, roll. Every test period is genuinely out of sample.' },
-    { t: 'Anchored and rolling', d: 'A growing fit window against a fixed length one that drops the oldest data.' },
-    { t: 'Hit rate', d: 'The share of periods that were positive. Low with a good return means a few large wins carried it.' },
-    { t: 'Time in market', d: 'How much of the period the strategy was invested. Makes a comparison to buy and hold fair or unfair.' }
+    { t: 'Observability', d: 'Being able to answer new questions about a running system without shipping code.' },
+    { t: 'Structured log', d: 'An event with fields, as JSON, with a stable name you can query for years.' },
+    { t: 'Request id', d: 'An identifier attached at the edge and carried through every service, log and span.' },
+    { t: 'Series', d: 'One distinct combination of metric label values. The unit of cost in a metrics system.' },
+    { t: 'Cardinality', d: 'How many distinct values a label takes. Series count is the product across labels.' },
+    { t: 'RED', d: 'Rate, errors, duration. What to measure for anything serving requests.' },
+    { t: 'USE', d: 'Utilisation, saturation, errors. What to measure for a resource.' },
+    { t: 'Histogram bucket', d: 'A latency range with a count. Quantiles are interpolated inside them, so edges matter.' },
+    { t: 'Span', d: 'One unit of work in a trace, with a start, a duration, a parent and attributes.' },
+    { t: 'Context propagation', d: 'Carrying the trace and request ids across every hop, including queues.' },
+    { t: 'Head sampling', d: 'Deciding to keep a trace before the request runs. Cheap, and it discards errors equally.' },
+    { t: 'Tail sampling', d: 'Deciding after the request finishes, so you can keep everything slow or failed.' },
+    { t: 'SLI', d: 'The measurement: the share of requests that were good, by your definition of good.' },
+    { t: 'SLO', d: 'The target for an SLI over a window, such as 99.9% over 30 days.' },
+    { t: 'SLA', d: 'A contract with money attached, always looser than the SLO you run to.' },
+    { t: 'Error budget', d: 'The failure the objective permits. 99.9% over 30 days is 43 minutes 12 seconds.' },
+    { t: 'Burn rate', d: 'How fast the budget is being spent, as a multiple of the steady rate.' },
+    { t: 'Runbook', d: 'What an alert means, what to check, what to do, who to escalate to.' },
+    { t: 'Incident commander', d: 'The person who decides and assigns during an incident, and does not debug.' },
+    { t: 'Blameless postmortem', d: 'Assuming everyone acted reasonably, and asking what made the wrong action look right.' },
+    { t: 'Game day', d: 'A scheduled exercise where you break something on purpose and practise the response.' }
   ],
 
   quiz: [
-    { q: "What does position = signal.shift(1) prevent?",
+    { q: "Which signal answers \"how many payments failed in the last hour\"?",
       options: [
-        "Division by zero in the returns",
-        "Acting on information you did not have yet",
-        "Costs being double counted",
-        "Trading on the last day of the sample"
+        "A profile",
+        "A metric",
+        "A trace",
+        "A log"
       ],
       answer: 1,
-      why: "Measured on this course's data: the same rule gives +21,745,676% unshifted and -26.05% shifted." },
+      why: "Metrics tell you something is wrong, traces tell you where, logs tell you why." },
 
-    { q: "A backtest reports a Sharpe ratio of 21. What is the most likely explanation?",
+    { q: "Adding merchant_id with 500 values took a counter from 400 series to 200,000. What broke first?",
       options: [
-        "Costs were set too low",
-        "Too little data",
-        "Lookahead bias",
-        "A very strong strategy"
+        "Disk on the metrics server",
+        "The dashboard",
+        "The scrape, which went from 13.1 ms to 8,025.9 ms while Prometheus polls every 15 seconds",
+        "Memory, at 243.6 MB"
       ],
       answer: 2,
-      why: "Real equity strategies live between 0 and 2. Above about 3 is a bug until proven otherwise, and 21 is arithmetic telling you the model knew the answer." },
+      why: "Eight seconds of your own CPU, in your own process, every fifteen seconds. Monitoring became the outage." },
 
-    { q: "Ten basis points of cost destroys one strategy and barely touches another. What decides which?",
+    { q: "Which of these must never be a metric label?",
       options: [
-        "Turnover",
-        "The Sharpe ratio",
-        "The asset class",
-        "The length of the sample"
+        "payment_id",
+        "Endpoint",
+        "HTTP status",
+        "Region"
       ],
       answer: 0,
-      why: "248 turns a year against 5.5. The cost rate is the same; how often you pay it is not." },
+      why: "An unbounded value creates a series per value, forever, and the series outlive the traffic." },
 
-    { q: "Why report the break even cost rather than the cost you assumed?",
+    { q: "Ten instances, one unhealthy. True p99 393.4 ms, average of instance p99s 361.6 ms, max 906.2 ms. What is wrong with the average?",
       options: [
-        "Because regulators require it",
-        "Because it is always lower",
-        "It is easier to compute",
-        "Because it is a single number a reader can judge against reality, instead of an assumption to argue about"
+        "It is too high",
+        "It should be a median instead",
+        "Nothing, it is a reasonable approximation",
+        "It is not a percentile of anything, and it hides the sick instance that is serving one customer in ten at 906 ms"
       ],
       answer: 3,
-      why: "It turns a debate about assumptions into one figure. A strategy that breaks even at seven basis points is dead for most instruments, and everybody can see that at once." },
+      why: "Aggregate the histogram buckets first, and also graph the maximum across instances." },
 
-    { q: "What is survivorship bias?",
+    { q: "How do you compute a correct p99 across instances in Prometheus?",
       options: [
-        "Keeping only the strategies that worked",
-        "Overweighting recent data",
-        "Ignoring dividends",
-        "Testing on names that lasted, because the failures were removed from the data"
+        "avg of each instance's p99",
+        "max of each instance's p99",
+        "The p99 of the p99s",
+        "histogram_quantile over the summed bucket rates"
       ],
       answer: 3,
-      why: "It lives in the file rather than in your code, and no amount of careful programming removes it. You need a point in time universe." },
+      why: "Sum the buckets across instances, then take the quantile of the sum. That produced the true 393.4 ms." },
 
-    { q: "Seventy nine parameter combinations are tested. The best in sample scores Sharpe 2.18 and -1.95 out of sample, and the correlation between the two is -0.57. What does that say?",
+    { q: "With default buckets the dashboard reported a p99 of 450.1 ms when the real value was 301.5 ms. Why?",
       options: [
-        "The out of sample period was unusual",
-        "The best in sample result was mostly luck, and searching harder makes that more certain",
-        "The parameters need finer steps",
-        "The cost assumption was wrong"
+        "The metric was scraped too rarely",
+        "The 99th percentile fell in a bucket spanning 250 ms to 500 ms, so the interpolation across that gap was a guess",
+        "The histogram lost data",
+        "The clock was wrong"
       ],
       answer: 1,
-      why: "None of the top five in sample beat the median out of sample. Choosing the best fit to one history is choosing its accidents." },
+      why: "A 49.3% error, entirely from the bucket edges. Tuned buckets brought it to 1.6%." },
 
-    { q: "What are the first three questions to ask about a strategy with an in sample Sharpe of 2.4?",
+    { q: "What is the most common failure when adding tracing to an existing system?",
       options: [
-        "Which library, which data vendor, and which language",
-        "The maximum drawdown, the hit rate and the time in market",
-        "How many variations were tried, what happened on untouched data, and what the turnover and cost are",
-        "What is the idea, who else uses it, and how much capital it takes"
+        "Clock skew",
+        "Sampling too little",
+        "Missed context propagation on one hop, usually a queue, which breaks the trace in half",
+        "Too many spans"
       ],
       answer: 2,
-      why: "None of the three is about the idea. The idea is the part that is easy to have." },
+      why: "Across a queue, the context has to travel in the message rather than in a header." },
 
-    { q: "In walk forward testing, which periods go in the reported result?",
+    { q: "Why is head sampling a poor choice for a payments service?",
       options: [
-        "All of it, fits and tests together",
-        "The best fold",
-        "The test periods only, joined end to end",
-        "The fits, because they use more data"
+        "It is more expensive",
+        "It breaks context propagation",
+        "It decides before the request runs, so at 1% sampling you keep 1% of your incidents",
+        "It requires more infrastructure"
       ],
       answer: 2,
-      why: "Every test period is genuinely out of sample, which is what makes the joined series worth reading." },
+      why: "Tail sampling keeps everything slow or failed and one in a hundred of the rest." },
 
-    { q: "The parameters chosen by walk forward jump from 5 and 20 to 35 and 90 and back between folds. What does that tell you?",
+    { q: "A 99.9% objective over thirty days is how much failure?",
       options: [
-        "There is probably nothing to choose, and the parameter is noise",
-        "The optimiser has a bug",
-        "The market is changing quickly",
-        "The fit window is too long"
+        "43 minutes 12 seconds",
+        "21 minutes 36 seconds",
+        "4 minutes 19 seconds",
+        "7 hours 12 minutes"
       ],
       answer: 0,
-      why: "Stability across folds is evidence. Instability is the absence of it, and it is worth more in a report than the return." },
+      why: "And 99.99% is 4 minutes 19 seconds, which is shorter than one bad deploy." },
 
-    { q: "A strategy is invested 12% of the time and reports a Sharpe higher than buy and hold. What must the report say?",
+    { q: "What is an error budget actually for?",
       options: [
-        "That it is riskier by definition",
-        "Its time in market, so the comparison is fair",
-        "Nothing extra, Sharpe already accounts for it",
-        "The number of trades only"
+        "Calculating SLA refunds",
+        "A rule agreed in advance: budget remaining means ship, budget exhausted means stop feature work and fix stability",
+        "Reporting to management",
+        "Deciding when to page"
       ],
       answer: 1,
-      why: "Sitting in cash is not skill. Without exposure alongside it, the comparison flatters the strategy." },
+      why: "It ends the argument between shipping and stability, because both sides already agreed the number." },
 
-    { q: "Why is maximum drawdown reported next to the return?",
+    { q: "Over a simulated month, the threshold alert paged 4 times and the burn rate alert paged twice. What was the real difference?",
       options: [
-        "Because it determines the tax treatment",
-        "Because regulators require it",
-        "Because it is what decides whether anybody could hold the strategy through",
-        "Because it is the same as volatility"
+        "The burn rate alert was slower on everything",
+        "The burn rate alert missed an incident",
+        "Both caught both incidents, but two of the threshold pages were harmless blips and the burn rate alert had none",
+        "The threshold alert used less CPU"
       ],
       answer: 2,
-      why: "Level 7 made the point in money: the crossover here draws down 28% against buy and hold's 60%, and that difference matters more than the extra return." },
+      why: "A pager that is wrong half the time is a pager people learn to ignore." },
 
-    { q: "Monthly rebalancing using quarterly earnings dated to the quarter end is:",
+    { q: "The burn rate alert detected the 35% incident in 2 minutes and the 8% one in 10. Why is that useful?",
       options: [
-        "Survivorship bias",
-        "Fine, the date is in the past",
-        "Only a problem for daily strategies",
-        "Lookahead, because earnings are published weeks after the quarter they describe"
+        "Because it uses a shorter window",
+        "It is a coincidence of the simulation",
+        "Because 35% is above the threshold",
+        "Because severity scaling comes free: the worse the incident, the faster the budget burns, so the alert arrives sooner with no extra configuration"
       ],
       answer: 3,
-      why: "The test is whether the value was published before you act, not whether its timestamp looks historical." },
+      why: "One rule, and it behaves like two severities you never had to write." },
 
-    { q: "What belongs in the write up that almost nobody includes?",
+    { q: "Why does a burn rate alert need a short confirming window as well as a long one?",
       options: [
-        "How many variations were tried in total, including abandoned ones",
-        "The Sharpe ratio",
-        "The list of libraries used",
-        "The equity curve"
+        "So the alert stops firing when the incident ends, rather than an hour later",
+        "To detect faster",
+        "To smooth the data",
+        "To reduce false positives at the start"
       ],
       answer: 0,
-      why: "It gives the Sharpe ratio a denominator. Without it the number means one thing after two attempts and nothing after four hundred." },
+      why: "Otherwise somebody turns it off during the next incident, having learned it lies." },
 
-    { q: "Anchored walk forward differs from rolling in that:",
+    { q: "Which of these should page somebody at three in the morning?",
       options: [
-        "Anchored keeps the start fixed and lets the fit window grow",
-        "Anchored tests on the fit period",
-        "Rolling cannot be used with daily data",
-        "Rolling uses all history every time"
+        "Payment success rate below the objective",
+        "CPU above 80%",
+        "An instance restarting",
+        "Disk at 85%"
       ],
       answer: 0,
-      why: "Rolling drops the oldest data, which is the right choice when you believe the world changes rather than accumulates." },
+      why: "Page for symptoms the customer feels. Causes become dashboard panels and tickets." },
 
-    { q: "Your walk forward Sharpe is worse than your single split Sharpe. What goes in the report?",
+    { q: "What makes a postmortem blameless in a technical sense?",
       options: [
-        "The walk forward only",
-        "Both, with a sentence explaining why they differ",
-        "Whichever is closer to the benchmark",
-        "The single split, since it used more data for fitting"
+        "Only writing about the system",
+        "Assuming everyone acted reasonably given what they knew, and asking what made the wrong action look right",
+        "Having a manager approve it",
+        "Not naming anybody"
       ],
       answer: 1,
-      why: "A reader who later finds you ran both and reported the flattering one will not believe anything else in the document." }
+      why: "\"Ran the wrong migration\" is not a finding. \"The tool defaults to production\" is, and it has a fix." }
   ],
 
   project: {
-    title: 'The backtest engine',
-    story: 'The society\'s investment group keeps sharing screenshots of rising equity curves. Build the engine that ' +
-           'settles it: one interface every strategy plugs into, costs, walk forward, and a report that says how many ' +
-           'variations were tried and what cost would kill the result.',
-    scope: 'Uses this level plus level 7 (returns, Sharpe, drawdown, correlation) and level 3 (pandas). pandas and numpy ' +
-           'only. No backtesting library: the whole point is that you can see every line that touches a return.',
-    dataset: '{{RAW}}/data/level-07-prices.csv',
+    title: 'payments-observability: a pager you would trust',
+    story: 'Take the service you built in levels 7 and 14 and make it operable. Structured logs with a request id, RED ' +
+           'metrics with a cardinality budget, correct percentiles, traces that survive the queue, an SLO document, ' +
+           'burn rate alerts replayed against a month of traffic, a runbook per alert, and a game day with a real ' +
+           'postmortem at the end.',
+    scope: 'Prometheus, Grafana and an OpenTelemetry collector in Docker Compose. The measurements and the documents are ' +
+           'the deliverable. A dashboard nobody can interpret scores nothing.',
     requirements: [
-      'A Strategy interface: given prices, return a signal series. At least three implemented, including buy and hold',
-      'run(returns, signal, cost_bps) applying the one day shift, computing turnover, and returning gross and net series',
-      'A deliberate lookahead test comparing the shifted and unshifted version of one rule, with both numbers printed',
-      'metrics() returning total, CAGR, Sharpe, max drawdown, hit rate, turnover per year and time in market',
-      'A cost sensitivity table at 0, 2, 5, 10, 25 and 50 basis points for every strategy',
-      'break_even_cost() returning the cost in basis points at which the total return reaches zero',
-      'A parameter grid search reporting the best in sample result, its out of sample result, and the correlation across the grid',
-      'walk_forward() with configurable fit and test windows, returning the joined test series and the parameters chosen per fold',
-      'Every result compared against buy and hold on the same asset and period',
-      'A report function printing the same fields for every strategy, including how many variations were tried',
-      'A README with the lookahead comparison, the cost table, the grid result, and a paragraph naming what would falsify the strategy and what is wrong with the sample',
-      'The repository in your GitHub portfolio as finquest-backtest'
+      'JSON structured logging with stable event names and a request id attached at the edge and carried everywhere',
+      'A measured log volume in gigabytes a day and dollars a year, and a sampling policy that keeps all errors and slow requests',
+      'RED metrics on every endpoint, with a written cardinality budget and the series count each label set produces',
+      'A test that fails when the total series count exceeds your budget',
+      'A reproduction of the cardinality accident: series count, memory and scrape time before and after a high cardinality label',
+      'Correct cross instance percentiles by aggregating histogram buckets, demonstrated against one deliberately slow instance',
+      'A maximum-across-instances panel, and the explanation of what it catches that the average hides',
+      'Histogram buckets chosen from your own measured distribution, with the reported p99 compared against an exact p99 from raw timings',
+      'Distributed tracing with context propagated across services and across the queue, shown as one unbroken trace',
+      'Tail sampling that keeps everything failed or slow, with the retained share reported',
+      'An SLO document for at least two journeys: SLI in precise words, target, window, budget in minutes, and the policy when it runs out',
+      'Multiwindow burn rate alert rules, replayed against a month of synthetic traffic with two incidents and some harmless blips',
+      'The page count, false page count and detection time for your rules against a naive threshold, in a table',
+      'A runbook for every alert, and a test that fails if an alert has no runbook',
+      'A game day: what you broke, the timings, and at least two things it found that were wrong beforehand',
+      'A postmortem with a timeline, impact in money, layered causes, what made it worse, and actions with owners and dates',
+      'The repository public on GitHub as `payments-observability`'
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest level 16: the backtest engine.\n\nLayout:\n  engine/core.py       run, metrics, break_even_cost\n  engine/strategies.py buy_and_hold, crossover, momentum\n  engine/search.py     grid search and walk_forward\n  engine/report.py     one shape of output for every result\n  tests/\n"""\n\nimport numpy as np\nimport pandas as pd\n\nURL = "{{RAW}}/data/level-07-prices.csv"\n\n\ndef run(returns, signal, cost_bps=10):\n    """Shift the signal by one day, apply costs to turnover, return the series."""\n    # TODO\n    pass\n\n\ndef metrics(daily, benchmark=None, periods=252):\n    """total, cagr, sharpe, max_drawdown, hit_rate, and excess over a benchmark."""\n    # TODO\n    pass\n\n\ndef break_even_cost(returns, signal, hi=200):\n    """The cost in basis points at which the total return reaches zero."""\n    # TODO\n    pass\n\n\ndef grid_search(prices, returns, fasts, slows, cost_bps=10):\n    """In sample and out of sample Sharpe for every combination."""\n    # TODO\n    pass\n\n\ndef walk_forward(prices, returns, fit_days=252, test_days=63, cost_bps=10):\n    """Fit on a window, test on the next, roll. Return the joined test series."""\n    # TODO\n    pass\n'
+      code: '"""FinQuest level 16: making the service operable.\n\nLayout:\n  obs/logging.py      JSON events, stable names, request id from context\n  obs/metrics.py      RED metrics, and the cardinality budget test\n  obs/tracing.py      OpenTelemetry, propagation including across the queue\n  slo/OBJECTIVES.md   SLI, SLO, window, budget, and the policy\n  slo/burn_rate.yml   the multiwindow rules\n  slo/replay.py       a month of traffic, and the page count it produces\n  runbooks/           one per alert, each with a date\n  POSTMORTEM.md       written after the game day\n"""\n\nSECONDS_IN_30_DAYS = 30 * 24 * 60 * 60\n\n\ndef error_budget(objective: float, window_seconds: int = SECONDS_IN_30_DAYS) -> float:\n    """99.9% over 30 days is 2,592 seconds: 43 minutes 12 seconds."""\n    return (1 - objective) * window_seconds\n\n\ndef burn_rate(error_ratio: float, objective: float) -> float:\n    """How many times faster than the budget allows. 14.4x empties a 30 day\n    budget in about two days, which is why it is the fast page threshold."""\n    return error_ratio / (1 - objective)\n\n\nMAX_SERIES = 5_000          # chosen, written down, and enforced by a test\n\n\ndef series_count(registry) -> int:\n    """Fails the build when somebody adds an unbounded label."""\n    # TODO\n    raise NotImplementedError\n'
     },
     tests: [
-      'run() shifts the signal: a signal that is 1 on day t produces a position of 1 on day t+1',
-      'A strategy that is always in matches buy and hold exactly at zero cost',
-      'Turnover is 2.0 for a position that goes 0 to 1 to 0 over three days',
-      'The unshifted version of the sign rule returns over one million percent and the shifted version loses money',
-      'metrics() on the 20/50 crossover at 10 bps gives total near 31.02%, Sharpe near 0.49 and drawdown near -28%',
-      'break_even_cost on the daily flipper is under 10 basis points',
-      'The grid search over 79 combinations reproduces the best in sample Sharpe near 2.18 and its out of sample Sharpe near -1.95',
-      'The correlation between in sample and out of sample Sharpe across the grid is negative',
-      'walk_forward returns a series covering only the test windows, and one parameter pair per fold',
-      'Every strategy report includes turnover, time in market and the count of variations tried'
+      'Every log line emitted during one request carries the same request id',
+      'No log line contains a value outside the allowlist',
+      'The metrics registry stays under the series budget, and the test fails when a high cardinality label is added',
+      'The p99 from aggregated histogram buckets matches an exact p99 from raw timings within a few percent',
+      'Averaging instance p99s is demonstrably wrong when one instance is slow, and the max panel catches it',
+      'A single trace covers the whole payment including the part after the queue',
+      'Tail sampling retains 100% of failed requests and 100% of requests over the target',
+      'Every alert rule has a runbook link',
+      'Replaying the synthetic month produces zero false pages and catches both incidents',
+      'The burn rate rule stops firing within minutes of an incident ending',
+      'The error budget calculation matches the published minutes for 99%, 99.9%, 99.95% and 99.99%'
     ],
     rubric: [
-      { pts: 25, t: 'Honest mechanics', d: 'The shift is correct and tested, turnover is right, and costs are applied to turnover rather than to returns.' },
-      { pts: 20, t: 'Bias demonstrated', d: 'The lookahead comparison is in the repository with both numbers, and the sample limitations are written down.' },
-      { pts: 20, t: 'Overfitting measured', d: 'The grid search reports out of sample results and the correlation, rather than the best number.' },
-      { pts: 20, t: 'Walk forward', d: 'Implemented, reported on test periods only, with the chosen parameters per fold shown.' },
-      { pts: 15, t: 'Reported like research', d: 'One report shape, a benchmark on every result, the break even cost, and a paragraph on what would falsify it.' }
+      { pts: 20, t: 'Signals used properly', d: 'Structured logs with a request id, RED metrics, traces that cross the queue, each answering what it is for.' },
+      { pts: 20, t: 'Cardinality understood', d: 'A written budget, an enforcing test, and a reproduction of the accident with series, memory and scrape time.' },
+      { pts: 20, t: 'Correct numbers', d: 'Cross instance percentiles aggregated properly, buckets tuned, and both compared against exact values.' },
+      { pts: 20, t: 'SLOs and alerting', d: 'An SLO document with a budget policy, multiwindow burn rate rules, and the replay table against a naive threshold.' },
+      { pts: 20, t: 'Operability', d: 'A runbook per alert enforced by a test, a game day with timings, and a postmortem with owned actions.' }
     ],
     stretch: [
-      'Extend the engine to a portfolio of all four assets with weights, and report the diversification effect from level 7',
-      'Add a volatility target that scales the position, and measure what it does to drawdown and turnover',
-      'Implement a simple deflated Sharpe ratio that adjusts for the number of variations tried, and apply it to your grid',
-      'Add a bootstrap: resample the returns a thousand times and report where the real result sits in that distribution'
+      'Add exemplars so a point on the latency graph links to a trace of one slow request',
+      'Implement adaptive log sampling that keeps a fixed volume per second regardless of traffic',
+      'Add a second SLO on data correctness rather than availability, such as the reconciliation break rate from level 10',
+      'Build the burn rate replay as a continuous test, so changing an alert rule shows the page count change in the pull request',
+      'Run a game day with somebody who did not build the system and record how long the runbooks take them'
     ],
     solutionPath: 'solutions/level-16'
   },
 
   faq: [
-    { q: 'Why does shift(1) and not shift(-1)?',
-      a: 'Because the position you hold today was decided from data available yesterday. shift(-1) pulls tomorrow into today, which is the bias this level is about, with a number attached.' },
-    { q: 'Ten basis points: is that realistic?',
-      a: 'For a liquid stock at retail scale, roughly. For a small illiquid one, nowhere near. This is why the level asks for a sensitivity table and a break even cost rather than one assumed figure.' },
-    { q: 'My Sharpe is 4 and I cannot find the bug',
-      a: 'Look for the future first: a rolling window that includes the current bar, a fill that reaches backwards, a merge on a date that aligns the wrong rows, or a signal built from a column derived after the fact.' },
-    { q: 'Is the level 7 data good enough to draw conclusions from?',
-      a: 'No, and saying so is part of the work. It is four synthetic assets over three years with no failures in it. The engine is the deliverable; the strategy result is a demonstration.' },
-    { q: 'How many parameter combinations is too many?',
-      a: 'There is no clean line, which is why you report the count. Two is a choice, four hundred is a search, and the reader can weigh a Sharpe ratio against the number of attempts that produced it.' },
-    { q: 'Should I use a backtesting library in a job?',
-      a: 'Probably, and you will be able to read what it does because you wrote the small version. The interview question is never which library; it is which bias you checked for.' },
-    { q: 'What about intraday, or limit orders, or partial fills?',
-      a: 'All real and all out of scope here. A daily close to close engine with honest costs is enough to learn the discipline, and the biases it teaches get worse rather than better at higher frequency.' }
+    { q: 'Do I need Prometheus and Grafana specifically?',
+      a: 'No, and the concepts move between tools unchanged: series and cardinality, histogram buckets, quantile aggregation, burn rate. Use whatever you can run locally in Docker. The interview question is never which tool, it is what you measured and why.' },
+    { q: 'How do I pick an SLO number?',
+      a: 'From what users already tolerate, not from ambition. Look at your current performance over the last few months and set the objective a little tighter than your typical month. A target you have never met teaches everybody to ignore the dashboard, and every extra nine costs about ten times more than the one before.' },
+    { q: 'Should 4xx responses count against the objective?',
+      a: 'Usually not, because a client sending malformed requests is that client failing rather than your service. Write the decision into the SLI in words, because it changes the number a great deal and somebody will ask.' },
+    { q: 'What if an incident is caused by a dependency I do not control?',
+      a: 'It still spends your budget, because your users experienced it. That is the point of measuring from the user in: it puts the conversation about that dependency on a factual basis, with minutes attached, which is far more persuasive than an opinion about their reliability.' },
+    { q: 'Our logging bill is enormous. Where do I start?',
+      a: 'Count first: bytes per line times lines per request times requests per second. Then the two cheapest cuts, in order, are removing lines that are logged on the success path and never read, and sampling the remaining successful requests while keeping every error and every slow one. Ninety percent reductions are common and nobody misses the data.' },
+    { q: 'How many alerts should a service have?',
+      a: 'Few enough that every page is investigated. A handful of symptom alerts tied to objectives, plus the specific invariants from earlier levels: stuck payouts, reconciliation breaks, unfinished states. If a page has been ignored twice, either delete it or fix what makes it noisy.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'The alerting replay, because it is a number almost nobody has: over a simulated month, a threshold alert paged four times with two false pages, while multiwindow burn rate paged twice with none, and found the worse incident in two minutes against ten for the milder one without anybody configuring severities. Then the histogram result, because it is uncomfortable and true: default buckets reported a p99 of 450 ms when the real value was 301 ms.' }
   ]
 });

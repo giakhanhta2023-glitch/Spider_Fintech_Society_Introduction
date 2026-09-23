@@ -1,4 +1,4 @@
-# Level 16: The backtest that does not lie to you: quiz answer key
+# Level 16: The pager, and what it is allowed to wake you for: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. What does position = signal.shift(1) prevent?
+### 1. Which signal answers "how many payments failed in the last hour"?
 
-- A. Division by zero in the returns
-- **B. Acting on information you did not have yet** ✅
-- C. Costs being double counted
-- D. Trading on the last day of the sample
+- A. A profile
+- **B. A metric** ✅
+- C. A trace
+- D. A log
 
-**Why:** Measured on this course's data: the same rule gives +21,745,676% unshifted and -26.05% shifted.
+**Why:** Metrics tell you something is wrong, traces tell you where, logs tell you why.
 
-### 2. A backtest reports a Sharpe ratio of 21. What is the most likely explanation?
+### 2. Adding merchant_id with 500 values took a counter from 400 series to 200,000. What broke first?
 
-- A. Costs were set too low
-- B. Too little data
-- **C. Lookahead bias** ✅
-- D. A very strong strategy
+- A. Disk on the metrics server
+- B. The dashboard
+- **C. The scrape, which went from 13.1 ms to 8,025.9 ms while Prometheus polls every 15 seconds** ✅
+- D. Memory, at 243.6 MB
 
-**Why:** Real equity strategies live between 0 and 2. Above about 3 is a bug until proven otherwise, and 21 is arithmetic telling you the model knew the answer.
+**Why:** Eight seconds of your own CPU, in your own process, every fifteen seconds. Monitoring became the outage.
 
-### 3. Ten basis points of cost destroys one strategy and barely touches another. What decides which?
+### 3. Which of these must never be a metric label?
 
-- **A. Turnover** ✅
-- B. The Sharpe ratio
-- C. The asset class
-- D. The length of the sample
+- **A. payment_id** ✅
+- B. Endpoint
+- C. HTTP status
+- D. Region
 
-**Why:** 248 turns a year against 5.5. The cost rate is the same; how often you pay it is not.
+**Why:** An unbounded value creates a series per value, forever, and the series outlive the traffic.
 
-### 4. Why report the break even cost rather than the cost you assumed?
+### 4. Ten instances, one unhealthy. True p99 393.4 ms, average of instance p99s 361.6 ms, max 906.2 ms. What is wrong with the average?
 
-- A. Because regulators require it
-- B. Because it is always lower
-- C. It is easier to compute
-- **D. Because it is a single number a reader can judge against reality, instead of an assumption to argue about** ✅
+- A. It is too high
+- B. It should be a median instead
+- C. Nothing, it is a reasonable approximation
+- **D. It is not a percentile of anything, and it hides the sick instance that is serving one customer in ten at 906 ms** ✅
 
-**Why:** It turns a debate about assumptions into one figure. A strategy that breaks even at seven basis points is dead for most instruments, and everybody can see that at once.
+**Why:** Aggregate the histogram buckets first, and also graph the maximum across instances.
 
-### 5. What is survivorship bias?
+### 5. How do you compute a correct p99 across instances in Prometheus?
 
-- A. Keeping only the strategies that worked
-- B. Overweighting recent data
-- C. Ignoring dividends
-- **D. Testing on names that lasted, because the failures were removed from the data** ✅
+- A. avg of each instance's p99
+- B. max of each instance's p99
+- C. The p99 of the p99s
+- **D. histogram_quantile over the summed bucket rates** ✅
 
-**Why:** It lives in the file rather than in your code, and no amount of careful programming removes it. You need a point in time universe.
+**Why:** Sum the buckets across instances, then take the quantile of the sum. That produced the true 393.4 ms.
 
-### 6. Seventy nine parameter combinations are tested. The best in sample scores Sharpe 2.18 and -1.95 out of sample, and the correlation between the two is -0.57. What does that say?
+### 6. With default buckets the dashboard reported a p99 of 450.1 ms when the real value was 301.5 ms. Why?
 
-- A. The out of sample period was unusual
-- **B. The best in sample result was mostly luck, and searching harder makes that more certain** ✅
-- C. The parameters need finer steps
-- D. The cost assumption was wrong
+- A. The metric was scraped too rarely
+- **B. The 99th percentile fell in a bucket spanning 250 ms to 500 ms, so the interpolation across that gap was a guess** ✅
+- C. The histogram lost data
+- D. The clock was wrong
 
-**Why:** None of the top five in sample beat the median out of sample. Choosing the best fit to one history is choosing its accidents.
+**Why:** A 49.3% error, entirely from the bucket edges. Tuned buckets brought it to 1.6%.
 
-### 7. What are the first three questions to ask about a strategy with an in sample Sharpe of 2.4?
+### 7. What is the most common failure when adding tracing to an existing system?
 
-- A. Which library, which data vendor, and which language
-- B. The maximum drawdown, the hit rate and the time in market
-- **C. How many variations were tried, what happened on untouched data, and what the turnover and cost are** ✅
-- D. What is the idea, who else uses it, and how much capital it takes
+- A. Clock skew
+- B. Sampling too little
+- **C. Missed context propagation on one hop, usually a queue, which breaks the trace in half** ✅
+- D. Too many spans
 
-**Why:** None of the three is about the idea. The idea is the part that is easy to have.
+**Why:** Across a queue, the context has to travel in the message rather than in a header.
 
-### 8. In walk forward testing, which periods go in the reported result?
+### 8. Why is head sampling a poor choice for a payments service?
 
-- A. All of it, fits and tests together
-- B. The best fold
-- **C. The test periods only, joined end to end** ✅
-- D. The fits, because they use more data
+- A. It is more expensive
+- B. It breaks context propagation
+- **C. It decides before the request runs, so at 1% sampling you keep 1% of your incidents** ✅
+- D. It requires more infrastructure
 
-**Why:** Every test period is genuinely out of sample, which is what makes the joined series worth reading.
+**Why:** Tail sampling keeps everything slow or failed and one in a hundred of the rest.
 
-### 9. The parameters chosen by walk forward jump from 5 and 20 to 35 and 90 and back between folds. What does that tell you?
+### 9. A 99.9% objective over thirty days is how much failure?
 
-- **A. There is probably nothing to choose, and the parameter is noise** ✅
-- B. The optimiser has a bug
-- C. The market is changing quickly
-- D. The fit window is too long
+- **A. 43 minutes 12 seconds** ✅
+- B. 21 minutes 36 seconds
+- C. 4 minutes 19 seconds
+- D. 7 hours 12 minutes
 
-**Why:** Stability across folds is evidence. Instability is the absence of it, and it is worth more in a report than the return.
+**Why:** And 99.99% is 4 minutes 19 seconds, which is shorter than one bad deploy.
 
-### 10. A strategy is invested 12% of the time and reports a Sharpe higher than buy and hold. What must the report say?
+### 10. What is an error budget actually for?
 
-- A. That it is riskier by definition
-- **B. Its time in market, so the comparison is fair** ✅
-- C. Nothing extra, Sharpe already accounts for it
-- D. The number of trades only
+- A. Calculating SLA refunds
+- **B. A rule agreed in advance: budget remaining means ship, budget exhausted means stop feature work and fix stability** ✅
+- C. Reporting to management
+- D. Deciding when to page
 
-**Why:** Sitting in cash is not skill. Without exposure alongside it, the comparison flatters the strategy.
+**Why:** It ends the argument between shipping and stability, because both sides already agreed the number.
 
-### 11. Why is maximum drawdown reported next to the return?
+### 11. Over a simulated month, the threshold alert paged 4 times and the burn rate alert paged twice. What was the real difference?
 
-- A. Because it determines the tax treatment
-- B. Because regulators require it
-- **C. Because it is what decides whether anybody could hold the strategy through** ✅
-- D. Because it is the same as volatility
+- A. The burn rate alert was slower on everything
+- B. The burn rate alert missed an incident
+- **C. Both caught both incidents, but two of the threshold pages were harmless blips and the burn rate alert had none** ✅
+- D. The threshold alert used less CPU
 
-**Why:** Level 7 made the point in money: the crossover here draws down 28% against buy and hold's 60%, and that difference matters more than the extra return.
+**Why:** A pager that is wrong half the time is a pager people learn to ignore.
 
-### 12. Monthly rebalancing using quarterly earnings dated to the quarter end is:
+### 12. The burn rate alert detected the 35% incident in 2 minutes and the 8% one in 10. Why is that useful?
 
-- A. Survivorship bias
-- B. Fine, the date is in the past
-- C. Only a problem for daily strategies
-- **D. Lookahead, because earnings are published weeks after the quarter they describe** ✅
+- A. Because it uses a shorter window
+- B. It is a coincidence of the simulation
+- C. Because 35% is above the threshold
+- **D. Because severity scaling comes free: the worse the incident, the faster the budget burns, so the alert arrives sooner with no extra configuration** ✅
 
-**Why:** The test is whether the value was published before you act, not whether its timestamp looks historical.
+**Why:** One rule, and it behaves like two severities you never had to write.
 
-### 13. What belongs in the write up that almost nobody includes?
+### 13. Why does a burn rate alert need a short confirming window as well as a long one?
 
-- **A. How many variations were tried in total, including abandoned ones** ✅
-- B. The Sharpe ratio
-- C. The list of libraries used
-- D. The equity curve
+- **A. So the alert stops firing when the incident ends, rather than an hour later** ✅
+- B. To detect faster
+- C. To smooth the data
+- D. To reduce false positives at the start
 
-**Why:** It gives the Sharpe ratio a denominator. Without it the number means one thing after two attempts and nothing after four hundred.
+**Why:** Otherwise somebody turns it off during the next incident, having learned it lies.
 
-### 14. Anchored walk forward differs from rolling in that:
+### 14. Which of these should page somebody at three in the morning?
 
-- **A. Anchored keeps the start fixed and lets the fit window grow** ✅
-- B. Anchored tests on the fit period
-- C. Rolling cannot be used with daily data
-- D. Rolling uses all history every time
+- **A. Payment success rate below the objective** ✅
+- B. CPU above 80%
+- C. An instance restarting
+- D. Disk at 85%
 
-**Why:** Rolling drops the oldest data, which is the right choice when you believe the world changes rather than accumulates.
+**Why:** Page for symptoms the customer feels. Causes become dashboard panels and tickets.
 
-### 15. Your walk forward Sharpe is worse than your single split Sharpe. What goes in the report?
+### 15. What makes a postmortem blameless in a technical sense?
 
-- A. The walk forward only
-- **B. Both, with a sentence explaining why they differ** ✅
-- C. Whichever is closer to the benchmark
-- D. The single split, since it used more data for fitting
+- A. Only writing about the system
+- **B. Assuming everyone acted reasonably given what they knew, and asking what made the wrong action look right** ✅
+- C. Having a manager approve it
+- D. Not naming anybody
 
-**Why:** A reader who later finds you ran both and reported the flattering one will not believe anything else in the document.
+**Why:** "Ran the wrong migration" is not a finding. "The tool defaults to production" is, and it has a fix.

@@ -391,27 +391,35 @@ const NOTES = {
   },
   16: {
     files: [
-      ['`engine/core.py`', 'run, metrics and break_even_cost'],
-      ['`engine/strategies.py`', 'buy and hold, crossover, momentum, all behind one interface'],
-      ['`engine/search.py`', 'the parameter grid and walk_forward'],
-      ['`engine/report.py`', 'the same nine lines for every result'],
-      ['`tests/test_lookahead.py`', 'the shifted and unshifted comparison, asserted']
+      ['`obs/logging.py`', 'JSON events, stable names, a request id from context'],
+      ['`obs/metrics.py`', 'RED metrics, and the test that enforces the series budget'],
+      ['`obs/tracing.py`', 'propagation across services and across the queue'],
+      ['`slo/OBJECTIVES.md`', 'SLI, target, window, budget in minutes, and the policy'],
+      ['`slo/burn_rate.yml`', 'the multiwindow rules'],
+      ['`slo/replay.py`', 'a month of traffic, and the pages each rule would have produced'],
+      ['`runbooks/`', 'one per alert, dated, and checked by a test'],
+      ['`POSTMORTEM.md`', 'written after the game day, with owned actions']
     ],
-    run: 'pip install -r requirements.txt && pytest -q && python -m engine.report',
+    run: 'docker compose up -d && python -m slo.replay && pytest -q tests/test_cardinality.py',
     design: [
-      'The shift lives in `run` rather than in each strategy, so no strategy can forget it. The test that proves it asserts that a signal of 1 on day t produces a position of 1 on day t+1 and nothing on day t.',
-      'Costs are applied to turnover rather than to returns, which is what makes the fast and slow strategies react so differently to the same rate: 248 turns a year against 5.5.',
-      '`break_even_cost` is reported instead of defending an assumed cost. One number a reader can compare with reality beats a paragraph of justification.',
-      'The grid search reports the out of sample result and the correlation across the grid, not the winner. On this data the correlation is negative, which is the whole lesson in one figure.',
-      'Walk forward returns the joined test windows and the parameters chosen per fold. Unstable choices between folds are reported as a finding rather than smoothed over.'
+      'The three signals are used for what each is good at: metrics say something is wrong, traces say where, logs say why. The request id is generated at the edge and reaches every log line and every span, because reconstructing one request is the only thing logs do better than anything else.',
+      'Cardinality is budgeted rather than hoped for. Measured on one counter: 100 series cost 0.2 MB and a 3.1 ms scrape; adding merchant_id with 500 values took it to 200,000 series, 243.6 MB and an 8,025.9 ms scrape, against a 15 second scrape interval. Monitoring becomes the outage, and the pull request that does it looks reasonable.',
+      'Percentiles are aggregated by summing histogram buckets, never by averaging quantiles. With ten instances and one of them three times slower, the true p99 was 393.4 ms, the average of the instance p99s was 361.6 ms, and the maximum across instances was 906.2 ms. The average hid exactly the thing the dashboard exists to show.',
+      'Buckets come from the measured distribution. Prometheus defaults reported a p99 of 450.1 ms when the exact value was 301.5 ms, a 49.3% error produced entirely by the gap between the 250 ms and 500 ms edges. Tuned buckets brought it to 1.6%.',
+      'The SLO document is a page and the budget is a decision rule: 99.9% over 30 days is 43 minutes 12 seconds, and below a quarter of it remaining, feature work pauses. 4xx responses are excluded from the SLI on purpose, and the sentence saying why is in the document.',
+      'Alerting is replayed rather than argued about. Over a simulated month with two incidents and two harmless blips: a threshold on error rate paged 4 times with 2 false pages; multiwindow burn rate paged twice with none, and detected the 35% incident in 2 minutes and the 8% one in 10, which is severity scaling nobody had to configure.',
+      'The uncomfortable number from the same month: the two incidents were only 42% of all errors. The other 58% came from a quiet 0.05% background rate that never crossed a threshold and never woke anybody, and it was spending most of the budget.'
     ],
     mistakes: [
-      ['Sharpe above 3', 'Look for the future: a rolling window including the current bar, a backward fill, or a merge that aligned the wrong rows.'],
-      ['Costs barely matter', 'Check the turnover calculation. A position that never changes pays nothing, and a diff on a constant series is zero everywhere.'],
-      ['Walk forward beats the single split', 'Suspect leakage between folds: the fit window and the test window must not overlap, including any rolling feature that spans the boundary.']
+      ['A scrape started timing out', 'A high cardinality label. Series count is the product across labels, and it never comes back down.'],
+      ['The latency dashboard was wrong by half', 'Default histogram buckets. The p99 landed in a bucket 250 ms wide and the interpolation was a guess.'],
+      ['One broken instance was invisible', 'Instance p99s were averaged. Sum the buckets, and also graph the maximum.'],
+      ['The trace stopped at the queue', 'Context has to travel inside the message, not in a header.'],
+      ['Sampling threw away the incident', 'Head sampling keeps 1% of errors at 1%. Tail sampling keeps all of them.'],
+      ['Nobody reacts to the pager any more', 'It has been paging for causes and for blips. Page for symptoms tied to an objective, and delete the rest.'],
+      ['The postmortem blamed a person', 'Ask what made the wrong action look right. That question has a fix attached; blame does not.']
     ]
   },
-
   17: {
     files: [
       ['`engine/optimise.py`', 'max_sharpe, min_variance and risk_parity, all with bounds'],
