@@ -74,10 +74,10 @@ model backed tutor.
 | 14 | The p99 you promised | Measure the tail, then cache, limit and shed | Latency, Redis, load shedding |
 | 15 | The keys to the money | A card vault with envelope encryption | Tokenisation, OAuth2, mTLS, PCI scope |
 | 16 | The pager, and what it is allowed to wake you for | Instrument it, then break it on purpose | SLOs, burn rate alerts, postmortems |
-| 17 | Weights, and the risk they actually carry | A portfolio and risk engine | optimisation, risk parity, VaR |
-| 18 | Three banks, three shapes, one account view | An open banking aggregator | OAuth2, consent, normalisation |
-| 19 | Ninety eight percent of your alerts are wrong | An AML and sanctions monitor | fuzzy matching, rule tuning |
-| 20 | The mean was 45 milliseconds and the service was down | Shipping the level 12 service | Docker, CI, SLOs, cost |
+| 17 | The deploy you can undo | Container, pipeline, infrastructure, blue green | Docker, CI/CD, Terraform, cost |
+| 18 | Java, for somebody who already writes Python | Port the payments API to Spring Boot | JVM, types, Testcontainers |
+| 19 | The screen that filters you out | Forty problems, four exercises, an honest log | Complexity, patterns, interviews |
+| 20 | The whiteboard, and the thing you hand over | The platform assembled, load tested, packaged | System design, capacity, capstone |
 
 A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
 one.

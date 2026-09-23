@@ -1,4 +1,4 @@
-# Level 18: Three banks, three shapes, one account view: quiz answer key
+# Level 18: Java, for somebody who already writes Python: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Where does the customer type their bank password in the authorization code flow?
+### 1. Why is `0.1 + 0.2` not `0.3` in Java?
 
-- **A. At their bank, and you never see it** ✅
-- B. In your app, which forwards it
-- C. Nowhere: the flow uses the client secret instead
-- D. In the redirect URL
+- **A. Because it uses IEEE 754 binary64, exactly as Python does, and 0.1 is not representable in binary** ✅
+- B. A Java specific rounding rule
+- C. It is 0.3 in Java
+- D. Because double has fewer bits than Python floats
 
-**Why:** That is the point of the flow, and why screen scraping with shared credentials is being legislated out.
+**Why:** The nearest double to 0.1 is 0.10000000000000000555. Same hardware, same answer, same rule: never for money.
 
-### 2. What does PKCE protect against?
+### 2. What is the largest amount an `int` can hold in minor units?
 
-- A. The access token expiring too soon
-- B. Replay of the refresh token
-- **C. An attacker who obtains the authorization code being able to exchange it** ✅
-- D. The bank refusing the scope
+- A. $2,147,483.64
+- B. There is no limit
+- **C. $21,474,836.47** ✅
+- D. $214,748,364.70
 
-**Why:** The verifier never leaves your server. Current guidance is to use it for every client type, not only mobile.
+**Why:** And it wraps silently to negative after that. Use long, and Math.addExact when you want a throw instead.
 
-### 3. The state parameter exists to:
+### 3. Why must BigDecimal be constructed from a string?
 
-- A. Carry the requested scopes
-- B. Identify the bank
-- C. Hold the code verifier
-- **D. Stop an attacker linking their account to your user's session** ✅
+- A. It is faster
+- B. Because the constructor requires it
+- C. To set the scale
+- **D. Because `new BigDecimal(0.1)` is handed a double that is already wrong, so the exact type receives an inexact value** ✅
 
-**Why:** Random, stored server side, checked on return, and used once. A reused state is a fatal error rather than a warning.
+**Why:** Exactness has to start at the boundary. Once a double is involved, nothing downstream can recover it.
 
-### 4. How should a refresh token be stored?
+### 4. `new BigDecimal("1.0").equals(new BigDecimal("1.00"))` returns what, and why does it matter?
 
-- A. In the session cookie
-- B. In plain text, because it expires anyway
-- C. Hashed, like a password
-- **D. Encrypted at rest with a key held outside the database** ✅
+- A. It throws
+- B. True, because the values are equal
+- C. True, and it does not matter
+- **D. False, because equals compares scale as well as value, so money comparisons must use compareTo** ✅
 
-**Why:** You cannot hash it because you need it back. Encryption means a dump of the table is not a set of working credentials.
+**Why:** This one costs everybody a day exactly once.
 
-### 5. Two workers refresh the same token at the same moment. What usually happens?
+### 5. What does a sealed interface give you that a Python union type usually does not?
 
-- **A. Many banks invalidate the old refresh token, so one worker is left holding a dead credential** ✅
-- B. Both succeed harmlessly
-- C. The bank merges the requests
-- D. The access token is issued twice with the same value
+- **A. The compiler refuses to build when a switch does not handle every case, so adding an outcome finds every place that must change** ✅
+- B. Faster dispatch
+- C. Smaller memory use
+- D. Runtime validation
 
-**Why:** Take a lock and re-read inside it. A hundred workers should cost one refresh rather than a hundred races.
+**Why:** That is the property people mean when they say the type system pays for itself.
 
-### 6. A refresh returns 400 invalid_grant. What is the correct handling?
+### 6. Which `@Transactional` behaviour catches everybody once?
 
-- A. Page an engineer
-- **B. Mark the connection as needing consent and ask the user to reconnect** ✅
-- C. Reconnect automatically using the stored credentials
-- D. Retry five times with backoff
+- A. It cannot be used with JDBC
+- **B. Calling an annotated method from inside the same class does nothing, because the proxy is bypassed** ✅
+- C. It requires an explicit commit
+- D. It only works on public methods of interfaces
 
-**Why:** The permission is gone. No number of retries recreates it, and the only person who can fix it is the customer.
+**Why:** And by default it rolls back on unchecked exceptions only, so checked ones commit. Set rollbackFor for money.
 
-### 7. Why keep the raw bank record alongside the normalised one?
+### 7. Why turn off `open-in-view`?
 
-- A. Because regulators require the raw format
-- **B. Because normalisation is a guess that will be wrong for some bank, and fixing it later needs the original** ✅
-- C. For the audit log
-- D. To compute the running balance
+- A. It breaks transactions
+- **B. Because it holds a database connection for the whole request including response writing, which multiplies the pool you need** ✅
+- C. It is deprecated
+- D. It disables lazy loading
 
-**Why:** Otherwise the only way to correct a parsing bug is asking every customer to reconnect and resync.
+**Why:** The level 8 pool arithmetic applies unchanged, and this setting quietly invalidates it.
 
-### 8. Bank A sends no transaction id. How do you give its rows a stable identity?
+### 8. What is an N plus one query?
 
-- A. Use the date alone
-- B. Use the row number in the file
-- **C. Hash the account, date, amount and description, with a counter for genuine repeats** ✅
-- D. Generate a UUID at ingestion
+- A. A query run once per connection
+- B. A query with too many joins
+- **C. One query per row instead of one query for the set, from touching a relation inside a loop** ✅
+- D. A failed retry
 
-**Why:** A UUID changes on every sync, so the same transaction arrives as new each time. The counter is what saves two identical coffees on one day.
+**Why:** Correct output, quadratic cost. The ORM version of the missing index from level 6.
 
-### 9. A payment appears as pending and later as booked with the same reference. The ingester should:
+### 9. Java threads run in parallel where Python threads do not. What follows for a payments service?
 
-- **A. Match on the reference and replace the pending row, keeping the fact that the amount changed** ✅
-- B. Ignore the pending one entirely
-- C. Keep both rows
-- D. Ask the user which is correct
+- **A. Shared mutable state is a genuine hazard, but the lost update from level 8 still lives in the database and still needs the same fixes** ✅
+- B. The database no longer needs locking
+- C. Concurrency bugs disappear
+- D. You no longer need a connection pool
 
-**Why:** One payment, two observations. Ignoring pending rows means the app is days behind, and keeping both double counts the spending.
+**Why:** Concurrency bugs in a payments service live in the database, not in the language.
 
-### 10. Why deliberately refetch a day or two you already have?
+### 10. What do virtual threads change?
 
-- A. To check the bank is still up
-- B. Because cursors are unreliable
-- **C. Because banks backdate and reorder transactions, and deduplication makes the overlap free** ✅
-- D. To keep the rate limit warm
+- A. They make CPU work faster
+- B. They replace the connection pool
+- **C. A thread costs hundreds of bytes instead of a megabyte and parks when it blocks, so ordinary blocking code gets asynchronous concurrency** ✅
+- D. They remove garbage collection pauses
 
-**Why:** Without the overlap, a transaction backdated after your cursor passed is never seen again.
+**Why:** Which removes the reason most Java services reached for an asynchronous framework.
 
-### 11. What should the categoriser do first with POS APPLE.COM/BILL HANOI?
+### 11. Why does a load test of a Java service need a warm up phase?
 
-- A. Feed it to the model
-- **B. Clean it to APPLE.COM** ✅
-- C. Ask the user
-- D. Look it up in a merchant database
+- A. To fill the caches
+- **B. Because the JVM interprets bytecode first and compiles hot paths as it runs, so early requests measure the slow phase** ✅
+- C. To let the garbage collector settle
+- D. Because the connection pool starts empty
 
-**Why:** Most of the value is in the cleaning, and it is a list of rules rather than a model. Everything downstream gets easier.
+**Why:** And a canary that judges a new instance in its first thirty seconds will reject healthy releases.
 
-### 12. A user recategorises EVN HANOI to utilities. What happens for other users?
+### 12. A Java service in a container restarts with no log line and no stack trace. Most likely cause?
 
-- **A. It becomes one vote, promoted to a global rule only when enough independent users agree** ✅
-- B. Nothing at all, ever
-- C. The same change immediately
-- D. The model retrains on it overnight
+- **A. The JVM sized its heap for the host rather than the container limit, so the platform killed it for using too much memory** ✅
+- B. A garbage collection pause
+- C. A deadlock
+- D. A failed health check
 
-**Why:** One correction can be a mistake or a personal preference. Applying it globally lets one person recategorise the electricity company.
+**Why:** Tell it what it may use. MaxRAMPercentage, and ExitOnOutOfMemoryError so it fails loudly.
 
-### 13. Which is the right order for the categorisation fallback chain?
+### 13. What makes Testcontainers better than an in memory database for the level 8 race test?
 
-- A. Model, user rule, global rule
-- **B. User rule, global rule, model, uncategorised** ✅
-- C. Global rule, model, user rule
-- D. Model only, with corrections as training data
+- A. It is faster
+- **B. It runs the real Postgres, which implements the locking the test exists to exercise** ✅
+- C. It needs no configuration
+- D. It works without Docker
 
-**Why:** The user always wins, and an honest "uncategorised" beats a confident wrong answer that they have to correct twice.
+**Why:** An in memory substitute would pass the test and ship the bug.
 
-### 14. Consent typically lasts ninety days. What does that mean for the product?
+### 14. Your Java port benchmarks faster than the Python original. What should you check first?
 
-- A. Nothing, refresh handles it
-- B. Tokens must be rotated daily
-- C. The user must reauthenticate every login
-- **D. The sync will stop on a date you can predict, so warn the user before it does** ✅
+- A. The hardware
+- B. The garbage collector
+- C. The JVM version
+- **D. Whether both runs were warmed up, and what share of a request is database time in each** ✅
 
-**Why:** Write the expiry down at connection time. A banner at day eighty three is worth more than any retry logic.
+**Why:** If a payment is 5 ms of your code and 40 ms of database, the language was never the bottleneck.
 
-### 15. Why does each bank get its own normaliser function?
+### 15. Which is the honest reason to choose the JVM for a new payments service?
 
-- A. For parallel processing
-- B. Because the banks use different HTTP libraries
-- **C. So that nothing outside those functions sees a bank specific field, and a fourth bank touches nothing else** ✅
-- D. To allow per bank rate limits
+- A. It is faster than Python
+- B. It has better libraries
+- **C. Concurrency per instance and a compiler that checks your state machine, along with the hiring market you are targeting** ✅
+- D. It uses less memory
 
-**Why:** One place per bank, one schema out, and a test per bank holding a real row and the exact object it should become.
+**Why:** A latency claim that turns out to be mostly database time is a weak argument and an interviewer will test it.

@@ -1,6 +1,6 @@
-# Level 20: The mean was 45 milliseconds and the service was down
+# Level 20: The whiteboard, and the thing you hand over
 
-> **Ship the payment service** · build project · difficulty 9/10
+> **payments-platform-capstone: all of it, running, measured, and packaged** · build project · difficulty 10/10
 
 ## Read this second
 
@@ -10,75 +10,72 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-Take the service you built in level 12 and make it something a team could run. Container, pipeline, migrations, the three signals, a load test, an objective with the arithmetic done, a cost estimate and a runbook. This is the repository you point at in an interview.
+One repository that starts the whole platform with a single command, takes an hour of real load, survives four injected failures with the reconciliation still at zero, performs a schema migration without dropping a request, and hands a stranger enough to decide to interview you in ninety seconds.
 
-**Scope:** Builds directly on level 12, with level 11 for the schema and level 13 for the audit trail. Everything runs locally: Docker, Postgres, Prometheus, an OpenTelemetry collector and k6. The shipped load test file lets you do the analysis even if your own run comes out differently.
+**Scope:** Assembly and evidence rather than new features. Anything that has to change to make the services run together is part of the exercise, and the documents count as much as the code.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `Dockerfile` | two stages, pinned by digest, non root, with a health check |
-| `.github/workflows/ci.yml` | lint, types, tests against real Postgres, migration up then down, build, scan |
-| `migrations/` | the six step expand and contract, with lock_timeout set |
-| `app/observability.py` | structlog, the RED metrics, and the OpenTelemetry spans |
-| `analysis/loadtest.py` | percentiles by window and by endpoint, from the shipped run |
-| `slo/` | the two objectives, the budget arithmetic and the multiwindow burn rate alerts |
-| `docs/` | a runbook page per alert, the drill record, and the cost estimate |
+| `docker-compose.yml` | every service, one command, a fresh clone |
+| `bench/` | the hour long run and the report it writes |
+| `chaos/` | four failures, injected under load, with timings |
+| `recon/daily.py` | the check across every service that must return zero |
+| `ARCHITECTURE.md` | diagram, ownership, dependencies, failure behaviour |
+| `decisions/` | context, options, decision, consequences |
+| `designs/` | six one page system designs |
+| `README.md` | diagram, one sentence, five measured results |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-docker compose up --build   then   pytest -q && python -m analysis.loadtest
+docker compose up -d && python seed.py && python -m bench.run --minutes 60 && python -m chaos.all
 ```
 
 ## Why the solution is shaped this way
 
-- The Dockerfile is two stages and pinned by digest, so the compiler and the test dependencies never reach production and a build from a month ago reproduces byte for byte. It runs as uid 10001, because a container escape as root is a different incident.
-- The pipeline applies every migration and then rolls it back. That is the step most repositories skip, and it is the one that answers the question you will ask during an incident.
-- The rename is six migrations and three deploys rather than one. There is a test that runs the old application code against the new schema, which is the state the service is actually in during every rolling deploy.
-- One id joins the three signals. The request id from level 12 and the trace id sit on the same log line, so a metric leads to a log line and a log line leads to a trace.
-- Metric labels are the route template, the method and the status class, and nothing else. A customer id in a label turns a thousand series into ten million, and the bill arrives before the outage does.
-- The load test analysis splits by window before it reports anything. The whole run averages 44.7 ms and 1.06% errors; steady state is 31.2 ms and 0.08%, and one minute is 152.7 ms and 9.82%. The summary line describes no minute of the run.
-- The error budget is computed rather than quoted: 259,200 failures allowed a month at 100 rps, of which the bad minute spent 589, which is 0.23%. That number ends two arguments at once.
-- The cost estimate includes the logs. 259.2 million requests at 400 bytes each is 103.68 GB a month, which at ordinary ingest prices costs more than the compute it describes.
+- The capstone is assembly and evidence rather than new features. Anything that has to change to make the services run together was part of the exercise, and those changes are listed in the README because they are the honest output of level 17.
+- Capacity was estimated before anything was measured, so the measurements had something to disagree with: 50 payments a second averages 130 million a month and about 2.3 TB a year, which fits on one Postgres, so nothing here is sharded and the README says why.
+- The load test is an hour, warmed up, with p50, p99 and goodput, and it reports the utilisation at which the objective stops being met rather than the theoretical capacity.
+- The share of the monthly error budget spent during that hour is reported. An hour of load testing that spends a third of the budget means the objective is wrong or the system is.
+- Four failures are injected under load: the ledger database, a slow then failing bank, a stopped publisher, a revoked credential. Each one records what fired, time to detection, time to recovery, and whether money moved twice.
+- The single result the whole capstone turns on is the daily reconciliation returning zero after every one of those scenarios. It is the only check that requires every service to agree with every other service.
+- The package is built for ninety seconds of attention: the diagram, one sentence, five measured results, and a two minute video with no slides. Every number in it is reproducible by a command in the repository, and anything that is not was deleted.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| The image is over a gigabyte | A single stage build, or no .dockerignore. Check docker history and look for the layer that carries the build tooling. |
-| Compose works for you and nobody else | Something is still on your machine: a local database, a file outside the repository, or an environment variable set in your shell months ago. |
-| The deploy broke for two minutes | A migration that assumed only one version of the code was running. Expand and contract, and test the old code against the new schema. |
-| Prometheus fell over | A high cardinality label. Count the series after a thousand distinct requests and find the label that grew with them. |
-| The percentiles do not reproduce | Check the window boundaries first, then whether the percentile is interpolated. A p99 over a different window is a different number, and that is the lesson rather than a bug. |
+| Services would not run together | Hard coded ports, database names and paths. That is the exercise rather than an obstacle. |
+| The load test looked fine and production would not | Closed loop generation, or no warm up. Both measure something other than overload. |
+| Chaos passed but reconciliation did not | The right outcome to find in a rehearsal. Money moving twice shows up here and nowhere else. |
+| The README opened with installation instructions | Ninety seconds. Diagram, sentence, five results. |
+| A number could not be reproduced when asked | One undefendable number undoes all the others. Delete it or make it runnable. |
 
 ## Self-checks the solution satisfies
 
-- The image runs as a non root user and contains no .env, .git or test dependency
-- docker compose up serves a request from a clean clone with no manual steps
-- CI fails when a test is broken, and fails when a migration cannot be rolled back
-- The old application code passes its tests against the post migration schema
-- Every log line carries a request id, a trace id and a route template
-- No log line contains a token, a card number, an email address or a full name
-- No metric label has unbounded cardinality, asserted by counting series after a thousand distinct requests
-- The analysis reproduces p50 26.4 ms, p95 75.6 ms and p99 111.0 ms for the steady state window
-- The analysis reproduces 9.82% errors and 11.38% over 300 ms for the bad minute
-- The error budget calculation returns 259,200 failures for 99.9% at 100 rps over 30 days
-- The burn rate alert fires when the shipped incident is replayed and stays quiet in steady state
-- The cost estimate reproduces 103.68 GB of logs a month from its stated assumptions
+- A fresh clone starts the platform with one command and passes the smoke test
+- A payment flows from the API through the ledger, the events and the payout without manual intervention
+- The hour long load test completes and writes a report with percentiles and goodput
+- Killing the ledger database under load loses no money, and the reconciliation still returns zero afterwards
+- A bank that times out leaves payouts in an explicit unknown state, and the sweeper resolves all of them
+- Stopping the publisher for ten minutes loses no events, and the consumer catches up
+- A revoked vault credential produces a clear failure and a firing alert rather than silent errors
+- A schema migration under load completes with zero failed requests
+- The daily reconciliation returns zero breaks after every chaos scenario
+- Every number in the landing README can be reproduced by a command in the repository
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 20 | Runs anywhere | Clean clone to serving request in one command, image small, pinned and non root. |
-| 20 | The pipeline earns its place | Every stage present, fast enough to wait for, and shown to block a bad merge. |
-| 15 | Deployable schema changes | Expand and contract done properly, with the old code tested against the new schema. |
-| 20 | Observable | Three signals, joined by one id, with cardinality under control and a trace that locates the slow span. |
-| 15 | Measured, not asserted | The load test analysis by window and endpoint, the objectives, and the budget arithmetic. |
-| 10 | Operable | A runbook per alert, a drill that was actually run, and a cost estimate with its assumptions named. |
+| 20 | It runs | One command, a fresh clone, a payment end to end through every service. |
+| 25 | It holds | An hour under load with percentiles and goodput, and the utilisation where the objective breaks. |
+| 25 | It survives | Four injected failures with detection and recovery times, and reconciliation at zero after each. |
+| 15 | It is legible | Architecture document, three decision records, and six one page designs. |
+| 15 | It is hireable | A two minute video, a README leading with five measured results, and a CV where every line has a number. |
 
 ---
 

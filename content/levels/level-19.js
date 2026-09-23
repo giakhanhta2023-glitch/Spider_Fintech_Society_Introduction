@@ -1,515 +1,556 @@
 /* =========================================================================
-   LEVEL 19: AML, sanctions screening and the false positive budget
+   LEVEL 19: the screen that filters you out
    ========================================================================= */
 FQ.registerLevel({
   id: 19,
-  codename: 'watchlist',
-  title: 'Ninety eight percent of your alerts are wrong',
-  tagline: 'Every payments company runs a monitoring system, and almost every alert it raises is innocent. Building one teaches you why, and what a good one does about it.',
+  codename: 'gauntlet',
+  title: 'The screen that filters you out',
+  tagline: 'Fourteen repositories will not help you if you cannot pass the sixty minute screen in front of them. This level is the filter itself: complexity you can feel, the eight patterns that keep appearing, and the practical exercises payments companies actually set.',
   difficulty: 9,
-  minutes: 260,
-  tags: ['AML', 'sanctions', 'fuzzy matching', 'rule tuning'],
-  summary: 'Sanctions screening and transaction monitoring, built against 12,067 synthetic payments and a fictional ' +
-           'watchlist. Exact name matching finds five of the seven real hits. Fuzzy matching finds all seven and ' +
-           '175 innocent people alongside them. Choosing where to sit between those two is the job.',
+  minutes: 600,
+  tags: ['interviews', 'complexity', 'data structures', 'practice'],
+  summary: 'Everything before this level was about being worth hiring. This one is about being allowed to demonstrate ' +
+           'it. The coding screen, the patterns that cover most of it, forty problems dressed as payments work, the ' +
+           'Stripe style practical exercise, the behavioural round, and a rehearsal schedule. The complexity numbers ' +
+           'here were measured, because feeling the difference is worth more than memorising the notation.',
 
   objectives: [
-    'Separate sanctions screening from transaction monitoring, because they are different obligations',
-    'Normalise a name, then match it with Jaro-Winkler, and see what each step buys',
-    'Measure recall and precision across thresholds instead of picking one by instinct',
-    'Cut false positives with secondary identifiers rather than by lowering recall',
-    'Write structuring and pass-through rules, and tune them against a stated budget',
-    'Build an alert queue with dispositions, case files and an audit trail',
-    'Say what the system cannot do, and what a person has to decide'
+    'State the complexity of your own code without guessing',
+    'Recognise which of eight patterns a problem wants',
+    'Write a correct solution while talking, under time',
+    'Handle a practical exercise: read a codebase fast, find the bug, ship the change',
+    'Answer behavioural questions with a structure and a real story',
+    'Rehearse on a schedule instead of grinding at random'
   ],
 
   knowledge: [
-    { h: 'Two obligations that get confused' },
-    { p: 'Anti money laundering rules put several duties on a regulated firm. Two of them turn into software, and treating ' +
-         'them as one system is the most common design mistake in this area.' },
+    { h: 'What the loop actually is' },
+    { p: 'For a backend role at a payments company, the shape is nearly always this, and each stage is filtering for ' +
+         'something different:' },
     { table: {
-      head: ['', 'Sanctions screening', 'Transaction monitoring'],
+      head: ['Stage', 'Length', 'What it really tests'],
       rows: [
-        ['**Question**', 'Is this party on a list?', 'Does this behaviour look like laundering?'],
-        ['**Standard**', 'Prohibition. No threshold, no judgement', 'Suspicion. Judgement, documented'],
-        ['**Timing**', 'Before the payment moves', 'After, in batches or near real time'],
-        ['**Getting it wrong**', 'A payment to a designated party', 'A pattern nobody reported'],
-        ['**Output**', 'Block, or release with a reason', 'An alert, then a case, then possibly a report']
+        ['Recruiter call', '20 min', 'That you can say what you have built in three sentences'],
+        ['Technical screen', '45 to 60 min', 'Whether you can write working code while talking. Most rejections happen here'],
+        ['Practical exercise', '60 to 90 min', 'Can you work in somebody else\'s codebase, at all'],
+        ['Onsite coding, twice', '60 min each', 'Depth, and whether you improve a first answer'],
+        ['System design', '45 to 60 min', 'Whether you have seen a system rather than read about one'],
+        ['Behavioural', '45 min', 'Ownership, disagreement, and what you do when you are wrong']
       ]
     }},
-    { p: 'Screening is a lookup with a matching problem. Monitoring is a set of rules over behaviour. They share an alert ' +
-         'queue and nothing else, and building them as one pipeline produces a system that can neither block reliably nor ' +
-         'explain a pattern.' },
+    { p: 'Two things are worth knowing before you prepare. **Most candidates are rejected at the technical screen**, so ' +
+         'that hour deserves most of your practice. And **Stripe, Adyen and several others prefer practical exercises to ' +
+         'puzzles**: a small repository with a failing test, an API to integrate against, a bug to find, a migration to ' +
+         'write. Preparing only on algorithm puzzles leaves you unready for the half of the industry that stopped ' +
+         'setting them.' },
+    { money: 'Your repositories change what these stages feel like rather than replacing them. A system design round ' +
+             'where you can say "I built the reconciliation, and here is the break rate it found" is a different ' +
+             'conversation from one where you are describing a design you have only read about. But you have to get to ' +
+             'that round.' },
+
+    { h: 'Complexity, as something you can feel' },
+    { p: 'Big O describes how the work grows with the input, not how fast it is. That distinction sounds academic until ' +
+         'you watch it. Here is the level 10 reconciliation, matching two files by reference, written the obvious way ' +
+         'and the indexed way:' },
+    { table: {
+      head: ['Rows each side', 'Nested loops', 'Dictionary index', 'Ratio'],
+      rows: [
+        ['2,000', '187.2 ms', '1.1 ms', '175x'],
+        ['8,000', '**8,528.3 ms**', '**7.0 ms**', '**1,220x**']
+      ]
+    }},
+    { p: 'Four times the rows made the nested version **forty five times slower**, which is worse than the sixteen times ' +
+         'quadratic growth predicts. The extra came from memory: at 2,000 rows the inner list still sits in cache, and ' +
+         'at 8,000 it does not, so each comparison costs more as well as there being more of them. The indexed version ' +
+         'grew by about six times, which is roughly linear with its own cache penalty.' },
+    { p: 'Now scale it. At 8,000 rows a side the nested version takes 8.5 seconds. A real settlement file has a million ' +
+         'rows, and a million is 125 times eight thousand, so the quadratic version would take **around 36 hours**, ' +
+         'while the indexed version stays under a second. That is why the answer to "how would you match these two ' +
+         'files" is a dictionary, and why an interviewer stops listening when it is not.' },
+    { p: 'The same lesson, four more ways, all measured:' },
+    { table: {
+      head: ['Task', 'The obvious way', 'The right way', 'Ratio'],
+      rows: [
+        ['"Have I seen this reference?" 10,000 times, over 100,000 known references', 'A list: 19,708.9 ms', 'A set: 6.82 ms', '**2,891x**'],
+        ['Group 200,000 payments by merchant, 500 merchants', 'Filter once per merchant: 9,527.8 ms', 'One pass into a dictionary: 59.1 ms', '**161x**'],
+        ['Top 10 merchants out of 200,000', 'Sort everything: 309.1 ms', 'A heap of 10: 41.8 ms', '7.4x'],
+        ['Build a 200,000 line export', 'String += in a loop: 195.2 ms', '`"".join(...)`: 82.8 ms', '2.4x']
+      ]
+    }},
+    { p: 'Notice the sizes of the ratios. The first two are changes of complexity class, so they grow without limit as ' +
+         'the data does. The last two are constant factor improvements, valuable but bounded. **Interviewers care much ' +
+         'more about the first kind**, and so should you: getting a 7x speedup is nice, and turning `O(n²)` into `O(n)` ' +
+         'is the answer to the question.' },
     { check: {
-      q: 'A payment scores 0.93 against a designated entity. Your system blocks it automatically and emails the customer ' +
-         'that their payment was rejected for compliance reasons. Name two problems.',
-      a: 'First, 0.93 is a similarity score, not an identification. Somewhere around that score sit hundreds of people who ' +
-         'share part of a name with somebody on a list, and blocking them automatically means freezing innocent people\'s ' +
-         'money without a person ever looking. A score that high should hold the payment and raise an alert; a person ' +
-         'releases or blocks it. Second, telling the customer why can be tipping off, which is an offence in many ' +
-         'jurisdictions when a report has been or may be made. What the customer is told is a legal question with a ' +
-         'jurisdiction specific answer, and it does not belong in a template somebody wrote in a hurry.'
+      q: 'In a screen you write a solution and say "this is O(n log n)". The interviewer asks whether it could be O(n). ' +
+         'You cannot immediately see how. What is the best thing to say?',
+      a: 'Say what you actually know, out loud, and then reason forwards. Something like: "The log n comes from the ' +
+         'sort, so to remove it I would need to avoid needing sorted order. What I am using the order for is finding ' +
+         'matches, and a hash map gives me lookups without order, so let me see whether that covers every case." Then ' +
+         'try it. That answer shows the interviewer the thing they are actually assessing, which is whether you can ' +
+         'find your way to a better solution with a hint, and it is far stronger than either guessing or going silent. ' +
+         'If it turns out not to be possible, saying "I think n log n is the bound here, because we need the ordering ' +
+         'for the ranking" is a perfectly good answer, and interviewers do sometimes ask about improvements that are ' +
+         'not available to see what you do.'
     }},
 
-    { h: 'A name is not an identifier' },
-    { p: 'Screening compares a string on a payment against a list of strings. Everything hard about it comes from the fact ' +
-         'that the same person is written many ways, and different people are written the same way. This level plants ' +
-         'seven payments to entities that really are on its watchlist, each written differently.' },
+    { h: 'The eight patterns' },
+    { p: 'Almost every screen question is one of these wearing a costume. Learn to recognise the costume:' },
     { table: {
-      head: ['How it was written', 'Found by exact match?'],
+      head: ['Pattern', 'The tell', 'A payments version'],
       rows: [
-        ['Exactly as listed', 'Yes'],
-        ['In upper case', 'Yes, after case folding'],
-        ['Using the listed alias, family name first', 'Yes, after sorting the tokens'],
-        ['With a title, `MR` in front', 'Yes, after stripping titles'],
-        ['With the word order swapped', 'Yes, after sorting the tokens'],
-        ['Transliterated, `k` written as `c`', '**No**'],
-        ['With one letter dropped', '**No**']
+        ['**Hash map counting**', '"How many", "duplicates", "seen before"', 'Find every payment reference that appears twice in a settlement file'],
+        ['**Two pointers**', 'A sorted array, pairs, or merging', 'Merge two sorted transaction streams into one timeline'],
+        ['**Sliding window**', '"In any period of", "consecutive"', 'The highest total any merchant took in a rolling 24 hours'],
+        ['**Heap**', '"Top k", "k largest", a stream', 'The ten largest refunds today, from a stream you cannot store'],
+        ['**Sort by a key**', '"Group", "order by", "earliest"', 'Order card events so authorisations precede their captures'],
+        ['**Prefix sums**', '"Running total", "sum between"', 'A balance as of any date, from a list of entries'],
+        ['**Graph and breadth first search**', '"Path", "reachable", "cycle"', 'Cheapest route through payment networks, or detecting a cycle in transfers'],
+        ['**Intervals**', '"Overlap", "merge", "free time"', 'Merge overlapping authorisation holds on one card']
       ]
     }},
-    { p: 'So normalisation, which is upper casing, removing punctuation, dropping titles and sorting the tokens, recovers ' +
-         'five of the seven. It is cheap and it is most of the win. The last two need a similarity measure.' },
-    { money: 'Exact matching on these files: **5 alerts, all 5 correct, and 2 designated parties paid**. A perfect ' +
-             'precision score and a failure, which is the shape of every argument about screening thresholds.' },
+    { p: 'The recognition is the hard part and it is trainable. For every problem you practise, write down which pattern ' +
+         'it was after you solve it. After thirty problems you will start naming the pattern from the question, which is ' +
+         'what people mean when they say somebody is good at these.' },
 
-    { h: 'Jaro-Winkler, and what the number means' },
-    { p: 'Jaro similarity counts characters that appear in both strings close to the same position, penalises ones that ' +
-         'appear in the wrong order, and returns a number between 0 and 1. Winkler adds a bonus when the strings share a ' +
-         'prefix, which suits names because people get the start of a name right more often than the end.' },
-    { code: 'jaro_winkler("BRANREN BOSKOUL", "BRANREN BOSCOUL")  = 0.9689   # the transliteration\njaro_winkler("IVASKITZ SEVREN",  "IVASKITZ SEVRN")   = 0.9867   # the dropped letter\njaro_winkler("NISLO DAVRESKI",   "NISLO DAVRESKI")   = 1.0000   # exact', lang: 'text' },
-    { p: 'Now sweep the threshold across all 12,067 payments. Seven of them are the real hits. Everything else is ' +
-         'somebody with an ordinary name.' },
+    { h: 'Forty problems, in payments clothing' },
+    { p: 'Solve each with tests and a stated complexity. They are ordinary interview problems: the costume is there so ' +
+         'that you think about the domain at the same time, and so that your repository is worth showing.' },
     { table: {
-      head: ['Threshold', 'Payments alerted', 'Real hits found', 'Innocent', 'Recall', 'Precision'],
+      head: ['Pattern', 'Problems'],
       rows: [
-        ['1.00, exact', '5', '5', '0', '71.4%', '100%'],
-        ['0.95', '182', '7', '175', '100%', '3.85%'],
-        ['0.92', '889', '7', '882', '100%', '0.79%'],
-        ['0.90', '1,961', '7', '1,954', '100%', '0.36%'],
-        ['0.85', '7,081', '7', '7,074', '100%', '0.10%'],
-        ['0.80', '9,360', '7', '9,353', '100%', '0.07%']
+        ['Hash map', 'Duplicate references in a file. First non repeated merchant. Two payments summing to a target. Are two settlement files anagrams of each other by reference. Most frequent decline code.'],
+        ['Two pointers', 'Merge two sorted event streams. Remove duplicate refunds in place. Nearest pair of amounts. Three amounts summing to a target. Longest common prefix of two reference formats.'],
+        ['Sliding window', 'Highest 24 hour volume for a merchant. Longest run of successful payments. Smallest window containing one of every decline code. Rolling average latency. Count windows over a velocity limit.'],
+        ['Heap', 'Top ten refunds from a stream. Merge k sorted settlement files. Running median of payment amounts. The kth largest chargeback. Schedule payouts by priority.'],
+        ['Sorting', 'Order card events so authorisation precedes capture. Group payments by merchant then by day. Sort by amount with references breaking ties. Find the first gap in a sequence of ids. Custom order for settlement currencies.'],
+        ['Prefix sums', 'Balance as of any date. Days where the balance went negative. Subarray of payments summing to a refund. Largest single day movement. Fee totals between two dates.'],
+        ['Graphs', 'Cheapest route across payment networks. Detect a cycle in a chain of transfers. Which accounts are reachable from one. Order microservice deploys by dependency. Shortest path in a currency conversion graph.'],
+        ['Intervals', 'Merge overlapping authorisation holds. Free capacity in a payout schedule. Insert a hold into a sorted list. Maximum concurrent holds on one card. Minimum batches covering every settlement window.']
       ]
     }},
-    { p: 'Read the middle of that table rather than the ends. Moving from 0.95 to 0.85 finds nothing new and multiplies ' +
-         'the queue by thirty nine. Moving from 0.95 up to 0.97 cuts the queue to six distinct names and loses the ' +
-         'transliteration, which scored 0.9689. The whole decision lives in a narrow band, and outside it you are either ' +
-         'drowning analysts or missing designated parties.' },
-    { warn: 'A precision of 3.85% is not a broken system. Published figures for sanctions and AML alerting sit in that ' +
-            'region across the industry, because the cost of a miss is a prohibition breach and the cost of a false ' +
-            'positive is an analyst\'s afternoon. What matters is that somebody chose the number and can say why.' },
-    { check: {
-      q: 'Your compliance lead asks for a threshold that gives both high recall and high precision. What do you tell them?',
-      a: 'That on name similarity alone it does not exist, and show them the sweep. There is no threshold in this data ' +
-         'where recall is 100% and precision is above about 4%, because innocent names genuinely resemble listed names. ' +
-         'A better threshold will not get you there. More information will: secondary identifiers, so a high scoring name ' +
-         'with the wrong country and the wrong date of birth is discounted automatically. That moves both numbers at once, ' +
-         'and a threshold only trades one for the other.'
-    }},
+    { tip: 'Do not solve forty problems once. Solve twenty, twice, a week apart, under time, and keep a record of which ' +
+           'ones you failed the second time. Repetition on the ones you got wrong is worth ten fresh problems, and the ' +
+           'record is what makes the repetition targeted rather than random.' },
 
-    { h: 'Secondary identifiers, the only way out' },
-    { p: 'The watchlist carries more than a name. In this level it carries a country, an entity type, and a date of birth ' +
-         'for most individuals. A payment carries a counterparty country. Every field they share is a chance to discount ' +
-         'a match without lowering the name threshold.' },
-    { ol: [
-      '**Score the name.** Keep the threshold low enough that no real hit is lost.',
-      '**Then score the rest.** Country agrees, disagrees, or is missing. Date of birth agrees, disagrees, or is missing.',
-      '**Combine them into a decision**, not into one number. A high name score with a definite country mismatch is a different thing from a high name score with a missing country, and flattening both into 0.86 throws away the distinction.',
-      '**Auto discount only on disagreement, never on absence.** A missing date of birth is not evidence of innocence, and a system that treats it as such will miss the entities that are hardest to identify.'
-    ]},
-    { code: 'name 0.96, country XA == XA, dob missing      -> alert, high priority\nname 0.96, country GB != XA, dob 1971 != 1984 -> auto discount, logged with the reason\nname 0.96, country missing, dob missing       -> alert, normal priority', lang: 'text' },
-
-    { h: 'Monitoring rules, and the budget that tunes them' },
-    { p: 'Monitoring looks for behaviour. Three rules cover most of what a small payments firm would run, and this level\'s ' +
-         'data contains planted examples of the first two and none of the third.' },
-    { table: {
-      head: ['Rule', 'What it looks for', 'On this data'],
-      rows: [
-        ['**Structuring**', 'Cash deposits kept under a reporting threshold, repeatedly', '4 real cases, 6 deposits each'],
-        ['**Pass through**', 'Money in, almost all of it out within a day', '3 real cases, 92% to 93% out'],
-        ['**Corridor**', 'Anything touching a higher risk jurisdiction', '514 payments, 0 real cases']
-      ]
-    }},
-    { p: 'The corridor rule is in the table as a warning. It alerts on 4.26% of the book, finds nothing here, and is the ' +
-         'rule most likely to be written first because it takes one line. A rule that fires on geography alone is a rule ' +
-         'that spends an analyst\'s year confirming that people send money to places.' },
-    { p: 'Structuring shows the tuning problem cleanly. The rule is: cash deposits between 80% and 100% of the 10,000 ' +
-         'reporting threshold, at least N of them, within seven days, summing to more than the threshold.' },
-    { table: {
-      head: ['N', 'Alerts', 'Real', 'Innocent', 'Precision'],
-      rows: [
-        ['2', '16', '4', '12', '25%'],
-        ['3', '4', '4', '0', '100%']
-      ]
-    }},
-    { p: 'Twelve customers in this data made two large cash deposits within a few days for ordinary reasons. Setting N to ' +
-         'two catches them all and finds nothing extra. Setting N to three is right **on this data**, which is the ' +
-         'sentence that matters: somebody who knows the threshold can now deposit twice a week forever, and the only ' +
-         'defence is that a tuning decision is written down, dated, and revisited.' },
-    { check: {
-      q: 'You raise the structuring threshold from two deposits to three, the queue drops from 16 alerts to 4, and you ' +
-         'ship it. What did you skip?',
-      a: 'The record, and the check that goes with it. Raising a threshold is a change to how much the firm looks, so it ' +
-         'needs the reason, the data it was measured on, the date, and who approved it. It also needs below the line ' +
-         'testing: sample what the new threshold no longer alerts on and confirm those cases really are innocent, because ' +
-         'the alerts you stopped generating are invisible by construction. A tuning change that shrinks the queue is ' +
-         'indistinguishable from a bug that shrinks the queue, unless somebody looked underneath it.'
-    }},
-
-    { h: 'The alert is the start, not the answer' },
-    { p: 'An alert is a question. What a monitoring system produces for the business is a queue of them, and what the ' +
-         'regulator eventually reads is the record of how each one was answered.' },
-    { ol: [
-      '**Alert**: a rule or a score fired, with the payments that caused it attached.',
-      '**Triage**: an analyst looks. Most are closed here, with a disposition code and a sentence.',
-      '**Case**: the ones that survive get a file, with the customer history, the pattern and what was asked.',
-      '**Report**: if suspicion stands, the firm files a suspicious activity report. That decision is a person\'s, in a role, and your software records it rather than making it.'
-    ]},
-    { p: 'Two properties make the difference between a system a compliance team can use and one they work around.' },
+    { h: 'The hour itself' },
+    { p: 'The most common way to fail a screen is not being unable to solve it. It is silence, or writing code before ' +
+         'the problem is clear. This order works, and interviewers are grading against something close to it:' },
+    { code: '1. Repeat the problem back, in your own words.            30 seconds\n2. Ask about edges: empty input, duplicates, size,\n   negative amounts, currencies, ties.                    1 minute\n3. Write one small example by hand and state the answer.   1 minute\n4. Say the approach and its complexity BEFORE coding.      1 minute\n5. Code, narrating. Leave the optimisation for later.     20 minutes\n6. Run your own example through it, out loud.              3 minutes\n7. Say what you would do with more time.                   1 minute', lang: 'text' },
+    { p: 'Step 4 is the one candidates skip and the one interviewers weight most heavily. Saying "I will build a hash map ' +
+         'of references, which makes this one pass and O(n) time with O(n) memory" before writing anything tells them ' +
+         'almost everything they were going to learn from the whole hour.' },
     { ul: [
-      '**Every alert carries its evidence.** The payments, the scores, the rule version and the thresholds in force when it fired. An analyst who has to go and find the data will be slower than the queue.',
-      '**Nothing is ever deleted.** Dispositions, reopenings and comments are appended. This is level 13\'s rule, and here it is a legal requirement rather than a preference.'
+      '**Talk continuously, even when stuck.** "I am trying to see whether sorting first helps here" is information. Thirty seconds of silence is not, and it reads as being lost.',
+      '**A working slow answer beats an unfinished fast one.** Get something correct, say what is slow about it, then improve it. Many interviews are scored on whether you got there, not on how directly.',
+      '**Use the language you are fastest in,** unless the role is specifically Java, which is why level 18 exists.',
+      '**Test with your own example,** by hand, before saying you are done. Finding your own bug is a positive signal; having the interviewer find it is not.',
+      '**When you are stuck, three moves:** say the brute force out loud, try a tiny example on paper, or ask "would it help if the input were sorted?". One of the three almost always moves it forward.'
     ]},
-    { warn: 'This system decides whether real people can move their own money. A false positive is somebody\'s rent held ' +
-            'for three days. Build the queue so that discounting a match is as easy as escalating one, measure how long ' +
-            'people wait, and put that number on the same dashboard as the alert count.' }
+
+    { h: 'The practical exercise' },
+    { p: 'This is the round payments companies increasingly prefer, because it resembles the job. You are given a small ' +
+         'repository and ninety minutes, and asked to do something real:' },
+    { table: {
+      head: ['Exercise', 'They are watching for'],
+      rows: [
+        ['Integrate against an API from its documentation', 'Do you read the docs, handle errors, set a timeout, retry safely'],
+        ['Find and fix a bug from a failing test', 'Can you navigate unfamiliar code without panicking'],
+        ['Add a feature to an existing service', 'Do you match the existing style, or impose your own'],
+        ['Write a migration and a backfill', 'Level 13, in ninety minutes'],
+        ['Review a pull request and comment', 'What you notice, and how you say it']
+      ]
+    }},
+    { ul: [
+      '**Run the tests in the first five minutes,** before reading everything. A working baseline tells you more than an hour of reading, and a broken setup is something you want to find early.',
+      '**Follow the conventions you find.** A pull request that reformats the file while fixing a bug is a bad signal at every company.',
+      '**Commit small and often,** with messages. Some companies read the history to see how you worked.',
+      '**Write a short note with your submission:** what you did, what you did not have time for, what you would do next. It converts an unfinished exercise into a demonstration of judgement.',
+      '**Handle the failure cases,** because that is the entire point of the payments version. A happy path integration with no timeout and no retry is the wrong answer even when it works.'
+    ]},
+    { check: {
+      q: 'In a ninety minute practical exercise you realise at minute seventy that your approach cannot handle one of ' +
+         'the required cases. Do you start again, hack around it, or stop and explain?',
+      a: 'None of those exactly, and the order matters. First, make sure what you have is committed and working for the ' +
+         'cases it does handle, because a working partial solution is worth much more than a broken complete one. Then ' +
+         'spend two minutes deciding whether the gap is a small fix inside your design or a design problem, and say ' +
+         'which it is in your notes. If it is small, do it. If it is structural, do not start again with twenty minutes ' +
+         'left, because you will hand in nothing. Write the note instead: what breaks, why your approach cannot handle ' +
+         'it, and what you would do differently given another hour, ideally with the shape of the correct design ' +
+         'sketched. Reviewers consistently score that above a rushed rewrite, because it is exactly what they want a ' +
+         'colleague to do at four in the afternoon on a Friday.'
+    }},
+
+    { h: 'The behavioural round is not a formality' },
+    { p: 'At a payments company this round is often where offers are decided, because the domain punishes people who ' +
+         'hide mistakes. Use **STAR**: Situation, Task, Action, Result, in about two minutes, with the Action being most ' +
+         'of it and containing the word "I" rather than "we".' },
+    { p: 'Prepare five stories, written down, and reuse them across questions:' },
+    { ul: [
+      '**Something you built that mattered,** with a number in it. One of your levels, with the measurement.',
+      '**A time you were wrong,** and what you did when you found out. Not a disguised strength.',
+      '**A disagreement with somebody,** and how it was resolved. What you did when you lost the argument counts here.',
+      '**Something that broke,** what you did first, and what you changed afterwards so it could not recur.',
+      '**A money bug,** even a small one from your own projects: the one cent rounding difference, the double capture, the missing idempotency key. In fintech this story lands harder than any of the others.'
+    ]},
+    { p: 'The failure story is the one people prepare worst. Interviewers are not looking for a small tidy mistake; they ' +
+         'are looking for whether you noticed, told somebody, fixed it and changed something. "I shipped a rounding bug ' +
+         'that under charged 40 merchants by a cent each, I found it in reconciliation, I told my lead before fixing it, ' +
+         'we corrected the entries and I added a property test that would have caught it" is a strong answer, and it is ' +
+         'a story every one of these levels can give you.' },
+
+    { h: 'A rehearsal schedule' },
+    { p: 'Grinding problems at random is how people spend three months and improve slowly. Six weeks, structured, beats ' +
+         'three months of drift:' },
+    { table: {
+      head: ['Week', 'Coding', 'Everything else'],
+      rows: [
+        ['1', 'Ten problems, hash map and two pointers, untimed. Name the pattern for each', 'Write the five stories'],
+        ['2', 'Ten problems, sliding window and heap, 30 minutes each', 'One practical exercise, timed'],
+        ['3', 'Ten problems, sorting and prefix sums, 30 minutes, talking aloud', 'Rewrite the two weakest stories'],
+        ['4', 'Ten problems, graphs and intervals, 30 minutes, talking aloud', 'One practical exercise, timed'],
+        ['5', 'Redo the ten you failed, under time', 'Two mock interviews with a person'],
+        ['6', 'Five fresh problems, full hour format', 'Level 20: system design, and the final package']
+      ]
+    }},
+    { warn: 'Rehearse out loud, with somebody, at least twice. Explaining code while writing it uses a different part of ' +
+            'your brain from writing it silently, and the first time you try it must not be in an interview. A friend on ' +
+            'a call is enough; the value is in the talking, not in their feedback.' },
+    { p: 'And the part nobody says out loud: **you will fail some of these**, including ones you should have passed. The ' +
+         'screens are noisy, the hour is short and interviewers have bad days too. The response is to write down what ' +
+         'happened while it is fresh, fix the specific thing, and apply to the next one. A rejection from a company that ' +
+         'sets a problem you had never seen is information about the problem, not a verdict on you.' }
   ],
 
   tutorial: {
-    intro: 'Python, pandas, and a queue in Postgres. The watchlist, the customers and the payments ship with the level, ' +
-           'and every name in all three is invented. Implement Jaro-Winkler yourself once, then use a library.',
+    intro: 'This level is practice rather than construction, so the repository is a record of practice: forty solved ' +
+           'problems with tests and complexities, four timed exercises, and an honest log. Work in a repository called ' +
+           '`interview-gauntlet`.',
     steps: [
       {
-        t: 'Load, and look at the shapes',
+        t: 'Feel the complexity before you study it',
         blocks: [
-          { code: 'import pandas as pd\n\nwatch = pd.read_csv("data/level-19-watchlist.csv").fillna("")\ncust  = pd.read_csv("data/level-19-customers.csv")\npays  = pd.read_csv("data/level-19-payments.csv", parse_dates=["booked_at"])\n\nprint(len(watch), "entities", len(cust), "customers", len(pays), "payments")\nprint(pays.booked_at.min().date(), "to", pays.booked_at.max().date())', lang: 'python' },
-          { code: '60 entities 400 customers 12067 payments\n2026-04-01 to 2026-06-29', lang: 'text' },
-          { p: 'Expand the aliases into their own rows first. A list of 60 entities is 95 searchable strings, and screening ' +
-               'against the primary name alone silently loses every alias hit.' }
+          { p: 'Write the reconciliation both ways and time it yourself at several sizes. Do not read the numbers below ' +
+               'and move on: produce your own, because the memory of watching 8.5 seconds become 7 milliseconds is what ' +
+               'you will actually recall in an interview.' },
+          { code: '2,000 rows a side   nested   187.2 ms   indexed   1.1 ms      175x\n8,000 rows a side   nested 8,528.3 ms   indexed   7.0 ms    1,220x', lang: 'text' },
+          { p: 'Then extrapolate to a million rows, as the knowledge section does, and write the number in your README.' }
         ],
-        check: 'The watchlist expands from 60 rows to 95 searchable strings.'
+        check: 'You have your own timings at three sizes, and the growth ratio between them.'
       },
       {
-        t: 'Normalise, and count what it recovers',
+        t: 'The four other comparisons',
         blocks: [
-          { code: 'import re\n\nTITLES = {"MR", "MRS", "MS", "DR", "MISS", "PROF"}\n\ndef normalise(name: str) -> str:\n    s = re.sub(r"[^A-Z0-9 ]", " ", name.upper())\n    return " ".join(sorted(t for t in s.split() if t not in TITLES))', lang: 'python' },
-          { p: 'Four decisions in four lines: case folding, punctuation removal, title stripping and token sorting. Test ' +
-               'each one against a name it is supposed to fix, and write down why sorting the tokens is safe here. It is ' +
-               'safe because a two token name reversed is common and a false pairing of unrelated names is rare, and both ' +
-               'of those are assumptions worth stating.' },
-          { code: 'exact matches after normalisation:  5 of the 7 planted hits', lang: 'text' }
+          { p: 'List against set membership, grouping by filter against one pass, sorting against a heap for top k, and ' +
+               'string concatenation against join. Time each, and label which are changes of complexity class and which ' +
+               'are constant factors.' },
+          { code: 'membership, 100,000 known   list 19,708.9 ms   set   6.82 ms   2,891x   class change\ngrouping, 200,000 rows      filter 9,527.8 ms   pass 59.1 ms     161x   class change\ntop 10 of 200,000           sort    309.1 ms   heap 41.8 ms     7.4x   constant factor\n200,000 line export         +=      195.2 ms   join 82.8 ms     2.4x   constant factor', lang: 'text' }
         ],
-        check: 'Normalised exact matching finds 5 of the 7, and the other 2 are the transliteration and the dropped letter.'
+        check: 'You can say, for each pair, whether the gap grows with the input or stays roughly fixed.'
       },
       {
-        t: 'Jaro-Winkler, written once by hand',
+        t: 'Twenty problems, with the pattern named',
         blocks: [
-          { p: 'Write it yourself before importing it. It takes thirty lines and it is the difference between choosing a ' +
-               'threshold and guessing one.' },
-          { code: 'def jaro(s, t):\n    if s == t:\n        return 1.0\n    window = max(len(s), len(t)) // 2 - 1\n    s_hit = [False] * len(s)\n    t_hit = [False] * len(t)\n    matches = 0\n    for i, ch in enumerate(s):\n        for j in range(max(0, i - window), min(i + window + 1, len(t))):\n            if not t_hit[j] and t[j] == ch:\n                s_hit[i] = t_hit[j] = True\n                matches += 1\n                break\n    if not matches:\n        return 0.0\n    k = transpositions = 0\n    for i, hit in enumerate(s_hit):\n        if hit:\n            while not t_hit[k]:\n                k += 1\n            transpositions += s[i] != t[k]\n            k += 1\n    transpositions //= 2\n    return (matches / len(s) + matches / len(t)\n            + (matches - transpositions) / matches) / 3\n\n\ndef jaro_winkler(s, t, p=0.1):\n    j = jaro(s, t)\n    if j < 0.7:\n        return j\n    prefix = 0\n    for a, b in zip(s[:4], t[:4]):\n        if a != b:\n            break\n        prefix += 1\n    return j + prefix * p * (1 - j)', lang: 'python' },
-          { tip: 'Then check it against `rapidfuzz.distance.JaroWinkler.similarity` on a hundred pairs. If they disagree, ' +
-                 'your transposition count is wrong, which is the part everybody gets wrong.' }
+          { p: 'Work through the first twenty from the list, untimed to begin with. For each one: a solution, a test, ' +
+               'the complexity in a comment, and the pattern name. One file per problem.' },
+          { code: '"""Duplicate references in a settlement file.\n\nPattern: hash map counting\nTime:    O(n)\nSpace:   O(n)\nNote:    my first attempt sorted first, which was O(n log n) for no gain.\n"""', lang: 'python' },
+          { p: 'That last line, recording your first wrong instinct, is the most useful thing in the file when you come ' +
+               'back in week five.' }
         ],
-        check: 'Your implementation agrees with the library to six decimal places, and the transliteration pair scores 0.9689.'
+        check: 'Twenty solved problems, each with a test, a complexity and a named pattern.'
       },
       {
-        t: 'Screen once, on distinct names',
+        t: 'Twenty more, under thirty minutes each',
         blocks: [
-          { p: 'There are 12,067 payments and 887 distinct counterparty names. Score the names, then join back to the ' +
-               'payments. That is a 93% saving before any optimisation, and it makes the sweep fast enough to run in a test.' },
-          { code: 'names = pays.counterparty_name.drop_duplicates()\nscored = {\n    n: max((jaro_winkler(normalise(n), t), eid) for eid, t in targets)\n    for n in names\n}\npays["score"] = pays.counterparty_name.map(lambda n: scored[n][0])\npays["matched_entity"] = pays.counterparty_name.map(lambda n: scored[n][1])', lang: 'python' },
-          { warn: 'This is 887 by 95 comparisons, which is fine. A real book is millions of names by tens of thousands of ' +
-                  'list entries, and that needs blocking: compare only names that share a first letter, a phonetic key or ' +
-                  'a token, then score inside each block. Write the slow version first and know what it costs.' }
+          { p: 'Timer visible. Stop at thirty minutes whether or not you are finished, and record the outcome honestly: ' +
+               'solved, solved with a hint you gave yourself, or failed. The log is the point.' },
+          { tip: 'A problem you failed is more valuable than one you solved. Put it in a list called `redo.md` with the ' +
+                 'date, and come back to it a week later.' }
         ],
-        check: 'Scoring runs over distinct names, and 12,067 payments each carry a score and a matched entity.'
+        check: 'A log of forty attempts with times and outcomes, and a redo list.'
       },
       {
-        t: 'Sweep the threshold, and print the table',
+        t: 'Talk while you type',
         blocks: [
-          { code: 'for thr in (1.00, 0.95, 0.92, 0.90, 0.85, 0.80):\n    hit = pays[pays.score >= thr]\n    true = hit.payment_id.isin(KNOWN_HITS).sum()\n    print(f"{thr:.2f}  {len(hit):6d} alerts  {true} real  "\n          f"recall {true/7:.0%}  precision {true/max(len(hit),1):.2%}")', lang: 'python' },
-          { code: '1.00       5 alerts  5 real  recall  71%  precision 100.00%\n0.95     182 alerts  7 real  recall 100%  precision   3.85%\n0.92     889 alerts  7 real  recall 100%  precision   0.79%\n0.90    1961 alerts  7 real  recall 100%  precision   0.36%\n0.85    7081 alerts  7 real  recall 100%  precision   0.10%\n0.80    9360 alerts  7 real  recall 100%  precision   0.07%', lang: 'text' },
-          { p: 'This table is the deliverable of the whole level. Put it in the README, and put the chosen threshold next ' +
-               'to it with the sentence explaining the choice.' }
+          { p: 'Redo five problems you have already solved, narrating every step out loud to a recording or a person. ' +
+               'Follow the seven step order from the knowledge section, including saying the complexity before you ' +
+               'write anything.' },
+          { p: 'Listen to one recording. It is unpleasant and it is the fastest improvement available in this entire ' +
+               'level, because the gap between what you thought you explained and what you actually said is large.' }
         ],
-        check: 'Your sweep reproduces these six rows exactly.'
+        check: 'You can solve a familiar problem while speaking continuously, with no silences over ten seconds.'
       },
       {
-        t: 'Discount on secondary identifiers',
+        t: 'Four practical exercises, timed',
         blocks: [
-          { code: 'def decide(row, entity):\n    if row.score < THRESHOLD:\n        return None\n    reasons = []\n    if entity.country and row.counterparty_country:\n        if entity.country != row.counterparty_country:\n            reasons.append("country mismatch")\n    if not reasons:\n        return Alert(row, entity, priority="high" if row.score >= 0.98 else "normal")\n    return Discount(row, entity, reasons=reasons)          # logged, not deleted', lang: 'python' },
-          { p: 'Then measure it: how many alerts the discount removes, and whether any of the seven real hits were among ' +
-               'them. If one was, the discount rule is wrong and no amount of queue reduction makes it right.' },
-          { tip: 'Keep discounts in the same table as alerts with a status, so a later question about what the system did ' +
-                 'with a name has an answer.' }
+          { p: 'Build the exercises for yourself, because building them teaches you what they test:' },
+          { code: '1. Integrate with a public API you have never used, with a timeout,\n   retries with backoff, and a test that proves the retry is safe.\n2. Take one of your own repositories, introduce a subtle bug on a\n   branch, leave it a week, then find it from the failing test alone.\n3. Add a feature to somebody else\'s small open source project,\n   matching their style exactly.\n4. Write a migration and a backfill for a schema you have not seen\n   for a month, in ninety minutes, with a rollback plan.', lang: 'text' },
+          { p: 'Each one gets a note at the end: what you did, what you skipped, what you would do next. Practise ' +
+               'writing that note, because it is part of the submission and almost nobody rehearses it.' }
         ],
-        check: 'Discounted matches are stored with their reasons, and none of the seven real hits is discounted.'
+        check: 'Four exercises completed under time, each with a submission note.'
       },
       {
-        t: 'Two behaviour rules, tuned against a number',
+        t: 'Write the five stories',
         blocks: [
-          { code: 'def structuring(pays, threshold=10_000, floor=0.8, min_deposits=3, window_days=7):\n    cash = pays[(pays.channel == "cash") & (pays.direction == "in")]\n    near = cash[(cash.amount_usd >= floor * threshold)\n                & (cash.amount_usd < threshold)]\n    for cust, rows in near.groupby("customer_id"):\n        rows = rows.sort_values("booked_at")\n        for i in range(len(rows)):\n            w = rows[rows.booked_at - rows.booked_at.iloc[i]\n                     <= pd.Timedelta(days=window_days)]\n            if len(w) >= min_deposits and w.amount_usd.sum() >= threshold:\n                yield Alert("structuring", cust, w)\n                break', lang: 'python' },
-          { p: 'Run it at `min_deposits=2` and at `3`, and record both. Then the pass-through rule: an incoming payment ' +
-               'above 10,000 followed by outgoing payments totalling at least 90% of it within 24 hours.' },
-          { code: 'structuring, min_deposits=2   16 alerts,  4 real   precision  25%\nstructuring, min_deposits=3    4 alerts,  4 real   precision 100%\npass through                   3 alerts,  3 real   precision 100%\ncorridor, XA/XB/XC           514 alerts,  0 real   precision   0%', lang: 'text' }
+          { p: 'Written out in STAR form, two minutes each spoken. Pull the numbers from your own levels: the 13% ' +
+               'inconsistent payouts, the 49% histogram error, the break rate your reconciliation found.' },
+          { p: 'Then say them out loud to somebody and ask which one was vague. There is always one that reads well and ' +
+               'sounds like nothing.' }
         ],
-        check: 'All four rule results match, including the corridor rule finding nothing.'
+        check: 'Five stories, each containing at least one number and at least one thing you changed afterwards.'
       },
       {
-        t: 'The queue, the case and the trail',
+        t: 'Two mock interviews, with a person',
         blocks: [
-          { code: 'create table alert (\n  id            bigserial primary key,\n  kind          text not null,              -- screening | structuring | pass_through\n  customer_id   text not null,\n  score         numeric,\n  rule_version  text not null,              -- which thresholds were in force\n  evidence      jsonb not null,             -- the payments, with their scores\n  status        text not null default \'open\',\n  created_at    timestamptz not null default now()\n);\n\ncreate table alert_event (                   -- append only, as in level 13\n  id         bigserial primary key,\n  alert_id   bigint not null references alert(id),\n  actor      text not null,\n  action     text not null,                 -- triaged | discounted | escalated | reopened\n  reason     text not null,\n  at         timestamptz not null default now()\n);', lang: 'sql' },
-          { p: '`rule_version` is the field people leave out. Without it, an alert from March cannot be explained after ' +
-               'April\'s tuning change, and explaining old alerts is most of what an examination consists of.' }
+          { p: 'A full hour each, with somebody who will not rescue you. One coding, one behavioural. Ask for the ' +
+               'feedback in the form "what would have made you say no", which is more useful than praise.' },
+          { p: 'Then fix exactly the two things they name, and stop preparing. Past a point, more practice stops helping ' +
+               'and applying starts.' }
         ],
-        check: 'Closing an alert writes an event rather than updating a row in place, and reopening one is possible.'
+        check: 'Two mock interviews done, feedback written down, and two specific fixes made.'
       }
     ]
   },
 
   glossary: [
-    { t: 'AML', d: 'Anti money laundering: the obligations on a regulated firm to know its customers, monitor behaviour and report suspicion.' },
-    { t: 'Sanctions screening', d: 'Checking parties against designation lists. A prohibition, so there is no acceptable miss rate.' },
-    { t: 'Transaction monitoring', d: 'Rules or models over behaviour, producing alerts for human judgement.' },
-    { t: 'KYC and CDD', d: 'Know your customer and customer due diligence: identifying who you are dealing with, before and during the relationship.' },
-    { t: 'PEP', d: 'Politically exposed person. Not a wrongdoer, a category that calls for extra diligence.' },
-    { t: 'Jaro-Winkler', d: 'A string similarity measure with a bonus for a shared prefix, widely used for names.' },
-    { t: 'Normalisation', d: 'Case folding, punctuation removal, title stripping and token sorting, before any similarity is computed.' },
-    { t: 'Recall', d: 'Of the real hits, the share the system found. On a prohibition, the number that has to be 100%.' },
-    { t: 'Precision', d: 'Of the alerts raised, the share that are real. Low by design in this domain.' },
-    { t: 'False positive budget', d: 'How many innocent alerts the team can actually work. The real constraint on every threshold.' },
-    { t: 'Structuring', d: 'Splitting money into amounts below a reporting threshold, repeatedly.' },
-    { t: 'Pass through', d: 'Money arriving and leaving almost immediately, leaving little behind.' },
-    { t: 'Blocking', d: 'Comparing only names that share a key, so screening scales past a full cross product.' },
-    { t: 'Below the line testing', d: 'Sampling what a threshold no longer alerts on, to check the misses are really innocent.' },
-    { t: 'Tipping off', d: 'Telling a customer that they are under suspicion or reported. An offence in many jurisdictions.' },
-    { t: 'SAR or STR', d: 'The report a firm files when suspicion stands. A person decides; the software records.' }
+    { t: 'Big O', d: 'How the work grows with the input. A statement about growth, not about speed.' },
+    { t: 'O(1)', d: 'Constant. A dictionary lookup. Does not care how large the data is.' },
+    { t: 'O(log n)', d: 'Halving each step. Binary search, a balanced tree.' },
+    { t: 'O(n)', d: 'One pass. The target for most interview answers.' },
+    { t: 'O(n log n)', d: 'Sorting. Usually acceptable, and often the honest bound.' },
+    { t: 'O(n squared)', d: 'Nested loops over the same data. What you are being tested for noticing.' },
+    { t: 'Amortised', d: 'Average over many operations, even when one is occasionally expensive.' },
+    { t: 'Hash map', d: 'Constant time lookup by key. The single most useful structure in these interviews.' },
+    { t: 'Heap', d: 'Cheap access to the smallest or largest. The answer whenever you hear "top k".' },
+    { t: 'Two pointers', d: 'Two indices moving through sorted data, avoiding a nested loop.' },
+    { t: 'Sliding window', d: 'A range that moves, with totals updated rather than recomputed.' },
+    { t: 'Prefix sum', d: 'Cumulative totals, so any range sum becomes one subtraction.' },
+    { t: 'Breadth first search', d: 'Explore a graph level by level. Shortest path on unweighted edges.' },
+    { t: 'STAR', d: 'Situation, Task, Action, Result. The structure for a behavioural answer.' },
+    { t: 'Practical exercise', d: 'A real task in a small codebase. What payments companies increasingly set instead of puzzles.' }
   ],
 
   quiz: [
-    { q: "What is the standard for sanctions screening, as opposed to transaction monitoring?",
+    { q: "Matching two 8,000 row files by reference took 8,528.3 ms with nested loops and 7.0 ms with a dictionary. At a million rows, roughly what happens?",
       options: [
-        "Prohibition: there is no acceptable threshold for a miss",
-        "Suspicion, documented",
-        "Materiality above a monetary limit",
-        "Best effort within the alert budget"
+        "The nested version would take around 36 hours while the indexed one stays under a second",
+        "Both grow by the same factor",
+        "Neither is usable",
+        "The nested version becomes about 125 times slower"
       ],
       answer: 0,
-      why: "A payment to a designated party is a breach regardless of size or intent, which is why recall dominates the threshold choice." },
+      why: "Quadratic growth against linear. This is why \"use a dictionary\" is the expected answer, said early." },
 
-    { q: "Normalising names before matching recovers which of the level's seven planted hits?",
+    { q: "Four times the rows made the nested version 45 times slower rather than 16. Why?",
       options: [
-        "Five of the seven",
-        "Two of the seven",
-        "None: normalisation only affects speed",
-        "All seven"
+        "Memory: at the smaller size the data still fits in cache, so each comparison also got more expensive",
+        "Because the algorithm is cubic",
+        "Garbage collection",
+        "The measurement was wrong"
       ],
       answer: 0,
-      why: "Case, titles and word order are all fixed by normalisation. The transliteration and the dropped letter need a similarity measure." },
+      why: "Complexity describes growth in operations. Constant factors move too, and usually in the wrong direction." },
 
-    { q: "Exact matching on this data produces 5 alerts, all correct. Why is that not good enough?",
+    { q: "Which of these is a change of complexity class rather than a constant factor improvement?",
       options: [
-        "Exact matching is too slow at scale",
-        "The queue is too small to justify the system",
-        "Precision of 100% is statistically implausible",
-        "Two designated parties were paid"
+        "Using a faster JSON library",
+        "Sorting 200,000 items against using a heap for the top 10",
+        "String += in a loop against \"\".join(...)",
+        "Checking membership in a list against a set"
       ],
       answer: 3,
-      why: "Perfect precision and 71.4% recall is a failure on a prohibition. The two it missed are the two that matter." },
+      why: "Measured at 100,000 known references: 19,708.9 ms against 6.82 ms, and the gap grows with the data." },
 
-    { q: "Moving the fuzzy threshold from 0.95 down to 0.85 on this data:",
+    { q: "Grouping 200,000 payments by merchant: filtering once per merchant took 9,527.8 ms, one pass took 59.1 ms. What is the pattern name?",
       options: [
-        "Halves the false positive rate",
-        "Finds two more real hits",
-        "Finds no more real hits and raises the queue from 182 to 7,081",
-        "Has no effect because the scores cluster near 1.0"
+        "Sliding window",
+        "Two pointers",
+        "Hash map, one pass building a dictionary of lists",
+        "Prefix sums"
       ],
       answer: 2,
-      why: "Thirty nine times the work for nothing. The useful band is narrow, and the sweep is what shows you where it is." },
+      why: "Filtering per key is a nested loop wearing a comprehension. 161x, and it grows." },
 
-    { q: "Raising the threshold from 0.95 to 0.97 on this data:",
+    { q: "\"The ten largest refunds today, from a stream you cannot store.\" Which pattern?",
       options: [
-        "Keeps all seven hits and cuts the queue",
-        "Loses the transliteration, which scored 0.9689",
-        "Loses the dropped letter, which scored 0.9867",
-        "Makes no difference to recall"
+        "Sorting",
+        "A heap",
+        "Prefix sums",
+        "Intervals"
       ],
       answer: 1,
-      why: "One of the seven sits just below 0.97. That single number is the argument against picking a threshold by instinct." },
+      why: "Whenever you hear \"top k\", especially over a stream, the answer starts with a heap." },
 
-    { q: "Your compliance lead wants high recall and high precision from name matching alone. The honest answer is:",
+    { q: "\"The highest total any merchant took in a rolling 24 hours.\" Which pattern?",
       options: [
-        "Train a model on past dispositions",
-        "Lower the threshold and add a second pass",
-        "On name similarity alone that point does not exist: you need secondary identifiers",
-        "Use a better algorithm"
+        "Hash map counting",
+        "Two pointers",
+        "Sliding window",
+        "Graph traversal"
       ],
       answer: 2,
-      why: "Innocent names genuinely resemble listed names. More information moves both numbers; a threshold only trades one for the other." },
+      why: "\"In any period of\" and \"consecutive\" are the tells. Update the total rather than recomputing it." },
 
-    { q: "A match scores 0.96 and the date of birth is missing on the watchlist. What should the system do?",
+    { q: "Which step do candidates skip most often, and interviewers weight most heavily?",
       options: [
-        "Block the payment automatically",
-        "Discount it, since the identifier cannot be confirmed",
-        "Lower the score by a fixed penalty",
-        "Alert, because absence of an identifier is not evidence of innocence"
+        "Asking about edge cases",
+        "Writing tests",
+        "Optimising the solution",
+        "Stating the approach and its complexity before writing any code"
       ],
       answer: 3,
-      why: "Auto discount on disagreement, never on absence. The entities hardest to identify are the ones with the least data." },
+      why: "One sentence before you type tells the interviewer most of what the hour was going to reveal." },
 
-    { q: "Why score distinct counterparty names rather than every payment?",
+    { q: "You are stuck five minutes in. What is the best move?",
       options: [
-        "To avoid double counting alerts",
-        "887 distinct names against 12,067 payments is a 93% saving, and the scores are identical",
-        "Because payments can be duplicated",
-        "Because pandas cannot join on strings"
+        "Start writing code and hope",
+        "Say the brute force out loud, try a tiny example, or ask whether sorting the input would help",
+        "Think silently until you have it",
+        "Ask for a different question"
       ],
       answer: 1,
-      why: "Score once, join back. It also makes the threshold sweep fast enough to live in a test." },
+      why: "Silence reads as lost. One of those three almost always moves the problem forward." },
 
-    { q: "What is blocking, in the screening sense?",
+    { q: "A working slow solution against an unfinished fast one. Which scores better?",
       options: [
-        "Preventing an analyst from reopening a closed alert",
-        "Refusing a payment",
-        "Comparing only names that share a key, so screening scales past a full cross product",
-        "Freezing a customer account"
+        "It depends on the company",
+        "The unfinished fast one, because it shows ambition",
+        "The working slow one, said aloud to be slow, then improved",
+        "They score the same"
       ],
       answer: 2,
-      why: "A shared first letter, phonetic key or token. The word is unfortunate, and it means something different from blocking a payment." },
+      why: "Get correct first, name what is slow, then improve. Many loops score whether you arrived, not how directly." },
 
-    { q: "The structuring rule at two deposits gives 16 alerts and 4 real ones. At three deposits it gives 4 and 4. What should you record?",
+    { q: "In a practical exercise, what should you do in the first five minutes?",
       options: [
-        "Nothing: tuning is an operational detail",
-        "The alert count, since precision is implied",
-        "Both settings, the date, the reason, who approved it, and a below the line sample of what three no longer catches",
-        "Only the chosen setting, to keep the documentation short"
+        "Start writing the fix",
+        "Plan the change in full",
+        "Run the tests, so you have a working baseline and find a broken setup early",
+        "Read the whole codebase"
       ],
       answer: 2,
-      why: "The alerts you stopped generating are invisible by construction, so a tuning change without a sample is indistinguishable from a bug." },
+      why: "A working baseline tells you more than an hour of reading, and setup problems are worth finding at minute two." },
 
-    { q: "The corridor rule alerts on 514 payments and finds nothing real. What does that tell you?",
+    { q: "At minute seventy of a ninety minute exercise you find your approach cannot handle a required case. Best response?",
       options: [
-        "The data is missing real cases",
-        "Geography alone is a poor rule, and it is the one most likely to be written first",
-        "The jurisdiction list needs expanding",
-        "The rule should run on a shorter window"
+        "Start again with the correct design",
+        "Commit what works, then write a note saying what breaks, why, and what you would do with another hour",
+        "Hack around it so everything appears to pass",
+        "Stop and submit nothing"
       ],
       answer: 1,
-      why: "It costs an analyst a year of confirming that people send money to places. Geography belongs as a risk factor, not as a standalone rule." },
+      why: "Reviewers score that above a rushed rewrite, because it is what they want a colleague to do on a Friday." },
 
-    { q: "Why does an alert need to store the rule version that produced it?",
+    { q: "Why does reformatting a file while fixing a bug count against you?",
       options: [
-        "Because rule versions are personal data",
-        "To allow replaying the rule",
-        "For database partitioning",
-        "So an alert from March can still be explained after April's tuning change"
+        "It does not matter",
+        "Because formatters disagree",
+        "It is slower",
+        "Because it buries the actual change and ignores the conventions of the codebase you are joining"
       ],
       answer: 3,
-      why: "Explaining old alerts under the thresholds in force at the time is most of what an examination consists of." },
+      why: "Matching the style you find is a signal about working with people, which is what the exercise is for." },
 
-    { q: "How should closing an alert be recorded?",
+    { q: "What makes a good failure story in a behavioural round?",
       options: [
-        "Move it to an archive table",
-        "Append an event with the actor, the action and the reason, leaving the history intact",
-        "Update the alert row with the new status",
-        "Delete the alert once it is dispositioned"
+        "A failure caused by somebody else",
+        "That you noticed it, told somebody, fixed it, and changed something so it could not recur",
+        "A small mistake with no consequences",
+        "A strength disguised as a weakness"
       ],
       answer: 1,
-      why: "Level 13's rule, here as a legal requirement. Reopening has to be possible, and nothing is ever overwritten." },
+      why: "In fintech this round often decides the offer, because the domain punishes people who hide mistakes." },
 
-    { q: "What is tipping off?",
+    { q: "Why rehearse out loud with a person rather than only solving problems?",
       options: [
-        "Telling a customer they are under suspicion or have been reported, which is an offence in many jurisdictions",
-        "Filing a report without evidence",
-        "Sharing a watchlist with another firm",
-        "Escalating an alert to a senior analyst"
+        "Because explaining while writing uses a different skill from writing silently, and the first attempt must not be in an interview",
+        "To build a network",
+        "Because it is faster",
+        "To get feedback on your solutions"
       ],
       answer: 0,
-      why: "What a customer is told about a held payment is a legal question with a jurisdiction specific answer, not a template decision." },
+      why: "The value is in the talking. A friend on a call is enough." },
 
-    { q: "Which number belongs on the dashboard beside the alert count?",
+    { q: "What is the most useful thing to do with a problem you failed under time?",
       options: [
-        "How long customers wait while their payments are held",
-        "The size of the watchlist",
-        "The number of rules in production",
-        "The average similarity score"
+        "Put it on a redo list with the date and attempt it again a week later",
+        "Read the model solution and consider it learned",
+        "Move on to a new problem",
+        "Solve it untimed until it is comfortable"
       ],
       answer: 0,
-      why: "A false positive is somebody's rent held for three days. If nobody measures the wait, nobody optimises it." }
+      why: "Repetition on what you got wrong is worth ten fresh problems, and the list is what keeps it targeted." }
   ],
 
   project: {
-    title: 'The monitoring system',
-    story: 'A small payments firm has 400 customers and a quarter of traffic to review. Build the screening engine, the ' +
-           'monitoring rules, the alert queue and the tuning report, and defend the thresholds you chose.',
-    scope: 'Uses this level plus level 11 (Postgres, append only tables), level 13 (the event log), level 3 (pandas) and ' +
-           'level 15\'s habit of measuring before claiming. All three data files are synthetic and every name in them is ' +
-           'invented, including the watchlist.',
-    dataset: '{{RAW}}/data/level-19-payments.csv',
+    title: 'interview-gauntlet: forty problems, four exercises, one honest log',
+    story: 'A repository that is a record of practice rather than a product. Forty problems solved with tests and ' +
+           'complexities, the five measured complexity comparisons reproduced on your own machine, four timed practical ' +
+           'exercises with submission notes, five behavioural stories, and a log honest enough to be useful.',
+    scope: 'Six weeks part time, following the schedule. The log is the deliverable that makes it real, and it is the ' +
+           'only part that cannot be faked by copying solutions.',
     requirements: [
-      'Alias expansion: the 60 entity watchlist becomes 95 searchable strings',
-      'A normaliser covering case, punctuation, titles and token order, with a test per rule',
-      'Jaro-Winkler implemented by hand and checked against rapidfuzz on a hundred pairs',
-      'Screening that scores distinct names once and joins back to the payments',
-      'A threshold sweep reproducing the six row table, printed by the code rather than typed into the README',
-      'A secondary identifier stage that discounts on disagreement only, storing the reason',
-      'A structuring rule, reported at both two and three deposits',
-      'A pass through rule catching the three real cases',
-      'The corridor rule, included and shown to find nothing, because a negative result is a result',
-      'An alert table and an append only event table, with rule_version stored on every alert',
-      'A triage CLI that lists open alerts with their evidence and records a disposition with a reason',
-      'A tuning report: the thresholds chosen, the sweep they came from, the date, and a below the line sample',
-      'A README stating plainly what the system does not do and what a person has to decide',
-      'The repository in your GitHub portfolio as finquest-monitoring'
+      'Your own timings for the reconciliation, at three sizes, with the growth ratio between them',
+      'The four other complexity comparisons reproduced, each labelled as a class change or a constant factor',
+      'Forty problems from the list, one file each, with a test, a stated time and space complexity, and a named pattern',
+      'A note in each file recording your first instinct, especially when it was wrong',
+      'A log of every attempt: date, time taken, and outcome as solved, solved with a self hint, or failed',
+      'A `redo.md` of failed problems with dates, and evidence that you returned to them a week later',
+      'At least five problems solved a second time under thirty minutes, narrating aloud, with one recording kept',
+      'Four practical exercises built and completed under time, each with a submission note saying what you skipped and what you would do next',
+      'The API integration exercise must include a timeout, backoff with jitter, and a test proving the retry is safe',
+      'Five behavioural stories in STAR form, each with a number in it and a change you made afterwards',
+      'Two mock interviews with a person, with the feedback written down and the two fixes you made',
+      'A one page summary of your weakest pattern and what you did about it',
+      'The repository public on GitHub as `interview-gauntlet`'
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest level 19: sanctions screening and transaction monitoring.\n\nEvery name in the three data files is invented. The watchlist is fictional\nand corresponds to no real designation, programme or person.\n\nLayout:\n  monitor/names.py      normalise, jaro, jaro_winkler\n  monitor/screen.py     alias expansion, scoring, the threshold sweep\n  monitor/identify.py   secondary identifiers, discount with reasons\n  monitor/rules.py      structuring, pass_through, corridor\n  monitor/queue.py      alert + alert_event, dispositions\n  report.py             the sweep table and the tuning record\n"""\n\nimport re\n\nTITLES = {"MR", "MRS", "MS", "DR", "MISS", "PROF"}\n\n\ndef normalise(name: str) -> str:\n    """Upper case, strip punctuation and titles, sort the tokens."""\n    # TODO\n    pass\n\n\ndef jaro(s: str, t: str) -> float:\n    # TODO\n    pass\n\n\ndef jaro_winkler(s: str, t: str, p: float = 0.1) -> float:\n    # TODO\n    pass\n\n\ndef expand_watchlist(rows):\n    """60 entities -> 95 (entity_id, searchable_name) pairs."""\n    # TODO\n    pass\n\n\ndef sweep(pays, thresholds=(1.00, 0.95, 0.92, 0.90, 0.85, 0.80)):\n    """Print alerts, real hits, recall and precision at each threshold."""\n    # TODO\n    pass\n\n\ndef structuring(pays, threshold=10_000, floor=0.8, min_deposits=3, window_days=7):\n    # TODO\n    pass\n\n\ndef pass_through(pays, minimum=10_000, share=0.9, hours=24):\n    # TODO\n    pass\n'
+      code: '"""FinQuest level 19: one file per problem, this shape every time.\n\nProblem: duplicate references in a settlement file\nPattern: hash map counting\nTime:    O(n)\nSpace:   O(n)\nFirst instinct: sort then scan for neighbours, O(n log n) for no gain.\nTime taken: 11 minutes.  Outcome: solved.\n"""\nfrom collections import Counter\n\n\ndef duplicate_references(rows: list[dict]) -> list[str]:\n    """References appearing more than once, in first seen order."""\n    counts = Counter(r["reference"] for r in rows)\n    seen, out = set(), []\n    for r in rows:\n        ref = r["reference"]\n        if counts[ref] > 1 and ref not in seen:\n            seen.add(ref)\n            out.append(ref)\n    return out\n\n\ndef test_duplicate_references():\n    rows = [{"reference": "A"}, {"reference": "B"}, {"reference": "A"}]\n    assert duplicate_references(rows) == ["A"]\n\n\ndef test_empty():\n    assert duplicate_references([]) == []\n'
     },
     tests: [
-      'The watchlist expands from 60 rows to 95 searchable strings',
-      'normalise() fixes case, punctuation, titles and word order, one test each',
-      'jaro_winkler agrees with rapidfuzz to six decimal places on a hundred pairs',
-      'The transliteration pair scores 0.9689 and the dropped letter pair scores 0.9867',
-      'Normalised exact matching finds 5 of the 7 planted hits and nothing else',
-      'The sweep produces 182 alerts at 0.95 and 7,081 at 0.85, with all seven hits at both',
-      'A threshold of 0.97 loses exactly one of the seven',
-      'No secondary identifier discount removes any of the seven real hits',
-      'structuring() gives 16 alerts at two deposits and 4 at three, with 4 real in both',
-      'pass_through() gives exactly 3 alerts, all real',
-      'The corridor rule gives 514 alerts and none of them are real',
-      'Closing an alert appends an event and leaves the alert history readable',
-      'Every alert stores the rule_version in force when it fired'
+      'Every problem file has a test that passes',
+      'Every problem file states a time and a space complexity',
+      'Every problem file names one of the eight patterns',
+      'The log has an entry for every attempt, including the failures',
+      'Every problem on the redo list has at least two dated attempts',
+      'The API integration exercise sets a timeout on every call',
+      'The API integration exercise retries with backoff and jitter, and the retry is proven safe by a test',
+      'Each practical exercise has a submission note naming what was skipped',
+      'Each behavioural story contains a number and a change made afterwards'
     ],
     rubric: [
-      { pts: 25, t: 'Matching done properly', d: 'Aliases expanded, normalisation tested rule by rule, Jaro-Winkler implemented and verified against a library.' },
-      { pts: 25, t: 'Measurement', d: 'The sweep is computed by the code, both structuring settings are reported, and the corridor rule is shown to find nothing.' },
-      { pts: 20, t: 'Thresholds defended', d: 'A chosen threshold with the reason, the date, the data it was measured on, and a below the line sample.' },
-      { pts: 15, t: 'The queue', d: 'Alerts carry their evidence and rule version, dispositions append rather than overwrite, and reopening works.' },
-      { pts: 15, t: 'Honesty', d: 'The README says what the system does not do, who decides, and how long a held payment makes somebody wait.' }
+      { pts: 20, t: 'Complexity felt, not recited', d: 'Your own timings at several sizes, with class changes distinguished from constant factors.' },
+      { pts: 30, t: 'Forty problems', d: 'Tests, complexities, named patterns, and the first instinct recorded even when wrong.' },
+      { pts: 20, t: 'An honest log', d: 'Every attempt with time and outcome, a redo list, and evidence of returning to failures.' },
+      { pts: 20, t: 'Practical exercises', d: 'Four completed under time, with failure handling in the integration one and a submission note on each.' },
+      { pts: 10, t: 'The spoken half', d: 'Five stories with numbers, one recording of yourself, and two mock interviews with written feedback.' }
     ],
     stretch: [
-      'Add blocking by first letter and by a phonetic key, and measure the speed up and whether any of the seven is lost',
-      'Add a second watchlist with an overlapping entity, and deduplicate designations across sources',
-      'Score how long each alert sat in the queue, and put the customer waiting time on the report',
-      'Train a simple classifier on the dispositions to rank the queue, and show with level 14\'s reason codes why ranking is acceptable where auto closing is not'
+      'Solve ten of the problems in Java as well, and compare how long the same idea takes to express',
+      'Build a small timing script that plots your solution against input size, so the complexity is visible rather than asserted',
+      'Write the interviewer\'s rubric for five of your problems: what would earn a strong hire, and what would earn a no',
+      'Run a mock loop for somebody else, which teaches you more about scoring than being interviewed does',
+      'Take one failed problem and write up the three approaches you tried and why each did not work'
     ],
     solutionPath: 'solutions/level-19'
   },
 
   faq: [
-    { q: 'Is the watchlist real?',
-      a: 'No. Every name in all three files is built from invented syllables, and the jurisdictions use ISO 3166 user assigned codes, XA, XB and XC, precisely so the exercise labels no real country and names no real person. A real system screens against published official lists.' },
-    { q: 'Is a precision of 3.85% really normal?',
-      a: 'In this area, yes. Published industry figures for AML and sanctions alerting sit in that region. The level asks you to choose the number deliberately and be able to defend it, rather than to fix the rate.' },
-    { q: 'Should the system ever block a payment automatically?',
-      a: 'An exact match against a designated party, with identifiers agreeing, is the case firms usually automate, and even then a person reviews before release. A similarity score alone should hold and alert, never block.' },
-    { q: 'Why implement Jaro-Winkler rather than import it?',
-      a: 'Because you are about to choose a threshold based on its output. Writing it once means the difference between 0.95 and 0.97 is a fact you understand rather than a dial you turned.' },
-    { q: 'My sweep numbers are slightly different',
-      a: 'Check the normaliser first: token sorting and title stripping both move scores. Then check that aliases were expanded, since screening the primary name alone loses hits and changes the counts.' },
-    { q: 'Can I use a machine learning model instead of rules?',
-      a: 'For ranking the queue, yes, and level 14 covers how to keep it explainable. For deciding that an alert needs no human, no, because a model that closes alerts silently is a model whose errors nobody can see.' },
-    { q: 'Does this make me qualified to run compliance?',
-      a: 'It makes you able to build the system a compliance team uses, which is the engineering job. The obligations, the reporting and the decision to file are theirs, and knowing where that line sits is part of what this level is teaching.' }
+    { q: 'How many problems do I actually need?',
+      a: 'Forty solved properly, with twenty of them revisited, beats three hundred skimmed. The signal you are ready is naming the pattern from the question within the first minute, which usually arrives somewhere between thirty and sixty problems if you are recording what you got wrong.' },
+    { q: 'Should I memorise solutions?',
+      a: 'Memorise the eight patterns and the shape of each, not the solutions. Interviewers ask follow up questions, and a memorised answer collapses at the first variation, which is worse than not having seen the problem.' },
+    { q: 'What if I freeze?',
+      a: 'Say so, plainly: "I have gone blank for a second, let me go back to the brute force." It is a normal thing to say and it restarts you. Interviewers have all done it themselves and none of them mark it down; a long silence they have to interpret is worse.' },
+    { q: 'Is it acceptable to look things up?',
+      a: 'Ask. In a practical exercise it is usually expected, because it is what the job is. In an algorithm screen, syntax is generally fine to ask about and looking up the approach is not. Asking the question costs nothing and removes the doubt.' },
+    { q: 'How do I answer "what is your weakness" without being fake?',
+      a: 'Pick a real one that is not central to the job, say what it costs, and say what you do about it. "I go too deep on a problem before checking it is the right problem, so I now write down what I am trying to achieve before starting and check it after an hour" is honest, specific and finished.' },
+    { q: 'I have applied to twenty places and heard nothing',
+      a: 'That is normal and it is mostly about the application rather than about you. Referrals outperform applications by a large margin, so ask people who already work there, which is exactly what a public repository of measured projects is for. And apply to the companies one tier below your target as well, because two years at a smaller payments company makes the next application a different conversation.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'It is the one project you do not lead with, because it is preparation rather than engineering. If it comes up, the honest version is good: you kept a log of every attempt including the failures, you returned to the ones you got wrong, and you can name your weakest pattern and what you did about it. That answer says something real about how you learn.' }
   ]
 });

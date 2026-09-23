@@ -1,6 +1,6 @@
-# Level 18: Three banks, three shapes, one account view
+# Level 18: Java, for somebody who already writes Python
 
-> **The account aggregator** · build project · difficulty 8/10
+> **payments-api-java: the same service, on the JVM** · build project · difficulty 8/10
 
 ## Read this second
 
@@ -10,72 +10,75 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-Members of the society bank in three different places and want one view of their month. Build the aggregator: the consent flow, the token handling, three normalisers, deduplication that survives a double sync, and a categoriser that learns when somebody corrects it.
+Port the payments API from level 7 to Java and Spring Boot, with the money type from level 5, the state machine from level 9, the race from level 8 reproduced against a real Postgres in CI, and an honest benchmark against the Python original.
 
-**Scope:** Uses this level plus level 12 (FastAPI, errors, request ids), level 11 (Postgres, locks, unique constraints) and level 3 (pandas for the report). The three bank files ship with the level; the OAuth server is a small fake you write, so no real bank or vendor account is needed.
+**Scope:** Java 21 or later, Maven, Spring Boot, Testcontainers. The contract does not change: the same tests that exercised the Python service must pass against this one with only the base URL changed.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `fakebank/` | a tiny authorization server plus a transactions endpoint, so the flow is real code |
-| `aggregator/oauth.py` | pkce, state, the code exchange, and a refresh that takes a lock |
-| `aggregator/normalise.py` | from_bank_a, from_bank_b, from_bank_c, and the one Txn type they all produce |
-| `aggregator/ingest.py` | fingerprinting, the pending to booked collapse, and the sync cursor |
-| `aggregator/categorise.py` | the cleaner, the rules table, and the correction chain |
+| `money/Money.java` | long minor units, exact, overflow throws |
+| `card/AuthResult.java` | sealed, so an unhandled outcome is a compile error |
+| `api/PaymentController.java` | the level 7 contract, unchanged |
+| `api/ErrorAdvice.java` | one error shape for the whole service |
+| `test/LostUpdateTest.java` | the level 8 race, against a real Postgres |
+| `bench/` | both services, warmed up, on the same hardware |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-pip install -r requirements.txt && pytest -q && uvicorn main:app --reload
+mvn verify && java -jar target/payments.jar && python -m bench.compare
 ```
 
 ## Why the solution is shaped this way
 
-- The verifier and the pending state live server side, keyed by the state value, and the callback consumes them. A state that is unknown or already used is a fatal error rather than a warning, because both cases mean somebody sent the user a link you did not generate.
-- The refresh path reads the connection twice: once outside the lock to skip the common case, once inside it because another worker may have already refreshed. A hundred workers cost one refresh.
-- invalid_grant is handled as a product event. The connection is marked as needing consent, the sync stops, and the app shows which bank to reconnect. Nothing retries, because nothing can succeed.
-- One normaliser per bank, and nothing outside those three functions sees a bank specific field. Each has a test holding a real row from the shipped file and the exact Txn it must become, so a format change fails in one place with a readable diff.
-- The raw record is stored beside the normalised one. Every parse is a guess, and keeping the original is the difference between fixing a bug and asking every customer to reconnect.
-- Fingerprints carry a counter within account, date, amount and description, so a re-sync deduplicates and two identical coffees on one day both survive. 157 raw rows become 140 transactions, and running it again still produces 140.
-- The sync window overlaps by two days on purpose. Deduplication makes the overlap free, and without it a backdated transaction is never seen again.
-- Categorisation cleans first, matches rules second, and only then reaches a model. The fallback chain ends in uncategorised, which is a better answer than a confident wrong one.
+- The port is of one service rather than of the whole course, because the second port teaches nothing the first did not. The payments API was chosen because it exercises HTTP, validation, idempotency, a database and tests at once.
+- Money is long minor units, with BigDecimal where fractions of a cent are genuinely needed. Both classic traps are written as tests: BigDecimal from a double differs from BigDecimal from a string, and equals disagrees with compareTo about 1.0 and 1.00.
+- The int limit is treated as a real constraint rather than trivia. 2,147,483,647 minor units is $21,474,836.47, and an int wraps to negative past it with no error, so every amount is a long including in the schema.
+- The card lifecycle uses an enum and a sealed interface, and the repository deliberately demonstrates a compile failure when an outcome is added, because that refusal is the reason to be on the JVM at all.
+- Spring is used the way a reviewer expects: constructor injection with final fields, one ControllerAdvice, open-in-view off, and a Hikari pool sized with the level 8 arithmetic written in a comment.
+- Both @Transactional traps have failing tests before they have fixes: an internal call that bypasses the proxy, and a checked exception that commits under the default configuration.
+- Testcontainers runs a real Postgres so the level 8 lost update can be reproduced in CI and fixed twice. An in memory database would have passed the test and shipped the bug.
+- The benchmark states its conditions: warmed up, same hardware, same database, and the share of each request that is database time, so the comparison is about the runtime rather than about who wrote the faster query.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| Every sync inserts everything again | The fingerprint includes something that changes between exports, usually a row number or an ingestion timestamp. Hash only what the bank actually sends. |
-| Real transactions disappear | The fingerprint has no counter, so two identical purchases on one day collapse into one. Number them in order of appearance. |
-| Spending is positive for one bank | The sign convention differs per bank: a negative amount, an indicator field, and a column position. Normalise all three to negative for money out and test it. |
-| A refresh token shows up in a log line | Something logged the whole connection row or the whole exception. Log the connection id, and add the test that captures log output during a full flow. |
+| Amounts went negative above twenty million dollars | int instead of long. It wraps silently, with no error. |
+| Rounding disagreed with the Python service by a cent | A double somewhere upstream of the BigDecimal. |
+| Two equal amounts compared unequal | equals compares scale. Use compareTo for money. |
+| A transaction did not roll back | A checked exception, and no rollbackFor. Or an internal call bypassing the proxy. |
+| The connection pool ran out under light load | open-in-view left on, holding a connection for the whole request. |
+| The benchmark flattered Java | No warm up. The JVM compiles hot paths as it runs, so a short run measures the slow phase. |
+| The container restarted with no log line | The heap was sized for the host rather than the container limit. |
 
 ## Self-checks the solution satisfies
 
-- A callback with an unknown or reused state is refused
-- The code exchange fails without the correct code verifier
-- A full connect and sync writes no token to the logs, asserted by capturing log output
-- Two concurrent refreshes result in exactly one call to the bank
-- A refresh returning invalid_grant marks the connection as needing consent and does not retry
-- Each bank normaliser turns a real shipped row into the exact expected Txn
-- Spending is negative in every source, despite three different sign conventions
-- Ingesting the three files produces 140 transactions, and ingesting them again still produces 140
-- Two identical purchases on the same day both survive deduplication
-- A pending row followed by its booked row leaves one transaction with status booked
-- A second sync with a cursor fetches only the overlap window
-- clean() turns POS APPLE.COM/BILL HANOI into APPLE.COM
-- A user correction wins over the model on the next sync, and does not change another user
+- Allocating 100 minor units three ways loses nothing and the remainder is distributed deterministically
+- Adding two amounts in different currencies throws
+- An addition that would overflow throws rather than wrapping to a negative amount
+- BigDecimal constructed from a double differs from the same literal constructed from a string
+- Removing a case from an outcome switch fails compilation
+- The level 7 integration suite passes against this service with only the base URL changed
+- A repeated request with the same idempotency key returns the original response and creates no second payment
+- A method annotated @Transactional and called from inside the same class does not open a transaction, and the test proves it
+- A checked exception rolls back once rollbackFor is set, and commits without it
+- The lost update reproduces against a real Postgres and is fixed by both pessimistic and optimistic locking
+- The service refuses to start when a required configuration property is missing
+- A cold start reaches its steady state p99 within the readiness window you configured
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | Consent handled properly | PKCE, state, encrypted refresh tokens, a locked refresh, and invalid_grant treated as a product event rather than an error to retry. |
-| 25 | Normalisation | One function per bank, one schema out, the raw record kept, and a test per bank pinned to a real row. |
-| 20 | Deduplication | 157 raw rows become 140 transactions, twice, with identical purchases surviving and pending rows collapsing. |
-| 15 | Categorisation that learns | Cleaning first, rules second, model third, and a correction that sticks for that user without rewriting the world. |
-| 15 | Shipped | Runs from a clean clone against the fake bank, tests pass, README covers the consent lifecycle. |
+| 20 | Money on the JVM | long minor units, BigDecimal used correctly, overflow handled, the two classic traps tested. |
+| 20 | Types doing work | Records, enums and a sealed interface, with a compile failure demonstrated on purpose. |
+| 20 | Spring used properly | Constructor injection, one error shape, transactions with both traps understood, pool sized with arithmetic. |
+| 20 | Tested against reality | Testcontainers, the level 8 race reproduced and fixed twice, the level 7 suite passing unchanged. |
+| 20 | Measured honestly | Warm up curve, virtual threads with conditions recorded, and a benchmark whose limitations you state. |
 
 ---
 

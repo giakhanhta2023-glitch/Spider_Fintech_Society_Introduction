@@ -1,497 +1,554 @@
 /* =========================================================================
-   LEVEL 17: portfolio construction and the risk engine
+   LEVEL 17: the deploy you can undo
    ========================================================================= */
 FQ.registerLevel({
   id: 17,
-  codename: 'risk engine',
-  title: 'Weights, and the risk they actually carry',
-  tagline: 'The textbook optimiser handed 25% of the money to one asset and 63% of the risk with it, then asked to short another at 92%. Build the engine that produces weights a desk could hold.',
-  difficulty: 9,
-  minutes: 260,
-  tags: ['portfolio', 'optimisation', 'VaR', 'risk decomposition'],
-  summary: 'Level 7 measured one portfolio. This level decides what should be in it. Covariance and why the sample version ' +
-           'is fragile, mean variance and why it maximises estimation error, constraints and risk parity, where the risk ' +
-           'really sits, and a VaR engine that is backtested rather than believed.',
+  codename: 'ship',
+  title: 'The deploy you can undo',
+  tagline: 'Everything you have built runs on your laptop. This level is the part where it runs somewhere else, on a schedule, behind a pipeline, with a way back when it goes wrong.',
+  difficulty: 8,
+  minutes: 420,
+  tags: ['Docker', 'CI/CD', 'infrastructure as code', 'deploys', 'cost'],
+  summary: 'The last level of the production phase, and the one that turns twelve repositories into something a company ' +
+           'would run. A container that holds only what runs, a pipeline fast enough that nobody bypasses it, ' +
+           'infrastructure written down rather than clicked, a deploy strategy with a measured way back, feature flags ' +
+           'so releasing is not deploying, and a cost model so you know what your design charges per payment.',
 
   objectives: [
-    'Build and annualise a covariance matrix, and say why the sample estimate is fragile',
-    'Run a mean variance optimisation and explain the weights it produces',
-    'Add constraints, and measure what they cost and what they buy',
-    'Decompose portfolio risk into each holding\'s contribution',
-    'Compute VaR and expected shortfall three ways and reconcile them',
-    'Backtest the risk model by counting exceptions',
-    'Turn the result into a rebalancing policy with turnover in it'
+    'Build an image that contains what runs and nothing else',
+    'Order a Dockerfile so the cache does the work',
+    'Write a merge gate fast enough that people wait for it',
+    'Describe infrastructure in code, and explain what drift is',
+    'Choose a deploy strategy by how long a rollback takes',
+    'Separate deploying from releasing with feature flags',
+    'Put a cost per payment on your own architecture'
   ],
 
   knowledge: [
-    { h: 'Covariance is the whole problem' },
-    { p: 'A portfolio\'s risk is not the average of its parts, as level 7 showed: it depends on how the parts move together. ' +
-         'That information lives in the covariance matrix, and for four assets it is ten numbers. For a hundred assets it ' +
-         'is five thousand and fifty, estimated from the same limited history, and that is where portfolio theory starts ' +
-         'to hurt.' },
-    { code: 'returns = prices.pct_change().dropna()\nmu = returns.mean() * 252              # annualised means\nS  = returns.cov() * 252               # annualised covariance', lang: 'python' },
+    { h: 'What "works on my machine" actually means' },
+    { p: 'Four things differ between your laptop and a server, and naming them tells you what a container does and does ' +
+         'not fix:' },
     { table: {
-      head: ['Asset', 'Annual return', 'Annual volatility'],
+      head: ['What differs', 'Fixed by the image?', 'Notes'],
       rows: [
-        ['TECHX', '10.63%', '31.43%'],
-        ['BANKCO', '2.28%', '19.56%'],
-        ['GOLDF', '2.49%', '14.11%'],
-        ['CRYPTOZ', '32.99%', '73.37%']
+        ['System libraries', 'Yes', 'The whole reason images exist'],
+        ['Language runtime version', 'Yes', 'Pin it exactly. `python:3.12-slim`, never `python:3`'],
+        ['Dependency versions', 'Yes, if you build from a lockfile', 'Level 15: build from the lock, not from the index'],
+        ['Configuration and secrets', '**No**', 'They arrive at run time, and this is where the outages come from']
       ]
     }},
-    { warn: 'Those means are three years of history and nothing more. A covariance estimated from three years is noisy; a ' +
-            'mean estimated from three years is barely an estimate at all, which is the single most important fact in this ' +
-            'level and the reason for everything that follows.' },
+    { p: 'That last row is the one to design for. The same image must run in test and in production with nothing changed ' +
+         'except environment variables, and the application should **read its whole configuration at start and refuse to ' +
+         'boot if anything is missing or nonsensical**. A service that starts happily and fails on the first payment ' +
+         'because a variable was empty has turned a deploy problem into a customer problem.' },
+    { code: 'class Settings(BaseSettings):\n    database_url: PostgresDsn\n    redis_url: RedisDsn\n    vault_url: HttpUrl\n    payout_limit_minor: int = Field(gt=0)\n    environment: Literal["dev", "staging", "prod"]\n\nsettings = Settings()      # raises at import, before the first request', lang: 'python' },
 
-    { h: 'The optimiser does what you asked, which is the problem' },
-    { p: 'Mean variance optimisation finds the weights with the best return per unit of risk. Run it unconstrained on this ' +
-         'data and look at what it wants:' },
+    { h: 'The image: ship what runs, not what built it' },
+    { p: 'An image is layers, and everything you install stays in it forever, even if a later layer deletes it. The ' +
+         'commonest mistake is shipping the toolchain that built the application. Measured on the dependency tree of a ' +
+         'payments service, which is where an image\'s weight comes from:' },
     { table: {
-      head: ['', 'Equal weight', 'Unconstrained optimum', 'Long only optimum'],
+      head: ['Contents', 'Size', 'Files'],
       rows: [
-        ['TECHX', '25%', '64.1%', '26.8%'],
-        ['BANKCO', '25%', '**-92.5%**', '0%'],
-        ['GOLDF', '25%', '75.4%', '43.1%'],
-        ['CRYPTOZ', '25%', '53.0%', '30.0%'],
-        ['Return', '12.10%', '24.07%', '13.83%'],
-        ['Volatility', '27.10%', '47.89%', '28.99%'],
-        ['**Sharpe**', '**0.45**', '**0.50**', '**0.48**']
+        ['An empty virtual environment', '22.4 MB', '1,497'],
+        ['+ what the service needs to run', '60.8 MB', '3,424'],
+        ['+ the tools that test and lint it', '154.7 MB', '6,873'],
+        ['**Shipped for no reason**', '**94.0 MB**', '**3,449**']
       ]
     }},
-    { p: 'The unconstrained answer shorts a quarter of the universe at ninety two percent of the portfolio to buy more of ' +
-         'everything else, and it earns a Sharpe of 0.50 against 0.45 for dividing the money into four equal parts. That is ' +
-         'the entire prize: five hundredths, for a position that needs a margin account, a borrow and a strong stomach.' },
-    { p: 'This is **error maximisation**. The optimiser cannot tell an estimate from a fact, so the asset whose mean happened ' +
-         'to be overstated by noise looks best, and it gets the most money. Small changes in the inputs produce large ' +
-         'changes in the weights, which is the opposite of what anybody wants from an allocation.' },
-    { check: {
-      q: 'Your optimiser puts 92% short into one asset. Your colleague says the maths is correct so the weights must be ' +
-         'right. What is wrong with that argument?',
-      a: 'The maths is correct, and the inputs are guesses. Mean variance is exact given the true means and covariances, and ' +
-         'nobody has those: you have three years of history, from which a mean is estimated with enormous uncertainty. The ' +
-         'optimiser treats that estimate as certain and pushes as hard as it can in the direction the noise happened to ' +
-         'point. A better solver changes nothing. What helps is to stop feeding it numbers it cannot support: constrain the ' +
-         'weights, shrink the estimates, or use a method that does not need the means at all.'
-    }},
-
-    { h: 'Constraints are not a compromise' },
-    { p: 'Long only, and a cap per position. On this data those constraints cost 0.02 of Sharpe and remove the borrowing, the ' +
-         'short and the margin call. Practitioners reach for them first, and the theory eventually agreed: a constraint is a ' +
-         'crude way of saying you do not believe your own estimates, and disbelieving them is correct.' },
+    { p: 'The test framework, the type checker, the linter, the formatter and the coverage tool add 94.0 MB and 3,449 files, which is **155% more than the service needs to run**. None of it executes in production, all of it is code an attacker can reach, and every byte is pulled down again on every machine that runs the image. It is in there because one `pip install -r requirements.txt` was easier to write than two.' },
+    { p: 'The fix is a **multi stage build**: one stage installs everything and runs the tests, a second stage starts ' +
+         'from a clean base and copies in only the installed runtime dependencies and your code.' },
+    { code: 'FROM python:3.12-slim AS build\nCOPY requirements.lock .\nRUN pip install --no-cache-dir -r requirements.lock --target /deps\n\nFROM python:3.12-slim              # a fresh base: the build stage is discarded\nCOPY --from=build /deps /usr/local/lib/python3.12/site-packages\nCOPY src/ /app/src/\nUSER 10001                         # never root\nHEALTHCHECK CMD python -c "import urllib.request;urllib.request.urlopen(\'http://localhost:8000/healthz\')"\nCMD ["uvicorn", "src.main:app", "--host", "0.0.0.0"]', lang: 'docker' },
     { ul: [
-      '**Long only**: no shorts. Removes the most extreme positions, which are where the estimation error concentrates.',
-      '**Position cap**, for example 40% each: stops one asset dominating on the strength of one noisy mean.',
-      '**Turnover limit**: how far the new weights may move from the current ones. Level 16 taught what turnover costs.',
-      '**Shrinkage**: pull the sample covariance towards something simple and stable. Ledoit and Wolf is the standard reference and one line in scikit-learn.'
+      '**Order layers by how often they change.** Dependencies change monthly, your code changes hourly, so copy and install dependencies first and your source last. Reverse that and every one line change reinstalls everything.',
+      '**Never run as root.** One line, and it converts a remote code execution into a much smaller problem.',
+      '**Pin the base image,** ideally by digest. `python:3.12-slim` moves under you; a digest does not.',
+      '**A health check that actually checks,** rather than one that returns 200 because the process is alive. Level 16 called this the difference between liveness and readiness.'
     ]},
-    { p: 'And the method that sidesteps the means entirely: **minimum variance**, which asks only for the covariance. On this ' +
-         'data it produces 12.20% volatility against equal weight\'s 27.10%, by holding mostly the two calm assets.' },
+    { p: 'One more number from the same install: those runtime dependencies took **29.7 seconds** to install. A ' +
+         'Dockerfile that copies your source before installing them pays that 29.7 seconds on every one line ' +
+         'change you make, for the rest of the project. A correctly ordered one pays it when the lockfile ' +
+         'changes, which is roughly monthly.' },
+
+    { h: 'A pipeline nobody bypasses' },
+    { p: 'The merge gate is the only thing standing between a bad change and production, and its worst property is being ' +
+         'slow, because a slow gate gets skipped "just this once". Here is this course\'s own gate, measured step by ' +
+         'step:' },
+    { table: {
+      head: ['Step', 'Time'],
+      rows: [
+        ['Syntax check, 20 files, one process each', '**9.63 s**'],
+        ['Every string renders as written', '0.67 s'],
+        ['Answer key distribution', '0.53 s'],
+        ['Writing style scan', '3.88 s'],
+        ['Rebuild the quiz keys', '0.60 s'],
+        ['Rebuild the solution readmes', '0.66 s'],
+        ['**Total**', '**15.97 s**']
+      ]
+    }},
+    { p: 'The first row is 60% of the gate, and it is not doing 60% of the work. It starts a new Node process for each ' +
+         'of twenty files, and process startup is most of the cost. Doing the identical check inside one process:' },
+    { code: 'twenty processes, one file each   9.63 s\none process, twenty files         0.61 s      16x\n\ntotal gate                       15.97 s  ->  6.95 s', lang: 'text' },
+    { p: 'Nothing was removed and nothing was made less strict. **The slow step was startup, not work**, and that is ' +
+         'usually where pipeline time goes: cold caches, fresh containers, dependency installs, and processes started ' +
+         'per item instead of per run. Time your own steps before optimising any of them, for exactly the reason level ' +
+         '14 gave.' },
+    { table: {
+      head: ['A gate should', 'Because'],
+      rows: [
+        ['Run on every pull request, not on merge', 'Finding it after merge means the main branch is already broken'],
+        ['Fail fast on the cheap checks', 'Lint and types in ten seconds, before a five minute test suite'],
+        ['Be deterministic', 'A test that fails one time in twenty teaches everybody to press retry'],
+        ['Build the artefact once', 'What you tested is what you deploy, rather than a rebuild that might differ'],
+        ['Refuse to deploy an untested commit', 'The gate is only a gate if it cannot be walked around']
+      ]
+    }},
     { check: {
-      q: 'Minimum variance gives 12.20% volatility against 27.10% for equal weight, but its return is 2.52% against 12.10%. ' +
-         'Has it helped?',
-      a: 'It has answered a different question honestly. Minimum variance does not ask what you will earn; it asks how little ' +
-         'you can move, and on this book the calm assets earned little, so a low volatility portfolio is also a low return ' +
-         'one. It is the right tool when you have no confidence in the means at all, and it is a bad tool when you do, ' +
-         'because it will happily avoid the asset that carries the entire return. The useful comparison is Sharpe: 0.21 for ' +
-         'minimum variance against 0.45 for equal weight, which says that on this book, dividing the money evenly beat ' +
-         'being clever about the covariance.'
+      q: 'Your pipeline takes 25 minutes and the team has started merging with the "administrator override" when they are ' +
+         'in a hurry. A colleague proposes making the override require a manager. Is that the right fix?',
+      a: 'No, and the override is a symptom rather than the disease. People are not overriding because approval is too ' +
+         'easy, they are overriding because waiting 25 minutes for a one line change is unreasonable, and adding a ' +
+         'manager makes the wait longer and the override harder to audit, because it moves into direct messages. The ' +
+         'fix is the 25 minutes. Time every step, as above, and expect to find startup and cache misses rather than ' +
+         'tests. Then split it: a fast gate of a few minutes that must pass to merge, covering lint, types and unit ' +
+         'tests, and a slower suite that runs after merge and can block the deploy rather than the merge. If integration ' +
+         'tests are the slow part, run them in parallel and against a container that starts once for the whole suite. ' +
+         'When the gate is three minutes, nobody wants the override, and then you can remove it.'
     }},
 
-    { h: 'Where the risk actually is' },
-    { p: 'An equal weight portfolio is not an equal risk one. Decompose it and the difference is stark.' },
-    { code: 'port_vol = sqrt(w @ S @ w)\nmarginal = (S @ w) / port_vol          # change in risk per unit of weight\ncontribution = w * marginal            # sums to port_vol', lang: 'python' },
-    { table: {
-      head: ['Asset', 'Share of money', 'Share of risk'],
-      rows: [
-        ['TECHX', '25%', '21.6%'],
-        ['BANKCO', '25%', '11.7%'],
-        ['GOLDF', '25%', '**3.9%**'],
-        ['CRYPTOZ', '25%', '**62.7%**']
-      ]
-    }},
-    { p: 'A quarter of the money carries nearly two thirds of the risk. Nobody chose that: it fell out of holding equal ' +
-         'amounts of things with very different volatilities. Say it out loud to a committee and the allocation discussion ' +
-         'changes, which is what a risk decomposition is for.' },
-    { p: '**Risk parity** is the allocation that equalises the last column instead of the first. It needs no return ' +
-         'estimates, it holds more of the calm assets and less of the wild ones, and it is a serious alternative rather ' +
-         'than a curiosity.' },
-
-    { h: 'Value at risk, three ways' },
-    { p: 'Level 7 introduced historical VaR. A risk engine computes it three ways, because when they disagree the ' +
-         'disagreement is the finding.' },
-    { table: {
-      head: ['Method', 'VaR 95%', 'VaR 99%', 'Assumes'],
-      rows: [
-        ['Historical', '-2.63%', '-3.79%', 'The future resembles this sample'],
-        ['Parametric normal', '-2.76%', '-3.92%', 'Returns are normal'],
-        ['Monte Carlo, normal', '-2.76%', '-3.90%', 'The same, simulated'],
-        ['**Expected shortfall**', '**-3.35%**', '**-4.17%**', 'The average loss beyond VaR']
-      ]
-    }},
-    { p: 'They agree here to within about a tenth of a percentage point, and that is a property of this dataset rather than ' +
-         'a general truth: the excess kurtosis of these daily returns is 0.15, which is almost exactly normal. Real markets ' +
-         'run between three and ten, so on real data the parametric number would be the optimistic one and the gap would be ' +
-         'the warning.' },
-    { warn: 'The moment the three methods disagree on real data, believe the historical and the Monte Carlo with a fat tailed ' +
-            'distribution, and treat the normal one as the number that looks nicest in a slide.' },
-
-    { h: 'A risk number nobody checks is a decoration' },
-    { p: 'A 99% VaR says you should lose more than that on about one day in a hundred. So count. Over the 781 days in this ' +
-         'sample, the equal weight portfolio breached its parametric numbers like this:' },
-    { table: {
-      head: ['Level', 'Exceptions observed', 'Expected', 'Reading'],
-      rows: [
-        ['95%', '35', '39', 'Slightly conservative'],
-        ['99%', '5', '8', 'Conservative']
-      ]
-    }},
-    { p: 'Both are in the range you would expect from chance at this sample size, so the model passes. Far too many ' +
-         'exceptions means the model understates risk and somebody is trading on a number that is wrong in the dangerous ' +
-         'direction; far too few means it overstates risk, which costs money in capital and opportunity and is a real ' +
-         'finding rather than a comfortable one.' },
-    { check: {
-      q: 'Your 99% VaR is breached on 22 days out of 781. What do you conclude, and what do you check first?',
-      a: 'The model is understating risk badly: eight breaches were expected and you have nearly three times that, which is ' +
-         'not chance. First check whether the exceptions cluster. Independent breaches scattered through the sample point ' +
-         'at the distribution being wrong, usually tails fatter than normal, and the fix is a historical or fat tailed ' +
-         'simulation. Breaches bunched into a fortnight point at volatility clustering, meaning the model uses one ' +
-         'volatility for a calm period and a storm, and the fix is an estimate that reacts, such as an exponentially ' +
-         'weighted covariance. The count tells you there is a problem; the pattern tells you which one.'
-    }},
-
-    { h: 'Rebalancing is where the theory meets level 16' },
-    { p: 'Optimal weights drift as prices move. Rebalancing costs money, so a policy has to say when, not only what.' },
+    { h: 'Infrastructure you can read' },
+    { p: 'Everything your service needs, written as files in the repository and applied by a machine: the database, the ' +
+         'cache, the queue, the load balancer, the alarms, the permissions. **Terraform** is the common tool and the ' +
+         'shape is the same in all of them:' },
+    { code: 'resource "aws_db_instance" "ledger" {\n  identifier        = "ledger-${var.environment}"\n  engine            = "postgres"\n  engine_version    = "16.3"\n  instance_class    = var.db_size          # small in staging, large in prod\n  storage_encrypted = true\n  backup_retention_period = 30\n  deletion_protection     = var.environment == "prod"\n}', lang: 'text' },
     { ul: [
-      '**Calendar**: monthly or quarterly. Simple, predictable, and occasionally rebalances for no reason.',
-      '**Threshold**: only when a weight drifts more than a set distance from target. Trades less and trades for a reason.',
-      '**No trade band**: a region around the target where nothing happens at all, which is the honest version of the above.'
+      '**`plan` before `apply`, always.** The plan is a diff of reality against your files, and reading it is the review.',
+      '**State is a real thing you can lose.** Terraform records what it created in a state file: keep it remote, versioned and locked, and never edit it by hand.',
+      '**Drift is what somebody changed in the console at 2am.** The next plan will offer to undo their fix, which is why emergency changes get written back into the code the next morning.',
+      '**The same code builds every environment,** with variables for the differences. Staging that differs in shape from production tests nothing that matters.'
     ]},
-    { p: 'Whatever the rule, report turnover per year and apply the costs from level 16. An allocation that looks better ' +
-         'on paper and rebalances weekly is usually worse after costs, and the only way to know is to run it through the ' +
-         'engine you already built.' }
+    { warn: 'Never put a secret in a Terraform file or a variable default. It ends up in the state file, which is a ' +
+            'plaintext copy of everything, sitting in a bucket. Reference a secret manager and let the resource read it ' +
+            'at run time.' },
+
+    { h: 'Deploying, and the only question that matters' },
+    { p: 'Four strategies. Choose by how long it takes to get back, because that is the number you will care about at ' +
+         'the moment you need it:' },
+    { table: {
+      head: ['Strategy', 'How', 'Downtime', 'Rollback', 'Cost'],
+      rows: [
+        ['Recreate', 'Stop the old, start the new', 'Yes', 'Another full deploy', 'Cheapest'],
+        ['Rolling', 'Replace instances a few at a time', 'None', 'Roll forward or back, minutes', 'Cheap'],
+        ['**Blue green**', 'Run both, switch the load balancer', 'None', '**Switch back, seconds**', 'Double, briefly'],
+        ['Canary', 'Send 1% of traffic to the new one, then more', 'None', 'Stop sending, seconds', 'Slightly more']
+      ]
+    }},
+    { p: 'For money, blue green or canary. The reason is in the rollback column: when a deploy is losing payments, ' +
+         '**seconds against minutes is the whole argument**, and the cost of running two versions for ten minutes is ' +
+         'trivial next to the cost of a ten minute outage.' },
+    { p: 'Canary needs the level 16 work to be real. You are comparing the new version\'s error rate and latency against ' +
+         'the old one on live traffic, automatically, and rolling back when it is worse. Without per version metrics ' +
+         'that comparison is somebody squinting at a dashboard.' },
+
+    { h: 'The thing that makes rollback impossible' },
+    { p: 'Code rolls back in seconds. Databases do not, and that is why deploys go badly. If version 2 renamed a column ' +
+         'and you roll back to version 1, version 1 meets a schema it has never seen.' },
+    { p: 'The answer is level 13\'s expand and contract, and now you can see why it was worth six deploys: **every ' +
+         'intermediate state is one where both the old and the new code work.** The rule that follows is short enough to ' +
+         'remember:' },
+    { code: 'A migration and the code that needs it never deploy together.\n\n  deploy 1   migration only: add the new column, nullable. Old code fine.\n  deploy 2   code that writes both.\n  deploy 3   backfill, verify.\n  deploy 4   code that reads the new one. Rollback is one deploy back.\n  deploy 5   code stops writing the old one.\n  deploy 6   migration only: drop the old column, days later.', lang: 'text' },
+    { tip: 'Write the rollback plan into the pull request, in one line, before merging. If the honest answer is "we ' +
+           'cannot roll this back", that is worth knowing while the change can still be restructured.' },
+
+    { h: 'Deploying is not releasing' },
+    { p: 'A **feature flag** separates shipping code from turning it on. The code goes out dark, and a configuration ' +
+         'change enables it: for you, then for one merchant, then for one percent, then everybody.' },
+    { ul: [
+      '**A kill switch for every risky path.** Turning a feature off is a configuration change taking seconds, where a rollback is a deploy taking minutes.',
+      '**Flags are read at request time,** not at start, or turning one off means a restart and you have lost the point.',
+      '**Default to off, and fail to off.** If the flag service is unreachable, the new path stays dark rather than everybody getting it at once.',
+      '**Flags expire.** Every flag is a branch in your code and two paths to test. Put a removal date on it and delete it, or in a year you will have sixty flags and nobody willing to touch any of them.'
+    ]},
+    { p: 'For payments there is a second use that matters more than gradual rollout: **the switch you reach for during ' +
+         'an incident.** Turn off the new fraud provider, stop the payout job, route everything to the old processor. ' +
+         'Those are flags, decided in advance, and they are the difference between a five minute incident and an hour.' },
+
+    { h: 'What your design costs per payment' },
+    { p: 'Nobody asks a junior engineer what their architecture costs, and being able to answer is a way to sound like ' +
+         'somebody who has run something. The arithmetic is not difficult; what is rare is doing it at all.' },
+    { code: 'Assume 200 payments per second at peak, 50 average, so 130 million a month.\nUnit prices are illustrative: look up the real ones, the method is the point.\n\n  compute   6 instances x 2 vCPU x $0.04 per vCPU hour x 730 h   =  $3,504\n  database  1 primary + 1 replica, 8 vCPU each, managed           =  $2,200\n  cache     2 nodes, small                                        =    $180\n  queue     130 M messages                                        =    $130\n  logs      21.6 GB a day x 30 x $0.50 per GB ingested            =    $324\n  metrics   40,000 series                                         =    $200\n  traces    1% tail sampled                                       =    $150\n  egress    2 TB x $0.09 per GB                                   =    $184\n  ---------------------------------------------------------------------------\n  total                                                              $6,872\n  per payment                                                     $0.000053', lang: 'text' },
+    { p: 'Three things fall out of that table, and they are the same three every time. **Logs and metrics are a real ' +
+         'line item**, which is why level 16 sampled them. **Egress is charged and ingress usually is not**, so moving ' +
+         'data out of a region costs money that nobody budgeted. And **idle capacity is most of the bill**: the compute ' +
+         'line is sized for 200 payments a second at peak while the average is 50, so three quarters of it is insurance.' },
+    { money: 'Five thousandths of a cent per payment sounds like nothing, and that is the point of computing it. Now ' +
+             'compare it with your processing fee of roughly 2.9% plus 30 cents, and you can say exactly how much of ' +
+             'your margin the infrastructure takes. An engineer who can hold both numbers at once is talking the same ' +
+             'language as the person deciding the budget.' },
+    { check: {
+      q: 'Your finance team asks you to cut the cloud bill by 30%. The compute line is the biggest. What do you look at ' +
+         'first, and what would you refuse to do?',
+      a: 'Look first at the gap between peak and average, because that is where the waste is: sized for 200 a second ' +
+         'while averaging 50 means most instances are idle most of the day, and autoscaling on a metric that reflects ' +
+         'real load recovers a lot of it without touching reliability. Next, the things nobody has looked at since they ' +
+         'were switched on: log retention and volume, metrics cardinality from level 16, snapshots and backups that ' +
+         'accumulate, and environments that exist but are used one week in ten. Those are usually a quarter of a bill ' +
+         'and cost nothing to change. What to refuse is anything that removes headroom you sized deliberately: running ' +
+         'the database without a replica, dropping to one instance per zone, or turning off backups, because the saving ' +
+         'is small and the failure mode is the entire business. Say that out loud with the numbers attached, because ' +
+         '"no" with arithmetic is a different conversation from "no".'
+    }},
+
+    { h: 'The twelve repositories problem' },
+    { p: 'You now have a dozen projects that each work alone. A company would have one deployable system, and the last ' +
+         'job of this level is to notice what is missing between them: one place to find every service, one way to run ' +
+         'them together locally, one pipeline shape, one logging format, one set of dashboards, and one document that ' +
+         'says which service owns what.' },
+    { p: 'That document is worth writing even for yourself. It is the first thing a new engineer reads, it is what an ' +
+         'interviewer will ask you to draw, and it is the spine of the capstone in level 20.' }
   ],
 
   tutorial: {
-    intro: 'numpy, pandas and scipy on the level 7 prices. Every table in this level was produced by the code below, so ' +
-           'you can check each figure as you go. Keep the level 16 engine to hand: the last step feeds this into it.',
+    intro: 'Take the payments API, the vault and the observability work and make them deployable together. Everything ' +
+           'here runs on free tiers or locally. Work in a repository called `payments-platform`.',
     steps: [
       {
-        t: 'Means, covariance, and a portfolio function',
+        t: 'Containerise, then look at what you shipped',
         blocks: [
-          { code: 'import numpy as np\nimport pandas as pd\n\nprices = pd.read_csv("{{RAW}}/data/level-07-prices.csv", parse_dates=["date"]).set_index("date")\nrets = prices.pct_change().dropna()\n\nmu = rets.mean() * 252\nS = rets.cov() * 252\n\ndef portfolio(w, mu=mu, S=S):\n    w = np.asarray(w, dtype=float)\n    ret = float(w @ mu)\n    vol = float(np.sqrt(w @ S.values @ w))\n    return {"return": ret, "vol": vol, "sharpe": ret / vol if vol else np.nan}', lang: 'python' },
-          { p: 'Check it against level 7: an equal weight portfolio should give 12.10% return, 27.10% volatility and a Sharpe ' +
-               'of 0.45 with no risk free rate.' }
+          { p: 'A single stage Dockerfile first, deliberately, so you can measure it. Then the multi stage version. ' +
+               'Compare image sizes and write both numbers down.' },
+          { code: 'docker build -t pay:naive -f Dockerfile.naive .\ndocker build -t pay:slim  -f Dockerfile .\ndocker images | grep pay', lang: 'bash' },
+          { p: 'The dependency tree is where the weight is. Measured on a payments service: what it needs to run against ' +
+               'what it needs to be built and tested is 60.8 MB against 154.7 MB.' }
         ],
-        check: 'portfolio([0.25]*4) reproduces the equal weight figures from level 7.'
+        check: 'Your final image contains no test framework, no linter and no compiler, and you can prove it by running `pip list` inside it.'
       },
       {
-        t: 'Optimise, and look at what you get',
+        t: 'Make the cache do the work',
         blocks: [
-          { code: 'from scipy.optimize import minimize\n\ndef max_sharpe(mu, S, bounds=None, cap=None):\n    n = len(mu)\n    x0 = np.repeat(1 / n, n)\n    cons = [{"type": "eq", "fun": lambda w: w.sum() - 1}]\n    if cap is not None:\n        bounds = [(0, cap)] * n\n    return minimize(lambda w: -portfolio(w, mu, S)["sharpe"],\n                    x0, bounds=bounds, constraints=cons).x\n\nprint("unconstrained", (np.linalg.inv(S.values) @ mu.values / (np.linalg.inv(S.values) @ mu.values).sum()).round(3))\nprint("long only    ", max_sharpe(mu, S, bounds=[(0, 1)] * 4).round(3))', lang: 'python' },
-          { warn: 'Print the weights every time, before the Sharpe. A number like -0.925 in a weight vector is the finding, ' +
-                  'and it is invisible if you only look at the summary statistics.' }
+          { p: 'Order the Dockerfile so dependencies install before your source is copied, then change one line of code ' +
+               'and rebuild. Time both orders.' },
+          { code: 'installing the runtime dependencies   29.7 s\n\nordered wrongly, you pay that on every code change\nordered rightly, you pay it when the lockfile changes', lang: 'text' },
+          { tip: 'Also add a `.dockerignore`. Without one, your git history, virtual environment and test data are sent ' +
+                 'to the build daemon on every build, which is usually the reason a build is slow before anything has ' +
+                 'been compiled.' }
         ],
-        check: 'The unconstrained solution shorts BANKCO at about -92.5% and gains 0.05 of Sharpe over equal weight.'
+        check: 'Changing one line of application code rebuilds in seconds, not minutes.'
       },
       {
-        t: 'Shrink the covariance',
+        t: 'Configuration that refuses to start',
         blocks: [
-          { code: 'from sklearn.covariance import LedoitWolf\n\nlw = LedoitWolf().fit(rets.values)\nS_shrunk = pd.DataFrame(lw.covariance_ * 252, index=S.index, columns=S.columns)\nprint("shrinkage intensity", round(lw.shrinkage_, 3))\n\nprint("weights, sample   ", max_sharpe(mu, S, bounds=[(0, 1)] * 4).round(3))\nprint("weights, shrunk   ", max_sharpe(mu, S_shrunk, bounds=[(0, 1)] * 4).round(3))', lang: 'python' },
-          { p: 'With four assets and 781 days the effect is small, which is worth seeing: shrinkage earns its place when the ' +
-               'number of assets approaches the number of observations, and saying when a technique does nothing is part of ' +
-               'knowing it.' }
+          { p: 'One settings object, validated at import, with no defaults for anything that matters. Then prove it: ' +
+               'start the container with a missing variable and confirm it exits immediately with a message naming the ' +
+               'variable.' },
+          { warn: 'Secrets come from the environment or a secret manager, never from the image and never from a file in ' +
+                  'the repository. Level 15 applies unchanged here.' }
         ],
-        check: 'The shrinkage intensity prints, and the weights move less than a percentage point on this small universe.'
+        check: 'A missing or invalid variable stops the service at start, not at the first payment.'
       },
       {
-        t: 'Decompose the risk',
+        t: 'The gate',
         blocks: [
-          { code: 'def risk_contributions(w, S=S):\n    w = np.asarray(w, dtype=float)\n    vol = float(np.sqrt(w @ S.values @ w))\n    marginal = (S.values @ w) / vol\n    contribution = w * marginal\n    return pd.Series(contribution / contribution.sum(), index=S.index)\n\nprint((risk_contributions([0.25] * 4) * 100).round(1))', lang: 'python' },
-          { p: 'You should see CRYPTOZ at about 62.7% and GOLDF at about 3.9%. Put that next to the weights in your report: ' +
-               'two columns, money and risk, and let the gap make the argument.' }
+          { p: 'GitHub Actions: lint, types, unit tests, build the image once, then integration tests against that ' +
+               'exact image. Then time every step and publish the table in your README.' },
+          { code: 'twenty processes, one file each   9.63 s\none process, twenty files         0.61 s     16x\ntotal gate                       15.97 s -> 6.95 s', lang: 'text' },
+          { p: 'Find your own version of that row. It is almost always a step that starts a process per file, or a cache ' +
+               'that is not being restored.' }
         ],
-        check: 'The contributions sum to 100% and reproduce the table in this level.'
+        check: 'The gate runs on every pull request, takes under five minutes, and the artefact it built is the one that deploys.'
       },
       {
-        t: 'Risk parity',
+        t: 'Write the infrastructure down',
         blocks: [
-          { code: 'def risk_parity(S, tol=1e-10):\n    n = S.shape[0]\n    target = np.repeat(1 / n, n)\n\n    def error(w):\n        rc = risk_contributions(w, S)\n        return float(((rc - target) ** 2).sum())\n\n    cons = [{"type": "eq", "fun": lambda w: w.sum() - 1}]\n    return minimize(error, np.repeat(1 / n, n),\n                    bounds=[(1e-6, 1)] * n, constraints=cons, tol=tol).x', lang: 'python' },
-          { tip: 'Compare risk parity, equal weight and minimum variance in one table: weights, return, volatility, Sharpe ' +
-                 'and the four risk contributions. That single table is the deliverable a committee reads.' }
+          { p: 'Terraform for the database, the cache, the queue and the alarms, with remote state and a variable for ' +
+               'environment size. Run `plan` against a live environment and read the diff: that is your first encounter ' +
+               'with drift.' },
+          { p: 'Then destroy and recreate staging from scratch, timed. If you cannot, something is not in the code, and ' +
+               'finding out which thing is the exercise.' }
         ],
-        check: 'Risk parity gives four risk contributions near 25% each, and holds far less CRYPTOZ than equal weight.'
+        check: 'Staging can be destroyed and rebuilt from the repository alone, and you know how long it takes.'
       },
       {
-        t: 'VaR three ways',
+        t: 'Blue green, with a switch you have used',
         blocks: [
-          { code: 'import scipy.stats as st\n\nport_daily = rets.values @ np.repeat(0.25, 4)\n\ndef var_historical(x, level=0.95):\n    return float(np.quantile(x, 1 - level))\n\ndef var_parametric(x, level=0.95):\n    return float(x.mean() + x.std() * st.norm.ppf(1 - level))\n\ndef var_monte_carlo(mu_d, S_d, w, level=0.95, n=200_000, seed=7):\n    rng = np.random.default_rng(seed)\n    sims = rng.multivariate_normal(mu_d, S_d, size=n) @ w\n    return float(np.quantile(sims, 1 - level))\n\ndef expected_shortfall(x, level=0.95):\n    cut = var_historical(x, level)\n    return float(x[x <= cut].mean())', lang: 'python' },
-          { p: 'Print all four at 95% and 99% in one table. On this data they land within about a tenth of a percentage ' +
-               'point of each other, and the reason is in the next step.' }
+          { p: 'Two environments, one load balancer, a health check that fails when the service is genuinely not ready. ' +
+               'Deploy a deliberately broken version to the idle side and confirm it never receives traffic.' },
+          { p: 'Then time a rollback, honestly, from the decision to the first healthy response. That number belongs in ' +
+               'your README and in your interview answer.' }
         ],
-        check: 'Historical VaR95 is about -2.63%, ES95 about -3.35%, and the parametric and Monte Carlo figures agree closely.'
+        check: 'You have rolled back a live deploy and know how many seconds it took.'
       },
       {
-        t: 'Ask whether normal was a fair assumption',
+        t: 'Flags, and a migration that can go backwards',
         blocks: [
-          { code: 'print("excess kurtosis", round(st.kurtosis(port_daily), 2))\nprint("skew", round(st.skew(port_daily), 2))', lang: 'python' },
-          { p: 'About 0.15 and 0.16 here: this synthetic data is nearly normal, which is why the parametric number worked. ' +
-               'Write that in the report, because on real returns the excess kurtosis runs between three and ten and the ' +
-               'parametric VaR is the one that understates the danger.' }
+          { p: 'A flag service read at request time, defaulting to off, with a kill switch on the payout path. Then ' +
+               'perform an expand and contract migration across several deploys, rolling back in the middle on purpose ' +
+               'to prove the intermediate states are safe.' },
+          { code: 'deploy 1   migration only, additive\ndeploy 2   write both        <- roll back to here and confirm nothing breaks\ndeploy 3   backfill and verify\ndeploy 4   read the new column', lang: 'text' }
         ],
-        check: 'The kurtosis is printed and the report says what it implies for the parametric method.'
+        check: 'Rolling back from deploy 4 to deploy 2 loses no data and breaks nothing.'
       },
       {
-        t: 'Backtest the risk model',
+        t: 'Cost the whole thing',
         blocks: [
-          { code: 'def exceptions(x, var_level, level=0.95):\n    breaches = x < var_level\n    return {"observed": int(breaches.sum()),\n            "expected": round((1 - level) * len(x), 1),\n            "days": len(x),\n            "worst": float(x.min())}\n\nprint(exceptions(port_daily, var_parametric(port_daily, 0.99), 0.99))', lang: 'python' },
-          { p: 'Five observed against eight expected over 781 days. Then check clustering: if the breaches are bunched into ' +
-               'one fortnight, the problem is that your volatility estimate does not react, and an exponentially weighted ' +
-               'covariance is the next thing to try.' }
+          { p: 'Build the table for your own architecture, with real list prices you looked up and your own measured ' +
+               'log and metric volumes from level 16. Compute cost per payment, and compare it with a 2.9% plus 30 cent ' +
+               'fee.' },
+          { p: 'Then find the two biggest lines and write one paragraph on how you would halve each, and what you would ' +
+               'refuse to cut. That paragraph is the difference between an engineer and a senior one.' }
         ],
-        check: 'The exception count is printed at both levels, along with the dates of the breaches.'
+        check: 'You can state your cost per payment and defend the two lines you would cut first.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Covariance matrix', d: 'How every pair of assets moves together. Ten numbers for four assets, 5,050 for a hundred.' },
-    { t: 'Mean variance optimisation', d: 'Choosing weights for the best return per unit of risk, given estimated means and covariances.' },
-    { t: 'Error maximisation', d: 'What mean variance does in practice: it puts the most money where the estimate was most overstated.' },
-    { t: 'Tangency portfolio', d: 'The weights with the highest Sharpe ratio for a given set of estimates.' },
-    { t: 'Minimum variance', d: 'The lowest volatility portfolio. Needs the covariance and no return estimates at all.' },
-    { t: 'Shrinkage', d: 'Pulling a noisy sample covariance towards a simple stable target. Ledoit and Wolf is the standard.' },
-    { t: 'Long only', d: 'No short positions. The crudest and most effective way to say you distrust your estimates.' },
-    { t: 'Marginal contribution to risk', d: 'How much portfolio volatility changes per unit of weight in one asset.' },
-    { t: 'Risk contribution', d: 'Weight times marginal contribution. Sums to the portfolio volatility, and rarely matches the weights.' },
-    { t: 'Risk parity', d: 'Weights chosen so every holding contributes the same risk rather than the same money.' },
-    { t: 'Value at risk', d: 'A loss threshold at a confidence level. A threshold, never a maximum.' },
-    { t: 'Expected shortfall', d: 'The average loss on the days that breach VaR. What VaR refuses to tell you.' },
-    { t: 'Exception', d: 'A day whose loss exceeded the VaR. Counting them is how you find out whether the model works.' },
-    { t: 'Volatility clustering', d: 'Calm periods and stormy ones. Why a single volatility estimate produces bunched exceptions.' },
-    { t: 'No trade band', d: 'A region around the target weights where rebalancing does not happen, so turnover has a reason.' }
+    { t: 'Image', d: 'A filesystem plus metadata that a container runs from. Built in layers, and layers are forever.' },
+    { t: 'Multi stage build', d: 'Building in one stage and copying only the result into a clean final stage.' },
+    { t: 'Layer cache', d: 'Reusing unchanged layers. The reason dependency installs go before copying source.' },
+    { t: 'Lockfile', d: 'Exact pinned versions, so what you tested is what you deploy.' },
+    { t: 'Liveness probe', d: 'Is the process alive? Failing it restarts the container.' },
+    { t: 'Readiness probe', d: 'Should it receive traffic yet? Failing it removes it from the load balancer.' },
+    { t: 'Merge gate', d: 'The checks that must pass before a change can merge.' },
+    { t: 'Flaky test', d: 'One that fails intermittently. It teaches the team to press retry, which is the real damage.' },
+    { t: 'Infrastructure as code', d: 'Resources described in files and applied by a machine.' },
+    { t: 'State file', d: 'Terraform\'s record of what it created. Remote, versioned, locked, never hand edited.' },
+    { t: 'Drift', d: 'Reality differing from the code, usually because somebody changed it by hand during an incident.' },
+    { t: 'Blue green', d: 'Two environments and a switch, so rollback is the switch going back.' },
+    { t: 'Canary', d: 'A small share of live traffic on the new version, compared automatically against the old.' },
+    { t: 'Feature flag', d: 'A run time switch that separates deploying code from releasing behaviour.' },
+    { t: 'Kill switch', d: 'A flag whose only job is turning something off quickly during an incident.' },
+    { t: 'Egress', d: 'Data leaving the provider or region. Charged, while ingress usually is not.' }
   ],
 
   quiz: [
-    { q: "Why does an unconstrained mean variance optimiser produce extreme weights?",
+    { q: "Which difference between your laptop and a server does a container NOT fix?",
       options: [
-        "It treats noisy estimates as certain, so it pushes hardest where the noise pointed",
-        "The covariance matrix is singular",
-        "The solver has not converged",
-        "Because returns are not normal"
+        "Configuration and secrets",
+        "The language runtime version",
+        "System libraries",
+        "Dependency versions"
       ],
       answer: 0,
-      why: "Error maximisation. The fix is constraints, shrinkage, or a method that does not need the means, not a better solver." },
+      why: "They arrive at run time, which is why the application should validate all of them at start and refuse to boot." },
 
-    { q: "On this data, unconstrained optimisation gains 0.05 of Sharpe over equal weight. What does it require?",
+    { q: "Why should a service validate its configuration at import rather than on first use?",
       options: [
-        "A 92% short position, with the margin and borrow that implies",
-        "A risk free asset",
-        "Daily rebalancing",
-        "A longer sample"
+        "So a bad deploy fails immediately instead of turning into a customer facing failure on the first payment",
+        "To reduce memory",
+        "It is faster",
+        "Because the framework requires it"
       ],
       answer: 0,
-      why: "0.50 against 0.45. Five hundredths of Sharpe for a position most investors cannot hold and none should want." },
+      why: "A service that boots happily with an empty variable has converted a deploy problem into a money problem." },
 
-    { q: "What does a long only constraint actually express?",
+    { q: "Why does a multi stage build produce a smaller image?",
       options: [
-        "A preference for simplicity",
-        "That short selling is expensive",
-        "That you do not believe your own estimates enough to bet against anything",
-        "A regulatory requirement"
+        "It removes files in a later layer",
+        "It uses a different filesystem",
+        "The final stage starts from a clean base and copies in only what runs, so the build tooling is never in the image at all",
+        "It compresses the layers"
       ],
       answer: 2,
-      why: "Constraints are a crude prior. Practitioners reached for them first and the theory eventually agreed." },
+      why: "Deleting in a later layer does not help: everything installed stays in the image forever." },
 
-    { q: "Minimum variance needs which inputs?",
+    { q: "Where should dependency installation go in a Dockerfile?",
       options: [
-        "Neither, only prices",
-        "The covariance matrix only",
-        "Both, plus a risk free rate",
-        "Expected returns only"
+        "In the final stage only",
+        "Before copying the source, so a code change does not reinstall everything",
+        "It makes no difference",
+        "After copying the source, so the code is available"
       ],
       answer: 1,
-      why: "That is its attraction: the means are the least reliable estimate you have, and this method does not ask for them." },
+      why: "Order layers by how often they change: dependencies monthly, your code hourly." },
 
-    { q: "Equal weight gives every asset 25% of the money. On this data CRYPTOZ carries what share of the risk?",
+    { q: "A syntax check over twenty files took 9.63 s as twenty processes and 0.61 s as one. What was the cost?",
       options: [
-        "62.7%",
-        "25%",
-        "11.7%",
-        "38%"
+        "Process startup, not work: nothing was removed and nothing was made less strict",
+        "Disk reads",
+        "Network",
+        "The check itself"
       ],
       answer: 0,
-      why: "Equal money is not equal risk when volatilities differ by a factor of five. Nobody chose that concentration; it fell out of the weights." },
+      why: "That one change took the whole gate from 15.97 s to 6.95 s." },
 
-    { q: "Risk parity chooses weights so that:",
+    { q: "The team keeps using the administrator override to skip a 25 minute pipeline. What is the fix?",
       options: [
-        "Volatility is minimised",
-        "Every asset has the same weight",
-        "Every asset contributes the same risk",
-        "The Sharpe ratio is maximised"
+        "Remove the override entirely",
+        "Require a manager to approve the override",
+        "Make the pipeline fast: time every step, split a fast merge gate from a slower post merge suite",
+        "Run the pipeline only on the main branch"
       ],
       answer: 2,
-      why: "It needs no return estimates, holds more of the calm assets, and is a serious alternative rather than a curiosity." },
+      why: "The override is a symptom. Requiring approval moves it into direct messages, where nobody can audit it." },
 
-    { q: "Historical, parametric and Monte Carlo VaR agree closely on this dataset. Why?",
+    { q: "Why must a merge gate build the artefact once and deploy that same one?",
       options: [
-        "Because these returns are nearly normal, with excess kurtosis of 0.15",
-        "Because all three use the same quantile function",
-        "Because the portfolio is equal weight",
-        "Because the sample is large"
+        "Because a rebuild at deploy time might differ from what was tested",
+        "To keep the registry small",
+        "Because builds are slow",
+        "To save money"
       ],
       answer: 0,
-      why: "Real markets run between three and ten, and there the parametric number is the optimistic one and the gap is the warning." },
+      why: "What you tested is what you deploy, or you tested nothing in particular." },
 
-    { q: "Expected shortfall at 95% on this portfolio is -3.35% against a VaR of -2.63%. What does that mean?",
+    { q: "What is drift in infrastructure as code?",
       options: [
-        "The VaR was computed wrongly",
-        "The portfolio loses 3.35% on 5% of days",
-        "The worst possible day is -3.35%",
-        "On the days that breach the VaR, the average loss is 3.35%"
+        "Slow degradation of performance",
+        "Configuration diverging between environments",
+        "State file corruption",
+        "Reality differing from the code, usually because somebody changed it by hand"
       ],
       answer: 3,
-      why: "VaR gives the threshold, ES gives the average beyond it, and the worst single day here was -5.00%. Report all three." },
+      why: "The next plan offers to undo their emergency fix, which is why it gets written back into the code the next morning." },
 
-    { q: "A 99% VaR is breached 22 times in 781 days. The most likely explanations are:",
+    { q: "Why must secrets never appear in Terraform files or variable defaults?",
       options: [
-        "The sample is too short to say",
-        "Fat tails or volatility clustering",
-        "A bug in the quantile function",
-        "Too few assets"
+        "They change too often",
+        "They end up in the state file, which is a plaintext copy of everything, sitting in a bucket",
+        "They would be too long",
+        "Terraform cannot read them"
       ],
       answer: 1,
-      why: "Eight were expected. Scattered breaches point at the distribution; bunched ones point at a volatility estimate that does not react." },
+      why: "Reference a secret manager and let the resource read it at run time." },
 
-    { q: "Far fewer exceptions than expected means:",
+    { q: "Which deploy strategy makes rollback a matter of seconds?",
       options: [
-        "The model is working well",
-        "Nothing worth reporting",
-        "The model overstates risk, which costs capital and opportunity",
-        "The confidence level was set too low"
+        "Recreate",
+        "Rolling",
+        "Blue green",
+        "Any of them, with automation"
       ],
       answer: 2,
-      why: "Being wrong in the safe direction is still being wrong, and it is a real finding rather than a comfortable one." },
+      why: "Both versions are running, so rollback is the load balancer switching back. For money that is the argument." },
 
-    { q: "What does shrinkage do to a covariance matrix?",
+    { q: "What does canary deployment require that the others do not?",
       options: [
-        "Scales it to annual units",
-        "Pulls the noisy sample estimate towards a simple stable target",
-        "Reduces its dimensions",
-        "Removes the correlations"
+        "A feature flag service",
+        "Per version metrics, so the new version can be compared against the old on live traffic automatically",
+        "Twice the infrastructure",
+        "A database migration"
       ],
       answer: 1,
-      why: "It earns its place as the number of assets approaches the number of observations. On four assets and 781 days it does almost nothing." },
+      why: "Without them the comparison is somebody squinting at a dashboard during a deploy." },
 
-    { q: "Risk contribution is computed as:",
+    { q: "Why does a database migration make rollback hard?",
       options: [
-        "The correlation with the portfolio",
-        "Weight times marginal contribution to risk",
-        "Weight times volatility",
-        "Weight squared times variance"
+        "Because of replication lag",
+        "Because the old code can meet a schema it has never seen, so code and migration must not deploy together",
+        "Migrations are slow",
+        "Because backups take time"
       ],
       answer: 1,
-      why: "And the contributions sum to the portfolio volatility, which is what makes the percentages meaningful." },
+      why: "Expand and contract exists so that every intermediate state works with both versions of the code." },
 
-    { q: "Why does a rebalancing policy need a threshold rather than only a calendar?",
+    { q: "Why must a feature flag be read at request time rather than at start?",
       options: [
-        "Because thresholds are easier to implement",
-        "Because calendars vary by country",
-        "Because a calendar rebalances when nothing has moved, and every trade pays the costs from level 16",
-        "Because monthly is too frequent for any portfolio"
+        "Because flags change rarely",
+        "It is faster",
+        "Because otherwise turning a flag off requires a restart, which removes the point of having it",
+        "To reduce load on the flag service"
       ],
       answer: 2,
-      why: "A no trade band is the honest version: nothing happens until a weight has drifted far enough to be worth the cost." },
+      why: "And it should default to off, so an unreachable flag service leaves the new path dark." },
 
-    { q: "Which is the best summary of what constraints cost on this data?",
+    { q: "Compute was sized for 200 payments a second while the average is 50. What does that tell you about the bill?",
       options: [
-        "They always improve the result",
-        "Nothing at all",
-        "About half the return",
-        "About 0.02 of Sharpe, in exchange for removing the borrowing, the short and the margin call"
+        "That the average should be measured differently",
+        "Nothing, peak sizing is required",
+        "That the service is inefficient",
+        "That most of the compute line is idle capacity, which is the first place to look before cutting anything that removes headroom"
       ],
       answer: 3,
-      why: "0.50 unconstrained against 0.48 long only. Cheap insurance against estimates you know are noisy." },
+      why: "Autoscaling on real load recovers much of it. Removing a replica to save money does not." },
 
-    { q: "Ten numbers describe the covariance of four assets. How many for a hundred?",
+    { q: "Why compute a cost per payment at all?",
       options: [
-        "1,000",
-        "400",
-        "10,000",
-        "5,050"
+        "To choose a cloud provider",
+        "For the finance team's report",
+        "Because it is required for compliance",
+        "So you can compare infrastructure cost against the processing fee and say how much of the margin it takes"
       ],
       answer: 3,
-      why: "n(n+1)/2, all estimated from the same limited history. That growth is why portfolio theory starts to hurt at scale." }
+      why: "An engineer who can hold both numbers is in the same conversation as the person setting the budget." }
   ],
 
   project: {
-    title: 'The portfolio and risk engine',
-    story: 'The society\'s investment group has four assets, strong opinions and no process. Build the engine that produces ' +
-           'the weights, shows where the risk actually sits, reports the loss numbers three ways, and proves the risk model ' +
-           'has been checked rather than believed.',
-    scope: 'Uses this level plus level 7 (returns, volatility, correlation, drawdown) and level 16 (costs and turnover). ' +
-           'numpy, pandas, scipy and scikit-learn for shrinkage only.',
-    dataset: '{{RAW}}/data/level-07-prices.csv',
+    title: 'payments-platform: everything you built, deployable',
+    story: 'Take the payments API, the vault and the observability work, and make them one system somebody else could ' +
+           'run. Containers that hold only what runs, a gate fast enough that nobody skips it, infrastructure in code, ' +
+           'blue green with a rollback you have timed, flags with a kill switch, and a cost per payment you can defend.',
+    scope: 'Free tiers and local tools throughout. If you cannot run a cloud account, run the same shapes with Docker ' +
+           'Compose and a local registry, and say so in the README. The reasoning is what is being assessed.',
     requirements: [
-      'A portfolio(w) returning annualised return, volatility and Sharpe, checked against the level 7 equal weight figures',
-      'max_sharpe() and min_variance(), each accepting bounds and a per position cap',
-      'The unconstrained solution printed with its weights, including the short, next to the constrained one',
-      'Ledoit and Wolf shrinkage as an option, with the shrinkage intensity reported and a note on why it matters little here',
-      'risk_contributions(w) that sums to one, reproducing the equal weight decomposition in this level',
-      'risk_parity() solved numerically, with a test that the contributions are equal to within a tolerance',
-      'A comparison table of equal weight, minimum variance, maximum Sharpe and risk parity: weights, return, volatility, Sharpe and risk contributions',
-      'VaR at 95% and 99% by historical, parametric and Monte Carlo methods, plus expected shortfall',
-      'The excess kurtosis reported next to the VaR table, with one sentence on what it means for the parametric figure',
-      'An exception backtest counting breaches at both levels against expectation, and listing the dates so clustering is visible',
-      'A rebalancing policy with a no trade band, reporting turnover per year and the cost from the level 16 engine',
-      'A README with the comparison table, the risk decomposition and the exception count, written for somebody choosing an allocation',
-      'The repository in your GitHub portfolio as finquest-portfolio-engine'
+      'A single stage Dockerfile and a multi stage one, with both image sizes reported',
+      'Layers ordered so that a one line code change does not reinstall dependencies, with build times for both orders',
+      'A `.dockerignore`, a non root user, a pinned base image and a health check that fails when the service is not ready',
+      'Configuration as one validated object, with the service refusing to start on a missing or invalid variable',
+      'A merge gate: lint, types, unit tests, one image build, integration tests against that image',
+      'A table of your pipeline step timings, and at least one step you made faster with the reason',
+      'Terraform for the database, cache, queue and alarms, with remote state and environment variables for sizing',
+      'A destroy and rebuild of staging from the repository alone, timed',
+      'Blue green deployment with a health check that keeps a broken version from receiving traffic',
+      'A timed rollback, measured from decision to first healthy response',
+      'A feature flag service read at request time, defaulting to off, with a kill switch on the payout path',
+      'An expand and contract migration deployed across several releases, with a mid migration rollback proving the intermediate states are safe',
+      'A cost model with real list prices and your own measured log and metric volumes, giving a cost per payment',
+      'One paragraph on how you would halve the two biggest lines, and what you would refuse to cut',
+      'An architecture document naming every service, what it owns, and what it depends on',
+      'The repository public on GitHub as `payments-platform`'
     ],
     starter: {
-      lang: 'python',
-      code: '"""FinQuest level 17: the portfolio and risk engine.\n\nLayout:\n  engine/inputs.py      returns, means, covariance, shrinkage\n  engine/optimise.py    max_sharpe, min_variance, risk_parity\n  engine/decompose.py   marginal and total risk contributions\n  engine/var.py         historical, parametric, monte carlo, expected shortfall\n  engine/backtest.py    exception counting and clustering\n  engine/rebalance.py   the no trade band and its turnover\n"""\n\nimport numpy as np\nimport pandas as pd\n\nURL = "{{RAW}}/data/level-07-prices.csv"\n\n\ndef load(url=URL):\n    """Prices, daily returns, annualised mu and S."""\n    # TODO\n    pass\n\n\ndef portfolio(w, mu, S):\n    """Annualised return, volatility and Sharpe."""\n    # TODO\n    pass\n\n\ndef max_sharpe(mu, S, bounds=None, cap=None):\n    # TODO\n    pass\n\n\ndef min_variance(S, bounds=None):\n    # TODO\n    pass\n\n\ndef risk_contributions(w, S):\n    """Fractions summing to one."""\n    # TODO\n    pass\n\n\ndef risk_parity(S):\n    """Weights whose risk contributions are equal."""\n    # TODO\n    pass\n\n\ndef var_historical(x, level=0.95):\n    # TODO\n    pass\n\n\ndef expected_shortfall(x, level=0.95):\n    # TODO\n    pass\n\n\ndef exceptions(x, var_level, level=0.95):\n    """Observed against expected breaches, with the dates."""\n    # TODO\n    pass\n'
+      lang: 'text',
+      code: '# FinQuest level 17: the deploy you can undo.\n#\n#   Dockerfile.naive     the one you measure against\n#   Dockerfile           multi stage, non root, pinned, health checked\n#   .dockerignore        the file everybody forgets\n#   .github/workflows/   the gate: fast checks first, one build, then integration\n#   infra/               terraform, remote state, one module per environment\n#   deploy/bluegreen.sh  switch, and the rollback you have timed\n#   flags/               read at request time, default off, kill switches listed\n#   COST.md              the table, the per payment number, and what you would cut\n#   ARCHITECTURE.md      every service, what it owns, what it depends on\n\n# The rollback plan goes in the pull request template, one line, every time:\n#\n#   Rollback: revert this deploy. No migration in this change.\n#   Rollback: revert, then disable flag payouts_v2. Migration is additive only.\n#   Rollback: NOT POSSIBLE without data loss  <- restructure before merging\n'
     },
     tests: [
-      'portfolio([0.25]*4) gives about 12.10% return, 27.10% volatility and Sharpe 0.45',
-      'The unconstrained maximum Sharpe solution shorts BANKCO at about -92.5% and reaches Sharpe about 0.50',
-      'The long only solution holds nothing negative and reaches Sharpe about 0.48',
-      'Minimum variance long only gives volatility about 12.20% and holds mostly GOLDF and BANKCO',
-      'Risk contributions of the equal weight portfolio sum to 1.0 and give CRYPTOZ about 62.7%',
-      'Risk parity contributions are equal to within 1e-6, and it holds less CRYPTOZ than equal weight',
-      'Historical VaR95 is about -2.63% and expected shortfall about -3.35%',
-      'Parametric and Monte Carlo VaR99 agree to within 0.05 percentage points on this data',
-      'The exception count at 99% is 5 against an expectation of 8 over 781 days',
-      'Rebalancing with a no trade band produces lower turnover than a monthly calendar on the same data'
+      'The final image contains no test framework, linter or compiler',
+      'A one line source change rebuilds without reinstalling dependencies',
+      'The container refuses to start when a required variable is missing, naming it',
+      'The container does not run as root',
+      'The readiness probe fails while the database is unreachable, and the instance leaves the load balancer',
+      'The gate fails on a deliberately broken commit, and the deploy step cannot run without it',
+      'The image that integration tests ran against is the image that deploys',
+      'A terraform plan against an untouched environment shows no changes',
+      'Staging can be destroyed and rebuilt from the repository alone',
+      'A deliberately broken version deployed to the idle side receives no traffic',
+      'A rollback completes within the time stated in your README',
+      'Turning off the payout kill switch stops payouts without a deploy',
+      'Rolling back to the middle of an expand and contract migration breaks nothing'
     ],
     rubric: [
-      { pts: 25, t: 'Weights you can defend', d: 'The unconstrained result is shown and explained rather than hidden, and constraints are justified by what they cost.' },
-      { pts: 20, t: 'Risk located', d: 'Contributions computed correctly, compared against the weights, and risk parity implemented and tested.' },
-      { pts: 20, t: 'Loss numbers done properly', d: 'Three VaR methods, expected shortfall, and the kurtosis check that says whether the normal assumption was fair.' },
-      { pts: 20, t: 'The model is checked', d: 'Exception counts at both levels against expectation, with dates so clustering is visible, and a conclusion drawn.' },
-      { pts: 15, t: 'Usable', d: 'One comparison table a committee could read, a rebalancing policy with turnover and costs, and a README that leads with the decision.' }
+      { pts: 20, t: 'The artefact', d: 'Multi stage, ordered layers, non root, pinned, health checked, with sizes and build times reported.' },
+      { pts: 20, t: 'The gate', d: 'Fast, deterministic, builds once, cannot be walked around, with step timings and one improvement.' },
+      { pts: 20, t: 'Infrastructure', d: 'Terraform with remote state, a clean plan, and staging rebuilt from the repository.' },
+      { pts: 25, t: 'Deploy and undo', d: 'Blue green, a timed rollback, flags with a kill switch, and a migration rollback proven mid flight.' },
+      { pts: 15, t: 'Cost', d: 'A real cost model, a per payment number, and a defensible answer on what to cut and what not to.' }
     ],
     stretch: [
-      'Add an exponentially weighted covariance and rerun the exception backtest, comparing the clustering',
-      'Add a Monte Carlo with a Student t distribution and compare the 99% figure with the normal one',
-      'Run the whole allocation through the level 16 engine as a strategy, with rebalancing costs, and report the net result',
-      'Add a factor model: regress the four assets on one common factor and compare the covariance it implies with the sample one'
+      'Add automated canary analysis: compare the new version\'s error rate and latency against the old and roll back without a human',
+      'Add a deployment freeze window, and the override procedure for a genuine emergency',
+      'Run the same service on two providers and compare the cost model honestly',
+      'Add an ephemeral environment per pull request, torn down on merge, and measure what it costs a month',
+      'Instrument the pipeline itself: track gate duration over time and alert when it crosses five minutes'
     ],
     solutionPath: 'solutions/level-17'
   },
 
   faq: [
-    { q: 'Why does everybody still teach mean variance if it behaves this badly?',
-      a: 'Because it is the right frame: return, risk, and the trade between them. The failure is in the inputs rather than in the idea, and every practical method in this level is a way of admitting that.' },
-    { q: 'Should I use a risk free rate in the Sharpe ratio?',
-      a: 'Yes in a report, with the rate stated. This level uses zero throughout so the figures can be compared with level 7, and that choice is written down rather than assumed.' },
-    { q: 'How many assets before shrinkage matters?',
-      a: 'It grows with the ratio of assets to observations. With four assets and 781 days it does almost nothing; with two hundred assets and two years of daily data the sample covariance is close to unusable.' },
-    { q: 'Is risk parity better than equal weight?',
-      a: 'It is more honest about what it is doing. Whether it performs better depends on the assets, and on this book equal weight has the higher Sharpe, which is worth reporting rather than hiding.' },
-    { q: 'Why is expected shortfall preferred by regulators now?',
-      a: 'Because VaR says nothing about how bad the bad days are, and the 2008 experience was largely about the size of the tail rather than its frequency. ES averages the breaches, which is the question that matters.' },
-    { q: 'My optimiser returns weights that do not sum to one',
-      a: 'The equality constraint is missing or the solver failed. Check the return status rather than the weights, and assert the sum in a test so it can never pass silently.' },
-    { q: 'How often should a portfolio rebalance?',
-      a: 'Rarely enough that the costs do not eat the benefit, which is a question for the level 16 engine rather than for theory. Start with a no trade band and measure.' }
+    { q: 'I cannot run a cloud account. Is this level still worth doing?',
+      a: 'Yes. Docker Compose, a local registry and Terraform against a local provider give you the same shapes: an image, a gate, declared infrastructure, two environments and a switch. The reasoning transfers completely, and saying in your README which parts you ran locally is more honest than a screenshot of a console.' },
+    { q: 'Should I use Kubernetes?',
+      a: 'Not for this, and being able to say why is worth more than using it. Kubernetes solves scheduling many services across many machines, and it brings a large amount of operational work with it. Learn containers, health checks, rolling deploys and infrastructure as code first, because those are the concepts Kubernetes automates, and they are also what you will be asked about.' },
+    { q: 'How fast should the merge gate be?',
+      a: 'Fast enough that people wait for it rather than working around it, which in practice means single digit minutes. Split it if you have to: a fast gate that blocks merging and a fuller suite that blocks deploying.' },
+    { q: 'My integration tests are flaky in CI and fine locally',
+      a: 'Almost always timing or ordering: a service that is accepting connections before it is ready, tests sharing state, or a fixed sleep instead of waiting for a condition. Fix the wait, not the test, and treat a flaky test as a broken test rather than a fact of life, because the retry habit is what will later hide a real failure.' },
+    { q: 'How do I test a rollback without breaking production?',
+      a: 'Deploy a version that is deliberately broken in a harmless way, to staging first and then during a game day in production if you can. A rollback you have never performed is a plan rather than a capability, and the day you need it is the wrong day to find out which.' },
+    { q: 'When should a feature flag be deleted?',
+      a: 'When the feature is fully on for everybody and has been stable for a couple of weeks. Put the date in the code when you create the flag. Old flags are untested branches, and a service with sixty of them has a combinatorial number of behaviours nobody has ever run.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'The rollback number, because it is concrete and almost nobody has it: how many seconds from deciding to roll back to the first healthy response, and how you proved the migration in the middle was safe to roll back through. Then the cost per payment, because being able to say what your design charges per transaction is unusual at any level.' }
   ]
 });

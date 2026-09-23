@@ -1,503 +1,547 @@
 /* =========================================================================
-   LEVEL 18: open banking and the aggregator
+   LEVEL 18: Java, for somebody who already writes Python
    ========================================================================= */
 FQ.registerLevel({
   id: 18,
-  codename: 'aggregator',
-  title: 'Three banks, three shapes, one account view',
-  tagline: 'Most fintech backend work is this: somebody else owns the data, the consent expires, the formats disagree, and your app has to show one clean list anyway.',
+  codename: 'jvm',
+  title: 'Java, for somebody who already writes Python',
+  tagline: 'Capital One, Adyen, Goldman and most of the payments teams inside banks run on the JVM. You do not need to prefer it. You need to be able to be interviewed in it, and to port your own service to prove you can.',
   difficulty: 8,
-  minutes: 250,
-  tags: ['OAuth2', 'consent', 'data normalisation', 'integration'],
-  summary: 'Open banking lets an app read somebody\'s accounts with their permission. The protocol is the easy half. The ' +
-           'work is consent that expires, tokens you must never leak, three banks with three shapes for the same ' +
-           'transaction, and deduplication when the same payment arrives twice in two states.',
+  minutes: 480,
+  tags: ['Java', 'Spring Boot', 'JVM', 'types', 'Testcontainers'],
+  summary: 'Thirteen levels of payments engineering in Python, ported. This level is not an introduction to programming ' +
+           'in Java, because you can already program: it is the specific set of differences that matter when you move a ' +
+           'money handling service onto the JVM, the parts of Spring Boot you will actually touch, the traps that catch ' +
+           'people coming from Python, and a benchmark you run yourself.',
 
   objectives: [
-    'Walk the authorization code flow with PKCE and say what each step protects against',
-    'Store and refresh tokens without ever writing one to a log',
-    'Treat consent as a thing that expires, and handle the day it does',
-    'Normalise three incompatible exports into one schema',
-    'Deduplicate an ingestion that runs twice and a payment that arrives twice',
-    'Sync incrementally with cursors, inside a rate limit',
-    'Categorise merchant strings, and let a correction teach the system'
+    'Read and write Java at the level a payments service needs',
+    'Represent money in Java without ever reaching for a floating point type',
+    'Model a state machine with the type system rather than with strings',
+    'Use the parts of Spring Boot that appear in every service',
+    'Write tests against a real database with Testcontainers',
+    'Explain what the JVM does at start, and why it changes your latency numbers',
+    'Port your own payments API and benchmark both versions'
   ],
 
   knowledge: [
-    { h: 'Consent is the product' },
-    { p: 'Open banking regulation in the UK and the EU, and the same pattern arriving elsewhere, says a bank must let a ' +
-         'customer share their own data with a third party through an API. That third party is you. The permission it runs ' +
-         'on has four properties, and every one of them is something your code has to handle rather than something a ' +
-         'lawyer handles for you.' },
+    { h: 'Why this level exists' },
+    { p: 'Python will get you interviews. For a large part of the payments industry, Java is what gets you *those* ' +
+         'interviews: Capital One, Adyen, most bank payment platforms, Goldman, and a good share of the fintechs that ' +
+         'sell to banks. Some of them will interview you in any language and some will not, and you do not find out ' +
+         'which until you have applied.' },
+    { p: 'You are not learning Java from nothing. You know types from level 5, concurrency from level 8, transactions ' +
+         'from level 6 and HTTP from level 7. What follows is the difference list, not a tutorial, and the project is a ' +
+         'port of something you have already built and understand.' },
+    { warn: 'One honest note about the numbers in this level. Everywhere else in this course, every figure was measured ' +
+            'before it was published. Here, the timings depend on your JVM version, your machine and your heap, so the ' +
+            'numbers are yours to produce, and the level tells you exactly which ones to record. The arithmetic below, ' +
+            'about what a type can hold, is exact and does not vary.' },
+
+    { h: 'Five differences that actually matter' },
     { table: {
-      head: ['Property', 'What it means in code'],
+      head: ['Python', 'Java', 'What it means for you'],
       rows: [
-        ['**Explicit**', 'The customer authorises at their bank, not in your app. You never see their credentials'],
-        ['**Scoped**', 'You ask for accounts and transactions, and you get exactly that. Asking for more gets refused or reported'],
-        ['**Time limited**', 'Ninety days is the common figure. Your sync stops working on a date you can predict'],
-        ['**Revocable**', 'They can withdraw it at the bank, without telling you. Your next call fails and that is the notification']
+        ['Types are optional and checked by a separate tool', 'Types are the language, checked by the compiler', 'Whole categories of test disappear, and refactoring becomes safe'],
+        ['Functions live anywhere', 'Everything lives in a class', 'More ceremony per file, and more structure imposed for free'],
+        ['One exception hierarchy, all unchecked', 'Checked exceptions must be declared or caught', 'The compiler makes you decide what can fail, which is useful for money'],
+        ['`pip` and a virtual environment', 'Maven or Gradle, and a dependency tree', 'A build file rather than a requirements file, and transitive dependencies you should look at'],
+        ['Interpreted, starts instantly', 'Compiled to bytecode, then compiled again at run time by the JIT', 'The first thousand requests are slower than the rest, which changes how you measure']
       ]
     }},
-    { money: 'This is the whole business model of Plaid, TrueLayer, Tink and a dozen others: not the protocol, which is ' +
-             'published, but handling these four properties across hundreds of banks that each implement them slightly ' +
-             'differently. Building a small one against three fake banks teaches the shape of that work.' },
+    { p: 'The last row is the one that surprises Python engineers, and it matters for everything you learned in level 14. ' +
+         'The **JVM starts interpreting your bytecode and compiles the hot paths to machine code while it runs**, so a ' +
+         'freshly started service is slow, then gets faster, then settles. A load test with no warm up measures the ' +
+         'warm up, and a canary deploy that judges a new instance in its first thirty seconds will fail every healthy ' +
+         'release.' },
 
-    { h: 'The authorization code flow, and what each step is for' },
-    { code: '1. your app  ->  bank:      here is a code_challenge, and where to send the user back\n2. bank      ->  customer:  sign in and approve these scopes\n3. bank      ->  your app:  one time code, on the redirect\n4. your app  ->  bank:      the code, plus the code_verifier\n5. bank      ->  your app:  access token (minutes), refresh token (until consent ends)', lang: 'text' },
+    { h: 'Money in Java' },
+    { p: 'Level 5 said never use a float for money, and the reason is the same in Java because it is the same IEEE 754 ' +
+         'binary64 that Python uses. `0.1 + 0.2` is `0.30000000000000004` in both languages, for the same reason, and ' +
+         'the nearest double to `0.1` is `0.10000000000000000555`.' },
+    { p: 'Java gives you two correct options, and you will meet both:' },
+    { code: '// 1. minor units in a long. Fast, exact, and what most payment APIs use.\nlong amountMinor = 149_99L;          // $149.99\n\n// 2. BigDecimal, when you need fractions of a cent or many currencies\nBigDecimal rate   = new BigDecimal("0.029");\nBigDecimal fee    = new BigDecimal("149.99")\n                      .multiply(rate)\n                      .setScale(2, RoundingMode.HALF_EVEN);   // always both', lang: 'java' },
     { ul: [
-      '**The user authenticates at the bank.** You never receive a password, which is the entire point of the flow and the reason screen scraping is being legislated out.',
-      '**The code is one time and short lived.** Intercepting it later is worth nothing.',
-      '**PKCE** sends a hash of a secret you generated (`code_challenge`), and proves you knew the secret at step 4 (`code_verifier`). Without it, anybody who steals the code on the redirect can exchange it.',
-      '**The `state` parameter** is a random value you generate and check on return. It stops somebody handing your user a link that connects their account to an attacker\'s session.'
+      '**`new BigDecimal("0.1")` is exact. `new BigDecimal(0.1)` is not,** because the second one is handed a double that was already wrong. Always construct from a string.',
+      '**Always pass a scale and a rounding mode together.** `setScale(2, RoundingMode.HALF_EVEN)` says what you mean; leaving the rounding mode out throws when the value does not fit.',
+      '**`equals` compares scale as well as value,** so `new BigDecimal("1.0").equals(new BigDecimal("1.00"))` is false. Use `compareTo(...) == 0`. This one costs everybody a day.',
+      '**Never `double`, never `float`,** not for a total, not for a rate, not "just for display".'
     ]},
+    { p: 'And a trap that does not exist in Python at all. Java\'s `int` is exactly 32 bits and **wraps silently** on ' +
+         'overflow, while Python integers grow without limit. In minor units:' },
+    { code: 'int  maximum   2,147,483,647 minor units  =  $21,474,836.47\nlong maximum   9,223,372,036,854,775,807   =  $92,233,720,368,547,760.00\n\n2147483647 + 1  ==  -2147483648        // no error, no warning', lang: 'text' },
+    { p: 'An `int` column for a payment amount in cents fails at twenty one and a half million dollars, quietly, by ' +
+         'becoming negative. Use `long` for minor units everywhere, including in the database, and if you want the ' +
+         'compiler to shout instead of wrapping, `Math.addExact` throws on overflow.' },
     { check: {
-      q: 'A teammate says PKCE is only for mobile apps, and your server side app can skip it because it has a client secret. ' +
-         'Is that right?',
-      a: 'It was the original reasoning and it is no longer the advice. PKCE costs two extra fields and defends a case the ' +
-         'client secret does not: an attacker who obtains the authorization code, from a log, a referrer header, a proxy or ' +
-         'a badly built redirect, cannot exchange it without the verifier that never left your server. Current OAuth ' +
-         'guidance is to use it everywhere, and every open banking implementation you will meet requires it anyway.'
+      q: 'You are reviewing a Java service where a colleague stores fee percentages as `double` because "they are only ' +
+         'used to compute the fee, and the fee itself is a BigDecimal". Is that safe?',
+      a: 'No, and the argument has the right shape but the wrong conclusion. The moment the double enters the ' +
+         'calculation, the result is wrong before BigDecimal ever sees it: a rate of 0.029 is not exactly representable, ' +
+         'so the product is slightly off and the rounding to two decimal places can land on the wrong side of a half ' +
+         'cent. It will agree with the correct answer on almost every transaction, which is what makes it dangerous: the ' +
+         'failure appears as a handful of one cent reconciliation breaks a month, from level 10, and those take days to ' +
+         'trace back to a type. The rule is that a value in a money calculation is exact from end to end, so the rate is ' +
+         'a BigDecimal constructed from a string, or an integer of basis points, which is what many payment systems ' +
+         'actually store.'
     }},
 
-    { h: 'Tokens, and the two rules' },
-    { p: 'You end up holding an access token that lasts minutes and a refresh token that lasts until the consent does. Both ' +
-         'are credentials for somebody else\'s bank account.' },
-    { ol: [
-      '**Encrypted at rest, never in a log.** Encrypt the refresh token with a key held outside the database, so a dump of the table is not a set of working credentials. Level 12\'s rule about API keys, one step further, because you cannot hash these: you need them back.',
-      '**Refreshed once, not five times.** Two workers refreshing the same token at once will race, and many banks invalidate the old refresh token the moment a new one is issued, so the loser is left holding a dead credential. Take a lock, or store the new token in the same transaction that used the old one.'
-    ]},
-    { code: 'with lock(f"refresh:{connection_id}"):        # one refresher at a time\n    fresh = bank.refresh(decrypt(row.refresh_token))\n    store(connection_id, encrypt(fresh.refresh_token), fresh.access_token, fresh.expires_at)', lang: 'python' },
-    { warn: 'Log the connection id, never the token. A refresh token in an error message is in your log aggregator, your ' +
-            'error tracker and somebody\'s laptop, and it works until the consent expires.' },
-
-    { h: 'The day the consent ends' },
-    { p: 'Ninety days after the customer approved, the refresh stops working. This is not an error condition to retry: it ' +
-         'is a scheduled event you can put in a calendar, and the difference between an app people keep and one they ' +
-         'abandon is what happens in the week before it.' },
-    { table: {
-      head: ['What the bank returns', 'What it means', 'What your app does'],
-      rows: [
-        ['`401` on the access token', 'Expired, normally', 'Refresh and retry once'],
-        ['`400 invalid_grant` on refresh', 'The consent is gone', 'Mark the connection dead, ask the user to reconnect'],
-        ['`403` on one account', 'Scope does not cover it', 'Stop asking for that account, do not retry'],
-        ['`429`', 'Too fast', 'Back off, as in level 5'],
-        ['Nothing, for ten seconds', 'Their problem', 'Time out, keep the last good data, say when it was from']
-      ]
-    }},
-    { p: 'And the product half: tell the user before it happens. A banner at day eighty three that says which bank needs ' +
-         'reconnecting is worth more than any retry logic, because the failure is not technical and cannot be fixed by ' +
-         'your code.' },
-    { check: {
-      q: 'Your sync fails at three in the morning with `400 invalid_grant`. Your retry logic tries again five times with ' +
-         'backoff, then pages you. What is wrong with that design?',
-      a: 'Everything after the first attempt. `invalid_grant` on a refresh means the permission no longer exists, so the ' +
-         'second attempt cannot succeed and neither can the fiftieth: it is a `4xx` in the level 5 sense, and retrying it ' +
-         'is spending your rate limit to be told the same thing. Worse, it pages a person who cannot do anything, because ' +
-         'the only fix is the customer reauthorising at their bank. The correct handling is to mark the connection as ' +
-         'needing consent, stop syncing it, and surface it in the app where the one person who can fix it will see it.'
-    }},
-
-    { h: 'Three banks, three shapes, one transaction' },
-    { p: 'Here is the same month of spending as three real banks would hand it to you. The level ships all three files.' },
-    { code: 'bank A, csv\n  date,description,amount,running_balance\n  2026-06-01,LOTTE MART,-65141.00,\n\nbank B, json\n  {"transactionId": "B00000", "bookingDate": "12/06/2026",\n   "remittanceInformationUnstructured": "POS APPLE.COM/BILL HANOI",\n   "transactionAmount": {"amount": "5603200", "currency": "VND"},\n   "creditDebitIndicator": "DBIT"}\n\nbank C, csv\n  posted_at,merchant_name,debit,credit,status,reference\n  06-23-2026,Netflix.Com,89982,,pending,C00000', lang: 'text' },
-    { p: 'Count the disagreements in those three rows. The **date** is ISO, then day first, then month first. The **sign** is ' +
-         'negative, then a separate indicator field, then a column position. The **units** are decimal, then minor units, ' +
-         'then whole units. The **merchant** is upper case, then wrapped in terminal noise, then title case. And one of ' +
-         'them carries a status that means this transaction is not final.' },
-    { table: {
-      head: ['Field', 'Bank A', 'Bank B', 'Bank C'],
-      rows: [
-        ['Date format', '`2026-06-01`', '`12/06/2026`', '`06-23-2026`'],
-        ['Direction', 'Negative amount', '`creditDebitIndicator`', 'Column, debit or credit'],
-        ['Units', 'Decimal', 'Minor units (x100)', 'Whole units'],
-        ['Merchant', '`LOTTE MART`', '`POS APPLE.COM/BILL HANOI`', '`Netflix.Com`'],
-        ['Identity', 'None', '`transactionId`', '`reference`, repeated when booked']
-      ]
-    }},
-    { p: 'The target is one schema, and choosing it is the design decision of this level: **one row, one moment, one ' +
-         'signed amount in minor units, one cleaned merchant, one stable id, and a field saying which bank it came from ' +
-         'and what it looked like before you touched it.**' },
-    { code: '{"id": "a1c9...", "source": "bank-b", "source_id": "B00000",\n "booked_at": "2026-06-12", "amount_minor": -560320000, "currency": "VND",\n "merchant": "APPLE.COM", "category": "subscriptions",\n "status": "booked", "raw": {...}}', lang: 'json' },
-    { warn: 'Keep the raw record. Every normalisation is a guess that will be wrong for some bank, and the only way to fix ' +
-            'it later without asking the customer to reconnect is to still have what you were sent.' },
-
-    { h: 'The same payment, twice' },
-    { p: 'Two duplicates, with different causes and different fixes, and the files in this level contain both.' },
+    { h: 'Using the type system on purpose' },
+    { p: 'The reason to be on the JVM is the compiler, so use it. Three features do most of the work in a payments ' +
+         'service:' },
+    { code: '// a record: an immutable value object, in one line\nrecord Money(long minor, Currency currency) {\n    Money {\n        if (minor < 0) throw new IllegalArgumentException("negative");\n    }\n}\n\n// an enum: the level 9 states, so a typo is a compile error\nenum PaymentState { REQUESTED, AUTHORISED, CAPTURED, REFUNDED, VOIDED }\n\n// a sealed interface: every outcome enumerated, and the compiler checks\n// that you handled all of them\nsealed interface AuthResult permits Approved, Declined, Referred {}\n\nString message = switch (result) {\n    case Approved a  -> "approved " + a.code();\n    case Declined d  -> "declined " + d.reason();\n    case Referred r  -> "call the issuer";\n    // add a fourth outcome and this switch stops compiling. That is the point.\n};', lang: 'java' },
+    { p: 'That last property is what people mean when they say a type system pays for itself. In Python, adding a new ' +
+         'card outcome means finding every place that handles outcomes. In Java with a sealed interface, **the compiler ' +
+         'finds them for you**, and it finds all of them.' },
+    { p: 'Two more habits worth taking from Java back to your Python:' },
     { ul: [
-      '**The re-sync duplicate**: bank A is exported again and the last eight rows repeat. Bank A gives you no transaction id, so identity has to be constructed: a hash of the date, the amount and the description, scoped to the account. That is a **fingerprint**, and it is what level 12 used to tell a retry from a mistake.',
-      '**The pending duplicate**: bank C shows a payment as pending and then, days later, as booked, with the same reference and often a slightly different amount. Two rows, one payment. Match on the reference, replace the pending with the booked, and keep the fact that it changed.'
+      '**`Optional<Payment>` instead of returning null,** so the absence is in the type and the caller has to deal with it. It is the same discipline as a `Payment | None` annotation that is actually enforced.',
+      '**Immutable value objects by default.** A `record` cannot be modified after construction, which removes a whole class of bug where something changed a payment halfway through a request.'
     ]},
-    { code: 'raw rows across the three files   157\n  bank A  68  (60 real, 8 repeated by the second sync)\n  bank B  45\n  bank C  44  (35 booked, 9 of them seen as pending first)\n\nafter fingerprinting and collapsing   140', lang: 'text', label: 'the level\'s own files' },
+
+    { h: 'Spring Boot, the parts you will touch' },
+    { p: '**Spring Boot** is two ideas. **Dependency injection**: you declare what a class needs and the framework ' +
+         'supplies it, so nothing constructs its own database connection and everything can be tested with a substitute. ' +
+         '**Autoconfiguration**: adding a dependency configures it, so a Postgres driver on the classpath plus a URL in ' +
+         'the configuration gives you a working connection pool with no code.' },
+    { code: '@RestController\n@RequestMapping("/v1/payments")\nclass PaymentController {\n\n    private final PaymentService service;                 // injected, final\n\n    PaymentController(PaymentService service) {           // constructor injection\n        this.service = service;\n    }\n\n    @PostMapping\n    ResponseEntity<PaymentResponse> create(\n            @RequestHeader("Idempotency-Key") String key,   // level 7, unchanged\n            @Valid @RequestBody CreatePayment body) {\n        return ResponseEntity.status(201).body(service.create(key, body));\n    }\n}', lang: 'java' },
+    { table: {
+      head: ['Annotation', 'Does'],
+      rows: [
+        ['`@RestController`', 'This class handles HTTP and returns bodies rather than views'],
+        ['`@Service`, `@Repository`', 'Register this class so it can be injected'],
+        ['`@Valid`', 'Validate the request body against its constraints, like Pydantic in level 7'],
+        ['`@Transactional`', 'Run this method in a database transaction'],
+        ['`@ConfigurationProperties`', 'Bind configuration into a typed object, validated at start, as in level 17']
+      ]
+    }},
+    { warn: 'Two `@Transactional` traps, and both bite everybody once. **Calling an annotated method from inside the ' +
+            'same class does nothing,** because the annotation works through a proxy that an internal call bypasses. And ' +
+            '**by default it rolls back on unchecked exceptions only**, so a checked exception commits the transaction ' +
+            'you thought you had abandoned. For money, say what you mean: `@Transactional(rollbackFor = Exception.class)`.' },
+    { p: 'Use constructor injection and `final` fields, as above. Field injection with `@Autowired` still exists in old ' +
+         'code, and it hides dependencies, makes testing harder and allows a half constructed object. The constructor ' +
+         'version is what a reviewer expects to see.' },
+
+    { h: 'The database, and the same arithmetic as level 8' },
+    { p: 'Spring Boot ships **HikariCP** as its connection pool, and everything level 8 measured applies unchanged: the ' +
+         'pool is a queue, its size multiplied by the number of instances must stay under the database limit, and pool ' +
+         'size divided by query time is the requests per second it can support.' },
+    { code: 'spring:\n  datasource:\n    hikari:\n      maximum-pool-size: 10        # 10 x 6 instances = 60 connections\n      connection-timeout: 3000     # fail fast rather than queue (level 14)\n  jpa:\n    open-in-view: false            # turn this off. See below.', lang: 'text' },
+    { p: 'For queries you will meet two styles. **JPA and Hibernate** map objects to rows and generate SQL for you, ' +
+         'which is convenient and hides what the database is doing. **JdbcTemplate** or **jOOQ** keep the SQL visible. ' +
+         'After level 6, you know why seeing the query matters, and for a ledger the explicit style is easier to defend ' +
+         'in review.' },
+    { ul: [
+      '**`open-in-view: false`, always.** Left on, it holds a database connection for the whole request including the time spent writing the response, which quietly multiplies your pool requirement.',
+      '**Watch for the N plus one query,** where loading a list then touching each item\'s relation runs one query per row. It is the ORM version of the missing index from level 6: correct output, quadratic cost.',
+      '**Log the generated SQL in development** and read it once. It is usually the moment people stop trusting an ORM blindly.'
+    ]},
+
+    { h: 'Concurrency without a global lock' },
+    { p: 'Python has a global interpreter lock, so threads do not run Python bytecode in parallel and the answer to CPU ' +
+         'work is processes. **The JVM has no such lock**: threads genuinely run at the same time on different cores, ' +
+         'which is faster and means shared mutable state is a real hazard rather than a mostly theoretical one.' },
+    { table: {
+      head: ['Need', 'Java'],
+      rows: [
+        ['Run tasks in a pool', '`ExecutorService` and `Future`'],
+        ['Many blocking calls at once', 'Virtual threads, from Java 21. Millions of them, cheaply'],
+        ['A counter several threads touch', '`AtomicLong`, never `long++`'],
+        ['A map several threads touch', '`ConcurrentHashMap`'],
+        ['A section only one thread may enter', '`synchronized`, or a `ReentrantLock` when you need a timeout']
+      ]
+    }},
+    { p: '**Virtual threads** are the change worth understanding, because they remove the reason most Java services used ' +
+         'asynchronous frameworks. A platform thread costs about a megabyte of stack, so a service can have a few ' +
+         'thousand; a virtual thread costs a few hundred bytes and parks itself when it blocks on input or output. You ' +
+         'write ordinary blocking code and get the concurrency of an asynchronous design.' },
+    { p: 'None of this changes the database. The lost update from level 8 happens exactly the same way in Java, and the ' +
+         'fix is still `select for update`, an optimistic version column or serialisable isolation. **Concurrency bugs ' +
+         'in a payments service live in the database, not in the language.**' },
+
+    { h: 'Testing: a real database, per test run' },
+    { p: 'The Java ecosystem has one testing practice that is genuinely ahead of the Python default, and it is worth ' +
+         'taking back with you. **Testcontainers** starts a real Postgres in Docker for your test run, so integration ' +
+         'tests run against the database you actually ship with, rather than against an in memory substitute that ' +
+         'behaves differently under exactly the conditions you care about.' },
+    { code: '@Testcontainers\n@SpringBootTest\nclass LedgerTest {\n\n    @Container\n    static PostgreSQLContainer<?> db = new PostgreSQLContainer<>("postgres:16");\n\n    @Test\n    void concurrent_captures_do_not_double_spend() {\n        // the level 8 experiment, against a real Postgres, in CI\n    }\n}', lang: 'java' },
+    { p: 'That is the level 8 race, the level 6 constraints and the level 13 migrations, all runnable in a pipeline. An ' +
+         'in memory database would have passed the level 8 test and shipped the bug, because it does not implement the ' +
+         'same locking.' },
     { check: {
-      q: 'Your fingerprint is a hash of date, amount and description. A customer buys the same coffee twice on the same day ' +
-         'for the same amount. What happens, and what do you do about it?',
-      a: 'One of the two disappears, and the customer is looking at a statement that is missing a real purchase. The ' +
-         'fingerprint is not unique, because nothing in the data makes those two rows different. The usual fix is to ' +
-         'include a counter: within one account, date, amount and description, number them in order of appearance, so the ' +
-         'second coffee gets a fingerprint ending in 2. A re-sync produces the same sequence and still deduplicates, and ' +
-         'two genuine identical purchases survive. Where a bank gives you a transaction id, use it and skip all of this.'
+      q: 'Your Java service is measurably faster than your Python one in a benchmark, and a colleague concludes the ' +
+         'rewrite was worth it. What would you want to check before agreeing?',
+      a: 'Several things, and the order matters. First, whether the benchmark warmed up: the JVM interprets before it ' +
+         'compiles hot paths, so a short run measures the slow phase and a long one measures the fast phase, and the ' +
+         'two can differ by a lot in either direction. Second, what the service actually spends its time on: if a ' +
+         'payment is a few milliseconds of your code and forty milliseconds of database, the language was never the ' +
+         'bottleneck and you have rewritten the cheap part. Third, whether the two versions are doing the same work, ' +
+         'because a port usually drops a validation or a log line somewhere. And fourth, what the comparison cost: a ' +
+         'rewrite spends months and reintroduces bugs that were fixed years ago. The honest version of the claim is ' +
+         'usually "the JVM gives us better concurrency per instance and a type system we wanted", which is a real ' +
+         'reason, rather than a latency number that was mostly database anyway.'
     }},
 
-    { h: 'Syncing inside somebody else\'s limits' },
-    { p: 'You do not own the API and you cannot poll it hard. Three rules make a sync that does not get you blocked.' },
-    { ol: [
-      '**Incremental, with a cursor.** Store the point you reached, ask for what is newer, and never refetch a year of history because it was easier to write.',
-      '**Overlap the window.** Ask for slightly more than you need, a day or two, because banks backdate and reorder. Your deduplication is what makes the overlap free.',
-      '**Respect `429` and the documented ceiling.** Level 5 covered the backoff. What is new here is that the limit is per customer consent, so a sync loop that is polite in aggregate can still be rude to one bank.'
+    { h: 'The JVM at run time' },
+    { p: 'Three facts that change how you operate a Java service, all of which connect back to earlier levels:' },
+    { ul: [
+      '**Warm up.** Code starts interpreted and is compiled as it gets hot. Your level 14 load test needs a warm up phase before it records anything, and a canary that judges an instance too early rejects healthy releases.',
+      '**Garbage collection.** Memory is reclaimed automatically, in pauses. Modern collectors keep them short, but they land in your p99, so a latency graph with regular small spikes usually has a collector underneath it.',
+      '**Heap in a container.** The JVM sizes its heap from what it thinks the machine has. In a container it must be told, or it will size for the host and be killed by the memory limit, which looks like a random restart with no log line.'
     ]},
-    { p: 'And schedule around the customer rather than around the clock. Syncing every connection at midnight makes a spike ' +
-         'that every bank notices, and spreading the same work across the hour costs nothing.' },
+    { p: 'The commands worth knowing on day one: `jcmd` to ask a running JVM what it is doing, and a heap dump when a ' +
+         'service is using more memory than it should. Both belong in the runbooks from level 16.' },
 
-    { h: 'Categorising a merchant string' },
-    { p: 'Level 3 categorised transactions that arrived with a category. Real ones arrive as `POS APPLE.COM/BILL HANOI` and ' +
-         '`GRAB *RIDE 8812`, and turning those into something a person recognises is most of what a money app does.' },
-    { ol: [
-      '**Clean first.** Strip the terminal noise, the city, the reference numbers and the prefixes. Most of the win is here, and it is a list of rules rather than a model.',
-      '**Match known merchants.** A table of patterns to names and categories. Boring, auditable, and correct for the top few hundred that cover most spending.',
-      '**Then a model**, for the long tail, trained on what the rules already labelled.',
-      '**Then the correction.** When a user recategorises something, store it as a rule for that user and as a signal for everybody. A categoriser that cannot be corrected is one people stop trusting after the third mistake.'
-    ]},
-    { check: {
-      q: 'Your model categorises `EVN HANOI` as shopping. The user corrects it to utilities. What should happen next time ' +
-         'they see it, and what should happen for other users?',
-      a: 'For that user, immediately and permanently: their correction becomes a rule that wins over the model, because ' +
-         'nothing erodes trust faster than fixing something and watching it come back. For everybody else, it becomes one ' +
-         'vote rather than a rule: a single correction can be a mistake or a personal preference, and applying it globally ' +
-         'lets one person recategorise the country\'s electricity company. Collect them, and promote a pattern to a global ' +
-         'rule when enough independent users agree, which is a threshold you write down.'
-    }}
+    { h: 'What to port, and what to prove' },
+    { p: 'Porting all thirteen levels would take a month and teach you nothing after the first one. Port the payments ' +
+         'API from level 7, because it has an HTTP contract, validation, idempotency, a database and tests, which ' +
+         'exercises everything above. Then prove two things with numbers you measured:' },
+    { ul: [
+      '**The behaviour is identical.** Run the same integration tests against both services, including the idempotency and concurrency tests. Identical responses, identical ledger entries.',
+      '**The performance difference, honestly.** Use the open loop generator from level 14 against both, with a warm up, and report p50, p99 and goodput. Whatever it says, report it: a result that favours Python is just as interesting, and being able to explain why is the point.'
+    ]}
   ],
 
   tutorial: {
-    intro: 'No real bank is involved: you build against the three exports shipped with this level, plus a small fake OAuth ' +
-           'server so the token flow is real code rather than a diagram. Python, FastAPI from level 12, and the ledger ' +
-           'schema habits from level 11.',
+    intro: 'Java 21 or later, Maven, and Docker for Testcontainers. Use IntelliJ IDEA Community: the Java ecosystem ' +
+           'assumes an IDE in a way Python does not, and refusing one makes this harder than it needs to be. Work in a ' +
+           'repository called `payments-api-java`.',
     steps: [
       {
-        t: 'The flow, against a fake bank',
+        t: 'A project, and the money type',
         blocks: [
-          { p: 'Write the authorization server yourself, badly and briefly. Thirty lines gives you something to point a real ' +
-               'client at, and makes every later step testable without a partner.' },
-          { code: 'import hashlib, base64, secrets\n\ndef pkce_pair():\n    verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).rstrip(b"=").decode()\n    challenge = base64.urlsafe_b64encode(\n        hashlib.sha256(verifier.encode()).digest()\n    ).rstrip(b"=").decode()\n    return verifier, challenge\n\nstate = secrets.token_urlsafe(16)          # checked on the way back', lang: 'python' },
-          { code: '@app.get("/connect/{bank}")\ndef connect(bank: str):\n    verifier, challenge = pkce_pair()\n    state = secrets.token_urlsafe(16)\n    save_pending(state, bank, verifier)          # server side, never in the URL\n    return RedirectResponse(\n        f"{BANKS[bank][\'authorize\']}?response_type=code"\n        f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT}"\n        f"&scope=accounts+transactions&state={state}"\n        f"&code_challenge={challenge}&code_challenge_method=S256"\n    )', lang: 'python' }
+          { p: 'Spring Initializr with web, validation, Postgres and Testcontainers. Then write `Money` as a record ' +
+               'before anything else, with tests ported straight from level 5: allocation without losing a cent, ' +
+               'rounding, and arithmetic that refuses to mix currencies.' },
+          { code: 'record Money(long minor, Currency currency) {\n    Money {\n        Objects.requireNonNull(currency);\n    }\n    Money plus(Money other) {\n        if (!currency.equals(other.currency))\n            throw new IllegalArgumentException("currency mismatch");\n        return new Money(Math.addExact(minor, other.minor), currency);   // throws on overflow\n    }\n}', lang: 'java' },
+          { warn: 'Write the test that proves `new BigDecimal(0.1)` and `new BigDecimal("0.1")` differ, and the one ' +
+                  'that proves `equals` and `compareTo` disagree about `1.0` and `1.00`. Both will save you a day later.' }
         ],
-        check: 'The redirect carries state and a code challenge, and the verifier is stored server side only.'
+        check: 'Your level 5 property tests pass unchanged in meaning, and an overflowing addition throws rather than wrapping.'
       },
       {
-        t: 'Exchange, and store what comes back',
+        t: 'The state machine, in types',
         blocks: [
-          { code: '@app.get("/callback")\ndef callback(code: str, state: str):\n    pending = take_pending(state)               # missing or reused state is fatal\n    if not pending:\n        raise problem(400, "bad_state", "Unknown or reused state.")\n\n    tokens = http.post(BANKS[pending.bank]["token"], data={\n        "grant_type": "authorization_code",\n        "code": code,\n        "redirect_uri": REDIRECT,\n        "client_id": CLIENT_ID,\n        "code_verifier": pending.verifier,\n    }).json()\n\n    save_connection(\n        bank=pending.bank,\n        access_token=tokens["access_token"],\n        refresh_token=encrypt(tokens["refresh_token"]),\n        expires_at=now() + timedelta(seconds=tokens["expires_in"]),\n        consent_expires_at=now() + timedelta(days=90),\n    )', lang: 'python' },
-          { warn: 'Write the consent expiry down at connection time. It is the only date that lets you warn the customer ' +
-                  'before the sync dies, and no bank will remind you.' }
+          { p: 'Port the level 9 card lifecycle using an enum for the states and a sealed interface for the outcomes, ' +
+               'so an unhandled case is a compile error rather than a test failure.' },
+          { p: 'Then delete one case from a switch and confirm the compiler refuses. That refusal is the thing you came ' +
+               'to Java for, and it is worth seeing once deliberately.' }
         ],
-        check: 'A replayed state is refused, and the stored refresh token is unreadable in a database dump.'
+        check: 'Adding a new authorisation outcome breaks compilation everywhere it must be handled.'
       },
       {
-        t: 'Refresh, once',
+        t: 'The API, with the level 7 contract',
         blocks: [
-          { code: 'def with_fresh_token(connection_id):\n    row = load(connection_id)\n    if row.expires_at > now() + timedelta(seconds=30):\n        return row.access_token\n\n    with advisory_lock(f"refresh:{connection_id}"):       # level 11\'s lock\n        row = load(connection_id)                        # somebody may have refreshed\n        if row.expires_at > now() + timedelta(seconds=30):\n            return row.access_token\n        try:\n            fresh = bank.refresh(decrypt(row.refresh_token))\n        except InvalidGrant:\n            mark_needs_consent(connection_id)\n            raise\n        save_tokens(connection_id, fresh)\n        return fresh.access_token', lang: 'python' },
-          { p: 'Read it twice: once before the lock and once inside it. That is the standard shape, and it means a hundred ' +
-               'workers cost one refresh rather than a hundred races.' }
+          { p: 'Same routes, same status codes, same idempotency behaviour, same error shape. Constructor injection, ' +
+               '`@Valid` on the request bodies, and a `@ControllerAdvice` so errors come back in one consistent format.' },
+          { p: 'Set `open-in-view: false` and a Hikari pool size you can justify with the arithmetic from level 8.' }
         ],
-        check: 'Two threads asking at once produce exactly one refresh call, and an invalid grant marks the connection instead of retrying.'
+        check: 'The level 7 integration tests pass against the Java service with only the base URL changed.'
       },
       {
-        t: 'One normaliser per bank, one schema out',
+        t: 'Transactions, and the two traps',
         blocks: [
-          { code: 'from dataclasses import dataclass\nfrom datetime import date\n\n@dataclass(frozen=True)\nclass Txn:\n    source: str\n    source_id: str | None\n    booked_at: date\n    amount_minor: int          # negative is money out, always\n    currency: str\n    merchant: str\n    status: str                # "pending" or "booked"\n    raw: dict\n\ndef from_bank_a(row) -> Txn:\n    return Txn(source="bank-a", source_id=None,\n               booked_at=date.fromisoformat(row["date"]),\n               amount_minor=int(round(float(row["amount"]) * 100)),\n               currency="VND", merchant=clean(row["description"]),\n               status="booked", raw=row)', lang: 'python' },
-          { p: 'Then `from_bank_b` and `from_bank_c`, each owning exactly one bank\'s oddities. Nothing outside these three ' +
-               'functions ever sees a bank specific field, which is what keeps the fourth bank from touching the rest of ' +
-               'the system.' },
-          { tip: 'Write one test per bank holding a real row from the shipped file and the exact Txn it should become. When ' +
-                 'a bank changes its export, that test is where you find out.' }
+          { p: 'Put `@Transactional(rollbackFor = Exception.class)` where it belongs, then prove both traps exist by ' +
+               'writing tests for them: one where an internal call bypasses the proxy, and one where a checked exception ' +
+               'commits when the default configuration is used.' },
+          { code: '// this does NOT open a transaction: the proxy is bypassed\npublic void outer() { this.inner(); }\n@Transactional public void inner() { ... }', lang: 'java' }
         ],
-        check: 'All three normalisers produce Txn objects with negative amounts for spending and a real date.'
+        check: 'You have two failing tests that demonstrate each trap, and they pass once the code is corrected.'
       },
       {
-        t: 'Fingerprint and deduplicate',
+        t: 'Testcontainers, and the level 8 race',
         blocks: [
-          { code: 'import hashlib\n\ndef fingerprint(txn, seen_counter):\n    """Stable identity for a bank that gives you none."""\n    if txn.source_id:\n        return f"{txn.source}:{txn.source_id}"\n    base = f"{txn.source}|{txn.booked_at}|{txn.amount_minor}|{txn.merchant}"\n    n = seen_counter[base] = seen_counter.get(base, 0) + 1\n    return hashlib.sha256(f"{base}|{n}".encode()).hexdigest()[:24]', lang: 'python' },
-          { p: 'Then the pending collapse: when a booked row arrives with a reference you have already seen as pending, ' +
-               'update the existing row rather than inserting, and keep both amounts if they differ.' },
-          { code: 'raw rows in      157\nunique out       140', lang: 'text' }
+          { p: 'A real Postgres for the test run, then port the lost update experiment: several threads capturing the ' +
+               'same payment, the bug reproduced, and then fixed with `select for update` and again with an optimistic ' +
+               'version column.' },
+          { p: 'This is the test that would not work against an in memory database, which is exactly why it is the one ' +
+               'worth having.' }
         ],
-        check: 'Ingesting all three files twice leaves 140 transactions, and two identical purchases on one day both survive.'
+        check: 'The race reproduces in CI, and both fixes make it stop.'
       },
       {
-        t: 'Incremental sync with a cursor',
+        t: 'Virtual threads',
         blocks: [
-          { code: 'def sync(connection_id, overlap_days=2):\n    cursor = load_cursor(connection_id)               # the last booked_at we trusted\n    since = (cursor or date(2000, 1, 1)) - timedelta(days=overlap_days)\n\n    for page in bank.transactions(connection_id, since=since):\n        for row in page:\n            upsert(normalise(row))\n    save_cursor(connection_id, max_booked_at_seen)', lang: 'python' },
-          { p: 'The overlap is free because the deduplication already works, and it saves you from the bank that backdates ' +
-               'a transaction by a day. Without the overlap, that transaction is never seen again.' }
+          { p: 'Turn them on, then measure the difference under the level 14 load generator with a dependency that ' +
+               'blocks for 50 ms.' },
+          { code: 'spring.threads.virtual.enabled: true', lang: 'text' },
+          { p: 'Record throughput and p99 with them on and off, at several concurrency levels. Whatever you find, write ' +
+               'it down with the JVM version and the machine, because that is what makes a benchmark quotable.' }
         ],
-        check: 'A second sync fetches only the recent window and inserts nothing new.'
+        check: 'You can state what virtual threads did for your service, with numbers and conditions.'
       },
       {
-        t: 'Clean, match, then model',
+        t: 'Package it and warm it up',
         blocks: [
-          { code: 'import re\n\nNOISE = [r"^POS\\s+", r"\\s+HANOI$", r"\\*\\w+", r"\\s{2,}", r"\\d{4,}"]\n\ndef clean(raw: str) -> str:\n    out = raw.upper().strip()\n    for pattern in NOISE:\n        out = re.sub(pattern, " ", out)\n    return re.sub(r"\\s+", " ", out).strip()\n\nRULES = [\n    (r"NETFLIX|SPOTIFY|APPLE\\.COM", "subscriptions"),\n    (r"LOTTE|VINMART|CIRCLE K", "groceries"),\n    (r"GRAB|METRO|TAXI", "transport"),\n    (r"EVN|WATER|INTERNET", "utilities"),\n]', lang: 'python' },
-          { p: 'Measure the coverage: what share of transactions the rules alone can label. On these files it should be most ' +
-               'of them, and that number is the honest answer to whether a model is needed yet.' }
+          { p: 'A multi stage Dockerfile from level 17, with the heap told what it may use, and a startup probe that ' +
+               'tolerates the JVM taking longer to become ready than a Python service.' },
+          { code: 'ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"', lang: 'docker' },
+          { p: 'Then measure the warm up: run the load generator from a cold start and plot p99 over the first two ' +
+               'minutes. That curve is the reason your canary needs a warm up window.' }
         ],
-        check: 'The cleaner turns POS APPLE.COM/BILL HANOI into APPLE.COM, and the rules cover most of the month.'
+        check: 'You have a graph of p99 against time from a cold start, and a readiness configuration that matches it.'
       },
       {
-        t: 'The correction that sticks',
+        t: 'Benchmark both, honestly',
         blocks: [
-          { code: 'def recategorise(user_id, merchant, category):\n    upsert_user_rule(user_id, merchant, category)       # wins over everything\n    record_vote(merchant, category)                      # one vote, not a rule\n\ndef categorise(user_id, merchant):\n    return (user_rule(user_id, merchant)\n            or global_rule(merchant)\n            or model_guess(merchant)\n            or "uncategorised")', lang: 'python' },
-          { p: 'Read the order of that fallback chain. The user always wins, then the curated rules, then the model, then an ' +
-               'honest admission. "Uncategorised" is a better answer than a confident wrong one.' }
+          { p: 'Same hardware, same database, same load generator, both warmed up. Report p50, p99 and goodput for the ' +
+               'Python service and the Java one, and state what share of a request is database time in each.' },
+          { p: 'Then write the paragraph an interviewer wants: what the difference was, how much of it was the language ' +
+               'at all, and what you would choose for a new service and why.' }
         ],
-        check: 'A correction survives the next sync, and a second user is unaffected until enough independent votes agree.'
+        check: 'Both services pass the same tests, and you can defend the benchmark including its limitations.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Open banking', d: 'Regulation requiring banks to let customers share their own data with a third party through an API.' },
-    { t: 'Consent', d: 'The customer\'s permission: explicit, scoped, time limited and revocable. All four are your code\'s problem.' },
-    { t: 'Authorization code flow', d: 'The OAuth2 flow where the user authenticates at the bank and your app receives a one time code.' },
-    { t: 'PKCE', d: 'Proof that the app exchanging the code is the one that started the flow. Now advised for every client type.' },
-    { t: 'State parameter', d: 'A random value echoed back on the redirect, checked to stop an attacker linking their account to your user.' },
-    { t: 'Access token', d: 'Short lived credential for API calls. Minutes, usually.' },
-    { t: 'Refresh token', d: 'Longer lived credential used to get new access tokens. Encrypted at rest, never logged.' },
-    { t: 'invalid_grant', d: 'The refresh failed because the consent is gone. Not retryable: ask the user to reconnect.' },
-    { t: 'Normalisation', d: 'Turning several banks\' shapes into one schema, keeping the raw record alongside.' },
-    { t: 'Minor units', d: 'Integer cents or equivalent. The only sane storage for money, as in level 1.' },
-    { t: 'Pending and booked', d: 'A payment seen before it settles and after. One payment, two rows, matched on a reference.' },
-    { t: 'Fingerprint', d: 'A constructed identity for a bank that gives you no transaction id, with a counter for genuine repeats.' },
-    { t: 'Cursor', d: 'The point a sync reached, so the next one asks only for what is newer.' },
-    { t: 'Overlap window', d: 'Deliberately refetching a day or two, because banks backdate. Free once deduplication works.' },
-    { t: 'Merchant cleaning', d: 'Stripping terminal noise and references from a raw description. Most of a categoriser\'s value.' }
+    { t: 'JVM', d: 'The virtual machine that runs Java bytecode, compiling hot paths to machine code as it goes.' },
+    { t: 'JIT', d: 'Just in time compilation. Why a freshly started service is slower than a warm one.' },
+    { t: 'Checked exception', d: 'One the compiler makes you declare or catch.' },
+    { t: 'BigDecimal', d: 'Exact decimal arithmetic. Construct from a string, and always set scale with a rounding mode.' },
+    { t: 'long', d: '64 bit integer. What minor units belong in, because `int` stops at $21,474,836.47.' },
+    { t: 'record', d: 'An immutable value object declared in one line.' },
+    { t: 'sealed interface', d: 'A type with a fixed set of implementations, so the compiler can check you handled all.' },
+    { t: 'Optional', d: 'A type that says a value may be absent, instead of returning null.' },
+    { t: 'Spring Boot', d: 'Dependency injection plus autoconfiguration, and the default way Java services are built.' },
+    { t: 'Dependency injection', d: 'A class declares what it needs and the framework supplies it.' },
+    { t: 'Constructor injection', d: 'Dependencies passed to the constructor and held in final fields. The reviewed default.' },
+    { t: '@Transactional', d: 'Runs a method in a transaction. Bypassed by internal calls; set rollbackFor explicitly.' },
+    { t: 'HikariCP', d: 'The connection pool Spring Boot ships. Same arithmetic as level 8.' },
+    { t: 'open-in-view', d: 'A Spring default that holds a connection for the whole request. Turn it off.' },
+    { t: 'N plus one', d: 'One query per row instead of one query. The ORM version of a missing index.' },
+    { t: 'Virtual thread', d: 'A cheap thread that parks when it blocks. Blocking code, asynchronous concurrency.' },
+    { t: 'Testcontainers', d: 'Real dependencies in Docker for the test run, instead of in memory substitutes.' },
+    { t: 'Garbage collection pause', d: 'A brief stop to reclaim memory. It lands in your p99.' }
   ],
 
   quiz: [
-    { q: "Where does the customer type their bank password in the authorization code flow?",
+    { q: "Why is `0.1 + 0.2` not `0.3` in Java?",
       options: [
-        "At their bank, and you never see it",
-        "In your app, which forwards it",
-        "Nowhere: the flow uses the client secret instead",
-        "In the redirect URL"
+        "Because it uses IEEE 754 binary64, exactly as Python does, and 0.1 is not representable in binary",
+        "A Java specific rounding rule",
+        "It is 0.3 in Java",
+        "Because double has fewer bits than Python floats"
       ],
       answer: 0,
-      why: "That is the point of the flow, and why screen scraping with shared credentials is being legislated out." },
+      why: "The nearest double to 0.1 is 0.10000000000000000555. Same hardware, same answer, same rule: never for money." },
 
-    { q: "What does PKCE protect against?",
+    { q: "What is the largest amount an `int` can hold in minor units?",
       options: [
-        "The access token expiring too soon",
-        "Replay of the refresh token",
-        "An attacker who obtains the authorization code being able to exchange it",
-        "The bank refusing the scope"
+        "$2,147,483.64",
+        "There is no limit",
+        "$21,474,836.47",
+        "$214,748,364.70"
       ],
       answer: 2,
-      why: "The verifier never leaves your server. Current guidance is to use it for every client type, not only mobile." },
+      why: "And it wraps silently to negative after that. Use long, and Math.addExact when you want a throw instead." },
 
-    { q: "The state parameter exists to:",
+    { q: "Why must BigDecimal be constructed from a string?",
       options: [
-        "Carry the requested scopes",
-        "Identify the bank",
-        "Hold the code verifier",
-        "Stop an attacker linking their account to your user's session"
+        "It is faster",
+        "Because the constructor requires it",
+        "To set the scale",
+        "Because `new BigDecimal(0.1)` is handed a double that is already wrong, so the exact type receives an inexact value"
       ],
       answer: 3,
-      why: "Random, stored server side, checked on return, and used once. A reused state is a fatal error rather than a warning." },
+      why: "Exactness has to start at the boundary. Once a double is involved, nothing downstream can recover it." },
 
-    { q: "How should a refresh token be stored?",
+    { q: "`new BigDecimal(\"1.0\").equals(new BigDecimal(\"1.00\"))` returns what, and why does it matter?",
       options: [
-        "In the session cookie",
-        "In plain text, because it expires anyway",
-        "Hashed, like a password",
-        "Encrypted at rest with a key held outside the database"
+        "It throws",
+        "True, because the values are equal",
+        "True, and it does not matter",
+        "False, because equals compares scale as well as value, so money comparisons must use compareTo"
       ],
       answer: 3,
-      why: "You cannot hash it because you need it back. Encryption means a dump of the table is not a set of working credentials." },
+      why: "This one costs everybody a day exactly once." },
 
-    { q: "Two workers refresh the same token at the same moment. What usually happens?",
+    { q: "What does a sealed interface give you that a Python union type usually does not?",
       options: [
-        "Many banks invalidate the old refresh token, so one worker is left holding a dead credential",
-        "Both succeed harmlessly",
-        "The bank merges the requests",
-        "The access token is issued twice with the same value"
+        "The compiler refuses to build when a switch does not handle every case, so adding an outcome finds every place that must change",
+        "Faster dispatch",
+        "Smaller memory use",
+        "Runtime validation"
       ],
       answer: 0,
-      why: "Take a lock and re-read inside it. A hundred workers should cost one refresh rather than a hundred races." },
+      why: "That is the property people mean when they say the type system pays for itself." },
 
-    { q: "A refresh returns 400 invalid_grant. What is the correct handling?",
+    { q: "Which `@Transactional` behaviour catches everybody once?",
       options: [
-        "Page an engineer",
-        "Mark the connection as needing consent and ask the user to reconnect",
-        "Reconnect automatically using the stored credentials",
-        "Retry five times with backoff"
+        "It cannot be used with JDBC",
+        "Calling an annotated method from inside the same class does nothing, because the proxy is bypassed",
+        "It requires an explicit commit",
+        "It only works on public methods of interfaces"
       ],
       answer: 1,
-      why: "The permission is gone. No number of retries recreates it, and the only person who can fix it is the customer." },
+      why: "And by default it rolls back on unchecked exceptions only, so checked ones commit. Set rollbackFor for money." },
 
-    { q: "Why keep the raw bank record alongside the normalised one?",
+    { q: "Why turn off `open-in-view`?",
       options: [
-        "Because regulators require the raw format",
-        "Because normalisation is a guess that will be wrong for some bank, and fixing it later needs the original",
-        "For the audit log",
-        "To compute the running balance"
+        "It breaks transactions",
+        "Because it holds a database connection for the whole request including response writing, which multiplies the pool you need",
+        "It is deprecated",
+        "It disables lazy loading"
       ],
       answer: 1,
-      why: "Otherwise the only way to correct a parsing bug is asking every customer to reconnect and resync." },
+      why: "The level 8 pool arithmetic applies unchanged, and this setting quietly invalidates it." },
 
-    { q: "Bank A sends no transaction id. How do you give its rows a stable identity?",
+    { q: "What is an N plus one query?",
       options: [
-        "Use the date alone",
-        "Use the row number in the file",
-        "Hash the account, date, amount and description, with a counter for genuine repeats",
-        "Generate a UUID at ingestion"
+        "A query run once per connection",
+        "A query with too many joins",
+        "One query per row instead of one query for the set, from touching a relation inside a loop",
+        "A failed retry"
       ],
       answer: 2,
-      why: "A UUID changes on every sync, so the same transaction arrives as new each time. The counter is what saves two identical coffees on one day." },
+      why: "Correct output, quadratic cost. The ORM version of the missing index from level 6." },
 
-    { q: "A payment appears as pending and later as booked with the same reference. The ingester should:",
+    { q: "Java threads run in parallel where Python threads do not. What follows for a payments service?",
       options: [
-        "Match on the reference and replace the pending row, keeping the fact that the amount changed",
-        "Ignore the pending one entirely",
-        "Keep both rows",
-        "Ask the user which is correct"
+        "Shared mutable state is a genuine hazard, but the lost update from level 8 still lives in the database and still needs the same fixes",
+        "The database no longer needs locking",
+        "Concurrency bugs disappear",
+        "You no longer need a connection pool"
       ],
       answer: 0,
-      why: "One payment, two observations. Ignoring pending rows means the app is days behind, and keeping both double counts the spending." },
+      why: "Concurrency bugs in a payments service live in the database, not in the language." },
 
-    { q: "Why deliberately refetch a day or two you already have?",
+    { q: "What do virtual threads change?",
       options: [
-        "To check the bank is still up",
-        "Because cursors are unreliable",
-        "Because banks backdate and reorder transactions, and deduplication makes the overlap free",
-        "To keep the rate limit warm"
+        "They make CPU work faster",
+        "They replace the connection pool",
+        "A thread costs hundreds of bytes instead of a megabyte and parks when it blocks, so ordinary blocking code gets asynchronous concurrency",
+        "They remove garbage collection pauses"
       ],
       answer: 2,
-      why: "Without the overlap, a transaction backdated after your cursor passed is never seen again." },
+      why: "Which removes the reason most Java services reached for an asynchronous framework." },
 
-    { q: "What should the categoriser do first with POS APPLE.COM/BILL HANOI?",
+    { q: "Why does a load test of a Java service need a warm up phase?",
       options: [
-        "Feed it to the model",
-        "Clean it to APPLE.COM",
-        "Ask the user",
-        "Look it up in a merchant database"
+        "To fill the caches",
+        "Because the JVM interprets bytecode first and compiles hot paths as it runs, so early requests measure the slow phase",
+        "To let the garbage collector settle",
+        "Because the connection pool starts empty"
       ],
       answer: 1,
-      why: "Most of the value is in the cleaning, and it is a list of rules rather than a model. Everything downstream gets easier." },
+      why: "And a canary that judges a new instance in its first thirty seconds will reject healthy releases." },
 
-    { q: "A user recategorises EVN HANOI to utilities. What happens for other users?",
+    { q: "A Java service in a container restarts with no log line and no stack trace. Most likely cause?",
       options: [
-        "It becomes one vote, promoted to a global rule only when enough independent users agree",
-        "Nothing at all, ever",
-        "The same change immediately",
-        "The model retrains on it overnight"
+        "The JVM sized its heap for the host rather than the container limit, so the platform killed it for using too much memory",
+        "A garbage collection pause",
+        "A deadlock",
+        "A failed health check"
       ],
       answer: 0,
-      why: "One correction can be a mistake or a personal preference. Applying it globally lets one person recategorise the electricity company." },
+      why: "Tell it what it may use. MaxRAMPercentage, and ExitOnOutOfMemoryError so it fails loudly." },
 
-    { q: "Which is the right order for the categorisation fallback chain?",
+    { q: "What makes Testcontainers better than an in memory database for the level 8 race test?",
       options: [
-        "Model, user rule, global rule",
-        "User rule, global rule, model, uncategorised",
-        "Global rule, model, user rule",
-        "Model only, with corrections as training data"
+        "It is faster",
+        "It runs the real Postgres, which implements the locking the test exists to exercise",
+        "It needs no configuration",
+        "It works without Docker"
       ],
       answer: 1,
-      why: "The user always wins, and an honest \"uncategorised\" beats a confident wrong answer that they have to correct twice." },
+      why: "An in memory substitute would pass the test and ship the bug." },
 
-    { q: "Consent typically lasts ninety days. What does that mean for the product?",
+    { q: "Your Java port benchmarks faster than the Python original. What should you check first?",
       options: [
-        "Nothing, refresh handles it",
-        "Tokens must be rotated daily",
-        "The user must reauthenticate every login",
-        "The sync will stop on a date you can predict, so warn the user before it does"
+        "The hardware",
+        "The garbage collector",
+        "The JVM version",
+        "Whether both runs were warmed up, and what share of a request is database time in each"
       ],
       answer: 3,
-      why: "Write the expiry down at connection time. A banner at day eighty three is worth more than any retry logic." },
+      why: "If a payment is 5 ms of your code and 40 ms of database, the language was never the bottleneck." },
 
-    { q: "Why does each bank get its own normaliser function?",
+    { q: "Which is the honest reason to choose the JVM for a new payments service?",
       options: [
-        "For parallel processing",
-        "Because the banks use different HTTP libraries",
-        "So that nothing outside those functions sees a bank specific field, and a fourth bank touches nothing else",
-        "To allow per bank rate limits"
+        "It is faster than Python",
+        "It has better libraries",
+        "Concurrency per instance and a compiler that checks your state machine, along with the hiring market you are targeting",
+        "It uses less memory"
       ],
       answer: 2,
-      why: "One place per bank, one schema out, and a test per bank holding a real row and the exact object it should become." }
+      why: "A latency claim that turns out to be mostly database time is a weak argument and an interviewer will test it." }
   ],
 
   project: {
-    title: 'The account aggregator',
-    story: 'Members of the society bank in three different places and want one view of their month. Build the aggregator: ' +
-           'the consent flow, the token handling, three normalisers, deduplication that survives a double sync, and a ' +
-           'categoriser that learns when somebody corrects it.',
-    scope: 'Uses this level plus level 12 (FastAPI, errors, request ids), level 11 (Postgres, locks, unique constraints) ' +
-           'and level 3 (pandas for the report). The three bank files ship with the level; the OAuth server is a small ' +
-           'fake you write, so no real bank or vendor account is needed.',
-    dataset: '{{RAW}}/data/level-18-bank-a.csv',
+    title: 'payments-api-java: the same service, on the JVM',
+    story: 'Port the payments API from level 7 to Java and Spring Boot, with the money type from level 5, the state ' +
+           'machine from level 9, the race from level 8 reproduced against a real Postgres in CI, and an honest ' +
+           'benchmark against the Python original.',
+    scope: 'Java 21 or later, Maven, Spring Boot, Testcontainers. The contract does not change: the same tests that ' +
+           'exercised the Python service must pass against this one with only the base URL changed.',
     requirements: [
-      'A fake authorization server with an authorize and a token endpoint, supporting PKCE and state',
-      'GET /connect/{bank} and GET /callback implementing the authorization code flow, with the verifier stored server side',
-      'A connections table holding the encrypted refresh token, the access token expiry and the consent expiry',
-      'A refresh path that takes a lock, re-reads inside it, and marks the connection on invalid_grant instead of retrying',
-      'A test proving no token ever reaches the logs, by capturing log output during a full flow',
-      'Three normaliser functions, one per bank file, producing one frozen Txn type with amounts in minor units and negative for spending',
-      'One test per bank holding a real row from the shipped file and the exact Txn it must become',
-      'Fingerprinting for the bank with no transaction id, including the counter that keeps two identical purchases',
-      'Pending to booked collapse matched on the reference, keeping a record that the amount changed',
-      'Ingesting all three files twice produces 140 transactions',
-      'Incremental sync with a stored cursor and a two day overlap window',
-      'A merchant cleaner, a rules table, and a fallback chain of user rule, global rule, model, uncategorised',
-      'A correction endpoint that makes a user rule immediately and records a global vote',
-      'A README with the schema, the consent lifecycle, and what happens on the day consent expires',
-      'The repository in your GitHub portfolio as finquest-aggregator'
+      'A `Money` record over `long` minor units, with the level 5 tests ported and overflow throwing rather than wrapping',
+      'A test demonstrating that `new BigDecimal(0.1)` and `new BigDecimal("0.1")` differ',
+      'A test demonstrating that `equals` and `compareTo` disagree about 1.0 and 1.00',
+      'The card lifecycle as an enum plus a sealed interface, with a switch that stops compiling when an outcome is added',
+      'The level 7 HTTP contract reproduced exactly: routes, status codes, idempotency, pagination and error shape',
+      'Constructor injection with final fields throughout, and no field injection anywhere',
+      'A `@ControllerAdvice` producing one consistent error format',
+      '`open-in-view` disabled, and a Hikari pool size justified with the level 8 arithmetic in a comment',
+      'Two tests that demonstrate the `@Transactional` traps: the bypassed proxy and the checked exception that commits',
+      'Testcontainers running a real Postgres, with the level 8 lost update reproduced and then fixed two ways',
+      'Virtual threads measured on and off, at several concurrency levels, with the JVM version and machine recorded',
+      'A multi stage Dockerfile with the heap constrained and a readiness probe that tolerates JVM start up',
+      'A graph of p99 against time from a cold start, showing warm up, with the canary window you would choose',
+      'A benchmark of both services on the same hardware, warmed up, with p50, p99, goodput, and the database share of each request',
+      'A paragraph on what you would choose for a new service and why, in which the word "faster" does not appear unqualified',
+      'The repository public on GitHub as `payments-api-java`'
     ],
     starter: {
-      lang: 'python',
-      code: '"""FinQuest level 18: the account aggregator.\n\nLayout:\n  fakebank/            a small authorization server and transactions API\n  aggregator/oauth.py  pkce, state, exchange, refresh with a lock\n  aggregator/normalise.py  from_bank_a, from_bank_b, from_bank_c, Txn\n  aggregator/ingest.py fingerprint, upsert, pending collapse, cursor\n  aggregator/categorise.py  clean, rules, model, corrections\n  main.py              connect, callback, sync, recategorise\n"""\n\nfrom dataclasses import dataclass\nfrom datetime import date\n\n\n@dataclass(frozen=True)\nclass Txn:\n    source: str\n    source_id: str | None\n    booked_at: date\n    amount_minor: int\n    currency: str\n    merchant: str\n    status: str\n    raw: dict\n\n\ndef pkce_pair():\n    """Return (verifier, challenge)."""\n    # TODO\n    pass\n\n\ndef from_bank_a(row) -> Txn:\n    # TODO\n    pass\n\n\ndef from_bank_b(row) -> Txn:\n    # TODO\n    pass\n\n\ndef from_bank_c(row) -> Txn:\n    # TODO\n    pass\n\n\ndef fingerprint(txn, seen_counter) -> str:\n    """Stable identity, using source_id when the bank provides one."""\n    # TODO\n    pass\n\n\ndef clean(raw: str) -> str:\n    """POS APPLE.COM/BILL HANOI -> APPLE.COM"""\n    # TODO\n    pass\n\n\ndef categorise(user_id, merchant) -> str:\n    """user rule, then global rule, then model, then uncategorised."""\n    # TODO\n    pass\n'
+      lang: 'java',
+      code: '// FinQuest level 18: the same service, on the JVM.\n//\n//   src/main/java/.../money/Money.java          long minor units, exact\n//   src/main/java/.../card/AuthResult.java      sealed, so the compiler checks\n//   src/main/java/.../api/PaymentController.java level 7 contract, unchanged\n//   src/main/java/.../api/ErrorAdvice.java      one error shape\n//   src/test/java/.../LostUpdateTest.java       level 8, against real Postgres\n//   bench/                                      both services, warmed up\n\npublic record Money(long minor, Currency currency) {\n\n    public Money {\n        Objects.requireNonNull(currency, "currency");\n    }\n\n    public Money plus(Money other) {\n        requireSameCurrency(other);\n        return new Money(Math.addExact(minor, other.minor), currency);\n    }\n\n    /** Split without losing a cent. The level 5 test suite ports unchanged. */\n    public List<Money> allocate(int... ratios) {\n        // TODO\n        throw new UnsupportedOperationException();\n    }\n\n    private void requireSameCurrency(Money other) {\n        if (!currency.equals(other.currency)) {\n            throw new IllegalArgumentException(\n                "cannot combine " + currency + " and " + other.currency);\n        }\n    }\n}\n'
     },
     tests: [
-      'A callback with an unknown or reused state is refused',
-      'The code exchange fails without the correct code verifier',
-      'A full connect and sync writes no token to the logs, asserted by capturing log output',
-      'Two concurrent refreshes result in exactly one call to the bank',
-      'A refresh returning invalid_grant marks the connection as needing consent and does not retry',
-      'Each bank normaliser turns a real shipped row into the exact expected Txn',
-      'Spending is negative in every source, despite three different sign conventions',
-      'Ingesting the three files produces 140 transactions, and ingesting them again still produces 140',
-      'Two identical purchases on the same day both survive deduplication',
-      'A pending row followed by its booked row leaves one transaction with status booked',
-      'A second sync with a cursor fetches only the overlap window',
-      'clean() turns POS APPLE.COM/BILL HANOI into APPLE.COM',
-      'A user correction wins over the model on the next sync, and does not change another user'
+      'Allocating 100 minor units three ways loses nothing and the remainder is distributed deterministically',
+      'Adding two amounts in different currencies throws',
+      'An addition that would overflow throws rather than wrapping to a negative amount',
+      'BigDecimal constructed from a double differs from the same literal constructed from a string',
+      'Removing a case from an outcome switch fails compilation',
+      'The level 7 integration suite passes against this service with only the base URL changed',
+      'A repeated request with the same idempotency key returns the original response and creates no second payment',
+      'A method annotated @Transactional and called from inside the same class does not open a transaction, and the test proves it',
+      'A checked exception rolls back once rollbackFor is set, and commits without it',
+      'The lost update reproduces against a real Postgres and is fixed by both pessimistic and optimistic locking',
+      'The service refuses to start when a required configuration property is missing',
+      'A cold start reaches its steady state p99 within the readiness window you configured'
     ],
     rubric: [
-      { pts: 25, t: 'Consent handled properly', d: 'PKCE, state, encrypted refresh tokens, a locked refresh, and invalid_grant treated as a product event rather than an error to retry.' },
-      { pts: 25, t: 'Normalisation', d: 'One function per bank, one schema out, the raw record kept, and a test per bank pinned to a real row.' },
-      { pts: 20, t: 'Deduplication', d: '157 raw rows become 140 transactions, twice, with identical purchases surviving and pending rows collapsing.' },
-      { pts: 15, t: 'Categorisation that learns', d: 'Cleaning first, rules second, model third, and a correction that sticks for that user without rewriting the world.' },
-      { pts: 15, t: 'Shipped', d: 'Runs from a clean clone against the fake bank, tests pass, README covers the consent lifecycle.' }
+      { pts: 20, t: 'Money on the JVM', d: 'long minor units, BigDecimal used correctly, overflow handled, the two classic traps tested.' },
+      { pts: 20, t: 'Types doing work', d: 'Records, enums and a sealed interface, with a compile failure demonstrated on purpose.' },
+      { pts: 20, t: 'Spring used properly', d: 'Constructor injection, one error shape, transactions with both traps understood, pool sized with arithmetic.' },
+      { pts: 20, t: 'Tested against reality', d: 'Testcontainers, the level 8 race reproduced and fixed twice, the level 7 suite passing unchanged.' },
+      { pts: 20, t: 'Measured honestly', d: 'Warm up curve, virtual threads with conditions recorded, and a benchmark whose limitations you state.' }
     ],
     stretch: [
-      'Add a fourth bank with a format you invent, and count how many files you had to change',
-      'Add a webhook receiver so the bank can notify you of new transactions, verified as in level 12, and fall back to polling',
-      'Add balance reconciliation: check that the running balance implied by your transactions matches the balance the bank reports, and report breaks as in level 10',
-      'Add a consent expiry notifier that emails at day eighty three, and a dashboard of connections by health'
+      'Write the same service in Kotlin and compare the amount of code and the readability, on the same JVM',
+      'Add GraalVM native image compilation and measure start up time and memory against the JVM version',
+      'Port the level 12 saga and compare how the compiler helps or does not with a state machine that spans services',
+      'Add JMH microbenchmarks for the money type and find out what your allocation function actually costs',
+      'Run both services behind the same load balancer at 50/50 and compare their metrics on identical live traffic'
     ],
     solutionPath: 'solutions/level-18'
   },
 
   faq: [
-    { q: 'Do I need a real bank account or a Plaid key?',
-      a: 'No. The level ships three export files and you write a small fake authorization server. Everything you learn transfers, because the real ones implement the same flow with more edge cases.' },
-    { q: 'Why encrypt the refresh token rather than hash it?',
-      a: 'Because you have to send it back to the bank, so you need the original. Hashing works for something you only ever compare, such as an API key, which is the level 12 case.' },
-    { q: 'Where does the encryption key live?',
-      a: 'Outside the database: an environment variable in a small setup, a key management service in a larger one. A key stored next to the data it protects is a filing system, not encryption.' },
-    { q: 'My deduplication drops real transactions',
-      a: 'Your fingerprint has no counter. Two identical purchases on the same day are indistinguishable without one, and they are more common than people expect.' },
-    { q: 'Should pending transactions be shown to users?',
-      a: 'Usually yes, marked as pending, because people recognise the purchase they just made. What matters is that the booked version replaces it instead of adding to it.' },
-    { q: 'How accurate does the categoriser need to be?',
-      a: 'Good enough that corrections feel rare, and correctable when they are not. Cleaning plus a few hundred merchant rules covers most spending, and a model for the tail is a level 8 problem.' },
-    { q: 'What about currencies?',
-      a: 'Store the currency with every amount and never mix them in a sum. Level 5 covered conversion; here the rule is simply that a total across currencies is a bug until a rate and a date are attached.' }
+    { q: 'Do I have to like Java?',
+      a: 'No. You have to be able to read it, write a service in it, and discuss the JVM without bluffing. A good number of payments employers will not consider a candidate who cannot, and after this level you can, which is the entire purpose.' },
+    { q: 'Kotlin instead?',
+      a: 'Kotlin runs on the same JVM, uses the same Spring Boot and the same libraries, and is more pleasant to write. Learn the Java first, because interviews and existing code are in Java, then use Kotlin if the team does. The stretch goal is there for exactly this.' },
+    { q: 'Which Java version?',
+      a: '21 or later, because that is where records, sealed interfaces, pattern matching in switch and virtual threads all exist. A lot of existing code is on 8 or 11, and you will meet it, but learn on a modern version and know what is missing on an old one.' },
+    { q: 'Maven or Gradle?',
+      a: 'Maven for this, because its build file is declarative and easy to read when you are new. Gradle is more flexible and more common in larger codebases. Neither choice will matter to anybody interviewing you.' },
+    { q: 'Is Spring Boot really necessary, or is it overkill?',
+      a: 'For learning, it is what the jobs use, which settles it. It does a great deal implicitly, so make a point of understanding what each annotation causes rather than copying configuration, because the difference shows immediately in an interview.' },
+    { q: 'My tests are slow because Testcontainers starts a database every time',
+      a: 'Start one container for the whole test run rather than per test class, and reuse it. Then make your tests independent by cleaning data rather than recreating the schema. A single container plus a truncate between tests is usually the whole fix.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'Say that you ported a service you had already built and tested, so you could compare like with like, and lead with the two things that are genuinely hard: the level 8 race reproduced against a real Postgres in CI with Testcontainers, and an honest benchmark where you state how much of each request was database time. Then the sealed interface compile failure, because it shows you used the type system deliberately rather than because the language insisted.' }
   ]
 });

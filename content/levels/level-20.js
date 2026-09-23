@@ -1,553 +1,533 @@
 /* =========================================================================
-   LEVEL 20: shipping it, and keeping it up
+   LEVEL 20: the whiteboard, and the thing you hand over
    ========================================================================= */
 FQ.registerLevel({
   id: 20,
   codename: 'shipped',
-  title: 'The mean was 45 milliseconds and the service was down',
-  tagline: 'The last level takes the payment service you built in level 12 and makes it something a team can run: a container, a pipeline, three signals, an objective, and a bill somebody has read.',
-  difficulty: 9,
-  minutes: 280,
-  tags: ['Docker', 'CI', 'observability', 'SLO', 'cost'],
-  summary: 'Nineteen levels built things. This one ships one. Container, pipeline, migrations, logs, metrics, traces, a ' +
-           'load test of 60,000 requests with one bad minute hidden inside it, a service level objective with the ' +
-           'arithmetic done, and a monthly cost where the logs turn out to be more expensive than the servers.',
+  title: 'The whiteboard, and the thing you hand over',
+  tagline: 'The final round asks you to design a payments system in forty five minutes. You have built most of one. This level turns fifteen repositories into an answer, a platform, and a package somebody can hire from.',
+  difficulty: 10,
+  minutes: 900,
+  tags: ['system design', 'capacity', 'capstone', 'portfolio'],
+  summary: 'The end. Capacity arithmetic you can do out loud, six payment designs written up properly, the numbers you ' +
+           'carry into the room (which are your own measurements from this course), and then the capstone: the whole ' +
+           'platform assembled, load tested, documented, and packaged so that a hiring manager opening one link can see ' +
+           'what you can do in ninety seconds.',
 
   objectives: [
-    'Build a container somebody else can run, small, pinned and not running as root',
-    'Write a pipeline that gates a merge, and know what belongs in it',
-    'Deploy a schema change without a maintenance window',
-    'Instrument the three signals, and know which question each one answers',
-    'Read a latency distribution instead of an average',
-    'Set an objective, compute the error budget, and alert on burn rate',
-    'Estimate the monthly bill, including the part nobody estimates'
+    'Run a system design conversation instead of waiting to be asked things',
+    'Do capacity arithmetic out loud without a calculator',
+    'Design six canonical payment systems and name the trap in each',
+    'Defend a data model before drawing any boxes',
+    'Assemble your work into one running platform and load test it',
+    'Build a package a hiring manager can read in ninety seconds'
   ],
 
   knowledge: [
-    { h: 'Done means somebody else can run it' },
-    { p: 'Every level so far ended with tests passing on your machine. That is the halfway point of shipping. The rest is ' +
-         'the set of properties that let a second person operate the thing without asking you anything.' },
-    { ol: [
-      '**It starts from a clean clone**, with one documented command, on a machine that is not yours.',
-      '**Its configuration comes from the environment**, so the same artefact runs in staging and in production.',
-      '**Its schema changes apply themselves**, forwards, without a maintenance window.',
-      '**It says what it is doing**, in a form a machine can aggregate.',
-      '**It has a number it is supposed to hit**, and somebody knows what happens when it does not.',
-      '**It costs a knowable amount**, and somebody has looked.'
-    ]},
-    { p: 'This level does all six to the payment service from level 12. The work is deliberately unglamorous, and it is the ' +
-         'difference between a portfolio repository and one that shows you have run something.' },
-
-    { h: 'The container' },
-    { code: '# build stage: has the compiler and the dev dependencies\nFROM python:3.12-slim@sha256:<digest> AS build\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir --target /deps -r requirements.txt\n\n# run stage: has neither\nFROM python:3.12-slim@sha256:<digest>\nRUN useradd --uid 10001 --create-home app\nWORKDIR /app\nCOPY --from=build /deps /deps\nCOPY --chown=app:app . .\nENV PYTHONPATH=/deps PYTHONUNBUFFERED=1\nUSER app\nEXPOSE 8000\nHEALTHCHECK --interval=10s --timeout=2s CMD python -m app.healthcheck\nCMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]', lang: 'dockerfile' },
+    { h: 'What the round actually is' },
+    { p: 'Forty five to sixty minutes, a vague prompt, and a person watching how you think. The prompt is deliberately ' +
+         'underspecified, because the first thing being assessed is whether you ask. The shape that works:' },
     { table: {
-      head: ['Line', 'Why it is there'],
+      head: ['Phase', 'Minutes', 'What you do'],
       rows: [
-        ['Two stages', 'The compiler and the test dependencies never reach production. Smaller image, smaller attack surface'],
-        ['`@sha256:`', 'A tag moves. A digest does not, so today\'s build is tomorrow\'s build'],
-        ['`useradd` and `USER app`', 'A container escape as root is a different incident from one as uid 10001'],
-        ['`--no-cache-dir`', 'Pip\'s cache is dead weight in a layer'],
-        ['`HEALTHCHECK`', 'The orchestrator needs to know the difference between started and ready'],
-        ['`PYTHONUNBUFFERED`', 'Otherwise your logs arrive in blocks, minutes after the thing you are debugging']
+        ['**Requirements**', '5 to 8', 'Ask what it must do, for whom, at what scale, and what it must never do'],
+        ['**Estimation**', '3 to 5', 'Traffic, storage, peak. Out loud, with round numbers'],
+        ['**The data model**', '5', 'Tables and keys, before any boxes. Almost nobody does this, and it is the strongest move available'],
+        ['**High level design**', '10 to 15', 'Boxes, arrows, what each one owns'],
+        ['**Deep dive**', '15', 'They pick something and press. Usually consistency, failure or scale'],
+        ['**Wrap up**', '2', 'What you would build first, and what you knowingly left out']
       ]
     }},
-    { warn: 'Never `COPY .env` and never bake a key into a layer. Layers are cached, shared and pullable, and a secret in ' +
-            'one is a secret published. Level 12\'s rule, now with a second way to break it.' },
+    { p: 'The most common failure is starting at the boxes. A candidate who begins "we would have an API gateway, a ' +
+         'service, a queue and a database" has drawn something generic and has said nothing about payments. A candidate ' +
+         'who begins "before I draw anything, can a payment be retried, and is the customer waiting for the answer?" has ' +
+         'already demonstrated more than the rest of the hour usually does.' },
+    { money: 'Your advantage in this round is specific rather than general. Everybody has read about idempotency. You ' +
+             'measured that 13% of payouts ended inconsistent without compensation, that 3.50% of events were delivered ' +
+             'twice with an outbox, and that a default histogram bucket set reported a p99 that was wrong by 49%. Bring ' +
+             'one of those numbers into the room and the conversation changes.' },
+
+    { h: 'Estimation, out loud' },
+    { p: 'Four numbers to memorise, and everything else is multiplication:' },
+    { code: 'seconds in a day        86,400          (call it 100,000 and adjust)\nseconds in a month       2,600,000\npeak to average          3x to 5x for consumer payments\nrows a Postgres index\n  lookup costs            microseconds, not milliseconds (level 6)', lang: 'text' },
+    { p: 'Now a worked example, the kind you say aloud while writing on the board. "A mid sized payments company, 50 ' +
+         'payments a second on average, peaking at 200."' },
+    { code: 'traffic    50 x 86,400          = 4.32 million payments a day\n                                 = 130 million a month\npeak       200 a second, so size compute for 200 and average for cost\n\nstorage    payment row            500 bytes\n           two ledger entries      400 bytes\n           events and audit        600 bytes\n           ------------------------------------\n           per payment           1,500 bytes\n           130 M x 1.5 kB       = 195 GB a month  =  2.3 TB a year\n\nreads      roughly 10 per write (dashboards, support, retries)\n                                 = 500 a second average, 2,000 at peak', lang: 'text' },
+    { p: 'Three conclusions fall straight out of those numbers, and saying them is the point of having done the ' +
+         'arithmetic: **2.3 TB a year fits on one Postgres**, so this is not a sharding problem and anybody who starts ' +
+         'sharding has misread the question. **Reads outnumber writes ten to one**, so replicas and caching matter more ' +
+         'than write throughput. And **peak is four times average**, so the compute bill is mostly insurance, which is ' +
+         'the level 17 cost conversation.' },
+    { tip: 'Round aggressively and say that you are. "Call it a hundred thousand seconds in a day" is what a working ' +
+           'engineer does, and the interviewer will not care about the 15% as long as you said you rounded. Reaching for ' +
+           'a calculator, or getting lost in precision, both read badly.' },
+
+    { h: 'The data model first' },
+    { p: 'Before boxes, put the tables on the board. It forces every important question into the open: what is unique, ' +
+         'what is immutable, what the states are, and what you will need to query.' },
+    { code: 'payments(id, merchant_id, amount_minor, currency, state, idempotency_key,\n         created_at)\n         unique (merchant_id, idempotency_key)      <- level 7\n\nledger_entries(id, transaction_id, account_id, direction, amount_minor,\n         created_at)\n         append only, never updated                 <- level 4\n         sum(debits) = sum(credits) per transaction\n\ncard_events(id, payment_id, type, at, network_ref)\n         the state machine lives here               <- level 9\n\noutbox(id, aggregate_id, payload, published_at)\n         written in the business transaction        <- level 11\n\npayouts(id, our_ref unique, state, updated_at)\n         partial index on unfinished                <- level 12', lang: 'text' },
+    { p: 'Five tables, five earlier levels, and every one of them answers a question the interviewer was going to ask. ' +
+         'The unique constraint is your idempotency answer. The append only entries are your audit answer. The outbox is ' +
+         'your "how do other services find out" answer. Putting them up front means the deep dive starts from something ' +
+         'concrete rather than from a box labelled "payment service".' },
+
+    { h: 'Six designs worth having ready' },
+    { p: 'Nearly every payments system design question is one of these. For each, the decisions that matter and the ' +
+         'mistake that gets made:' },
+    { table: {
+      head: ['Design', 'The decisions', 'The trap'],
+      rows: [
+        ['**A payment API**', 'Idempotency keys, a versioned contract, synchronous authorisation and asynchronous everything else, webhooks with signatures and retries', 'Making the whole flow synchronous, so a slow bank becomes your outage'],
+        ['**A ledger at scale**', 'Double entry, append only, balances as a projection, partitioning by time, a daily proof that it balances', 'A mutable balance column, which loses the history and races under concurrency'],
+        ['**Reconciliation**', 'Ingest the file, match on reference then on amount and date, classify breaks, an exception queue with owners', 'Treating a break as an error rather than a normal daily quantity that needs a workflow'],
+        ['**Card authorisation**', 'A hard latency budget, cached limits and rules, fail closed or open as a business decision, no synchronous dependency you do not control', 'A fraud check with no timeout, which turns a slow model into declined payments'],
+        ['**Payouts**', 'A saga with compensation, an explicit unknown state, a sweeper, our own reference on every request', 'Retrying a timeout, which pays twice, or compensating it, which cancels a real payment'],
+        ['**Fraud and velocity**', 'Counters in Redis with sliding windows, the rules in configuration rather than in code, a shadow mode before enforcing', 'Putting the counter in Postgres and discovering it is your hottest row']
+      ]
+    }},
+    { p: 'For each of the six you should be able to draw it in three minutes, name where the money can be lost, and say ' +
+         'what you would monitor. That last part is unusual and it lands: "I would alert on payouts in a non final state ' +
+         'for more than fifteen minutes, because that is the one that silently keeps money" is a sentence from somebody ' +
+         'who has run something.' },
     { check: {
-      q: 'Your image is 1.2 GB and a colleague\'s equivalent service is 180 MB. Where has the weight gone, and why does it ' +
-         'matter beyond disk space?',
-      a: 'Almost always a single stage build: the compiler, the headers, the test dependencies and the pip cache are all ' +
-         'still in the image. It matters because every one of those is code that ships to production and appears in a ' +
-         'vulnerability scan, because a bigger image is slower to pull and so slower to scale out or roll back, and ' +
-         'because a rollback that takes four minutes instead of twenty seconds is four minutes of an incident.'
+      q: 'The prompt is "design a payment system". Before drawing anything, what five questions would you ask, and why ' +
+         'those five?',
+      a: 'First, who is paying whom, because a consumer paying a merchant, a merchant being paid out and a business ' +
+         'moving its own money are three different systems. Second, is the payer waiting for the answer, because that ' +
+         'sets your latency budget and decides what can be asynchronous. Third, what volume and what peak, because the ' +
+         'answer decides whether this is one Postgres or a much harder problem, and the arithmetic usually says one ' +
+         'Postgres. Fourth, what happens on a duplicate request, which is an idempotency question dressed as a product ' +
+         'question and tells you whether they are testing the thing most candidates get wrong. Fifth, what must never ' +
+         'happen, because in payments the answer is normally "we must never pay twice" and that single sentence dictates ' +
+         'the retry policy, the reference scheme and the recovery design. Those five fix the shape of everything you ' +
+         'would draw, and asking them takes ninety seconds.'
     }},
 
-    { h: 'The pipeline, and what it is allowed to stop' },
-    { p: 'Continuous integration is a list of things that must be true before code merges. The list is short in a good ' +
-         'repository, and every item on it has stopped something real.' },
+    { h: 'The deep dive, and what they press on' },
+    { p: 'Fifteen minutes on one thing. It is almost always one of five, and you have built all five:' },
     { table: {
-      head: ['Stage', 'Typical time', 'What it catches'],
+      head: ['"What happens if..."', 'Your answer comes from'],
       rows: [
-        ['Lint and format', 'seconds', 'Arguments nobody needs to have'],
-        ['Type check', 'seconds', 'The None you did not consider'],
-        ['Unit tests', 'under a minute', 'Logic'],
-        ['Integration tests, real Postgres', 'a few minutes', 'The half of your bugs that live in the database'],
-        ['Build the image', 'a minute', 'A Dockerfile that only worked on your laptop'],
-        ['Dependency and image scan', 'under a minute', 'A known vulnerability in something you did not write'],
-        ['Migration check, up then down', 'seconds', 'A migration that cannot be rolled back']
+        ['...the same request arrives twice?', 'Level 7: a unique idempotency key, the stored response, and the 409 on a conflicting body'],
+        ['...two requests hit the same balance at once?', 'Level 8: row locks, or an optimistic version, and the race you reproduced'],
+        ['...the bank never answers?', 'Level 12: an explicit unknown state, a sweeper, and never retrying blindly'],
+        ['...this table reaches a billion rows?', 'Level 13: partitioning by time, retention by dropping partitions, and an online migration'],
+        ['...you need to change a column with no downtime?', 'Level 13: expand and contract, six deploys, a batched backfill and a verification query']
       ]
     }},
-    { p: 'Two rules make the difference between a pipeline people trust and one they route around.' },
+    { p: 'Two habits make this phase go well. **Say the failure mode before they ask**: "the risk here is that the ' +
+         'publish succeeds and the transaction rolls back, so I would use an outbox" invites a better conversation than ' +
+         'waiting to be caught. And **give a number when you have one**, because "we measured 20 of 400 events lost at a ' +
+         '5% crash rate with a dual write" is not something a candidate usually has.' },
+
+    { h: 'Trade-offs, in the words people use' },
+    { table: {
+      head: ['Choice', 'Take this when', 'Cost'],
+      rows: [
+        ['Strong consistency', 'Money moves, limits are checked, idempotency is decided', 'Latency, and coordination'],
+        ['Eventual consistency', 'Dashboards, search, analytics, notifications', 'Somebody sees stale data and files a bug'],
+        ['Synchronous', 'The caller cannot continue without the answer', 'Their outage becomes yours'],
+        ['Asynchronous', 'The work can finish later', 'Ordering, duplicates, and a queue to operate'],
+        ['SQL', 'Transactions, constraints and joins matter, which for money is always', 'One machine\'s worth of writes, for a long time'],
+        ['NoSQL', 'One access pattern, enormous scale, no cross row invariants', 'You implement the invariants yourself, badly']
+      ]
+    }},
+    { p: 'On the last row, be direct in the room: **a ledger goes in a relational database.** The invariant that debits ' +
+         'equal credits is a constraint you want the database to enforce, and giving that up to gain write throughput ' +
+         'you do not need is the wrong trade. Saying so clearly, with the storage arithmetic behind it, is a better ' +
+         'answer than listing both options politely.' },
+    { p: 'And the phrase that improves almost any answer: **"it depends on..."** followed by the specific thing it ' +
+         'depends on. "It depends on whether the payer is waiting" is a real answer. "It depends" on its own is not.' },
+
+    { h: 'The capstone' },
+    { p: 'One repository that runs everything you have built, with one command, against generated traffic. Not new code: ' +
+         'assembly, and the documents that make it legible.' },
+    { code: 'docker compose up\n\n  gateway        the level 7 API, idempotent, versioned\n  ledger         level 4 and 6, double entry, constrained, indexed\n  cards          level 9, the lifecycle state machine\n  payouts        level 12, saga, sweeper, stuck detection\n  events         level 11, outbox, consumers, replay\n  recon          level 10, the daily job and the exception queue\n  vault          level 15, tokens, envelope encryption\n  observability  level 16, metrics, traces, SLOs, burn rate alerts\n  loadgen        level 14, open loop, and the report', lang: 'text' },
+    { p: 'Then run it hard, for an hour, while breaking things, and write down what happened:' },
     { ul: [
-      '**It has to be fast enough to wait for.** Ten minutes is tolerable, forty is not, and beyond that people merge without reading it.',
-      '**A red build has to mean something is broken.** A test that fails one run in twenty teaches everybody to re-run rather than to look, and that habit is what lets the real failure through.'
+      '**A sustained load test** at a stated rate, with p50, p99 and goodput, warmed up, and the utilisation you can hold while meeting your objective.',
+      '**A chaos run**: kill a service, slow the bank, fill the queue, expire a credential. For each, what fired, how long detection took, and whether any money was lost.',
+      '**A daily reconciliation** across the whole platform that comes out at zero, which is the single best evidence that the pieces agree.',
+      '**A migration under load**, from level 13, with zero failed requests.'
     ]},
+    { p: 'That set of results is the capstone. Any one of them is a better interview answer than a description of the ' +
+         'architecture, because each one is something that either happened or did not.' },
 
-    { h: 'Deploying a schema change' },
-    { p: 'The service runs on more than one machine, so during a deploy both the old code and the new code are live at ' +
-         'once. A migration that assumes otherwise causes an outage in the two minutes nobody tested.' },
-    { code: 'renaming a column, the only safe way\n\n  1. add the new column, nullable            old code fine, new code fine\n  2. write to both, read from the old        deploy\n  3. backfill the new one in batches         no lock held for long\n  4. read from the new one                   deploy\n  5. stop writing the old one                deploy\n  6. drop the old column                     days later, when nothing rolls back to it', lang: 'text' },
-    { p: 'That is expand and contract, and the shape is the same for every destructive change: make the new thing exist, ' +
-         'move the traffic, then remove the old thing in a separate release. Six deploys instead of one, and no window ' +
-         'where a rollback loses data.' },
-    { check: {
-      q: 'A migration adds a `not null` column with a default to a table of forty million rows, and the deploy times out ' +
-         'with the service unavailable. What happened?',
-      a: 'The migration took a lock the whole table needed while it rewrote it, and every query queued behind it until ' +
-         'connections ran out. Modern Postgres avoids the rewrite for a constant default, but the general habit is what ' +
-         'matters: add the column nullable, backfill in batches with a pause between them, then add the constraint. Also ' +
-         'set a `lock_timeout` on migrations so a blocked one fails in seconds instead of taking the service with it.'
-    }},
-
-    { h: 'Three signals, three questions' },
+    { h: 'The package somebody hires from' },
+    { p: 'A hiring manager gives your application about ninety seconds. Build for that, honestly:' },
     { table: {
-      head: ['Signal', 'Answers', 'Cardinality'],
+      head: ['Artefact', 'What it must do in ninety seconds'],
       rows: [
-        ['**Logs**', 'What happened to this one request?', 'Unlimited, and that is the cost problem'],
-        ['**Metrics**', 'How is the system doing right now?', 'Low, so keep it low'],
-        ['**Traces**', 'Where did the time go, across services?', 'Sampled']
+        ['One landing README', 'Say what the platform is, show the architecture diagram, and list five measured results'],
+        ['A two minute video', 'Start it, send traffic, break something, show the alert firing. No slides'],
+        ['An architecture document', 'Every service, what it owns, what it depends on, and the three decisions you would defend'],
+        ['A CV with numbers', '"Reduced inconsistent payouts from 13% to 0% with a saga and a sweeper", not "familiar with distributed systems"'],
+        ['Fifteen repositories', 'Each with a README that leads with the measurement rather than the technology']
       ]
     }},
-    { p: 'For metrics the useful default is RED, one set per endpoint: **rate** (requests per second), **errors** (the ' +
-         'share failing), and **duration** (a histogram, not an average). Level 12 already puts a request id on every log ' +
-         'line; the trace id goes in the same place, and that one field is what turns three tools into one investigation.' },
-    { code: '{"ts": "2026-07-02T14:06:03.412Z", "level": "error", "msg": "payment failed",\n "request_id": "01J2X...", "trace_id": "4bf92f...", "route": "POST /payments",\n "status": 503, "duration_ms": 41.2, "db_wait_ms": 38.9}', lang: 'json' },
-    { warn: 'Never put a customer id, an account number or an amount in a metric label. Metrics are stored per unique ' +
-            'combination of labels, so one high cardinality label turns a thousand time series into ten million and the ' +
-            'bill arrives before the outage does.' },
-
-    { h: 'Reading a load test' },
-    { p: 'Here is one run against the level 12 service: ten minutes, a hundred requests a second, 60,000 requests, and the ' +
-         'file ships with the level. One summary line describes it.' },
-    { code: 'whole run   n=60000   mean 44.7 ms   errors 1.06%', lang: 'text' },
-    { p: 'That line is true and it hides everything that matters. Split the same data by time.' },
-    { table: {
-      head: ['Window', 'Requests', 'p50', 'p95', 'p99', 'Errors'],
-      rows: [
-        ['Warm up, first 5 s', '500', '146.0 ms', '496.6 ms', '795.6 ms', '0%'],
-        ['Steady state, 30 s to 360 s', '33,000', '26.4 ms', '75.6 ms', '111.0 ms', '0.08%'],
-        ['**The bad minute, 360 s to 420 s**', '6,000', '120.5 ms', '398.8 ms', '590.9 ms', '**9.82%**'],
-        ['After, 420 s onward', '18,000', '26.4 ms', '74.3 ms', '110.9 ms', '0.12%']
-      ]
-    }},
-    { p: 'The mean of the whole run, 44.7 ms, describes no minute of it. The p99 of the whole run, 327.9 ms, is three times ' +
-         'the steady state p99 of 111.0 ms, entirely because of sixty seconds. And the warm up is a separate phenomenon ' +
-         'again: a cold process is slow, which is an argument for a readiness probe that waits rather than a deploy that ' +
-         'sends traffic at a process still loading.' },
-    { money: 'Split by endpoint too. In steady state `POST /payments` runs at a p99 of 121.5 ms and `GET /health` at ' +
-             '10.9 ms, so an overall percentile mixed across endpoints is an average of two different services.' },
+    { p: 'The rule that makes all of it work: **lead with what you measured, not what you used.** "Built a payments API ' +
+         'with FastAPI and Postgres" is a sentence about tools that says nothing about you. "Reproduced a lost update ' +
+         'under concurrent captures, fixed it three ways, and measured each: row locks, optimistic version, serialisable ' +
+         'isolation" describes an engineer.' },
+    { warn: 'Every number in the package must be one you can reproduce on the spot, because somebody will ask. If you ' +
+            'cannot rerun it in front of them, take it out. A single number you cannot defend undoes all the others.' },
     { check: {
-      q: 'Somebody proposes an alert on average latency above 100 ms. Using the numbers above, say why that alert would ' +
-         'not have fired during the bad minute, and what to alert on instead.',
-      a: 'It would have fired, but late and for the wrong reason: the mean in that window was 152.7 ms, so it crosses, ' +
-         'while the mean over any five minute window containing the incident stays near 60 ms and might not. Averages are ' +
-         'pulled towards the common case, and the common case stayed fast. Alert on the share of requests that failed and ' +
-         'the share slower than your objective, which moved from 0.08% to 9.82% and from 0.00% to 11.38%. Those are ' +
-         'unambiguous, and they are the things a customer noticed.'
+      q: 'You have fifteen repositories and a hiring manager will look at one. Which do you point at, and what goes in ' +
+         'the first three lines of its README?',
+      a: 'Point at the capstone, because it is the only one that shows the pieces working together, and because the ' +
+         'chaos run and the reconciliation coming out at zero are results rather than descriptions. The first three ' +
+         'lines are the architecture diagram, one sentence saying what the platform does, and the five measured ' +
+         'results, in that order. No installation instructions, no technology list and no paragraph about your ' +
+         'motivation, because none of those survive ninety seconds. If a single repository is a better fit for a ' +
+         'specific role, point at that one instead: the payouts saga for a payments infrastructure team, the ' +
+         'reconciliation for an operations heavy one, the latency lab for a team that advertises high volume. Matching ' +
+         'the repository to the job description takes two minutes and is the highest return thing you can do with them.'
     }},
 
-    { h: 'An objective, and the budget under it' },
-    { p: 'A service level objective is a promise with a number, chosen because somebody thought about what users need, ' +
-         'not because 99.99% sounds impressive. Two for this service:' },
-    { ul: [
-      '**Availability**: 99.9% of requests succeed, measured over 30 days.',
-      '**Latency**: 99% of `POST /payments` complete within 300 ms, measured over 30 days.'
-    ]},
-    { p: 'The budget follows from the objective by arithmetic. At 100 requests a second the service handles 259,200,000 ' +
-         'requests in 30 days, so 99.9% allows 259,200 failures. Now price the incident.' },
-    { table: {
-      head: ['', 'Value'],
-      rows: [
-        ['Requests in 30 days at 100 rps', '259,200,000'],
-        ['Failures allowed at 99.9%', '259,200'],
-        ['Failures in the bad minute', '589'],
-        ['Share of the monthly budget spent', '0.23%'],
-        ['Same thing as time, 99.9% of 30 days', '43.2 minutes']
-      ]
-    }},
-    { p: 'One minute at 9.82% errors costs about a quarter of one percent of the month. That is the number that stops two ' +
-         'arguments at once: the one where a minute of errors is treated as a catastrophe, and the one where it is ' +
-         'treated as nothing. It is 0.23%, and if it happens twice a day the budget is gone before the month ends.' },
-    { p: 'Alert on **burn rate**, which is how fast the budget is being spent compared to level. A 9.82% error rate against ' +
-         'a 0.1% allowance is a burn rate of about 98, and at that speed a month of budget is gone in roughly seven hours. ' +
-         'The usual configuration is two windows: a fast one that catches a burn rate above 14 over an hour, and a slow ' +
-         'one that catches a quieter leak over six. One page for something urgent, one ticket for something steady.' },
-    { check: {
-      q: 'Your service has been at 100% availability for four months. What should you do with the error budget?',
-      a: 'Ask what it cost. An untouched budget usually means the objective is set well below what the system delivers, ' +
-         'and the team has been paying for that margin in release caution, extra redundancy, or simply not shipping. ' +
-         'Either raise the objective so the number means something, or spend the budget deliberately: ship faster, run a ' +
-         'failure drill, test a rollback in production hours. A budget that is never spent is a number nobody uses.'
-    }},
-
-    { h: 'The bill, including the part nobody estimates' },
-    { p: 'At 100 requests a second the service does 8,640,000 requests a day. Suppose each one writes a single structured ' +
-         'log line of about 400 bytes, which is a modest line with a request id, a route, a status and a duration.' },
-    { code: '259,200,000 requests x 400 bytes  =  103.68 GB of logs a month\n\n  at an assumed $0.50 per GB ingested   =  $51.84 a month\n  at an assumed $2.00 per GB ingested   = $207.36 a month', lang: 'text' },
-    { p: 'Three small instances to serve that traffic cost less than the second figure. The log bill is not an exotic ' +
-         'failure mode, it is the normal outcome of logging every request at full detail and never looking at the volume. ' +
-         'The unit prices above are assumptions for the arithmetic; put your own provider\'s numbers in and the ratio ' +
-         'usually survives.' },
-    { ul: [
-      '**Sample the boring ones.** Every error, every slow request, and one in a hundred successful ones is a different bill and almost the same information.',
-      '**Move the counting into metrics.** A count of requests by route and status is a handful of time series, not a hundred gigabytes.',
-      '**Set a retention that matches the question.** Debugging needs days. Audit needs years, and belongs in the append only tables from level 13, not in a log product.',
-      '**Sample traces.** One percent, plus everything that errored.'
-    ]},
-    { p: 'Then write the estimate down: compute, database, logs, traces, egress, and the per transaction fees if the ' +
-         'service touches a payment provider. Being able to say what your service costs per thousand transactions is rare ' +
-         'in a junior engineer and noticed immediately.' },
-
-    { h: 'The runbook' },
-    { p: 'The last artefact, and the one most repositories lack. A page per alert, written before the incident, in the ' +
-         'imperative.' },
-    { ol: [
-      '**What fired**, in the words of the alert.',
-      '**What it means** for a customer, in one sentence.',
-      '**The first three things to look at**, with the links already in the document.',
-      '**The safe actions**: restart this, scale that, turn this feature off.',
-      '**What not to do**, which is usually the interesting part.',
-      '**Who to wake**, and when it is right to.'
-    ]},
-    { p: 'Write it the day you build the alert, while you still remember why. Then run one drill: break something in ' +
-         'staging on purpose, follow your own runbook, and fix whatever you could not find. That drill is the difference ' +
-         'between a document and a thing that works at four in the morning.' }
+    { h: 'What you actually have now' },
+    { p: 'This track started at level 5 with a money type. The list, said plainly, because you should be able to say it:' },
+    { p: 'A money library with exact arithmetic and property tests. A double entry ledger with constraints, indexes and ' +
+         'query plans you can read. A payments API with idempotency, versioning and pagination. A reproduced lost update ' +
+         'and three measured fixes. A card lifecycle with a real state machine. A reconciliation that finds planted ' +
+         'breaks. An outbox with idempotent consumers and a replay. A payout saga with compensation and a sweeper that ' +
+         'takes inconsistency to zero. A partitioned schema migrated under live traffic. A latency lab with a cache, a ' +
+         'limiter, a breaker and load shedding. A card vault with envelope encryption and a rotation that rewrites no ' +
+         'rows. Metrics, traces, SLOs and burn rate alerts that page for symptoms. A deploy you can undo, with a cost ' +
+         'per payment. The same service on the JVM. And forty problems with an honest log.' },
+    { p: 'That is more production payments engineering than most people have after two years in the job. **Go and apply ' +
+         'before you feel ready**, because the feeling arrives some time after the evidence does, and you now have the ' +
+         'evidence.' }
   ],
 
   tutorial: {
-    intro: 'This level operates on the service from level 12. Work in that repository, or clone your own and branch. ' +
-           'Docker, GitHub Actions, Postgres, Prometheus and OpenTelemetry, all free to run locally.',
+    intro: 'Two weeks. One week assembling and running the platform, one week on the six designs and the package. Work ' +
+           'in a repository called `payments-platform-capstone`.',
     steps: [
       {
-        t: 'Containerise, then measure the result',
+        t: 'One command, everything up',
         blocks: [
-          { p: 'Write the two stage Dockerfile, then check the three things that make it good rather than merely working.' },
-          { code: 'docker build -t payments:dev .\ndocker image ls payments:dev            # size: aim well under 300 MB\ndocker run --rm payments:dev id        # uid should not be 0\ndocker history payments:dev | head     # no layer should mention a secret', lang: 'bash' },
-          { tip: 'Add a `.dockerignore` before you build. Without it your `.git`, your virtual environment and any local ' +
-                 '`.env` go into the build context, which is both slow and the most common way a secret ends up in an image.' }
+          { p: 'A compose file that starts every service, a shared network, one Postgres with a schema per service, one ' +
+               'Redis, one Kafka or Redpanda, and the observability stack from level 16. Then a script that seeds a ' +
+               'merchant and sends one payment end to end.' },
+          { warn: 'If a service needs code changes to run alongside the others, that is the exercise, not an ' +
+                  'inconvenience. Hard coded ports, hard coded database names and a configuration that only works on ' +
+                  'your laptop are exactly what level 17 was about.' }
         ],
-        check: 'The image builds, runs as a non root user, and is small enough to pull quickly.'
+        check: 'A fresh clone, one command, and a payment flows from the API to the ledger, the events and the payout.'
       },
       {
-        t: 'Compose the whole thing locally',
+        t: 'Load it properly',
         blocks: [
-          { code: 'services:\n  db:\n    image: postgres:16\n    environment: { POSTGRES_PASSWORD: dev }\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n  api:\n    build: .\n    depends_on:\n      db: { condition: service_healthy }\n    environment:\n      DATABASE_URL: postgres://postgres:dev@db:5432/postgres\n    ports: ["8000:8000"]', lang: 'yaml' },
-          { p: 'One command has to bring up the service and its database from nothing. That command goes at the top of the ' +
-               'README, and somebody who has never seen the project runs it to check you are telling the truth.' }
+          { p: 'The open loop generator from level 14 against the whole platform, warmed up, for an hour. Report p50, ' +
+               'p99 and goodput, and find the utilisation at which you stop meeting your SLO.' },
+          { code: 'sustained    120 payments per second for 60 minutes\np50          ...\np99          ...   against an objective of ...\ngoodput      ...\nbudget spent ...% of the monthly error budget in one hour', lang: 'text' },
+          { p: 'That last line is worth computing. An hour of load test that spends a third of your monthly error ' +
+               'budget tells you the objective is wrong, or the system is.' }
         ],
-        check: 'docker compose up brings up a working API against a fresh database, with no manual steps.'
+        check: 'An hour long run with percentiles, goodput, and the utilisation where the objective breaks.'
       },
       {
-        t: 'The pipeline',
+        t: 'Break it on purpose',
         blocks: [
-          { code: 'name: ci\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    services:\n      postgres:\n        image: postgres:16\n        env: { POSTGRES_PASSWORD: ci }\n        options: >-\n          --health-cmd pg_isready --health-interval 2s --health-retries 15\n        ports: ["5432:5432"]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with: { python-version: "3.12", cache: pip }\n      - run: pip install -r requirements.txt -r requirements-dev.txt\n      - run: ruff check . && ruff format --check .\n      - run: mypy app\n      - run: pytest -q --cov=app --cov-fail-under=80\n      - run: alembic upgrade head && alembic downgrade -1 && alembic upgrade head\n      - run: docker build -t payments:ci .', lang: 'yaml' },
-          { p: 'The migration line is the one people leave out. It proves the migration applies forwards and rolls back, ' +
-               'which is exactly what you need to be true at the moment you least want to find out.' },
-          { tip: 'Time the pipeline and put the number in the README. If it is over ten minutes, find out which step owns ' +
-                 'the time before adding anything to it.' }
+          { p: 'Four failures, one at a time, under load. For each: what fired, how long until you knew, how long until ' +
+               'it recovered, and whether any money was lost or duplicated.' },
+          { code: '1. kill the ledger database for 60 seconds\n2. make the bank simulator take 5 seconds, then time out\n3. stop the outbox publisher for 10 minutes\n4. revoke the vault credential', lang: 'text' },
+          { p: 'The result you want is that every one of them ends with the reconciliation at zero. The result you will ' +
+               'probably get first is that one of them does not, and finding out which is the entire value of the ' +
+               'exercise.' }
         ],
-        check: 'A pull request runs the pipeline, and a deliberately broken test blocks the merge.'
+        check: 'After every injected failure, the daily reconciliation comes out at zero breaks.'
       },
       {
-        t: 'Expand and contract, for real',
+        t: 'Migrate while it runs',
         blocks: [
-          { p: 'Rename `amount_cents` to `amount_minor` across six migrations and three deploys. Nothing else in this level ' +
-               'teaches as much per line of code.' },
-          { code: '# 01_add.py        add amount_minor, nullable\n# 02_dual_write.py application writes both, reads amount_cents\n# 03_backfill.py   update in batches of 5000, sleep between them\n# 04_read_new.py   application reads amount_minor\n# 05_stop_write.py application stops writing amount_cents\n# 06_drop.py       drop amount_cents', lang: 'text' },
-          { code: 'SET lock_timeout = \'3s\';       -- fail fast rather than queue the world\nSET statement_timeout = \'5min\';', lang: 'sql' },
-          { p: 'Write a test that runs the old application code against the new schema. That is the state your service is in ' +
-               'for two minutes during every deploy, and it is the only state nobody tests.' }
+          { p: 'The level 13 expand and contract, performed on the live platform while the load generator runs. Zero ' +
+               'failed requests is the requirement; a latency bump is fine and should be reported.' }
         ],
-        check: 'The old code passes its tests against the new schema, and each migration rolls back cleanly.'
+        check: 'A full schema change completes under load with no failed requests.'
       },
       {
-        t: 'Structured logs, with the ids that join things up',
+        t: 'Write the architecture document',
         blocks: [
-          { code: 'import structlog\n\nlog = structlog.get_logger()\n\n@app.middleware("http")\nasync def observe(request, call_next):\n    started = time.perf_counter()\n    request_id = request.headers.get("x-request-id") or str(ulid.new())\n    with structlog.contextvars.bound_contextvars(\n        request_id=request_id,\n        trace_id=current_trace_id(),\n        route=request.scope.get("route").path if request.scope.get("route") else request.url.path,\n    ):\n        response = await call_next(request)\n        log.info("request",\n                 status=response.status_code,\n                 duration_ms=round((time.perf_counter() - started) * 1000, 2))\n        return response', lang: 'python' },
-          { warn: 'Log the route template, `/payments/{id}`, never the filled in path. A path with the id in it is a ' +
-                  'different string every time, which ruins grouping and, if it reaches a metric label, your bill.' }
+          { p: 'One diagram and one table: every service, what data it owns, what it depends on, and what happens when ' +
+               'that dependency is unavailable. Then three decisions you would defend, each with the alternative you ' +
+               'rejected and why.' },
+          { tip: 'Write the decisions as short records: context, options, decision, consequences. Four paragraphs each. ' +
+                 'It is the format most companies use, and having written some already is a small, real advantage.' }
         ],
-        check: 'Every log line carries a request id and a trace id, and no line contains a token, a card number or a full name.'
+        check: 'Somebody who has never seen the code can draw the system from your document.'
       },
       {
-        t: 'RED metrics and a trace',
+        t: 'The six designs',
         blocks: [
-          { code: 'from prometheus_client import Counter, Histogram\n\nREQUESTS = Counter("http_requests_total", "", ["route", "method", "status"])\nLATENCY  = Histogram("http_request_duration_seconds", "", ["route", "method"],\n                     buckets=(.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5))\n\n# labels: route template, method, status class. Nothing per customer, ever.', lang: 'python' },
-          { p: 'Then add OpenTelemetry around the database calls, so a slow request shows where the time went rather than ' +
-               'only that it was slow. In the bad minute of the shipped load test, the answer was the database wait.' },
-          { code: 'POST /payments  412 ms\n  |- validate        0.4 ms\n  |- db: insert     38.9 ms\n  |- db: commit    371.2 ms   <- here\n  |- serialise       0.6 ms', lang: 'text' }
+          { p: 'Write each of the six up as a one page design: requirements, estimation, data model, diagram, failure ' +
+               'modes, what you would monitor. Then practise saying each one in eight minutes, out loud, to a person.' },
+          { p: 'Use your own measurements wherever they fit, because that is the part nobody else has.' }
         ],
-        check: 'A Prometheus scrape returns the three RED series, and a trace of one slow request shows the database span.'
+        check: 'You can present any of the six from memory in under ten minutes, including the numbers.'
       },
       {
-        t: 'Run the load test, and read it properly',
+        t: 'Two minutes of video',
         blocks: [
-          { code: '# 100 requests a second for ten minutes\nk6 run --vus 50 --duration 10m load/payments.js', lang: 'bash' },
-          { p: 'Then analyse the shipped run rather than trusting the tool\'s summary. Compute the percentiles yourself, ' +
-               'split by window and by endpoint, and reproduce this table.' },
-          { code: 'window                     n      p50      p95      p99   errors\nwhole run              60000   28.6ms  141.3ms  327.9ms    1.06%\nsteady state           33000   26.4ms   75.6ms  111.0ms    0.08%\nthe bad minute          6000  120.5ms  398.8ms  590.9ms    9.82%\n\nover 300 ms:  1.27% of the run, 0.00% in steady state, 11.38% in the bad minute', lang: 'text' },
-          { tip: 'Percentiles do not average. You cannot take the p99 of each minute and average them to get the p99 of the ' +
-                 'hour, which is why histograms are stored as buckets and not as numbers.' }
+          { p: 'Screen recording, no slides, no introduction. Start the platform, send traffic, open the dashboard, kill ' +
+               'a service, show the alert firing, show the reconciliation at zero. Stop.' },
+          { p: 'Rerecord it until it is under two minutes. The discipline of cutting is what makes it watchable, and a ' +
+               'watchable two minutes gets opened far more often than a repository does.' }
         ],
-        check: 'Your analysis reproduces the table, including the 11.38% of the bad minute over 300 ms.'
+        check: 'Somebody who does not know the project understands what it does, from the video alone, in two minutes.'
       },
       {
-        t: 'The objective, the alerts and the runbook',
+        t: 'The package, and then apply',
         blocks: [
-          { code: '# 99.9% availability over 30 days\n# budget: 259,200 failed requests, or 43.2 minutes\n\n- alert: ErrorBudgetBurningFast\n  expr: |\n    (sum(rate(http_requests_total{status=~"5.."}[1h]))\n     / sum(rate(http_requests_total[1h]))) > 14 * 0.001\n  for: 5m\n  labels: { severity: page }\n\n- alert: ErrorBudgetBurningSlowly\n  expr: |\n    (sum(rate(http_requests_total{status=~"5.."}[6h]))\n     / sum(rate(http_requests_total[6h]))) > 6 * 0.001\n  for: 30m\n  labels: { severity: ticket }', lang: 'yaml' },
-          { p: 'Two windows, two severities, one budget. Then write the runbook page for each alert, and run one drill ' +
-               'against staging with the runbook open. Whatever you could not find in three minutes is a missing line in ' +
-               'the document.' }
+          { p: 'The landing README with five measured results. The CV rewritten so every line has a number. Each ' +
+               'repository README rewritten to lead with its measurement. Then pick fifteen companies, match a ' +
+               'repository to each job description, and send them.' },
+          { code: 'Reduced inconsistent payouts from 13.0% to 0% with a saga and a recovery sweeper\nCut monthly retention work from a 47 ms delete to a 0.9 ms partition drop\nFound a 49% error in reported p99 caused by default histogram buckets\nReproduced a lost update under concurrency and fixed it three ways, measured\nBuilt a card vault that took systems holding card numbers from seven to one', lang: 'text' },
+          { p: 'Those five lines are a CV that gets read. Every one of them is something you did and can rerun in front ' +
+               'of somebody.' }
         ],
-        check: 'The alerts fire against a replayed incident, and somebody who did not build the service can follow the runbook.'
+        check: 'Fifteen applications sent, each pointing at the repository that matches the role.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Multi stage build', d: 'Compile in one image, copy the result into a smaller one. Keeps build tools out of production.' },
-    { t: 'Image digest', d: 'The sha256 of an image. Pinning to it makes a build reproducible in a way a tag does not.' },
-    { t: 'Readiness probe', d: 'The check that decides whether an instance should receive traffic yet. Different from liveness.' },
-    { t: 'Expand and contract', d: 'Adding the new schema, moving traffic, then removing the old one, across separate deploys.' },
-    { t: 'lock_timeout', d: 'A Postgres setting that makes a blocked migration fail quickly instead of queueing every query behind it.' },
-    { t: 'RED metrics', d: 'Rate, errors and duration, per endpoint. The default dashboard for a request driven service.' },
-    { t: 'Cardinality', d: 'The number of distinct label combinations in a metric. High cardinality is the usual cause of a surprise bill.' },
-    { t: 'Trace and span', d: 'One request end to end, and one unit of work within it. Shows where the time went across services.' },
-    { t: 'Percentile', d: 'The value below which that share of requests fall. p99 is the slowest one in a hundred.' },
-    { t: 'SLI', d: 'Service level indicator: the measurement, such as the share of requests under 300 ms.' },
-    { t: 'SLO', d: 'Service level objective: the target for an indicator, over a window.' },
-    { t: 'Error budget', d: 'The failure the objective allows. 99.9% over 30 days is 43.2 minutes, or 259,200 requests at 100 rps.' },
-    { t: 'Burn rate', d: 'How fast the budget is being spent compared to level. A rate of 14 exhausts a month in about two days.' },
-    { t: 'Log sampling', d: 'Keeping every error and slow request, and a fraction of the successful ones. Most of the saving, little of the loss.' },
-    { t: 'Runbook', d: 'One page per alert, written before the incident, saying what to look at and what not to do.' }
+    { t: 'Capacity estimation', d: 'Traffic, storage and peak, computed out loud with round numbers.' },
+    { t: 'Peak to average ratio', d: 'How much bigger the busiest second is than the typical one. Usually 3x to 5x.' },
+    { t: 'Data model first', d: 'Putting tables and keys on the board before boxes. The strongest opening available.' },
+    { t: 'Deep dive', d: 'The fifteen minutes where one part of your design is pressed on.' },
+    { t: 'Fail closed', d: 'On a dependency failure, decline. Safer for money, worse for conversion.' },
+    { t: 'Fail open', d: 'On a dependency failure, allow. A business decision, never a default.' },
+    { t: 'Shadow mode', d: 'Running new rules and recording what they would have done, without acting on it.' },
+    { t: 'Architecture decision record', d: 'Context, options, decision, consequences. Four paragraphs.' },
+    { t: 'Chaos run', d: 'Injecting failures under load and recording detection and recovery.' },
+    { t: 'Capstone', d: 'The assembly of everything, running, measured, and documented.' }
   ],
 
   quiz: [
-    { q: "Why does a production image use a second build stage?",
+    { q: "What is the most common way to lose a system design round in the first five minutes?",
       options: [
-        "So compilers, headers and test dependencies never ship to production",
-        "Because Docker requires it for health checks",
-        "To make the build faster",
-        "To allow multiple architectures"
+        "Drawing boxes immediately instead of asking what the system must do and must never do",
+        "Choosing the wrong database",
+        "Getting the arithmetic wrong",
+        "Talking too much about failure"
       ],
       answer: 0,
-      why: "Smaller image, smaller attack surface, fewer findings in a scan, and a faster pull when you need to roll back." },
+      why: "The prompt is vague on purpose. The first thing being assessed is whether you ask." },
 
-    { q: "Pinning a base image by digest rather than by tag means:",
+    { q: "50 payments a second on average. How many a month, roughly?",
       options: [
-        "The image downloads faster",
-        "The image works on any architecture",
-        "Today's build is tomorrow's build, because a digest cannot move",
-        "Security patches apply automatically"
+        "4.3 million",
+        "1.3 billion",
+        "130 million",
+        "13 million"
       ],
       answer: 2,
-      why: "Tags get republished. A digest is the content, so reproducing a build a month later gives the same bytes." },
+      why: "50 x 86,400 = 4.32 million a day, times 30. Round numbers said aloud beat a calculator." },
 
-    { q: "What belongs in a CI pipeline that most repositories leave out?",
+    { q: "130 million payments a month at about 1.5 kB each. What does that tell you?",
       options: [
-        "Building the image",
-        "Applying the migration and then rolling it back",
-        "Unit tests",
-        "A linter"
+        "That storage will dominate the cost",
+        "About 195 GB a month and 2.3 TB a year, which fits on one Postgres, so this is not a sharding problem",
+        "That you need a NoSQL store",
+        "That you need to shard immediately"
       ],
       answer: 1,
-      why: "You find out whether a migration can be reversed at the moment you least want to be finding out." },
+      why: "Doing the arithmetic stops you solving a problem the question does not have." },
 
-    { q: "A test fails one run in twenty. Why is that worse than a test that always fails?",
+    { q: "Reads outnumber writes about ten to one in a payments system. What follows?",
       options: [
-        "It cannot be reproduced locally",
-        "It uses more CI minutes",
-        "It teaches everybody to re-run rather than to look, so the real failure gets through",
-        "It inflates the coverage number"
+        "You should denormalise everything",
+        "Write throughput is the constraint",
+        "Replicas and caching matter more than write scaling, with the level 13 rule about which reads may go to a replica",
+        "The database should be NoSQL"
       ],
       answer: 2,
-      why: "A red build has to mean something is broken, or the signal is gone." },
+      why: "And anything deciding money still reads from the primary." },
 
-    { q: "During a rolling deploy, what is true about the code running against your database?",
+    { q: "Why put the data model on the board before the boxes?",
       options: [
-        "Neither, because traffic is drained first",
-        "Both versions at once, for a few minutes",
-        "Only the new version, after a brief pause",
-        "Only the old version, until the deploy completes"
+        "To avoid discussing services",
+        "Because it forces uniqueness, immutability, states and query patterns into the open, and almost no candidate does it",
+        "It is faster to draw",
+        "Because interviewers ask for it"
       ],
       answer: 1,
-      why: "That is why schema changes expand and contract, and why the old code against the new schema deserves a test." },
+      why: "The unique constraint is your idempotency answer and the append only table is your audit answer, before anybody asks." },
 
-    { q: "What does setting lock_timeout on a migration achieve?",
+    { q: "What is the trap when designing a ledger?",
       options: [
-        "It prevents the migration from being rolled back",
-        "It makes the migration run faster",
-        "A blocked migration fails in seconds instead of queueing every query behind it",
-        "It blocks other queries for a fixed period"
+        "Partitioning by time",
+        "Using double entry",
+        "A mutable balance column, which loses the history and races under concurrency",
+        "Storing amounts in minor units"
       ],
       answer: 2,
-      why: "The outage is rarely the migration itself, it is the thousand queries waiting behind the lock it took." },
+      why: "Balances are a projection of entries, which is levels 4 and 8 in one sentence." },
 
-    { q: "Which signal answers \"what happened to this one request\"?",
+    { q: "What is the trap when designing card authorisation?",
       options: [
-        "Traces",
-        "Logs",
-        "Alerts",
-        "Metrics"
+        "Using a state machine",
+        "A synchronous fraud check with no timeout, which turns a slow model into declined payments",
+        "Failing closed",
+        "Caching the limits"
       ],
       answer: 1,
-      why: "Metrics tell you how the system is doing, traces where the time went, logs what happened to a specific request." },
+      why: "Every outbound call gets a timeout shorter than your caller's, and failing open or closed is a business decision." },
 
-    { q: "Why must a customer id never be a metric label?",
+    { q: "Where do velocity counters belong, and why?",
       options: [
-        "It is personal data under GDPR",
-        "Labels must be numeric",
-        "Prometheus rejects string labels",
-        "Metrics are stored per unique label combination, so cardinality explodes and so does the bill"
+        "In Postgres, for durability",
+        "In the application's memory",
+        "In the event log",
+        "In Redis with sliding windows, because a counter in Postgres becomes your hottest row"
       ],
       answer: 3,
-      why: "One high cardinality label turns a thousand series into ten million. The customer id belongs in the log line." },
+      why: "And the rules live in configuration, run in shadow mode first, and only then enforce." },
 
-    { q: "The load test has a mean of 44.7 ms over the whole run. What does that number describe?",
+    { q: "The interviewer asks what happens if the bank never answers. Your answer comes from which level?",
       options: [
-        "Typical performance under load",
-        "The performance a customer experiences",
-        "The p50, closely enough",
-        "No actual minute of the run: steady state was 31.2 ms and the bad minute was 152.7 ms"
+        "Level 7: idempotency keys",
+        "Level 16: alerting",
+        "Level 13: partitioning",
+        "Level 12: an explicit unknown state, a sweeper, and never retrying or compensating blindly"
       ],
       answer: 3,
-      why: "Averages are pulled towards the common case, and the common case stayed fast while a minute of requests failed." },
+      why: "Retrying pays twice and compensating cancels a real payment. Uncertainty needs its own mechanism." },
 
-    { q: "In the shipped run, what share of requests in the bad minute exceeded 300 ms?",
+    { q: "What improves nearly any trade-off answer?",
       options: [
-        "11.38%",
-        "0.00%",
-        "1.27%",
-        "9.82%"
+        "Saying \"it depends on...\" and naming the specific thing it depends on",
+        "Listing both options neutrally",
+        "Saying \"it depends\"",
+        "Choosing the more scalable option"
       ],
       answer: 0,
-      why: "Against 0.00% in steady state and 1.27% across the whole run. The window you pick decides the story you tell." },
+      why: "\"It depends on whether the payer is waiting\" is an answer. \"It depends\" is not." },
 
-    { q: "Can you average the p99 of each minute to get the p99 of the hour?",
+    { q: "Should a ledger go in a relational database?",
       options: [
-        "Yes, that is what a histogram does",
-        "Only for latencies under a second",
-        "Yes, if the minutes have equal traffic",
-        "No: percentiles do not average, which is why histograms store buckets"
+        "Only for small volumes",
+        "It makes no difference",
+        "No, because it will not scale",
+        "Yes, because the invariant that debits equal credits is a constraint you want enforced, and the storage arithmetic says one machine is enough"
       ],
       answer: 3,
-      why: "Buckets can be summed and the percentile recomputed. Percentile values cannot be combined arithmetically." },
+      why: "Giving up constraints to gain write throughput you do not need is the wrong trade, and saying so plainly is a better answer than listing both." },
 
-    { q: "At 100 requests a second, how many failures does a 99.9% availability objective allow over 30 days?",
+    { q: "What single result is the strongest evidence that a multi service platform is correct?",
       options: [
-        "259,200",
-        "25,920",
-        "43,200",
-        "2,592,000"
+        "A daily reconciliation across every service that comes out at zero, including after injected failures",
+        "A clean architecture diagram",
+        "All tests passing",
+        "A load test meeting its objective"
       ],
       answer: 0,
-      why: "259,200,000 requests in the window, one thousandth of them. The same objective is 43.2 minutes as a time budget." },
+      why: "It is the one check that requires every piece to agree with every other piece." },
 
-    { q: "The bad minute produced 589 failures. What share of the monthly error budget is that?",
+    { q: "What should the first three lines of your capstone README contain?",
       options: [
-        "9.82%",
-        "0.23%",
-        "2.3%",
-        "23%"
+        "The technology list",
+        "The architecture diagram, one sentence on what it does, and five measured results",
+        "Installation instructions",
+        "Your motivation for building it"
       ],
       answer: 1,
-      why: "Small, and the point of computing it: it stops both the panic and the shrug. Twice a day and the budget is gone." },
+      why: "A hiring manager gives it about ninety seconds. Build for that honestly." },
 
-    { q: "Your service has used none of its error budget in four months. The healthy response is:",
+    { q: "Which CV line is stronger?",
       options: [
-        "Raise the objective, or spend the budget deliberately on shipping faster and running drills",
-        "Publish it as a reliability achievement",
-        "Nothing: an unused budget is the goal",
-        "Lower the objective to leave more room"
+        "\"Reduced inconsistent payouts from 13.0% to 0% with a saga and a recovery sweeper\"",
+        "\"Built a payments API with FastAPI and Postgres\"",
+        "\"Experienced with Docker, Kubernetes and CI/CD\"",
+        "\"Familiar with distributed systems and event driven architecture\""
       ],
       answer: 0,
-      why: "An untouched budget means the objective is below what the system delivers, and the margin was paid for somewhere." },
+      why: "Lead with what you measured, not what you used. The others are sentences about tools." },
 
-    { q: "At 100 rps with one 400 byte log line per request, roughly how much log volume does a month produce?",
+    { q: "What is the rule about numbers in your package?",
       options: [
-        "About 1 TB",
-        "About 1 GB",
-        "About 104 GB",
-        "About 10 GB"
+        "Cite the tool that produced them",
+        "Round them for readability",
+        "Every one must be reproducible on the spot, because a single number you cannot defend undoes all the others",
+        "Include only the impressive ones"
       ],
       answer: 2,
-      why: "259,200,000 x 400 bytes. At common ingest prices that costs more than the servers, which is why sampling exists." }
+      why: "If you cannot rerun it in front of them, take it out." }
   ],
 
   project: {
-    title: 'Ship the payment service',
-    story: 'Take the service you built in level 12 and make it something a team could run. Container, pipeline, ' +
-           'migrations, the three signals, a load test, an objective with the arithmetic done, a cost estimate and a ' +
-           'runbook. This is the repository you point at in an interview.',
-    scope: 'Builds directly on level 12, with level 11 for the schema and level 13 for the audit trail. Everything runs ' +
-           'locally: Docker, Postgres, Prometheus, an OpenTelemetry collector and k6. The shipped load test file lets you ' +
-           'do the analysis even if your own run comes out differently.',
-    dataset: '{{RAW}}/data/level-20-loadtest.csv',
+    title: 'payments-platform-capstone: all of it, running, measured, and packaged',
+    story: 'One repository that starts the whole platform with a single command, takes an hour of real load, survives ' +
+           'four injected failures with the reconciliation still at zero, performs a schema migration without dropping ' +
+           'a request, and hands a stranger enough to decide to interview you in ninety seconds.',
+    scope: 'Assembly and evidence rather than new features. Anything that has to change to make the services run ' +
+           'together is part of the exercise, and the documents count as much as the code.',
     requirements: [
-      'A two stage Dockerfile, pinned by digest, running as a non root user, with a health check and a .dockerignore',
-      'docker compose up brings the API and a fresh database up from nothing, in one command',
-      'A CI pipeline running lint, types, unit tests, integration tests against real Postgres, the image build, a dependency scan, and a migration up then down',
-      'The pipeline time recorded in the README, and a deliberately broken test shown to block a merge',
-      'A rename carried out as expand and contract across six migrations, with a test running the old code against the new schema',
-      'lock_timeout and statement_timeout set on migrations',
-      'Structured JSON logs with request id, trace id and route template, and a test that no secret or personal field is logged',
-      'RED metrics on a /metrics endpoint, with no high cardinality label',
-      'OpenTelemetry tracing with spans around the database calls',
-      'A load test script, plus an analysis that reproduces the shipped run\'s table by window and by endpoint',
-      'Two SLOs, the error budget computed from your own traffic assumption, and multiwindow burn rate alerts',
-      'A cost estimate covering compute, database, logs, traces and egress, with the unit prices stated as assumptions',
-      'A runbook page per alert, and a written record of one drill you ran against it',
-      'The repository in your GitHub portfolio as finquest-payments, replacing the level 12 version'
+      'One compose file starting every service, with the observability stack, on a fresh clone',
+      'A seed script that produces a merchant and one end to end payment as a smoke test',
+      'A sustained load test of at least an hour, warmed up, with p50, p99, goodput and the utilisation at which the objective breaks',
+      'The share of your monthly error budget spent during that hour',
+      'Four injected failures: database loss, a slow then failing bank, a stopped publisher, a revoked credential',
+      'For each failure: what fired, time to detection, time to recovery, and whether money was lost or duplicated',
+      'A daily reconciliation across every service that returns zero breaks, including after every injected failure',
+      'An expand and contract migration performed under load with zero failed requests',
+      'An architecture document: a diagram, every service with what it owns and depends on, and what happens when each dependency is unavailable',
+      'Three architecture decision records: context, options, decision, consequences',
+      'Six one page system designs, each with requirements, estimation, data model, diagram, failure modes and what you would monitor',
+      'A two minute video with no slides, showing the platform running, failing and recovering',
+      'A landing README leading with the diagram, one sentence, and five measured results',
+      'Every repository README rewritten to lead with its measurement rather than its technology',
+      'A CV in which every line contains a number',
+      'The repository public on GitHub as `payments-platform-capstone`'
     ],
     starter: {
-      lang: 'bash',
-      code: '# FinQuest level 20: ship the level 12 payment service.\n#\n# Start from your own level 12 repository. This is the layout to reach.\n#\n#   Dockerfile               two stages, pinned, non root\n#   .dockerignore            .git, .venv, .env, tests\n#   docker-compose.yml       api + postgres, one command\n#   .github/workflows/ci.yml lint, types, tests, migration up/down, build, scan\n#   migrations/              01_add .. 06_drop, the expand and contract\n#   app/observability.py     structlog setup, RED metrics, otel spans\n#   load/payments.js         the k6 script\n#   analysis/loadtest.py     percentiles by window and by endpoint\n#   slo/objectives.yml       the two objectives and the budget arithmetic\n#   slo/alerts.yml           multiwindow burn rate\n#   docs/runbook-*.md        one page per alert\n#   docs/cost.md             the estimate, with the assumptions named\n#\n# Reach them in this order, and commit each one separately so the history\n# shows the work rather than one drop of finished files.\n\ndocker build -t payments:dev .\ndocker run --rm payments:dev id          # must not be uid 0\ndocker compose up --build                 # must work from a clean clone\n'
+      lang: 'text',
+      code: '# FinQuest level 20: the capstone.\n#\n#   docker-compose.yml     everything, one command\n#   seed.py                a merchant and one payment, as a smoke test\n#   bench/                  the hour long run, and the report it writes\n#   chaos/                  four failures, injected under load\n#   recon/daily.py          the check that must return zero, always\n#   ARCHITECTURE.md         diagram, ownership, dependencies, failure behaviour\n#   decisions/              three records: context, options, decision, consequences\n#   designs/                six one page system designs\n#   README.md               diagram, one sentence, five measured results\n\n# The five results go here, and each must be reproducible on demand:\n#\n#   1. ...\n#   2. ...\n#   3. ...\n#   4. ...\n#   5. ...\n#\n# If you cannot rerun one of them in front of somebody, delete it.\n'
     },
     tests: [
-      'The image runs as a non root user and contains no .env, .git or test dependency',
-      'docker compose up serves a request from a clean clone with no manual steps',
-      'CI fails when a test is broken, and fails when a migration cannot be rolled back',
-      'The old application code passes its tests against the post migration schema',
-      'Every log line carries a request id, a trace id and a route template',
-      'No log line contains a token, a card number, an email address or a full name',
-      'No metric label has unbounded cardinality, asserted by counting series after a thousand distinct requests',
-      'The analysis reproduces p50 26.4 ms, p95 75.6 ms and p99 111.0 ms for the steady state window',
-      'The analysis reproduces 9.82% errors and 11.38% over 300 ms for the bad minute',
-      'The error budget calculation returns 259,200 failures for 99.9% at 100 rps over 30 days',
-      'The burn rate alert fires when the shipped incident is replayed and stays quiet in steady state',
-      'The cost estimate reproduces 103.68 GB of logs a month from its stated assumptions'
+      'A fresh clone starts the platform with one command and passes the smoke test',
+      'A payment flows from the API through the ledger, the events and the payout without manual intervention',
+      'The hour long load test completes and writes a report with percentiles and goodput',
+      'Killing the ledger database under load loses no money, and the reconciliation still returns zero afterwards',
+      'A bank that times out leaves payouts in an explicit unknown state, and the sweeper resolves all of them',
+      'Stopping the publisher for ten minutes loses no events, and the consumer catches up',
+      'A revoked vault credential produces a clear failure and a firing alert rather than silent errors',
+      'A schema migration under load completes with zero failed requests',
+      'The daily reconciliation returns zero breaks after every chaos scenario',
+      'Every number in the landing README can be reproduced by a command in the repository'
     ],
     rubric: [
-      { pts: 20, t: 'Runs anywhere', d: 'Clean clone to serving request in one command, image small, pinned and non root.' },
-      { pts: 20, t: 'The pipeline earns its place', d: 'Every stage present, fast enough to wait for, and shown to block a bad merge.' },
-      { pts: 15, t: 'Deployable schema changes', d: 'Expand and contract done properly, with the old code tested against the new schema.' },
-      { pts: 20, t: 'Observable', d: 'Three signals, joined by one id, with cardinality under control and a trace that locates the slow span.' },
-      { pts: 15, t: 'Measured, not asserted', d: 'The load test analysis by window and endpoint, the objectives, and the budget arithmetic.' },
-      { pts: 10, t: 'Operable', d: 'A runbook per alert, a drill that was actually run, and a cost estimate with its assumptions named.' }
+      { pts: 20, t: 'It runs', d: 'One command, a fresh clone, a payment end to end through every service.' },
+      { pts: 25, t: 'It holds', d: 'An hour under load with percentiles and goodput, and the utilisation where the objective breaks.' },
+      { pts: 25, t: 'It survives', d: 'Four injected failures with detection and recovery times, and reconciliation at zero after each.' },
+      { pts: 15, t: 'It is legible', d: 'Architecture document, three decision records, and six one page designs.' },
+      { pts: 15, t: 'It is hireable', d: 'A two minute video, a README leading with five measured results, and a CV where every line has a number.' }
     ],
     stretch: [
-      'Add a blue green or canary deploy and roll back automatically when the burn rate alert fires',
-      'Add a chaos test: kill the database mid request and assert the idempotency from level 12 holds',
-      'Add a second instance and prove the advisory lock from level 11 stops two workers doing the same work twice',
-      'Publish a dashboard as code, and put the objective and its remaining budget at the top of it'
+      'Run the platform on a cloud account for a week with real monitoring, and report what it actually cost',
+      'Add a second region and work out honestly what breaks, rather than assuming it works',
+      'Run a game day with a friend playing incident commander, using only your runbooks',
+      'Publish a write up of one measurement that surprised you, and post it where engineers read',
+      'Take one of the six designs to a mock interview with somebody who works in payments, and rewrite it afterwards'
     ],
     solutionPath: 'solutions/level-20'
   },
 
   faq: [
-    { q: 'Do I need a cloud account for this level?',
-      a: 'No. Everything here runs locally with Docker, and the deploy concepts apply the same way whether the container ends up on a managed platform or a single machine you rent.' },
-    { q: 'Is 80% coverage the right gate?',
-      a: 'It is a reasonable default and a poor target. Coverage tells you what was executed, not what was checked. Use it to find untested files, and judge quality by whether a deliberate bug makes a test fail.' },
-    { q: 'My load test numbers do not match the shipped file',
-      a: 'They should not. Your machine, your database and your network are different. The shipped file exists so the analysis has a fixed reference, and your own run is the one that tells you about your service.' },
-    { q: 'Why 99.9% rather than 99.99%?',
-      a: 'Because every nine costs redundancy, caution and money, and the right number comes from what users need rather than from what sounds impressive. Four nines is 4.3 minutes a month, which is less than one bad deploy.' },
-    { q: 'Should the SLO be measured from the server or from the client?',
-      a: 'From as close to the user as you can get. A server that answers in 40 ms while a load balancer times out is meeting an objective nobody cares about.' },
-    { q: 'How much of this would a junior role actually expect?',
-      a: 'More of it than most candidates show. Very few portfolio repositories include a pipeline that blocks merges, a load test read by percentile, an objective with the arithmetic, or a cost estimate. Having them is what the rest of this course has been building towards.' },
-    { q: 'What comes after level 20?',
-      a: 'The twenty repositories you now have, a README on each that explains the decision rather than the feature, and the projects you build because you want them to exist. The course ends here; the habit of measuring before claiming is the part worth keeping.' }
+    { q: 'How long should the capstone take?',
+      a: 'Two weeks part time if the earlier levels are genuinely finished, and much longer if they are not, which is the honest test of whether they were. The assembly is where you find out which services only ever worked on your laptop.' },
+    { q: 'Is one big repository better than fifteen small ones?',
+      a: 'Keep both. The fifteen show depth on a specific topic and match individual job descriptions; the capstone shows the pieces working together. The capstone is what you link to first, and the others are what you point at when the role is specific.' },
+    { q: 'What if I cannot get every service running together?',
+      a: 'Then that is the most valuable thing this level will teach you, and it is worth writing down. Get as many as you can, document exactly what stopped the rest, and fix what is fixable. Integration failures are the normal condition of real systems, and the write up is worth more than a diagram claiming everything works.' },
+    { q: 'Do I really need a video?',
+      a: 'It is optional and it is the single highest return two minutes in the package, because it gets watched when a repository does not get cloned. No slides, no introduction, no music: start it, load it, break it, show the alert.' },
+    { q: 'I still do not feel ready to apply',
+      a: 'That feeling arrives some time after the evidence does, and often a long time after. Set a date, send fifteen applications on it, and treat the first two interviews as practice you happen to be paid nothing for. The alternative is one more month of preparation that will not change the outcome.' },
+    { q: 'What if I get rejected?',
+      a: 'Write down the questions you were asked while they are fresh, fix the specific thing, and apply again. Screens are noisy and interviewers have bad days. A rejection is information about one hour, and the only serious mistake is letting it stop the next application.' },
+    { q: 'What comes after this course?',
+      a: 'Depth in one direction, chosen deliberately: the database internals, the card networks and scheme rules, distributed systems properly, or the regulatory side. Pick one, go a level deeper than this course did, and write about what you find. That habit, more than any particular topic, is what separates the fifth year from the first repeated five times.' }
   ]
 });

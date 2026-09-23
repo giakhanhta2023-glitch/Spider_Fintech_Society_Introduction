@@ -1,4 +1,4 @@
-# Level 19: Ninety eight percent of your alerts are wrong: quiz answer key
+# Level 19: The screen that filters you out: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. What is the standard for sanctions screening, as opposed to transaction monitoring?
+### 1. Matching two 8,000 row files by reference took 8,528.3 ms with nested loops and 7.0 ms with a dictionary. At a million rows, roughly what happens?
 
-- **A. Prohibition: there is no acceptable threshold for a miss** ✅
-- B. Suspicion, documented
-- C. Materiality above a monetary limit
-- D. Best effort within the alert budget
+- **A. The nested version would take around 36 hours while the indexed one stays under a second** ✅
+- B. Both grow by the same factor
+- C. Neither is usable
+- D. The nested version becomes about 125 times slower
 
-**Why:** A payment to a designated party is a breach regardless of size or intent, which is why recall dominates the threshold choice.
+**Why:** Quadratic growth against linear. This is why "use a dictionary" is the expected answer, said early.
 
-### 2. Normalising names before matching recovers which of the level's seven planted hits?
+### 2. Four times the rows made the nested version 45 times slower rather than 16. Why?
 
-- **A. Five of the seven** ✅
-- B. Two of the seven
-- C. None: normalisation only affects speed
-- D. All seven
+- **A. Memory: at the smaller size the data still fits in cache, so each comparison also got more expensive** ✅
+- B. Because the algorithm is cubic
+- C. Garbage collection
+- D. The measurement was wrong
 
-**Why:** Case, titles and word order are all fixed by normalisation. The transliteration and the dropped letter need a similarity measure.
+**Why:** Complexity describes growth in operations. Constant factors move too, and usually in the wrong direction.
 
-### 3. Exact matching on this data produces 5 alerts, all correct. Why is that not good enough?
+### 3. Which of these is a change of complexity class rather than a constant factor improvement?
 
-- A. Exact matching is too slow at scale
-- B. The queue is too small to justify the system
-- C. Precision of 100% is statistically implausible
-- **D. Two designated parties were paid** ✅
+- A. Using a faster JSON library
+- B. Sorting 200,000 items against using a heap for the top 10
+- C. String += in a loop against "".join(...)
+- **D. Checking membership in a list against a set** ✅
 
-**Why:** Perfect precision and 71.4% recall is a failure on a prohibition. The two it missed are the two that matter.
+**Why:** Measured at 100,000 known references: 19,708.9 ms against 6.82 ms, and the gap grows with the data.
 
-### 4. Moving the fuzzy threshold from 0.95 down to 0.85 on this data:
+### 4. Grouping 200,000 payments by merchant: filtering once per merchant took 9,527.8 ms, one pass took 59.1 ms. What is the pattern name?
 
-- A. Halves the false positive rate
-- B. Finds two more real hits
-- **C. Finds no more real hits and raises the queue from 182 to 7,081** ✅
-- D. Has no effect because the scores cluster near 1.0
+- A. Sliding window
+- B. Two pointers
+- **C. Hash map, one pass building a dictionary of lists** ✅
+- D. Prefix sums
 
-**Why:** Thirty nine times the work for nothing. The useful band is narrow, and the sweep is what shows you where it is.
+**Why:** Filtering per key is a nested loop wearing a comprehension. 161x, and it grows.
 
-### 5. Raising the threshold from 0.95 to 0.97 on this data:
+### 5. "The ten largest refunds today, from a stream you cannot store." Which pattern?
 
-- A. Keeps all seven hits and cuts the queue
-- **B. Loses the transliteration, which scored 0.9689** ✅
-- C. Loses the dropped letter, which scored 0.9867
-- D. Makes no difference to recall
+- A. Sorting
+- **B. A heap** ✅
+- C. Prefix sums
+- D. Intervals
 
-**Why:** One of the seven sits just below 0.97. That single number is the argument against picking a threshold by instinct.
+**Why:** Whenever you hear "top k", especially over a stream, the answer starts with a heap.
 
-### 6. Your compliance lead wants high recall and high precision from name matching alone. The honest answer is:
+### 6. "The highest total any merchant took in a rolling 24 hours." Which pattern?
 
-- A. Train a model on past dispositions
-- B. Lower the threshold and add a second pass
-- **C. On name similarity alone that point does not exist: you need secondary identifiers** ✅
-- D. Use a better algorithm
+- A. Hash map counting
+- B. Two pointers
+- **C. Sliding window** ✅
+- D. Graph traversal
 
-**Why:** Innocent names genuinely resemble listed names. More information moves both numbers; a threshold only trades one for the other.
+**Why:** "In any period of" and "consecutive" are the tells. Update the total rather than recomputing it.
 
-### 7. A match scores 0.96 and the date of birth is missing on the watchlist. What should the system do?
+### 7. Which step do candidates skip most often, and interviewers weight most heavily?
 
-- A. Block the payment automatically
-- B. Discount it, since the identifier cannot be confirmed
-- C. Lower the score by a fixed penalty
-- **D. Alert, because absence of an identifier is not evidence of innocence** ✅
+- A. Asking about edge cases
+- B. Writing tests
+- C. Optimising the solution
+- **D. Stating the approach and its complexity before writing any code** ✅
 
-**Why:** Auto discount on disagreement, never on absence. The entities hardest to identify are the ones with the least data.
+**Why:** One sentence before you type tells the interviewer most of what the hour was going to reveal.
 
-### 8. Why score distinct counterparty names rather than every payment?
+### 8. You are stuck five minutes in. What is the best move?
 
-- A. To avoid double counting alerts
-- **B. 887 distinct names against 12,067 payments is a 93% saving, and the scores are identical** ✅
-- C. Because payments can be duplicated
-- D. Because pandas cannot join on strings
+- A. Start writing code and hope
+- **B. Say the brute force out loud, try a tiny example, or ask whether sorting the input would help** ✅
+- C. Think silently until you have it
+- D. Ask for a different question
 
-**Why:** Score once, join back. It also makes the threshold sweep fast enough to live in a test.
+**Why:** Silence reads as lost. One of those three almost always moves the problem forward.
 
-### 9. What is blocking, in the screening sense?
+### 9. A working slow solution against an unfinished fast one. Which scores better?
 
-- A. Preventing an analyst from reopening a closed alert
-- B. Refusing a payment
-- **C. Comparing only names that share a key, so screening scales past a full cross product** ✅
-- D. Freezing a customer account
+- A. It depends on the company
+- B. The unfinished fast one, because it shows ambition
+- **C. The working slow one, said aloud to be slow, then improved** ✅
+- D. They score the same
 
-**Why:** A shared first letter, phonetic key or token. The word is unfortunate, and it means something different from blocking a payment.
+**Why:** Get correct first, name what is slow, then improve. Many loops score whether you arrived, not how directly.
 
-### 10. The structuring rule at two deposits gives 16 alerts and 4 real ones. At three deposits it gives 4 and 4. What should you record?
+### 10. In a practical exercise, what should you do in the first five minutes?
 
-- A. Nothing: tuning is an operational detail
-- B. The alert count, since precision is implied
-- **C. Both settings, the date, the reason, who approved it, and a below the line sample of what three no longer catches** ✅
-- D. Only the chosen setting, to keep the documentation short
+- A. Start writing the fix
+- B. Plan the change in full
+- **C. Run the tests, so you have a working baseline and find a broken setup early** ✅
+- D. Read the whole codebase
 
-**Why:** The alerts you stopped generating are invisible by construction, so a tuning change without a sample is indistinguishable from a bug.
+**Why:** A working baseline tells you more than an hour of reading, and setup problems are worth finding at minute two.
 
-### 11. The corridor rule alerts on 514 payments and finds nothing real. What does that tell you?
+### 11. At minute seventy of a ninety minute exercise you find your approach cannot handle a required case. Best response?
 
-- A. The data is missing real cases
-- **B. Geography alone is a poor rule, and it is the one most likely to be written first** ✅
-- C. The jurisdiction list needs expanding
-- D. The rule should run on a shorter window
+- A. Start again with the correct design
+- **B. Commit what works, then write a note saying what breaks, why, and what you would do with another hour** ✅
+- C. Hack around it so everything appears to pass
+- D. Stop and submit nothing
 
-**Why:** It costs an analyst a year of confirming that people send money to places. Geography belongs as a risk factor, not as a standalone rule.
+**Why:** Reviewers score that above a rushed rewrite, because it is what they want a colleague to do on a Friday.
 
-### 12. Why does an alert need to store the rule version that produced it?
+### 12. Why does reformatting a file while fixing a bug count against you?
 
-- A. Because rule versions are personal data
-- B. To allow replaying the rule
-- C. For database partitioning
-- **D. So an alert from March can still be explained after April's tuning change** ✅
+- A. It does not matter
+- B. Because formatters disagree
+- C. It is slower
+- **D. Because it buries the actual change and ignores the conventions of the codebase you are joining** ✅
 
-**Why:** Explaining old alerts under the thresholds in force at the time is most of what an examination consists of.
+**Why:** Matching the style you find is a signal about working with people, which is what the exercise is for.
 
-### 13. How should closing an alert be recorded?
+### 13. What makes a good failure story in a behavioural round?
 
-- A. Move it to an archive table
-- **B. Append an event with the actor, the action and the reason, leaving the history intact** ✅
-- C. Update the alert row with the new status
-- D. Delete the alert once it is dispositioned
+- A. A failure caused by somebody else
+- **B. That you noticed it, told somebody, fixed it, and changed something so it could not recur** ✅
+- C. A small mistake with no consequences
+- D. A strength disguised as a weakness
 
-**Why:** Level 13's rule, here as a legal requirement. Reopening has to be possible, and nothing is ever overwritten.
+**Why:** In fintech this round often decides the offer, because the domain punishes people who hide mistakes.
 
-### 14. What is tipping off?
+### 14. Why rehearse out loud with a person rather than only solving problems?
 
-- **A. Telling a customer they are under suspicion or have been reported, which is an offence in many jurisdictions** ✅
-- B. Filing a report without evidence
-- C. Sharing a watchlist with another firm
-- D. Escalating an alert to a senior analyst
+- **A. Because explaining while writing uses a different skill from writing silently, and the first attempt must not be in an interview** ✅
+- B. To build a network
+- C. Because it is faster
+- D. To get feedback on your solutions
 
-**Why:** What a customer is told about a held payment is a legal question with a jurisdiction specific answer, not a template decision.
+**Why:** The value is in the talking. A friend on a call is enough.
 
-### 15. Which number belongs on the dashboard beside the alert count?
+### 15. What is the most useful thing to do with a problem you failed under time?
 
-- **A. How long customers wait while their payments are held** ✅
-- B. The size of the watchlist
-- C. The number of rules in production
-- D. The average similarity score
+- **A. Put it on a redo list with the date and attempt it again a week later** ✅
+- B. Read the model solution and consider it learned
+- C. Move on to a new problem
+- D. Solve it untimed until it is comfortable
 
-**Why:** A false positive is somebody's rent held for three days. If nobody measures the wait, nobody optimises it.
+**Why:** Repetition on what you got wrong is worth ten fresh problems, and the list is what keeps it targeted.

@@ -1,6 +1,6 @@
-# Level 17: Weights, and the risk they actually carry
+# Level 17: The deploy you can undo
 
-> **The portfolio and risk engine** · build project · difficulty 9/10
+> **payments-platform: everything you built, deployable** · build project · difficulty 8/10
 
 ## Read this second
 
@@ -10,65 +10,77 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-The society's investment group has four assets, strong opinions and no process. Build the engine that produces the weights, shows where the risk actually sits, reports the loss numbers three ways, and proves the risk model has been checked rather than believed.
+Take the payments API, the vault and the observability work, and make them one system somebody else could run. Containers that hold only what runs, a gate fast enough that nobody skips it, infrastructure in code, blue green with a rollback you have timed, flags with a kill switch, and a cost per payment you can defend.
 
-**Scope:** Uses this level plus level 7 (returns, volatility, correlation, drawdown) and level 16 (costs and turnover). numpy, pandas, scipy and scikit-learn for shrinkage only.
+**Scope:** Free tiers and local tools throughout. If you cannot run a cloud account, run the same shapes with Docker Compose and a local registry, and say so in the README. The reasoning is what is being assessed.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `engine/optimise.py` | max_sharpe, min_variance and risk_parity, all with bounds |
-| `engine/decompose.py` | marginal and total risk contributions |
-| `engine/var.py` | historical, parametric, monte carlo and expected shortfall |
-| `engine/backtest.py` | exception counting, with the dates so clustering shows |
-| `engine/rebalance.py` | the no trade band and the turnover it produces |
+| `Dockerfile` | multi stage, non root, pinned base, real health check |
+| `Dockerfile.naive` | kept, because the comparison is the lesson |
+| `.github/workflows/gate.yml` | fast checks, one build, integration against that image |
+| `infra/` | terraform, remote state, one variable set per environment |
+| `deploy/bluegreen.sh` | the switch, and the rollback that was timed |
+| `flags/` | read at request time, default off, kill switches listed |
+| `COST.md` | the table, the cost per payment, and what would be cut first |
+| `ARCHITECTURE.md` | every service, what it owns, what it depends on |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-pip install -r requirements.txt && pytest -q && python -m engine.report
+docker build -t pay:slim . && ./deploy/bluegreen.sh staging && ./deploy/rollback.sh --time
 ```
 
 ## Why the solution is shaped this way
 
-- The unconstrained solution is printed rather than hidden. A weight of -92.5% for five hundredths of Sharpe is the most persuasive argument for constraints anybody will ever see, and it disappears if only the summary statistics are shown.
-- Risk contributions are reported next to the weights in the same table. Equal money giving one asset 62.7% of the risk is a fact a committee can act on, and it is invisible in a weights column.
-- Three VaR methods rather than one, with the excess kurtosis printed beside them. On this synthetic data the three agree because the returns are nearly normal, and saying so is the honest version of a result that would not hold on real returns.
-- The exception backtest lists the dates of the breaches. The count says whether the model is wrong; the pattern says whether it is the distribution or the volatility estimate.
-- Rebalancing uses a no trade band and reports turnover, so the allocation is costed through the level 16 engine rather than assumed to be free.
+- The image contains what runs and nothing else. Measured on the dependency tree: 60.8 MB and 3,424 files to run the service, 154.7 MB and 6,873 files once the test framework, type checker, linter, formatter and coverage tool are added. That is 94.0 MB shipped for no reason, and none of it executes in production.
+- Layers are ordered by how often they change. Installing the runtime dependencies took 29.7 seconds, and a Dockerfile that copies source before installing pays that on every one line change rather than when the lockfile moves.
+- Configuration is one validated object read at import, so a missing variable stops the service at start rather than on the first payment. Secrets never enter the image, which is level 15 unchanged.
+- The gate was timed step by step rather than guessed at. The syntax check over twenty files took 9.63 s as twenty processes and 0.61 s as one, taking the whole gate from 15.97 s to 6.95 s with nothing removed and nothing relaxed. Startup, not work.
+- Blue green is chosen for the rollback column rather than the deploy column: both versions run, so getting back is the load balancer switching, and the README states the measured seconds from decision to first healthy response.
+- Migrations and the code that needs them never deploy together. The expand and contract sequence from level 13 is what makes a rollback in the middle safe, and the repository proves it by rolling back mid migration on purpose.
+- The cost model turns the architecture into a number per payment, using real list prices and the log and metric volumes measured in level 16, next to a 2.9% plus 30 cent processing fee.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| Weights do not sum to one | The equality constraint is missing or the solver failed. Check the status, and assert the sum in a test. |
-| Risk parity will not converge | Bound the weights away from zero. A contribution divided by a weight of zero is undefined and the optimiser wanders. |
-| VaR looks too good | Check the sign convention and the tail. A 95% VaR is a loss, so it should be negative, and it should be breached about once a fortnight. |
+| The image is enormous | The build toolchain is inside it. A later RUN that deletes files does not help: layers are forever. |
+| Every code change rebuilds everything | Source copied before dependencies are installed. |
+| It started fine and failed on the first payment | Configuration read lazily instead of validated at start. |
+| People bypass the pipeline | It is too slow. Time the steps; the answer is usually startup or a cold cache, not the tests. |
+| Rollback took twenty minutes | Rolling deploys. Blue green makes it the switch going back. |
+| Rollback was impossible | A migration shipped with the code that needed it. |
+| A secret turned up in a bucket | It was in a terraform variable, so it is in the state file in plaintext. |
 
 ## Self-checks the solution satisfies
 
-- portfolio([0.25]*4) gives about 12.10% return, 27.10% volatility and Sharpe 0.45
-- The unconstrained maximum Sharpe solution shorts BANKCO at about -92.5% and reaches Sharpe about 0.50
-- The long only solution holds nothing negative and reaches Sharpe about 0.48
-- Minimum variance long only gives volatility about 12.20% and holds mostly GOLDF and BANKCO
-- Risk contributions of the equal weight portfolio sum to 1.0 and give CRYPTOZ about 62.7%
-- Risk parity contributions are equal to within 1e-6, and it holds less CRYPTOZ than equal weight
-- Historical VaR95 is about -2.63% and expected shortfall about -3.35%
-- Parametric and Monte Carlo VaR99 agree to within 0.05 percentage points on this data
-- The exception count at 99% is 5 against an expectation of 8 over 781 days
-- Rebalancing with a no trade band produces lower turnover than a monthly calendar on the same data
+- The final image contains no test framework, linter or compiler
+- A one line source change rebuilds without reinstalling dependencies
+- The container refuses to start when a required variable is missing, naming it
+- The container does not run as root
+- The readiness probe fails while the database is unreachable, and the instance leaves the load balancer
+- The gate fails on a deliberately broken commit, and the deploy step cannot run without it
+- The image that integration tests ran against is the image that deploys
+- A terraform plan against an untouched environment shows no changes
+- Staging can be destroyed and rebuilt from the repository alone
+- A deliberately broken version deployed to the idle side receives no traffic
+- A rollback completes within the time stated in your README
+- Turning off the payout kill switch stops payouts without a deploy
+- Rolling back to the middle of an expand and contract migration breaks nothing
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | Weights you can defend | The unconstrained result is shown and explained rather than hidden, and constraints are justified by what they cost. |
-| 20 | Risk located | Contributions computed correctly, compared against the weights, and risk parity implemented and tested. |
-| 20 | Loss numbers done properly | Three VaR methods, expected shortfall, and the kurtosis check that says whether the normal assumption was fair. |
-| 20 | The model is checked | Exception counts at both levels against expectation, with dates so clustering is visible, and a conclusion drawn. |
-| 15 | Usable | One comparison table a committee could read, a rebalancing policy with turnover and costs, and a README that leads with the decision. |
+| 20 | The artefact | Multi stage, ordered layers, non root, pinned, health checked, with sizes and build times reported. |
+| 20 | The gate | Fast, deterministic, builds once, cannot be walked around, with step timings and one improvement. |
+| 20 | Infrastructure | Terraform with remote state, a clean plan, and staging rebuilt from the repository. |
+| 25 | Deploy and undo | Blue green, a timed rollback, flags with a kill switch, and a migration rollback proven mid flight. |
+| 15 | Cost | A real cost model, a per payment number, and a defensible answer on what to cut and what not to. |
 
 ---
 

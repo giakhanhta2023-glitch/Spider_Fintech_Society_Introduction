@@ -422,110 +422,122 @@ const NOTES = {
   },
   17: {
     files: [
-      ['`engine/optimise.py`', 'max_sharpe, min_variance and risk_parity, all with bounds'],
-      ['`engine/decompose.py`', 'marginal and total risk contributions'],
-      ['`engine/var.py`', 'historical, parametric, monte carlo and expected shortfall'],
-      ['`engine/backtest.py`', 'exception counting, with the dates so clustering shows'],
-      ['`engine/rebalance.py`', 'the no trade band and the turnover it produces']
+      ['`Dockerfile`', 'multi stage, non root, pinned base, real health check'],
+      ['`Dockerfile.naive`', 'kept, because the comparison is the lesson'],
+      ['`.github/workflows/gate.yml`', 'fast checks, one build, integration against that image'],
+      ['`infra/`', 'terraform, remote state, one variable set per environment'],
+      ['`deploy/bluegreen.sh`', 'the switch, and the rollback that was timed'],
+      ['`flags/`', 'read at request time, default off, kill switches listed'],
+      ['`COST.md`', 'the table, the cost per payment, and what would be cut first'],
+      ['`ARCHITECTURE.md`', 'every service, what it owns, what it depends on']
     ],
-    run: 'pip install -r requirements.txt && pytest -q && python -m engine.report',
+    run: 'docker build -t pay:slim . && ./deploy/bluegreen.sh staging && ./deploy/rollback.sh --time',
     design: [
-      'The unconstrained solution is printed rather than hidden. A weight of -92.5% for five hundredths of Sharpe is the most persuasive argument for constraints anybody will ever see, and it disappears if only the summary statistics are shown.',
-      'Risk contributions are reported next to the weights in the same table. Equal money giving one asset 62.7% of the risk is a fact a committee can act on, and it is invisible in a weights column.',
-      'Three VaR methods rather than one, with the excess kurtosis printed beside them. On this synthetic data the three agree because the returns are nearly normal, and saying so is the honest version of a result that would not hold on real returns.',
-      'The exception backtest lists the dates of the breaches. The count says whether the model is wrong; the pattern says whether it is the distribution or the volatility estimate.',
-      'Rebalancing uses a no trade band and reports turnover, so the allocation is costed through the level 16 engine rather than assumed to be free.'
+      'The image contains what runs and nothing else. Measured on the dependency tree: 60.8 MB and 3,424 files to run the service, 154.7 MB and 6,873 files once the test framework, type checker, linter, formatter and coverage tool are added. That is 94.0 MB shipped for no reason, and none of it executes in production.',
+      'Layers are ordered by how often they change. Installing the runtime dependencies took 29.7 seconds, and a Dockerfile that copies source before installing pays that on every one line change rather than when the lockfile moves.',
+      'Configuration is one validated object read at import, so a missing variable stops the service at start rather than on the first payment. Secrets never enter the image, which is level 15 unchanged.',
+      'The gate was timed step by step rather than guessed at. The syntax check over twenty files took 9.63 s as twenty processes and 0.61 s as one, taking the whole gate from 15.97 s to 6.95 s with nothing removed and nothing relaxed. Startup, not work.',
+      'Blue green is chosen for the rollback column rather than the deploy column: both versions run, so getting back is the load balancer switching, and the README states the measured seconds from decision to first healthy response.',
+      'Migrations and the code that needs them never deploy together. The expand and contract sequence from level 13 is what makes a rollback in the middle safe, and the repository proves it by rolling back mid migration on purpose.',
+      'The cost model turns the architecture into a number per payment, using real list prices and the log and metric volumes measured in level 16, next to a 2.9% plus 30 cent processing fee.'
     ],
     mistakes: [
-      ['Weights do not sum to one', 'The equality constraint is missing or the solver failed. Check the status, and assert the sum in a test.'],
-      ['Risk parity will not converge', 'Bound the weights away from zero. A contribution divided by a weight of zero is undefined and the optimiser wanders.'],
-      ['VaR looks too good', 'Check the sign convention and the tail. A 95% VaR is a loss, so it should be negative, and it should be breached about once a fortnight.']
+      ['The image is enormous', 'The build toolchain is inside it. A later RUN that deletes files does not help: layers are forever.'],
+      ['Every code change rebuilds everything', 'Source copied before dependencies are installed.'],
+      ['It started fine and failed on the first payment', 'Configuration read lazily instead of validated at start.'],
+      ['People bypass the pipeline', 'It is too slow. Time the steps; the answer is usually startup or a cold cache, not the tests.'],
+      ['Rollback took twenty minutes', 'Rolling deploys. Blue green makes it the switch going back.'],
+      ['Rollback was impossible', 'A migration shipped with the code that needed it.'],
+      ['A secret turned up in a bucket', 'It was in a terraform variable, so it is in the state file in plaintext.']
     ]
   },
-
   18: {
     files: [
-      ['`fakebank/`', 'a tiny authorization server plus a transactions endpoint, so the flow is real code'],
-      ['`aggregator/oauth.py`', 'pkce, state, the code exchange, and a refresh that takes a lock'],
-      ['`aggregator/normalise.py`', 'from_bank_a, from_bank_b, from_bank_c, and the one Txn type they all produce'],
-      ['`aggregator/ingest.py`', 'fingerprinting, the pending to booked collapse, and the sync cursor'],
-      ['`aggregator/categorise.py`', 'the cleaner, the rules table, and the correction chain']
+      ['`money/Money.java`', 'long minor units, exact, overflow throws'],
+      ['`card/AuthResult.java`', 'sealed, so an unhandled outcome is a compile error'],
+      ['`api/PaymentController.java`', 'the level 7 contract, unchanged'],
+      ['`api/ErrorAdvice.java`', 'one error shape for the whole service'],
+      ['`test/LostUpdateTest.java`', 'the level 8 race, against a real Postgres'],
+      ['`bench/`', 'both services, warmed up, on the same hardware']
     ],
-    run: 'pip install -r requirements.txt && pytest -q && uvicorn main:app --reload',
+    run: 'mvn verify && java -jar target/payments.jar && python -m bench.compare',
     design: [
-      'The verifier and the pending state live server side, keyed by the state value, and the callback consumes them. A state that is unknown or already used is a fatal error rather than a warning, because both cases mean somebody sent the user a link you did not generate.',
-      'The refresh path reads the connection twice: once outside the lock to skip the common case, once inside it because another worker may have already refreshed. A hundred workers cost one refresh.',
-      'invalid_grant is handled as a product event. The connection is marked as needing consent, the sync stops, and the app shows which bank to reconnect. Nothing retries, because nothing can succeed.',
-      'One normaliser per bank, and nothing outside those three functions sees a bank specific field. Each has a test holding a real row from the shipped file and the exact Txn it must become, so a format change fails in one place with a readable diff.',
-      'The raw record is stored beside the normalised one. Every parse is a guess, and keeping the original is the difference between fixing a bug and asking every customer to reconnect.',
-      'Fingerprints carry a counter within account, date, amount and description, so a re-sync deduplicates and two identical coffees on one day both survive. 157 raw rows become 140 transactions, and running it again still produces 140.',
-      'The sync window overlaps by two days on purpose. Deduplication makes the overlap free, and without it a backdated transaction is never seen again.',
-      'Categorisation cleans first, matches rules second, and only then reaches a model. The fallback chain ends in uncategorised, which is a better answer than a confident wrong one.'
+      'The port is of one service rather than of the whole course, because the second port teaches nothing the first did not. The payments API was chosen because it exercises HTTP, validation, idempotency, a database and tests at once.',
+      'Money is long minor units, with BigDecimal where fractions of a cent are genuinely needed. Both classic traps are written as tests: BigDecimal from a double differs from BigDecimal from a string, and equals disagrees with compareTo about 1.0 and 1.00.',
+      'The int limit is treated as a real constraint rather than trivia. 2,147,483,647 minor units is $21,474,836.47, and an int wraps to negative past it with no error, so every amount is a long including in the schema.',
+      'The card lifecycle uses an enum and a sealed interface, and the repository deliberately demonstrates a compile failure when an outcome is added, because that refusal is the reason to be on the JVM at all.',
+      'Spring is used the way a reviewer expects: constructor injection with final fields, one ControllerAdvice, open-in-view off, and a Hikari pool sized with the level 8 arithmetic written in a comment.',
+      'Both @Transactional traps have failing tests before they have fixes: an internal call that bypasses the proxy, and a checked exception that commits under the default configuration.',
+      'Testcontainers runs a real Postgres so the level 8 lost update can be reproduced in CI and fixed twice. An in memory database would have passed the test and shipped the bug.',
+      'The benchmark states its conditions: warmed up, same hardware, same database, and the share of each request that is database time, so the comparison is about the runtime rather than about who wrote the faster query.'
     ],
     mistakes: [
-      ['Every sync inserts everything again', 'The fingerprint includes something that changes between exports, usually a row number or an ingestion timestamp. Hash only what the bank actually sends.'],
-      ['Real transactions disappear', 'The fingerprint has no counter, so two identical purchases on one day collapse into one. Number them in order of appearance.'],
-      ['Spending is positive for one bank', 'The sign convention differs per bank: a negative amount, an indicator field, and a column position. Normalise all three to negative for money out and test it.'],
-      ['A refresh token shows up in a log line', 'Something logged the whole connection row or the whole exception. Log the connection id, and add the test that captures log output during a full flow.']
+      ['Amounts went negative above twenty million dollars', 'int instead of long. It wraps silently, with no error.'],
+      ['Rounding disagreed with the Python service by a cent', 'A double somewhere upstream of the BigDecimal.'],
+      ['Two equal amounts compared unequal', 'equals compares scale. Use compareTo for money.'],
+      ['A transaction did not roll back', 'A checked exception, and no rollbackFor. Or an internal call bypassing the proxy.'],
+      ['The connection pool ran out under light load', 'open-in-view left on, holding a connection for the whole request.'],
+      ['The benchmark flattered Java', 'No warm up. The JVM compiles hot paths as it runs, so a short run measures the slow phase.'],
+      ['The container restarted with no log line', 'The heap was sized for the host rather than the container limit.']
     ]
   },
-
   19: {
     files: [
-      ['`monitor/names.py`', 'normalise, jaro and jaro_winkler, written by hand and checked against a library'],
-      ['`monitor/screen.py`', 'alias expansion, scoring on distinct names, the threshold sweep'],
-      ['`monitor/identify.py`', 'secondary identifiers, discounting on disagreement only'],
-      ['`monitor/rules.py`', 'structuring, pass through, and the corridor rule that finds nothing'],
-      ['`monitor/queue.py`', 'the alert table, the append only event table, and the triage CLI']
+      ['`bench/complexity.py`', 'the five comparisons, timed on your own machine'],
+      ['`problems/`', 'forty files, each with a test, a complexity and a named pattern'],
+      ['`exercises/`', 'four practical exercises, timed, each with a submission note'],
+      ['`log.md`', 'every attempt: date, minutes, outcome'],
+      ['`redo.md`', 'the failures, with the dates you came back to them'],
+      ['`stories.md`', 'five STAR stories, each with a number in it']
     ],
-    run: 'pip install -r requirements.txt && pytest -q && python -m monitor.report',
+    run: 'python -m bench.complexity && pytest -q problems/',
     design: [
-      'Aliases are expanded before anything else. Sixty entities are ninety five searchable strings, and screening the primary name alone loses hits without ever saying so.',
-      'Normalisation is four separate rules with a test each: case folding, punctuation, titles and token order. Together they recover five of the seven planted hits, which is the cheapest part of the whole system.',
-      'Jaro-Winkler is implemented rather than imported, then checked against rapidfuzz on a hundred pairs. Choosing between 0.95 and 0.97 is a judgement about the algorithm, and it is not a judgement you can make about a black box.',
-      'The threshold sweep is printed by the code and pasted nowhere. At 0.95 the queue is 182 payments and all seven hits are found; at 0.85 it is 7,081 and still seven; at 1.00 it is five alerts and two designated parties were paid.',
-      'Secondary identifiers discount on disagreement and never on absence, and every discount is stored with its reason rather than dropped. A missing date of birth is not evidence of innocence.',
-      'The structuring rule is reported at two deposits and at three, 16 alerts against 4, so the tuning decision appears in the output rather than in a conversation nobody wrote down.',
-      'The corridor rule ships even though it finds nothing: 514 alerts, no real cases. A negative result that costs an analyst a year is worth writing down.',
-      'Alerts store the rule version in force when they fired, and closing one appends an event. An alert from March has to stay explainable after April changed the thresholds.'
+      'Complexity is felt before it is studied. The level 10 reconciliation matched two 8,000 row files in 8,528.3 ms with nested loops and 7.0 ms with a dictionary index, and at 2,000 rows the same pair was 187.2 ms against 1.1 ms.',
+      'The growth is reported honestly rather than theoretically. Four times the rows made the nested version forty five times slower, not sixteen, because the inner list stopped fitting in cache. Complexity describes the number of operations; the cost of each one moves too.',
+      'The extrapolation is the argument: at a million rows a side, quadratic matching is about 36 hours and indexed matching is under a second. That is why the expected answer is a dictionary, said in the first minute.',
+      'Four more comparisons separate class changes from constant factors: list against set membership at 19,708.9 ms against 6.82 ms, grouping by repeated filtering at 9,527.8 ms against 59.1 ms in one pass, sorting for a top ten at 309.1 ms against 41.8 ms with a heap, and string concatenation at 195.2 ms against 82.8 ms with join. The first two grow without limit; the last two do not.',
+      'Every problem file records the first instinct, including when it was wrong, because that note is the most useful line in the file a week later.',
+      'The log includes failures with times, and the redo list has at least two dated attempts per entry. Repetition on what was got wrong is the mechanism; the log is what keeps it targeted.',
+      'The practical exercises are built rather than found, because building them teaches what they test. The API integration one is required to have a timeout, backoff with jitter, and a test proving the retry is safe.'
     ],
     mistakes: [
-      ['The sweep numbers are slightly off', 'Check the normaliser first, since token sorting and title stripping both move scores, then check that aliases were expanded into their own rows.'],
-      ['Jaro-Winkler disagrees with the library', 'The transposition count is the part everybody gets wrong. Halve it, and compare against a pair you worked out on paper.'],
-      ['Screening takes minutes', 'Score distinct names, not payments: 887 against 12,067. Then read the note on blocking before assuming this scales.'],
-      ['A real hit got discounted', 'A secondary identifier rule is firing on absence rather than disagreement. Assert in a test that none of the seven is ever discounted.']
+      ['Three hundred problems and still failing screens', 'No record of the failures, so the practice was never targeted.'],
+      ['Solved it but did not pass', 'Silence. The approach and its complexity go out loud before any code is written.'],
+      ['Ran out of time optimising', 'A working slow answer first, said to be slow, then improved. Correct beats elegant.'],
+      ['The practical exercise was unfinished and scored badly', 'No submission note. Say what breaks, why, and what you would do next.'],
+      ['The failure story sounded rehearsed and empty', 'No number and no change afterwards. Use one of your own levels.']
     ]
   },
-
   20: {
     files: [
-      ['`Dockerfile`', 'two stages, pinned by digest, non root, with a health check'],
-      ['`.github/workflows/ci.yml`', 'lint, types, tests against real Postgres, migration up then down, build, scan'],
-      ['`migrations/`', 'the six step expand and contract, with lock_timeout set'],
-      ['`app/observability.py`', 'structlog, the RED metrics, and the OpenTelemetry spans'],
-      ['`analysis/loadtest.py`', 'percentiles by window and by endpoint, from the shipped run'],
-      ['`slo/`', 'the two objectives, the budget arithmetic and the multiwindow burn rate alerts'],
-      ['`docs/`', 'a runbook page per alert, the drill record, and the cost estimate']
+      ['`docker-compose.yml`', 'every service, one command, a fresh clone'],
+      ['`bench/`', 'the hour long run and the report it writes'],
+      ['`chaos/`', 'four failures, injected under load, with timings'],
+      ['`recon/daily.py`', 'the check across every service that must return zero'],
+      ['`ARCHITECTURE.md`', 'diagram, ownership, dependencies, failure behaviour'],
+      ['`decisions/`', 'context, options, decision, consequences'],
+      ['`designs/`', 'six one page system designs'],
+      ['`README.md`', 'diagram, one sentence, five measured results']
     ],
-    run: 'docker compose up --build   then   pytest -q && python -m analysis.loadtest',
+    run: 'docker compose up -d && python seed.py && python -m bench.run --minutes 60 && python -m chaos.all',
     design: [
-      'The Dockerfile is two stages and pinned by digest, so the compiler and the test dependencies never reach production and a build from a month ago reproduces byte for byte. It runs as uid 10001, because a container escape as root is a different incident.',
-      'The pipeline applies every migration and then rolls it back. That is the step most repositories skip, and it is the one that answers the question you will ask during an incident.',
-      'The rename is six migrations and three deploys rather than one. There is a test that runs the old application code against the new schema, which is the state the service is actually in during every rolling deploy.',
-      'One id joins the three signals. The request id from level 12 and the trace id sit on the same log line, so a metric leads to a log line and a log line leads to a trace.',
-      'Metric labels are the route template, the method and the status class, and nothing else. A customer id in a label turns a thousand series into ten million, and the bill arrives before the outage does.',
-      'The load test analysis splits by window before it reports anything. The whole run averages 44.7 ms and 1.06% errors; steady state is 31.2 ms and 0.08%, and one minute is 152.7 ms and 9.82%. The summary line describes no minute of the run.',
-      'The error budget is computed rather than quoted: 259,200 failures allowed a month at 100 rps, of which the bad minute spent 589, which is 0.23%. That number ends two arguments at once.',
-      'The cost estimate includes the logs. 259.2 million requests at 400 bytes each is 103.68 GB a month, which at ordinary ingest prices costs more than the compute it describes.'
+      'The capstone is assembly and evidence rather than new features. Anything that has to change to make the services run together was part of the exercise, and those changes are listed in the README because they are the honest output of level 17.',
+      'Capacity was estimated before anything was measured, so the measurements had something to disagree with: 50 payments a second averages 130 million a month and about 2.3 TB a year, which fits on one Postgres, so nothing here is sharded and the README says why.',
+      'The load test is an hour, warmed up, with p50, p99 and goodput, and it reports the utilisation at which the objective stops being met rather than the theoretical capacity.',
+      'The share of the monthly error budget spent during that hour is reported. An hour of load testing that spends a third of the budget means the objective is wrong or the system is.',
+      'Four failures are injected under load: the ledger database, a slow then failing bank, a stopped publisher, a revoked credential. Each one records what fired, time to detection, time to recovery, and whether money moved twice.',
+      'The single result the whole capstone turns on is the daily reconciliation returning zero after every one of those scenarios. It is the only check that requires every service to agree with every other service.',
+      'The package is built for ninety seconds of attention: the diagram, one sentence, five measured results, and a two minute video with no slides. Every number in it is reproducible by a command in the repository, and anything that is not was deleted.'
     ],
     mistakes: [
-      ['The image is over a gigabyte', 'A single stage build, or no .dockerignore. Check docker history and look for the layer that carries the build tooling.'],
-      ['Compose works for you and nobody else', 'Something is still on your machine: a local database, a file outside the repository, or an environment variable set in your shell months ago.'],
-      ['The deploy broke for two minutes', 'A migration that assumed only one version of the code was running. Expand and contract, and test the old code against the new schema.'],
-      ['Prometheus fell over', 'A high cardinality label. Count the series after a thousand distinct requests and find the label that grew with them.'],
-      ['The percentiles do not reproduce', 'Check the window boundaries first, then whether the percentile is interpolated. A p99 over a different window is a different number, and that is the lesson rather than a bug.']
+      ['Services would not run together', 'Hard coded ports, database names and paths. That is the exercise rather than an obstacle.'],
+      ['The load test looked fine and production would not', 'Closed loop generation, or no warm up. Both measure something other than overload.'],
+      ['Chaos passed but reconciliation did not', 'The right outcome to find in a rehearsal. Money moving twice shows up here and nowhere else.'],
+      ['The README opened with installation instructions', 'Ninety seconds. Diagram, sentence, five results.'],
+      ['A number could not be reproduced when asked', 'One undefendable number undoes all the others. Delete it or make it runnable.']
     ]
   }
+
 };
 
 /* ------------------------------------------------------------------ build */

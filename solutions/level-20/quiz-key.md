@@ -1,4 +1,4 @@
-# Level 20: The mean was 45 milliseconds and the service was down: quiz answer key
+# Level 20: The whiteboard, and the thing you hand over: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -23,137 +23,137 @@
 
 ---
 
-### 1. Why does a production image use a second build stage?
+### 1. What is the most common way to lose a system design round in the first five minutes?
 
-- **A. So compilers, headers and test dependencies never ship to production** ✅
-- B. Because Docker requires it for health checks
-- C. To make the build faster
-- D. To allow multiple architectures
+- **A. Drawing boxes immediately instead of asking what the system must do and must never do** ✅
+- B. Choosing the wrong database
+- C. Getting the arithmetic wrong
+- D. Talking too much about failure
 
-**Why:** Smaller image, smaller attack surface, fewer findings in a scan, and a faster pull when you need to roll back.
+**Why:** The prompt is vague on purpose. The first thing being assessed is whether you ask.
 
-### 2. Pinning a base image by digest rather than by tag means:
+### 2. 50 payments a second on average. How many a month, roughly?
 
-- A. The image downloads faster
-- B. The image works on any architecture
-- **C. Today's build is tomorrow's build, because a digest cannot move** ✅
-- D. Security patches apply automatically
+- A. 4.3 million
+- B. 1.3 billion
+- **C. 130 million** ✅
+- D. 13 million
 
-**Why:** Tags get republished. A digest is the content, so reproducing a build a month later gives the same bytes.
+**Why:** 50 x 86,400 = 4.32 million a day, times 30. Round numbers said aloud beat a calculator.
 
-### 3. What belongs in a CI pipeline that most repositories leave out?
+### 3. 130 million payments a month at about 1.5 kB each. What does that tell you?
 
-- A. Building the image
-- **B. Applying the migration and then rolling it back** ✅
-- C. Unit tests
-- D. A linter
+- A. That storage will dominate the cost
+- **B. About 195 GB a month and 2.3 TB a year, which fits on one Postgres, so this is not a sharding problem** ✅
+- C. That you need a NoSQL store
+- D. That you need to shard immediately
 
-**Why:** You find out whether a migration can be reversed at the moment you least want to be finding out.
+**Why:** Doing the arithmetic stops you solving a problem the question does not have.
 
-### 4. A test fails one run in twenty. Why is that worse than a test that always fails?
+### 4. Reads outnumber writes about ten to one in a payments system. What follows?
 
-- A. It cannot be reproduced locally
-- B. It uses more CI minutes
-- **C. It teaches everybody to re-run rather than to look, so the real failure gets through** ✅
-- D. It inflates the coverage number
+- A. You should denormalise everything
+- B. Write throughput is the constraint
+- **C. Replicas and caching matter more than write scaling, with the level 13 rule about which reads may go to a replica** ✅
+- D. The database should be NoSQL
 
-**Why:** A red build has to mean something is broken, or the signal is gone.
+**Why:** And anything deciding money still reads from the primary.
 
-### 5. During a rolling deploy, what is true about the code running against your database?
+### 5. Why put the data model on the board before the boxes?
 
-- A. Neither, because traffic is drained first
-- **B. Both versions at once, for a few minutes** ✅
-- C. Only the new version, after a brief pause
-- D. Only the old version, until the deploy completes
+- A. To avoid discussing services
+- **B. Because it forces uniqueness, immutability, states and query patterns into the open, and almost no candidate does it** ✅
+- C. It is faster to draw
+- D. Because interviewers ask for it
 
-**Why:** That is why schema changes expand and contract, and why the old code against the new schema deserves a test.
+**Why:** The unique constraint is your idempotency answer and the append only table is your audit answer, before anybody asks.
 
-### 6. What does setting lock_timeout on a migration achieve?
+### 6. What is the trap when designing a ledger?
 
-- A. It prevents the migration from being rolled back
-- B. It makes the migration run faster
-- **C. A blocked migration fails in seconds instead of queueing every query behind it** ✅
-- D. It blocks other queries for a fixed period
+- A. Partitioning by time
+- B. Using double entry
+- **C. A mutable balance column, which loses the history and races under concurrency** ✅
+- D. Storing amounts in minor units
 
-**Why:** The outage is rarely the migration itself, it is the thousand queries waiting behind the lock it took.
+**Why:** Balances are a projection of entries, which is levels 4 and 8 in one sentence.
 
-### 7. Which signal answers "what happened to this one request"?
+### 7. What is the trap when designing card authorisation?
 
-- A. Traces
-- **B. Logs** ✅
-- C. Alerts
-- D. Metrics
+- A. Using a state machine
+- **B. A synchronous fraud check with no timeout, which turns a slow model into declined payments** ✅
+- C. Failing closed
+- D. Caching the limits
 
-**Why:** Metrics tell you how the system is doing, traces where the time went, logs what happened to a specific request.
+**Why:** Every outbound call gets a timeout shorter than your caller's, and failing open or closed is a business decision.
 
-### 8. Why must a customer id never be a metric label?
+### 8. Where do velocity counters belong, and why?
 
-- A. It is personal data under GDPR
-- B. Labels must be numeric
-- C. Prometheus rejects string labels
-- **D. Metrics are stored per unique label combination, so cardinality explodes and so does the bill** ✅
+- A. In Postgres, for durability
+- B. In the application's memory
+- C. In the event log
+- **D. In Redis with sliding windows, because a counter in Postgres becomes your hottest row** ✅
 
-**Why:** One high cardinality label turns a thousand series into ten million. The customer id belongs in the log line.
+**Why:** And the rules live in configuration, run in shadow mode first, and only then enforce.
 
-### 9. The load test has a mean of 44.7 ms over the whole run. What does that number describe?
+### 9. The interviewer asks what happens if the bank never answers. Your answer comes from which level?
 
-- A. Typical performance under load
-- B. The performance a customer experiences
-- C. The p50, closely enough
-- **D. No actual minute of the run: steady state was 31.2 ms and the bad minute was 152.7 ms** ✅
+- A. Level 7: idempotency keys
+- B. Level 16: alerting
+- C. Level 13: partitioning
+- **D. Level 12: an explicit unknown state, a sweeper, and never retrying or compensating blindly** ✅
 
-**Why:** Averages are pulled towards the common case, and the common case stayed fast while a minute of requests failed.
+**Why:** Retrying pays twice and compensating cancels a real payment. Uncertainty needs its own mechanism.
 
-### 10. In the shipped run, what share of requests in the bad minute exceeded 300 ms?
+### 10. What improves nearly any trade-off answer?
 
-- **A. 11.38%** ✅
-- B. 0.00%
-- C. 1.27%
-- D. 9.82%
+- **A. Saying "it depends on..." and naming the specific thing it depends on** ✅
+- B. Listing both options neutrally
+- C. Saying "it depends"
+- D. Choosing the more scalable option
 
-**Why:** Against 0.00% in steady state and 1.27% across the whole run. The window you pick decides the story you tell.
+**Why:** "It depends on whether the payer is waiting" is an answer. "It depends" is not.
 
-### 11. Can you average the p99 of each minute to get the p99 of the hour?
+### 11. Should a ledger go in a relational database?
 
-- A. Yes, that is what a histogram does
-- B. Only for latencies under a second
-- C. Yes, if the minutes have equal traffic
-- **D. No: percentiles do not average, which is why histograms store buckets** ✅
+- A. Only for small volumes
+- B. It makes no difference
+- C. No, because it will not scale
+- **D. Yes, because the invariant that debits equal credits is a constraint you want enforced, and the storage arithmetic says one machine is enough** ✅
 
-**Why:** Buckets can be summed and the percentile recomputed. Percentile values cannot be combined arithmetically.
+**Why:** Giving up constraints to gain write throughput you do not need is the wrong trade, and saying so plainly is a better answer than listing both.
 
-### 12. At 100 requests a second, how many failures does a 99.9% availability objective allow over 30 days?
+### 12. What single result is the strongest evidence that a multi service platform is correct?
 
-- **A. 259,200** ✅
-- B. 25,920
-- C. 43,200
-- D. 2,592,000
+- **A. A daily reconciliation across every service that comes out at zero, including after injected failures** ✅
+- B. A clean architecture diagram
+- C. All tests passing
+- D. A load test meeting its objective
 
-**Why:** 259,200,000 requests in the window, one thousandth of them. The same objective is 43.2 minutes as a time budget.
+**Why:** It is the one check that requires every piece to agree with every other piece.
 
-### 13. The bad minute produced 589 failures. What share of the monthly error budget is that?
+### 13. What should the first three lines of your capstone README contain?
 
-- A. 9.82%
-- **B. 0.23%** ✅
-- C. 2.3%
-- D. 23%
+- A. The technology list
+- **B. The architecture diagram, one sentence on what it does, and five measured results** ✅
+- C. Installation instructions
+- D. Your motivation for building it
 
-**Why:** Small, and the point of computing it: it stops both the panic and the shrug. Twice a day and the budget is gone.
+**Why:** A hiring manager gives it about ninety seconds. Build for that honestly.
 
-### 14. Your service has used none of its error budget in four months. The healthy response is:
+### 14. Which CV line is stronger?
 
-- **A. Raise the objective, or spend the budget deliberately on shipping faster and running drills** ✅
-- B. Publish it as a reliability achievement
-- C. Nothing: an unused budget is the goal
-- D. Lower the objective to leave more room
+- **A. "Reduced inconsistent payouts from 13.0% to 0% with a saga and a recovery sweeper"** ✅
+- B. "Built a payments API with FastAPI and Postgres"
+- C. "Experienced with Docker, Kubernetes and CI/CD"
+- D. "Familiar with distributed systems and event driven architecture"
 
-**Why:** An untouched budget means the objective is below what the system delivers, and the margin was paid for somewhere.
+**Why:** Lead with what you measured, not what you used. The others are sentences about tools.
 
-### 15. At 100 rps with one 400 byte log line per request, roughly how much log volume does a month produce?
+### 15. What is the rule about numbers in your package?
 
-- A. About 1 TB
-- B. About 1 GB
-- **C. About 104 GB** ✅
-- D. About 10 GB
+- A. Cite the tool that produced them
+- B. Round them for readability
+- **C. Every one must be reproducible on the spot, because a single number you cannot defend undoes all the others** ✅
+- D. Include only the impressive ones
 
-**Why:** 259,200,000 x 400 bytes. At common ingest prices that costs more than the servers, which is why sampling exists.
+**Why:** If you cannot rerun it in front of them, take it out.
