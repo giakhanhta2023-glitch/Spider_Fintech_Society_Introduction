@@ -155,6 +155,40 @@ FQ.registerLevel({
          'endpoint. The routing decision is about what the read is *for*, which the HTTP verb does not tell you.'
     }},
 
+    { h: 'Postgres, Redis, or something else entirely' },
+    { p: 'Every level so far has put data in Postgres, which was the right answer every time and will not always be. ' +
+         'Job descriptions ask for "relational and NoSQL databases", and the interview question behind that phrase is ' +
+         'never which one is better. It is **which access pattern you have**, because that is what decides.' },
+    { table: {
+      head: ['Store', 'Right when', 'What you give up'],
+      rows: [
+        ['**Relational**, Postgres', 'Invariants across rows, transactions, constraints, and queries nobody predicted', 'One machine\'s worth of writes, which is far more than most companies ever need'],
+        ['**Key value**, Redis', 'Counters, caches, rate limits, short lived shared state, at very high rates', 'Durability. Everything in it must be losable, as level 14 said'],
+        ['**Wide column**, DynamoDB or Cassandra', 'One or two access patterns you can name in advance, enormous scale, no cross row invariants', 'Ad hoc queries, joins, and constraints the database enforces for you'],
+        ['**Document**, MongoDB', 'Objects whose shape varies and that are read whole', 'The same, plus schema discipline you now have to impose yourself'],
+        ['**Object storage**, S3', 'Files: settlement files, exports, backups, anything large and whole', 'Any query at all. It is a filesystem with a bill'],
+        ['**Column store**, Redshift or ClickHouse', 'Analytics over hundreds of millions of rows, a few columns at a time', 'Single row writes and updates, which it is bad at on purpose']
+      ]
+    }},
+    { p: 'For a payments company the split settles quickly, and being able to say it in one breath is the point of this ' +
+         'section. **The ledger is relational, always**, because the invariant that debits equal credits is a constraint ' +
+         'you want the database to enforce rather than one you hope your code maintains. **Counters and caches are ' +
+         'Redis**, because they are hot, small and losable. **Files go to object storage.** **Analytics goes to a column ' +
+         'store**, fed by the change data capture from the previous section.' },
+    { p: 'The honest case for a wide column store in a payments system does exist, and naming it is what separates a ' +
+         'real answer from a memorised one. A **token vault lookup** from level 15 is one key to one value, billions of ' +
+         'times, with no cross row invariant. So is an **idempotency key store**, a **session store**, and a **device ' +
+         'fingerprint history**. Those are DynamoDB shaped problems, and putting them in your main Postgres because that ' +
+         'is where everything else lives is its own mistake.' },
+    { warn: 'The answer that loses the interview is "we would use DynamoDB for the ledger, for scale". It has ' +
+            'transactions across a limited number of items and conditional writes, so it can do a good deal. What it has ' +
+            'is no foreign keys, nothing that can enforce "every transaction balances", and no way to answer a question you ' +
+            'did not design a key for without a scan. You would be reimplementing constraints in application code, and ' +
+            'the storage arithmetic says you did not need the write throughput anyway: at 130 million payments a month ' +
+            'you are looking at a few terabytes a year.' },
+    { p: 'And the rule that covers the whole table: **pick the store from the query, not from the volume.** Volume is ' +
+         'the reason people think they need something else; the access pattern is the reason they actually might.' },
+
     { h: 'The migration that takes the site down' },
     { p: 'Now the second half. Five migrations, all one line, all on the same table. Three are free and two are outages, ' +
          'and the diff does not tell you which is which:' },
@@ -400,10 +434,10 @@ FQ.registerLevel({
   quiz: [
     { q: "What is partition pruning?",
       options: [
-        "Rebalancing rows between partitions",
+        "Deleting old partitions on a schedule",
         "Compressing partitions that are rarely read",
         "The planner skipping partitions that cannot contain matching rows",
-        "Deleting old partitions on a schedule"
+        "Rebalancing rows between partitions"
       ],
       answer: 2,
       why: "Measured here: 4,729 pages touched on the plain table against 396 on the partitioned one." },
@@ -420,10 +454,10 @@ FQ.registerLevel({
 
     { q: "What does partitioning make worse?",
       options: [
-        "Retention and archiving",
         "Insert throughput, severely",
+        "Queries that filter on the partition key",
         "Queries that do not mention the partition key, and planning time",
-        "Queries that filter on the partition key"
+        "Retention and archiving"
       ],
       answer: 2,
       why: "Measured: one index scan became ten, and planning went from 0.188 ms to 0.898 ms, more than the execution time." },
@@ -432,8 +466,8 @@ FQ.registerLevel({
       options: [
         "Because each partition has its own index, so uniqueness can only be enforced within a partition unless the key is included",
         "For performance",
-        "It does not have to",
-        "Because Postgres requires primary keys to be composite"
+        "Because Postgres requires primary keys to be composite",
+        "It does not have to"
       ],
       answer: 0,
       why: "Which means a unique reference becomes unique on the pair, and level 9 idempotency needs rethinking." },
@@ -441,8 +475,8 @@ FQ.registerLevel({
     { q: "Adding a column with `default 'standard'` took 0.6 ms. Adding one with `default gen_random_uuid()` took 1,526 ms and 70 MB of log. Why?",
       options: [
         "A constant default is stored once in the catalog, but a volatile default needs a different value per row, so the whole table is rewritten",
-        "The second statement was not indexed",
         "The uuid type is slower to write",
+        "The second statement was not indexed",
         "gen_random_uuid() is a slow function"
       ],
       answer: 0,
@@ -450,10 +484,10 @@ FQ.registerLevel({
 
     { q: "A four minute reporting query is running. Your one second ALTER TABLE starts. What happens to ordinary queries on that table?",
       options: [
-        "They fail immediately",
-        "They queue behind the waiting ALTER, so the table is unusable for four minutes",
         "They are routed to the replica",
-        "They run normally, because the ALTER is waiting"
+        "They queue behind the waiting ALTER, so the table is unusable for four minutes",
+        "They run normally, because the ALTER is waiting",
+        "They fail immediately"
       ],
       answer: 1,
       why: "Postgres lock queues are fair. The migration has not touched a row and the product is already down." },
@@ -468,22 +502,22 @@ FQ.registerLevel({
       answer: 1,
       why: "Failing is fine. Queueing is not. Your deploy tool can retry a failure; it cannot undo an outage." },
 
-    { q: "The six steps of expand and contract, in order:",
+    { q: "What decides whether data belongs in Postgres or in a wide column store such as DynamoDB?",
       options: [
-        "Add, switch reads, dual write, backfill, drop, verify",
-        "Dual write, add, verify, backfill, drop, switch reads",
-        "Add, dual write, backfill, verify, switch reads, drop the old",
-        "Add, backfill, switch reads, dual write, verify, drop"
+        "The write throughput required",
+        "Whether the team knows SQL",
+        "The access pattern: constraints and unpredicted queries need relational, while one named access pattern at enormous scale with no cross row invariant does not",
+        "The volume of data"
       ],
       answer: 2,
-      why: "Every step reversible on its own, which is the entire point of doing six deploys instead of one." },
+      why: "Pick the store from the query, not from the volume. A ledger is relational because the invariant must be enforced." },
 
     { q: "The one statement backfill took 5,622 ms; batches of 10,000 took 5,980 ms. Why prefer the slower one?",
       options: [
         "The longest lock held drops from 5,622 ms to 280 ms, and it can be paused or resumed",
-        "It is more atomic",
+        "It produces less write ahead log",
         "It avoids bloating the table",
-        "It produces less write ahead log"
+        "It is more atomic"
       ],
       answer: 0,
       why: "Same log, same bloat, 6% slower. What changes is lock duration and blast radius." },
@@ -491,9 +525,9 @@ FQ.registerLevel({
     { q: "Why walk the primary key instead of using `offset` in a backfill?",
       options: [
         "offset is not supported in updates",
-        "They are equivalent",
+        "Because offset requires an index",
         "Because offset makes the database count through and discard every skipped row, so each batch gets slower and the job degrades into quadratic time",
-        "Because offset requires an index"
+        "They are equivalent"
       ],
       answer: 2,
       why: "The same quadratic trap as the missing index in level 6, in a different disguise." },
@@ -501,9 +535,9 @@ FQ.registerLevel({
     { q: "Why keep `and fee_minor is null` in the backfill predicate?",
       options: [
         "To make the job idempotent, so it can be restarted, rerun, or accidentally run twice",
-        "Because the column is nullable",
+        "To make the update faster",
         "To avoid locking rows",
-        "To make the update faster"
+        "Because the column is nullable"
       ],
       answer: 0,
       why: "Resumability is the property you traded whole-job atomicity for. The predicate is what delivers it." },
@@ -511,8 +545,8 @@ FQ.registerLevel({
     { q: "Why `is distinct from` rather than `<>` in the verification query?",
       options: [
         "It is faster",
-        "They behave identically",
         "Because the column is numeric",
+        "They behave identically",
         "Because `null <> anything` evaluates to null rather than true, so a plain comparison silently skips the rows the backfill missed"
       ],
       answer: 3,
@@ -520,18 +554,18 @@ FQ.registerLevel({
 
     { q: "A merchant issues a refund, the page reloads, and the refund is missing. What happened?",
       options: [
-        "The transaction was rolled back",
+        "The cache was stale",
         "The write went to the primary and the read went to a replica that had not caught up",
-        "The write failed silently",
-        "The cache was stale"
+        "The transaction was rolled back",
+        "The write failed silently"
       ],
       answer: 1,
       why: "Read your own writes goes to the primary. So does anything that decides money." },
 
     { q: "One backfill produced 180 MB of write ahead log. Why does that matter beyond disk?",
       options: [
-        "It increases the table size",
         "It slows down the backfill",
+        "It increases the table size",
         "It blocks vacuum",
         "Every byte ships to every replica and every change data capture consumer, so lag climbs while it replays"
       ],
@@ -540,9 +574,9 @@ FQ.registerLevel({
 
     { q: "When is change data capture the better choice over an outbox?",
       options: [
-        "When you need exactly once delivery",
-        "When something needs a copy of your tables, such as a warehouse, a search index or an analytics store",
         "When other services need to react to business events",
+        "When something needs a copy of your tables, such as a warehouse, a search index or an analytics store",
+        "When you need exactly once delivery",
         "Always, because it needs no application code"
       ],
       answer: 1,
@@ -571,6 +605,7 @@ FQ.registerLevel({
       'A verification query using `is distinct from` that returns zero',
       'A load generator that writes and reads throughout the migration, recording every error and the latency distribution',
       'A README with every measurement, and a paragraph on which of your queries got worse and why the trade is worth it',
+      'A one page note choosing a store for four workloads in your own platform: the ledger, the rate limiter, the token lookup and the analytics copy, with the reason for each',
       'The repository public on GitHub as `payments-at-scale`'
     ],
     starter: {
@@ -602,6 +637,7 @@ FQ.registerLevel({
       'Set up a real read replica, measure the lag while the backfill runs, and write the routing rule that avoids stale reads',
       'Run the backfill with and without the sleep, and plot replica lag against time for both',
       'Add change data capture with Debezium against your table, then run the migration and see which consumers break',
+      'Move one genuinely key value workload out of Postgres into Redis or DynamoDB, measure both, and write down what you gave up',
       'Partition by hash of merchant instead, run the same query set, and write down which workload each key suits'
     ],
     solutionPath: 'solutions/level-13'

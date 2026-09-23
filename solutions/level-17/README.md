@@ -43,6 +43,9 @@ docker build -t pay:slim . && ./deploy/bluegreen.sh staging && ./deploy/rollback
 - Blue green is chosen for the rollback column rather than the deploy column: both versions run, so getting back is the load balancer switching, and the README states the measured seconds from decision to first healthy response.
 - Migrations and the code that needs them never deploy together. The expand and contract sequence from level 13 is what makes a rollback in the middle safe, and the repository proves it by rolling back mid migration on purpose.
 - The cost model turns the architecture into a number per payment, using real list prices and the log and metric volumes measured in level 16, next to a 2.9% plus 30 cent processing fee.
+- Each local component is mapped to the managed service that would run it: RDS or Aurora for the ledger, Fargate for the API, ElastiCache for the limiter, S3 for settlement files, KMS for the level 15 master key, and EventBridge for the level 12 sweeper. KMS is the one to read twice, because envelope encryption is literally its interface.
+- Access is by role rather than by key. The task role carries the narrowest policy that works, scoped to one bucket prefix and one key rather than to a wildcard, and no long lived access key exists anywhere. The database has no public address and accepts connections only from the service security group.
+- Kubernetes is present at the depth the interview asks for and no deeper: one component deployed to a local cluster with a manifest written by hand, and the object model named, Pod through Deployment, Service and Ingress. The README says plainly why the platform itself does not need it.
 
 ## Where people get stuck
 
@@ -55,6 +58,9 @@ docker build -t pay:slim . && ./deploy/bluegreen.sh staging && ./deploy/rollback
 | Rollback took twenty minutes | Rolling deploys. Blue green makes it the switch going back. |
 | Rollback was impossible | A migration shipped with the code that needed it. |
 | A secret turned up in a bucket | It was in a terraform variable, so it is in the state file in plaintext. |
+| The first cloud bill was a surprise | A NAT gateway and an idle database charge by the hour whether or not anything uses them. The billing alarm goes in before the first resource. |
+| A wildcard policy shipped | "Action": "*" added at 6pm to make an error go away. Start from nothing and add the one action that failed. |
+| A secret sat in a Kubernetes Secret | Base64 is not encryption. The object holds a reference; the value stays in the secret manager. |
 
 ## Self-checks the solution satisfies
 
@@ -67,6 +73,9 @@ docker build -t pay:slim . && ./deploy/bluegreen.sh staging && ./deploy/rollback
 - The image that integration tests ran against is the image that deploys
 - A terraform plan against an untouched environment shows no changes
 - Staging can be destroyed and rebuilt from the repository alone
+- No long lived cloud access key exists in the repository, the environment or the shell profile
+- The database refuses a connection from outside its security group
+- The Kubernetes readiness probe removes a pod from the Service while its dependency is unavailable
 - A deliberately broken version deployed to the idle side receives no traffic
 - A rollback completes within the time stated in your README
 - Turning off the payout kill switch stops payouts without a deploy
@@ -78,7 +87,7 @@ docker build -t pay:slim . && ./deploy/bluegreen.sh staging && ./deploy/rollback
 |--------|-----------|---------|
 | 20 | The artefact | Multi stage, ordered layers, non root, pinned, health checked, with sizes and build times reported. |
 | 20 | The gate | Fast, deterministic, builds once, cannot be walked around, with step timings and one improvement. |
-| 20 | Infrastructure | Terraform with remote state, a clean plan, and staging rebuilt from the repository. |
+| 20 | Infrastructure | Terraform with remote state, a clean plan, staging rebuilt from the repository, roles rather than keys, and a private database. |
 | 25 | Deploy and undo | Blue green, a timed rollback, flags with a kill switch, and a migration rollback proven mid flight. |
 | 15 | Cost | A real cost model, a per payment number, and a defensible answer on what to cut and what not to. |
 

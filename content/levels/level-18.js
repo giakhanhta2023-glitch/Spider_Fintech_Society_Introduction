@@ -8,11 +8,12 @@ FQ.registerLevel({
   tagline: 'Capital One, Adyen, Goldman and most of the payments teams inside banks run on the JVM. You do not need to prefer it. You need to be able to be interviewed in it, and to port your own service to prove you can.',
   difficulty: 8,
   minutes: 480,
-  tags: ['Java', 'Spring Boot', 'JVM', 'types', 'Testcontainers'],
+  tags: ['Java', 'Spring Boot', 'JVM', 'Go', 'Testcontainers'],
   summary: 'Thirteen levels of payments engineering in Python, ported. This level is not an introduction to programming ' +
            'in Java, because you can already program: it is the specific set of differences that matter when you move a ' +
            'money handling service onto the JVM, the parts of Spring Boot you will actually touch, the traps that catch ' +
-           'people coming from Python, and a benchmark you run yourself.',
+           'people coming from Python, a benchmark you run yourself, and one small component written in Go, because the ' +
+           'same job descriptions ask for that too.',
 
   objectives: [
     'Read and write Java at the level a payments service needs',
@@ -21,7 +22,8 @@ FQ.registerLevel({
     'Use the parts of Spring Boot that appear in every service',
     'Write tests against a real database with Testcontainers',
     'Explain what the JVM does at start, and why it changes your latency numbers',
-    'Port your own payments API and benchmark both versions'
+    'Port your own payments API and benchmark both versions',
+    'Write one concurrent component in Go, and say honestly what that proves'
   ],
 
   knowledge: [
@@ -193,13 +195,40 @@ FQ.registerLevel({
     { p: 'The commands worth knowing on day one: `jcmd` to ask a running JVM what it is doing, and a heap dump when a ' +
          'service is using more memory than it should. Both belong in the runbooks from level 16.' },
 
+    { h: 'And Go, in an afternoon' },
+    { p: 'Java is the large one. Go is the small one, and it sits on the same job descriptions: Capital One lists Java, ' +
+         'Python and Go across its backend roles, and it is the usual choice for platform teams, infrastructure tooling ' +
+         'and high throughput edge services. The useful thing about Go is that it is small enough to be productive in ' +
+         'over a weekend, which is not true of Java, so it costs you very little to stop being unable to read it.' },
+    { p: 'Three differences from what you already know, and they are the whole language for your purposes:' },
+    { ul: [
+      '**Concurrency is in the language.** `go doWork()` starts a goroutine, which costs a few kilobytes rather than a megabyte, and a **channel** is a typed pipe between them. Java\'s virtual threads are the same idea arriving much later.',
+      '**Errors are values, not exceptions.** Every call that can fail returns an error beside its result and you check it. It is verbose on purpose: you cannot silently fail to handle something, which for money is the right trade.',
+      '**No inheritance, and interfaces are implicit.** A type satisfies an interface by having the right methods, with nothing declared. Small interfaces, plain structs, and very little ceremony.'
+    ]},
+    { code: '// a worker pool: the shape you will actually write\nfunc sendAll(webhooks <-chan Webhook, workers int) {\n    var wg sync.WaitGroup\n    for i := 0; i < workers; i++ {\n        wg.Add(1)\n        go func() {                       // a goroutine, not a thread\n            defer wg.Done()\n            for w := range webhooks {     // reads until the channel closes\n                if err := send(w); err != nil {\n                    log.Printf("send failed ref=%s: %v", w.Ref, err)\n                    continue              // no exception to swallow it\n                }\n            }\n        }()\n    }\n    wg.Wait()\n}', lang: 'text' },
+    { warn: 'Money in Go: `int64` minor units, exactly as in Java. There is no decimal type in the standard library, so ' +
+            'it is either `int64` or a library such as `shopspring/decimal`. Never `float64`, for the same IEEE 754 ' +
+            'reason as everywhere else in this course.' },
+    { p: 'What to port is one component rather than the service. The right size is something with a queue coming in, ' +
+         'HTTP going out, real concurrency and almost no domain logic, which means **the webhook sender or the outbox ' +
+         'publisher from level 11**. Those are a day of work, they exercise goroutines, channels, timeouts, retries and ' +
+         'graceful shutdown, and they sit in front of the Python service without disturbing it.' },
+    { code: 'python payments service\n        |\n        v  outbox rows, or a queue\n   go webhook worker      <- this is the port. 200 lines, not 20,000\n        |\n        v\n   merchant endpoints', lang: 'text' },
+    { p: 'And the honest framing for your CV, because the wrong one is easy to write. You are not demonstrating that Go ' +
+         'is faster than Python. You are demonstrating that **you can pick up an unfamiliar language and ship a correct ' +
+         'concurrent component in it**, which is the claim a hiring manager cares about and the one they will probe. ' +
+         'Measure throughput, p99 and memory at a stated concurrency, say what the component does, and leave the ' +
+         'language war alone.' },
+
     { h: 'What to port, and what to prove' },
     { p: 'Porting all thirteen levels would take a month and teach you nothing after the first one. Port the payments ' +
          'API from level 7, because it has an HTTP contract, validation, idempotency, a database and tests, which ' +
          'exercises everything above. Then prove two things with numbers you measured:' },
     { ul: [
       '**The behaviour is identical.** Run the same integration tests against both services, including the idempotency and concurrency tests. Identical responses, identical ledger entries.',
-      '**The performance difference, honestly.** Use the open loop generator from level 14 against both, with a warm up, and report p50, p99 and goodput. Whatever it says, report it: a result that favours Python is just as interesting, and being able to explain why is the point.'
+      '**The performance difference, honestly.** Use the open loop generator from level 14 against both, with a warm up, and report p50, p99 and goodput. Whatever it says, report it: a result that favours Python is just as interesting, and being able to explain why is the point.',
+      '**One component in Go,** alongside the two services: the webhook sender, with goroutines, timeouts, retries and a graceful shutdown that drains what it is holding.'
     ]}
   ],
 
@@ -283,6 +312,21 @@ FQ.registerLevel({
         check: 'You have a graph of p99 against time from a cold start, and a readiness configuration that matches it.'
       },
       {
+        t: 'One component in Go',
+        blocks: [
+          { p: 'The webhook sender, in Go, reading from the level 11 outbox and posting to merchant endpoints. Two ' +
+               'hundred lines. A worker pool of goroutines, a timeout on every request, retries with backoff and ' +
+               'jitter, and a graceful shutdown that finishes what it is holding before exiting.' },
+          { code: 'go doWork()          a goroutine, a few kilobytes\nch := make(chan T)   a typed pipe between them\nif err != nil        every failure, checked, every time', lang: 'text' },
+          { p: 'Then measure it at a stated concurrency: throughput, p99 and memory. Write the CV line as what it ' +
+               'actually shows, which is that you shipped a correct concurrent component in an unfamiliar language.' },
+          { warn: 'Graceful shutdown is the part that is worth the exercise. A worker killed mid send must not lose ' +
+                  'the webhook, which means the row is only marked published after the send succeeds. That is level 11 ' +
+                  'again, in a new language, and it is exactly what an interviewer will ask about.' }
+        ],
+        check: 'Killing the Go worker under load loses no webhooks and sends none twice that were not already at-least-once.'
+      },
+      {
         t: 'Benchmark both, honestly',
         blocks: [
           { p: 'Same hardware, same database, same load generator, both warmed up. Report p50, p99 and goodput for the ' +
@@ -313,7 +357,10 @@ FQ.registerLevel({
     { t: 'N plus one', d: 'One query per row instead of one query. The ORM version of a missing index.' },
     { t: 'Virtual thread', d: 'A cheap thread that parks when it blocks. Blocking code, asynchronous concurrency.' },
     { t: 'Testcontainers', d: 'Real dependencies in Docker for the test run, instead of in memory substitutes.' },
-    { t: 'Garbage collection pause', d: 'A brief stop to reclaim memory. It lands in your p99.' }
+    { t: 'Garbage collection pause', d: 'A brief stop to reclaim memory. It lands in your p99.' },
+    { t: 'Goroutine', d: 'Go\'s lightweight thread. A few kilobytes, started with the word `go`.' },
+    { t: 'Channel', d: 'A typed pipe between goroutines. How Go passes work around.' },
+    { t: 'Errors as values', d: 'Go returns failures beside results instead of throwing, so each one is checked.' }
   ],
 
   quiz: [
@@ -321,8 +368,8 @@ FQ.registerLevel({
       options: [
         "Because it uses IEEE 754 binary64, exactly as Python does, and 0.1 is not representable in binary",
         "A Java specific rounding rule",
-        "It is 0.3 in Java",
-        "Because double has fewer bits than Python floats"
+        "Because double has fewer bits than Python floats",
+        "It is 0.3 in Java"
       ],
       answer: 0,
       why: "The nearest double to 0.1 is 0.10000000000000000555. Same hardware, same answer, same rule: never for money." },
@@ -330,9 +377,9 @@ FQ.registerLevel({
     { q: "What is the largest amount an `int` can hold in minor units?",
       options: [
         "$2,147,483.64",
-        "There is no limit",
+        "$214,748,364.70",
         "$21,474,836.47",
-        "$214,748,364.70"
+        "There is no limit"
       ],
       answer: 2,
       why: "And it wraps silently to negative after that. Use long, and Math.addExact when you want a throw instead." },
@@ -349,9 +396,9 @@ FQ.registerLevel({
 
     { q: "`new BigDecimal(\"1.0\").equals(new BigDecimal(\"1.00\"))` returns what, and why does it matter?",
       options: [
-        "It throws",
-        "True, because the values are equal",
         "True, and it does not matter",
+        "True, because the values are equal",
+        "It throws",
         "False, because equals compares scale as well as value, so money comparisons must use compareTo"
       ],
       answer: 3,
@@ -369,39 +416,39 @@ FQ.registerLevel({
 
     { q: "Which `@Transactional` behaviour catches everybody once?",
       options: [
-        "It cannot be used with JDBC",
+        "It only works on public methods of interfaces",
         "Calling an annotated method from inside the same class does nothing, because the proxy is bypassed",
         "It requires an explicit commit",
-        "It only works on public methods of interfaces"
+        "It cannot be used with JDBC"
       ],
       answer: 1,
       why: "And by default it rolls back on unchecked exceptions only, so checked ones commit. Set rollbackFor for money." },
 
     { q: "Why turn off `open-in-view`?",
       options: [
-        "It breaks transactions",
+        "It disables lazy loading",
         "Because it holds a database connection for the whole request including response writing, which multiplies the pool you need",
-        "It is deprecated",
-        "It disables lazy loading"
+        "It breaks transactions",
+        "It is deprecated"
       ],
       answer: 1,
       why: "The level 8 pool arithmetic applies unchanged, and this setting quietly invalidates it." },
 
-    { q: "What is an N plus one query?",
+    { q: "In Go, how are failures reported from a function that can fail?",
       options: [
-        "A query run once per connection",
-        "A query with too many joins",
-        "One query per row instead of one query for the set, from touching a relation inside a loop",
-        "A failed retry"
+        "Through a callback",
+        "As an exception, caught by the caller",
+        "As an error value returned beside the result, which the caller checks every time",
+        "By panicking, which unwinds the stack"
       ],
       answer: 2,
-      why: "Correct output, quadratic cost. The ORM version of the missing index from level 6." },
+      why: "Verbose on purpose: you cannot silently fail to handle something, which for money is the right trade." },
 
     { q: "Java threads run in parallel where Python threads do not. What follows for a payments service?",
       options: [
         "Shared mutable state is a genuine hazard, but the lost update from level 8 still lives in the database and still needs the same fixes",
-        "The database no longer needs locking",
         "Concurrency bugs disappear",
+        "The database no longer needs locking",
         "You no longer need a connection pool"
       ],
       answer: 0,
@@ -410,9 +457,9 @@ FQ.registerLevel({
     { q: "What do virtual threads change?",
       options: [
         "They make CPU work faster",
-        "They replace the connection pool",
+        "They remove garbage collection pauses",
         "A thread costs hundreds of bytes instead of a megabyte and parks when it blocks, so ordinary blocking code gets asynchronous concurrency",
-        "They remove garbage collection pauses"
+        "They replace the connection pool"
       ],
       answer: 2,
       why: "Which removes the reason most Java services reached for an asynchronous framework." },
@@ -421,8 +468,8 @@ FQ.registerLevel({
       options: [
         "To fill the caches",
         "Because the JVM interprets bytecode first and compiles hot paths as it runs, so early requests measure the slow phase",
-        "To let the garbage collector settle",
-        "Because the connection pool starts empty"
+        "Because the connection pool starts empty",
+        "To let the garbage collector settle"
       ],
       answer: 1,
       why: "And a canary that judges a new instance in its first thirty seconds will reject healthy releases." },
@@ -450,8 +497,8 @@ FQ.registerLevel({
     { q: "Your Java port benchmarks faster than the Python original. What should you check first?",
       options: [
         "The hardware",
-        "The garbage collector",
         "The JVM version",
+        "The garbage collector",
         "Whether both runs were warmed up, and what share of a request is database time in each"
       ],
       answer: 3,
@@ -491,6 +538,8 @@ FQ.registerLevel({
       'A graph of p99 against time from a cold start, showing warm up, with the canary window you would choose',
       'A benchmark of both services on the same hardware, warmed up, with p50, p99, goodput, and the database share of each request',
       'A paragraph on what you would choose for a new service and why, in which the word "faster" does not appear unqualified',
+      'One component written in Go: the webhook sender, with a worker pool, a timeout on every call, retries with backoff and jitter, and graceful shutdown',
+      'Throughput, p99 and memory for the Go component at a stated concurrency, with a CV line that claims only what it shows',
       'The repository public on GitHub as `payments-api-java`'
     ],
     starter: {
@@ -509,14 +558,15 @@ FQ.registerLevel({
       'A checked exception rolls back once rollbackFor is set, and commits without it',
       'The lost update reproduces against a real Postgres and is fixed by both pessimistic and optimistic locking',
       'The service refuses to start when a required configuration property is missing',
-      'A cold start reaches its steady state p99 within the readiness window you configured'
+      'A cold start reaches its steady state p99 within the readiness window you configured',
+      'Killing the Go worker under load loses no webhook and leaves no row marked published that was never sent'
     ],
     rubric: [
       { pts: 20, t: 'Money on the JVM', d: 'long minor units, BigDecimal used correctly, overflow handled, the two classic traps tested.' },
       { pts: 20, t: 'Types doing work', d: 'Records, enums and a sealed interface, with a compile failure demonstrated on purpose.' },
       { pts: 20, t: 'Spring used properly', d: 'Constructor injection, one error shape, transactions with both traps understood, pool sized with arithmetic.' },
       { pts: 20, t: 'Tested against reality', d: 'Testcontainers, the level 8 race reproduced and fixed twice, the level 7 suite passing unchanged.' },
-      { pts: 20, t: 'Measured honestly', d: 'Warm up curve, virtual threads with conditions recorded, and a benchmark whose limitations you state.' }
+      { pts: 20, t: 'Measured honestly', d: 'Warm up curve, virtual threads with conditions recorded, a benchmark whose limitations you state, and a Go component whose CV line claims only what it shows.' }
     ],
     stretch: [
       'Write the same service in Kotlin and compare the amount of code and the readability, on the same JVM',
@@ -541,7 +591,9 @@ FQ.registerLevel({
       a: 'For learning, it is what the jobs use, which settles it. It does a great deal implicitly, so make a point of understanding what each annotation causes rather than copying configuration, because the difference shows immediately in an interview.' },
     { q: 'My tests are slow because Testcontainers starts a database every time',
       a: 'Start one container for the whole test run rather than per test class, and reuse it. Then make your tests independent by cleaning data rather than recreating the schema. A single container plus a truncate between tests is usually the whole fix.' },
+    { q: 'Why Go as well, and why only one component?',
+      a: 'Because the same employers list it, and because a small concurrent component is enough to show you can work in it: goroutines, channels, checked errors, timeouts and a graceful shutdown. A second full port would take weeks and teach you almost nothing the first one did not. The claim you are making is that you can pick up a language and ship something correct in it, and one good component supports that claim completely.' },
     { q: 'What do I say about this project in an interview?',
-      a: 'Say that you ported a service you had already built and tested, so you could compare like with like, and lead with the two things that are genuinely hard: the level 8 race reproduced against a real Postgres in CI with Testcontainers, and an honest benchmark where you state how much of each request was database time. Then the sealed interface compile failure, because it shows you used the type system deliberately rather than because the language insisted.' }
+      a: 'Say that you ported a service you had already built and tested, so you could compare like with like, and lead with the two things that are genuinely hard: the level 8 race reproduced against a real Postgres in CI with Testcontainers, and an honest benchmark where you state how much of each request was database time. Then the sealed interface compile failure, because it shows you used the type system deliberately rather than because the language insisted. Mention the Go worker last and briefly, as evidence you can move between languages.' }
   ]
 });

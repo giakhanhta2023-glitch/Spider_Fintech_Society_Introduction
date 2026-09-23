@@ -50,7 +50,7 @@ before it.
 | 10 | **Reconciliation at scale**: processor settlement files, fees, FX, T+1 timing, break detection, an exception queue | The thing every payments company runs daily and few candidates have ever seen |
 | 11 | **Events with Kafka**: the outbox pattern, partitions and ordering, consumer groups, idempotent consumers, replay, a dead letter queue | "Event-driven architecture" on your CV with a repository behind it |
 | 12 | **The payout orchestrator**: sagas, compensating transactions, scheduled work, retry policy, failure injection | Distributed transactions: the senior-level system design answer, built small |
-| 13 | **Scale and change**: partitioning, read replicas, change data capture, an online schema migration and a 50 million row backfill with no downtime | That you can change a running system without stopping it, which is most of the job |
+| 13 | **Scale and change**: partitioning, read replicas, change data capture, choosing between Postgres, Redis and a wide column store, an online schema migration and a large backfill with no downtime | That you can change a running system without stopping it, which is most of the job |
 
 ### Phase 3: run it like production (levels 14 to 17)
 
@@ -59,13 +59,13 @@ before it.
 | 14 | **Latency work**: Redis, a token bucket rate limiter, cache invalidation, connection pooling, load shedding, a p99 budget you hit | "High volume, low latency" with numbers you measured |
 | 15 | **Security engineering**: OAuth2, JWTs, mutual TLS, envelope encryption with a key service, a card vault with tokenisation, PCI scope, a threat model | The part of fintech that gets people fired, understood before you are hired |
 | 16 | **Observability and on-call**: structured logs, metrics, traces, SLOs and error budgets, alerts that page for symptoms, a game day and a postmortem | Ownership, the word every job description uses and few candidates can evidence |
-| 17 | **Ship it**: Docker, Terraform, AWS, a pipeline that gates a merge, blue-green deploys, feature flags, a cost model | That your work can leave your laptop |
+| 17 | **Ship it**: Docker, a pipeline that gates a merge, Terraform, AWS with IAM roles and a private network, enough Kubernetes to read a manifest, blue-green deploys, feature flags, a cost model | That your work can leave your laptop |
 
 ### Phase 4: get hired (levels 18 to 20)
 
 | Level | Build | What it proves |
 |---|---|---|
-| 18 | **Java and Spring Boot for a Python engineer**: types, the JVM, Spring Boot, JDBC, threads and virtual threads, JUnit, Testcontainers, and the same payments API ported and benchmarked | Capital One and Adyen are Java shops. This level is the difference between applying and being considered |
+| 18 | **Java and Spring Boot for a Python engineer**: types, the JVM, Spring Boot, JDBC, threads and virtual threads, JUnit, Testcontainers, the same payments API ported and benchmarked, and one concurrent component in Go | Capital One and Adyen are Java shops, and the same postings list Go. This level is the difference between applying and being considered |
 | 19 | **The interview gauntlet**: complexity, the data structures that come up, forty money-flavoured problems, and Stripe-style practical exercises: integrate, debug, migrate, under time | The screen that filters out most candidates before anybody reads their repositories |
 | 20 | **System design and the capstone**: capacity arithmetic, six canonical payment designs written up properly, then the full platform assembled, load tested, and the hire-me package around it | The final round, and the portfolio that gets you into it |
 

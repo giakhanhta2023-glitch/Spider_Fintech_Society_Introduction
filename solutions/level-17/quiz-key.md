@@ -26,8 +26,8 @@
 ### 1. Which difference between your laptop and a server does a container NOT fix?
 
 - **A. Configuration and secrets** ✅
-- B. The language runtime version
-- C. System libraries
+- B. System libraries
+- C. The language runtime version
 - D. Dependency versions
 
 **Why:** They arrive at run time, which is why the application should validate all of them at start and refuse to boot.
@@ -35,56 +35,56 @@
 ### 2. Why should a service validate its configuration at import rather than on first use?
 
 - **A. So a bad deploy fails immediately instead of turning into a customer facing failure on the first payment** ✅
-- B. To reduce memory
-- C. It is faster
-- D. Because the framework requires it
+- B. Because the framework requires it
+- C. To reduce memory
+- D. It is faster
 
 **Why:** A service that boots happily with an empty variable has converted a deploy problem into a money problem.
 
 ### 3. Why does a multi stage build produce a smaller image?
 
-- A. It removes files in a later layer
-- B. It uses a different filesystem
+- A. It uses a different filesystem
+- B. It compresses the layers
 - **C. The final stage starts from a clean base and copies in only what runs, so the build tooling is never in the image at all** ✅
-- D. It compresses the layers
+- D. It removes files in a later layer
 
 **Why:** Deleting in a later layer does not help: everything installed stays in the image forever.
 
-### 4. Where should dependency installation go in a Dockerfile?
+### 4. Your container needs to read one prefix of one S3 bucket. What is the right way to grant that?
 
-- A. In the final stage only
-- **B. Before copying the source, so a code change does not reinstall everything** ✅
-- C. It makes no difference
-- D. After copying the source, so the code is available
+- A. Make the bucket public
+- **B. A task role with a policy allowing GetObject on that prefix, so the container receives short lived credentials with nothing to leak** ✅
+- C. A key stored in the secret manager
+- D. An access key in an environment variable
 
-**Why:** Order layers by how often they change: dependencies monthly, your code hourly.
+**Why:** Roles, never long lived access keys. A leaked key is a permanent credential in a format designed to be copied.
 
 ### 5. A syntax check over twenty files took 9.63 s as twenty processes and 0.61 s as one. What was the cost?
 
 - **A. Process startup, not work: nothing was removed and nothing was made less strict** ✅
 - B. Disk reads
-- C. Network
-- D. The check itself
+- C. The check itself
+- D. Network
 
 **Why:** That one change took the whole gate from 15.97 s to 6.95 s.
 
 ### 6. The team keeps using the administrator override to skip a 25 minute pipeline. What is the fix?
 
-- A. Remove the override entirely
-- B. Require a manager to approve the override
+- A. Require a manager to approve the override
+- B. Remove the override entirely
 - **C. Make the pipeline fast: time every step, split a fast merge gate from a slower post merge suite** ✅
 - D. Run the pipeline only on the main branch
 
 **Why:** The override is a symptom. Requiring approval moves it into direct messages, where nobody can audit it.
 
-### 7. Why must a merge gate build the artefact once and deploy that same one?
+### 7. In Kubernetes, which object decides how many copies run and how a new image is rolled out?
 
-- **A. Because a rebuild at deploy time might differ from what was tested** ✅
-- B. To keep the registry small
-- C. Because builds are slow
-- D. To save money
+- **A. The Deployment** ✅
+- B. The Pod
+- C. The Ingress
+- D. The Service
 
-**Why:** What you tested is what you deploy, or you tested nothing in particular.
+**Why:** Pod is the unit, Deployment manages them, Service gives a stable address, Ingress lets traffic in.
 
 ### 8. What is drift in infrastructure as code?
 
@@ -97,10 +97,10 @@
 
 ### 9. Why must secrets never appear in Terraform files or variable defaults?
 
-- A. They change too often
+- A. Terraform cannot read them
 - **B. They end up in the state file, which is a plaintext copy of everything, sitting in a bucket** ✅
-- C. They would be too long
-- D. Terraform cannot read them
+- C. They change too often
+- D. They would be too long
 
 **Why:** Reference a secret manager and let the resource read it at run time.
 
@@ -115,44 +115,44 @@
 
 ### 11. What does canary deployment require that the others do not?
 
-- A. A feature flag service
+- A. A database migration
 - **B. Per version metrics, so the new version can be compared against the old on live traffic automatically** ✅
-- C. Twice the infrastructure
-- D. A database migration
+- C. A feature flag service
+- D. Twice the infrastructure
 
 **Why:** Without them the comparison is somebody squinting at a dashboard during a deploy.
 
 ### 12. Why does a database migration make rollback hard?
 
-- A. Because of replication lag
+- A. Because backups take time
 - **B. Because the old code can meet a schema it has never seen, so code and migration must not deploy together** ✅
-- C. Migrations are slow
-- D. Because backups take time
+- C. Because of replication lag
+- D. Migrations are slow
 
 **Why:** Expand and contract exists so that every intermediate state works with both versions of the code.
 
 ### 13. Why must a feature flag be read at request time rather than at start?
 
-- A. Because flags change rarely
-- B. It is faster
+- A. To reduce load on the flag service
+- B. Because flags change rarely
 - **C. Because otherwise turning a flag off requires a restart, which removes the point of having it** ✅
-- D. To reduce load on the flag service
+- D. It is faster
 
 **Why:** And it should default to off, so an unreachable flag service leaves the new path dark.
 
 ### 14. Compute was sized for 200 payments a second while the average is 50. What does that tell you about the bill?
 
-- A. That the average should be measured differently
-- B. Nothing, peak sizing is required
-- C. That the service is inefficient
+- A. That the service is inefficient
+- B. That the average should be measured differently
+- C. Nothing, peak sizing is required
 - **D. That most of the compute line is idle capacity, which is the first place to look before cutting anything that removes headroom** ✅
 
 **Why:** Autoscaling on real load recovers much of it. Removing a replica to save money does not.
 
 ### 15. Why compute a cost per payment at all?
 
-- A. To choose a cloud provider
-- B. For the finance team's report
+- A. For the finance team's report
+- B. To choose a cloud provider
 - C. Because it is required for compliance
 - **D. So you can compare infrastructure cost against the processing fee and say how much of the margin it takes** ✅
 

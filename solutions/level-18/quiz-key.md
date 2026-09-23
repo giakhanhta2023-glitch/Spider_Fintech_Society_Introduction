@@ -27,17 +27,17 @@
 
 - **A. Because it uses IEEE 754 binary64, exactly as Python does, and 0.1 is not representable in binary** ✅
 - B. A Java specific rounding rule
-- C. It is 0.3 in Java
-- D. Because double has fewer bits than Python floats
+- C. Because double has fewer bits than Python floats
+- D. It is 0.3 in Java
 
 **Why:** The nearest double to 0.1 is 0.10000000000000000555. Same hardware, same answer, same rule: never for money.
 
 ### 2. What is the largest amount an `int` can hold in minor units?
 
 - A. $2,147,483.64
-- B. There is no limit
+- B. $214,748,364.70
 - **C. $21,474,836.47** ✅
-- D. $214,748,364.70
+- D. There is no limit
 
 **Why:** And it wraps silently to negative after that. Use long, and Math.addExact when you want a throw instead.
 
@@ -52,9 +52,9 @@
 
 ### 4. `new BigDecimal("1.0").equals(new BigDecimal("1.00"))` returns what, and why does it matter?
 
-- A. It throws
+- A. True, and it does not matter
 - B. True, because the values are equal
-- C. True, and it does not matter
+- C. It throws
 - **D. False, because equals compares scale as well as value, so money comparisons must use compareTo** ✅
 
 **Why:** This one costs everybody a day exactly once.
@@ -70,36 +70,36 @@
 
 ### 6. Which `@Transactional` behaviour catches everybody once?
 
-- A. It cannot be used with JDBC
+- A. It only works on public methods of interfaces
 - **B. Calling an annotated method from inside the same class does nothing, because the proxy is bypassed** ✅
 - C. It requires an explicit commit
-- D. It only works on public methods of interfaces
+- D. It cannot be used with JDBC
 
 **Why:** And by default it rolls back on unchecked exceptions only, so checked ones commit. Set rollbackFor for money.
 
 ### 7. Why turn off `open-in-view`?
 
-- A. It breaks transactions
+- A. It disables lazy loading
 - **B. Because it holds a database connection for the whole request including response writing, which multiplies the pool you need** ✅
-- C. It is deprecated
-- D. It disables lazy loading
+- C. It breaks transactions
+- D. It is deprecated
 
 **Why:** The level 8 pool arithmetic applies unchanged, and this setting quietly invalidates it.
 
-### 8. What is an N plus one query?
+### 8. In Go, how are failures reported from a function that can fail?
 
-- A. A query run once per connection
-- B. A query with too many joins
-- **C. One query per row instead of one query for the set, from touching a relation inside a loop** ✅
-- D. A failed retry
+- A. Through a callback
+- B. As an exception, caught by the caller
+- **C. As an error value returned beside the result, which the caller checks every time** ✅
+- D. By panicking, which unwinds the stack
 
-**Why:** Correct output, quadratic cost. The ORM version of the missing index from level 6.
+**Why:** Verbose on purpose: you cannot silently fail to handle something, which for money is the right trade.
 
 ### 9. Java threads run in parallel where Python threads do not. What follows for a payments service?
 
 - **A. Shared mutable state is a genuine hazard, but the lost update from level 8 still lives in the database and still needs the same fixes** ✅
-- B. The database no longer needs locking
-- C. Concurrency bugs disappear
+- B. Concurrency bugs disappear
+- C. The database no longer needs locking
 - D. You no longer need a connection pool
 
 **Why:** Concurrency bugs in a payments service live in the database, not in the language.
@@ -107,9 +107,9 @@
 ### 10. What do virtual threads change?
 
 - A. They make CPU work faster
-- B. They replace the connection pool
+- B. They remove garbage collection pauses
 - **C. A thread costs hundreds of bytes instead of a megabyte and parks when it blocks, so ordinary blocking code gets asynchronous concurrency** ✅
-- D. They remove garbage collection pauses
+- D. They replace the connection pool
 
 **Why:** Which removes the reason most Java services reached for an asynchronous framework.
 
@@ -117,8 +117,8 @@
 
 - A. To fill the caches
 - **B. Because the JVM interprets bytecode first and compiles hot paths as it runs, so early requests measure the slow phase** ✅
-- C. To let the garbage collector settle
-- D. Because the connection pool starts empty
+- C. Because the connection pool starts empty
+- D. To let the garbage collector settle
 
 **Why:** And a canary that judges a new instance in its first thirty seconds will reject healthy releases.
 
@@ -143,8 +143,8 @@
 ### 14. Your Java port benchmarks faster than the Python original. What should you check first?
 
 - A. The hardware
-- B. The garbage collector
-- C. The JVM version
+- B. The JVM version
+- C. The garbage collector
 - **D. Whether both runs were warmed up, and what share of a request is database time in each** ✅
 
 **Why:** If a payment is 5 ms of your code and 40 ms of database, the language was never the bottleneck.

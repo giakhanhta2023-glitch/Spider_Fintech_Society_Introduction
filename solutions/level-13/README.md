@@ -42,6 +42,7 @@ psql -f bench/baseline.sql && python -m load.generator & python -m migrate.backf
 - Every migration file starts with lock_timeout and statement_timeout. The repository reproduces the lock queue on purpose: a long reader, a blocked migration, and a third session that cannot run a plain select.
 - The backfill compares one statement against batches of 10,000. Same log, same bloat, 6% slower, and the longest lock held drops from 5,622 ms to 280 ms. The predicate keeps `fee_minor is null` so the job is idempotent and survives being killed.
 - Verification uses `is distinct from` rather than `<>`, because null comparisons are null, so a plain comparison skips exactly the rows the backfill missed.
+- The store for each workload is chosen from its access pattern rather than its volume, and written down: the ledger relational because the balancing invariant must be enforced by the database, counters and limits in Redis because they are hot and losable, files in object storage, analytics in a column store fed by change data capture, and the token lookup as the one genuinely key value workload in the platform.
 - The acceptance test is the load generator: the full migration runs under continuous traffic and the report states failures and p99 latency, before and during.
 
 ## Where people get stuck
@@ -54,6 +55,7 @@ psql -f bench/baseline.sql && python -m load.generator & python -m migrate.backf
 | The backfill died at hour five and undid everything | One transaction instead of batches. Atomicity across the whole job is not the property you need. |
 | Each backfill batch was slower than the last | offset, which counts through every skipped row. Walk the primary key instead. |
 | A refund vanished after the page reloaded | The read went to a replica that had not caught up. Read your own writes goes to the primary. |
+| "We would put the ledger in DynamoDB for scale" | Nothing enforces that every transaction balances, and at a few terabytes a year the write throughput was never the constraint. |
 
 ## Self-checks the solution satisfies
 

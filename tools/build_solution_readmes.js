@@ -317,6 +317,7 @@ const NOTES = {
       'Every migration file starts with lock_timeout and statement_timeout. The repository reproduces the lock queue on purpose: a long reader, a blocked migration, and a third session that cannot run a plain select.',
       'The backfill compares one statement against batches of 10,000. Same log, same bloat, 6% slower, and the longest lock held drops from 5,622 ms to 280 ms. The predicate keeps `fee_minor is null` so the job is idempotent and survives being killed.',
       'Verification uses `is distinct from` rather than `<>`, because null comparisons are null, so a plain comparison skips exactly the rows the backfill missed.',
+      'The store for each workload is chosen from its access pattern rather than its volume, and written down: the ledger relational because the balancing invariant must be enforced by the database, counters and limits in Redis because they are hot and losable, files in object storage, analytics in a column store fed by change data capture, and the token lookup as the one genuinely key value workload in the platform.',
       'The acceptance test is the load generator: the full migration runs under continuous traffic and the report states failures and p99 latency, before and during.'
     ],
     mistakes: [
@@ -325,7 +326,8 @@ const NOTES = {
       ['A one second migration took the site down for four minutes', 'It queued behind a long reader, and everything else queued behind it. lock_timeout prevents this.'],
       ['The backfill died at hour five and undid everything', 'One transaction instead of batches. Atomicity across the whole job is not the property you need.'],
       ['Each backfill batch was slower than the last', 'offset, which counts through every skipped row. Walk the primary key instead.'],
-      ['A refund vanished after the page reloaded', 'The read went to a replica that had not caught up. Read your own writes goes to the primary.']
+      ['A refund vanished after the page reloaded', 'The read went to a replica that had not caught up. Read your own writes goes to the primary.'],
+      ['"We would put the ledger in DynamoDB for scale"', 'Nothing enforces that every transaction balances, and at a few terabytes a year the write throughput was never the constraint.']
     ]
   },
   14: {
@@ -439,7 +441,10 @@ const NOTES = {
       'The gate was timed step by step rather than guessed at. The syntax check over twenty files took 9.63 s as twenty processes and 0.61 s as one, taking the whole gate from 15.97 s to 6.95 s with nothing removed and nothing relaxed. Startup, not work.',
       'Blue green is chosen for the rollback column rather than the deploy column: both versions run, so getting back is the load balancer switching, and the README states the measured seconds from decision to first healthy response.',
       'Migrations and the code that needs them never deploy together. The expand and contract sequence from level 13 is what makes a rollback in the middle safe, and the repository proves it by rolling back mid migration on purpose.',
-      'The cost model turns the architecture into a number per payment, using real list prices and the log and metric volumes measured in level 16, next to a 2.9% plus 30 cent processing fee.'
+      'The cost model turns the architecture into a number per payment, using real list prices and the log and metric volumes measured in level 16, next to a 2.9% plus 30 cent processing fee.',
+      'Each local component is mapped to the managed service that would run it: RDS or Aurora for the ledger, Fargate for the API, ElastiCache for the limiter, S3 for settlement files, KMS for the level 15 master key, and EventBridge for the level 12 sweeper. KMS is the one to read twice, because envelope encryption is literally its interface.',
+      'Access is by role rather than by key. The task role carries the narrowest policy that works, scoped to one bucket prefix and one key rather than to a wildcard, and no long lived access key exists anywhere. The database has no public address and accepts connections only from the service security group.',
+      'Kubernetes is present at the depth the interview asks for and no deeper: one component deployed to a local cluster with a manifest written by hand, and the object model named, Pod through Deployment, Service and Ingress. The README says plainly why the platform itself does not need it.'
     ],
     mistakes: [
       ['The image is enormous', 'The build toolchain is inside it. A later RUN that deletes files does not help: layers are forever.'],
@@ -448,7 +453,10 @@ const NOTES = {
       ['People bypass the pipeline', 'It is too slow. Time the steps; the answer is usually startup or a cold cache, not the tests.'],
       ['Rollback took twenty minutes', 'Rolling deploys. Blue green makes it the switch going back.'],
       ['Rollback was impossible', 'A migration shipped with the code that needed it.'],
-      ['A secret turned up in a bucket', 'It was in a terraform variable, so it is in the state file in plaintext.']
+      ['A secret turned up in a bucket', 'It was in a terraform variable, so it is in the state file in plaintext.'],
+      ['The first cloud bill was a surprise', 'A NAT gateway and an idle database charge by the hour whether or not anything uses them. The billing alarm goes in before the first resource.'],
+      ['A wildcard policy shipped', '"Action": "*" added at 6pm to make an error go away. Start from nothing and add the one action that failed.'],
+      ['A secret sat in a Kubernetes Secret', 'Base64 is not encryption. The object holds a reference; the value stays in the secret manager.']
     ]
   },
   18: {
@@ -469,7 +477,8 @@ const NOTES = {
       'Spring is used the way a reviewer expects: constructor injection with final fields, one ControllerAdvice, open-in-view off, and a Hikari pool sized with the level 8 arithmetic written in a comment.',
       'Both @Transactional traps have failing tests before they have fixes: an internal call that bypasses the proxy, and a checked exception that commits under the default configuration.',
       'Testcontainers runs a real Postgres so the level 8 lost update can be reproduced in CI and fixed twice. An in memory database would have passed the test and shipped the bug.',
-      'The benchmark states its conditions: warmed up, same hardware, same database, and the share of each request that is database time, so the comparison is about the runtime rather than about who wrote the faster query.'
+      'The benchmark states its conditions: warmed up, same hardware, same database, and the share of each request that is database time, so the comparison is about the runtime rather than about who wrote the faster query.',
+      'One component is written in Go rather than a second full port: the webhook sender, with a worker pool of goroutines, a timeout on every call, retries with backoff and jitter, and a graceful shutdown that marks a row published only after the send succeeded. The claim it supports is that an unfamiliar language can be picked up and shipped in, which is what a hiring manager probes, and the README says exactly that rather than claiming a speed result.'
     ],
     mistakes: [
       ['Amounts went negative above twenty million dollars', 'int instead of long. It wraps silently, with no error.'],

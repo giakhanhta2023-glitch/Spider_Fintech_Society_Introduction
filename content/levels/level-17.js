@@ -132,6 +132,91 @@ FQ.registerLevel({
             'plaintext copy of everything, sitting in a bucket. Reference a secret manager and let the resource read it ' +
             'at run time.' },
 
+    { h: 'AWS: where each piece you built actually runs' },
+    { p: 'Everything so far has run on your laptop. Here is the translation, because "experience with AWS" in a job ' +
+         'description means knowing which managed service replaces which thing you wrote, and what it charges for:' },
+    { table: {
+      head: ['What you built', 'What runs it', 'The thing people get wrong'],
+      rows: [
+        ['The ledger, in Postgres', '**RDS**, or **Aurora** Postgres', 'Multi AZ is failover, not a read replica. They are separate features and separate bills'],
+        ['The API container', '**ECS on Fargate**, or **EKS**', 'Fargate means no machines to patch. Start there unless somebody hands you a cluster'],
+        ['The cache and the rate limiter', '**ElastiCache** for Redis', 'It is still memory. Level 14 applies: everything in it must be losable'],
+        ['The event log', '**MSK** for Kafka, or **SQS** with **SNS**', 'SQS is a queue, not a log: you cannot replay it, which level 11 needed'],
+        ['Settlement files', '**S3**', 'Turn on versioning. A file overwritten by a bad job is otherwise gone'],
+        ['Secrets', '**Secrets Manager**, or Parameter Store', 'Parameter Store is cheaper and does less. Either is better than an environment variable you set by hand'],
+        ['The master key from level 15', '**KMS**', 'Look at this one twice, below'],
+        ['Metrics, logs and traces', '**CloudWatch**, or managed Prometheus and Grafana with **X-Ray**', 'CloudWatch Logs charges per gigabyte ingested. Level 16 measured why that matters'],
+        ['The level 12 sweeper', '**EventBridge Scheduler** into a Lambda or an ECS task', 'A cron job on one instance is a single point of failure that nobody monitors'],
+        ['Blue green traffic switching', 'An **ALB** with two target groups', 'The switch is a weighted routing change, which is also how you do canary']
+      ]
+    }},
+    { p: 'The row worth stopping on is **KMS**. Level 15\'s envelope encryption is literally its interface rather than ' +
+         'merely similar to it: `GenerateDataKey` hands you a plaintext data key and a wrapped copy, `Decrypt` ' +
+         'unwraps it, and the master key never leaves the service. You built the thing by hand, so you can now read that ' +
+         'documentation and know exactly what the 8 ms call is costing you.' },
+
+    { h: 'IAM, in one page' },
+    { p: 'Identity and access management is where cloud security actually happens, and it has three nouns. A ' +
+         '**principal** is who is acting: a person, or a service. A **policy** is a document saying which actions are ' +
+         'allowed on which resources. A **role** is a set of policies that something can assume temporarily.' },
+    { p: 'The rule that matters more than all the others: **use roles, never long lived access keys.** A task role means ' +
+         'your container receives short lived credentials automatically, rotated for you, with nothing to leak. An ' +
+         'access key in an environment variable is a permanent credential in a format designed to be copied, and it is ' +
+         'the single most common way cloud accounts are compromised.' },
+    { code: '# the narrowest policy that works, rather than the one that stops the error\n{\n  "Effect": "Allow",\n  "Action": ["s3:GetObject"],\n  "Resource": "arn:aws:s3:::settlement-files/incoming/*"     # not the bucket, the prefix\n}\n{\n  "Effect": "Allow",\n  "Action": ["kms:Decrypt", "kms:GenerateDataKey"],\n  "Resource": "arn:aws:kms:eu-west-1:123456789012:key/abc-123"   # that key, not all keys\n}', lang: 'text' },
+    { warn: 'The two mistakes, in order of frequency. `"Action": "*"` on `"Resource": "*"`, added at 6pm to make an error ' +
+            'go away and never narrowed afterwards. And an access key committed, pasted into a notebook, or set in a ' +
+            'shell profile. Start every policy from nothing, add the one action that failed, and read the error message ' +
+            'rather than widening the wildcard.' },
+
+    { h: 'The network, and the bill nobody expects' },
+    { p: 'A **VPC** is your own private network. Inside it, **public subnets** can reach the internet and **private ' +
+         'subnets** cannot, and a **security group** is a firewall attached to a resource rather than to a subnet.' },
+    { p: 'For a payments platform the shape is fixed and you should be able to draw it: the load balancer sits in the ' +
+         'public subnets, the service sits in private ones, and **the database has no public address at all**, with a ' +
+         'security group that permits port 5432 from the service\'s security group and from nothing else. Not from an ' +
+         'address range, from the other security group, so it keeps working when instances are replaced.' },
+    { p: 'Then the cost surprise, which is worth knowing before you meet it. A private subnet that needs to reach the ' +
+         'internet does so through a **NAT gateway**, which is charged per hour and per gigabyte, runs whether or not ' +
+         'you use it, and is the line most often missing from a first cost model. Level 17\'s egress row was about this.' },
+    { warn: 'Set a billing alarm before you create a single resource. An idle database, a forgotten NAT gateway and an ' +
+            'orphaned load balancer cost the same whether or not anything is using them, and the classic first AWS bill ' +
+            'is a few hundred dollars of resources nobody remembered creating.' },
+    { tip: 'The cheap path for this level: one small RDS instance you stop when not using it, one Fargate task, one S3 ' +
+           'bucket, and no NAT gateway (put the task in a public subnet with a security group, which is fine for a ' +
+           'learning environment and which you should say out loud is not how you would run production). Everything ' +
+           'else in this level runs locally.' },
+
+    { h: 'Kubernetes, enough to read a manifest' },
+    { p: 'You do not need Kubernetes for this platform, and being able to say why is worth more than using it. You do ' +
+         'need to read a manifest without flinching, because Capital One, Adyen and most large payments teams run on ' +
+         'it, and an interviewer will assume the vocabulary.' },
+    { p: 'The whole object model, in the order things are built on each other:' },
+    { code: 'your image\n  -> Pod          one or more containers scheduled together. The smallest unit\n  -> Deployment   how many pods, which image, how to roll a new one out\n  -> Service      a stable name and address for whichever pods exist\n  -> Ingress      how traffic from outside reaches a Service', lang: 'text' },
+    { table: {
+      head: ['Object', 'Is', 'What it replaces from earlier in this level'],
+      rows: [
+        ['**Deployment**', 'A desired number of pods running a given image', 'Your rolling deploy script'],
+        ['**Service**', 'A stable address in front of pods that come and go', 'The load balancer target group'],
+        ['**Ingress**', 'The route from outside the cluster to a Service', 'The load balancer itself'],
+        ['**ConfigMap**', 'Configuration injected as environment variables or files', 'Your environment variables'],
+        ['**Secret**', 'The same, for sensitive values', 'Nothing, and see the warning below'],
+        ['**Probes**', '`livenessProbe` and `readinessProbe`', 'Exactly the two probes you already wrote'],
+        ['**HorizontalPodAutoscaler**', 'More pods when a metric rises', 'The autoscaling in your cost model']
+      ]
+    }},
+    { code: 'spec:\n  replicas: 3\n  strategy:\n    rollingUpdate:\n      maxSurge: 1          # one extra pod during the roll\n      maxUnavailable: 0    # never fewer than three serving\n  template:\n    spec:\n      containers:\n        - name: payments\n          image: registry/payments@sha256:...    # a digest, never a tag\n          readinessProbe:\n            httpGet: { path: /readyz, port: 8000 }', lang: 'text' },
+    { p: 'Blue green and canary are done here with two Deployments and traffic shifted between them, which is the same ' +
+         'idea you already built with two environments and a load balancer. Nothing conceptual is new; the objects are ' +
+         'just named.' },
+    { warn: 'A Kubernetes **Secret is base64 encoded, not encrypted**. Anyone who can read the object can read the ' +
+            'value. Level 15 applies unchanged: real secrets come from a secret manager, injected at run time, and the ' +
+            'Kubernetes object holds at most a reference.' },
+    { p: 'The proportionate amount of this to do now: run a local cluster with `kind` or `k3d`, deploy one component of ' +
+         'your platform to it, write the manifest yourself rather than copying one, and stop there. Operating a cluster ' +
+         'is a job rather than a level, and the interview question is almost always "what are these objects and why" ' +
+         'rather than "tune the scheduler".' },
+
     { h: 'Deploying, and the only question that matters' },
     { p: 'Four strategies. Choose by how long it takes to get back, because that is the number you will care about at ' +
          'the moment you need it:' },
@@ -326,8 +411,8 @@ FQ.registerLevel({
     { q: "Which difference between your laptop and a server does a container NOT fix?",
       options: [
         "Configuration and secrets",
-        "The language runtime version",
         "System libraries",
+        "The language runtime version",
         "Dependency versions"
       ],
       answer: 0,
@@ -336,62 +421,62 @@ FQ.registerLevel({
     { q: "Why should a service validate its configuration at import rather than on first use?",
       options: [
         "So a bad deploy fails immediately instead of turning into a customer facing failure on the first payment",
+        "Because the framework requires it",
         "To reduce memory",
-        "It is faster",
-        "Because the framework requires it"
+        "It is faster"
       ],
       answer: 0,
       why: "A service that boots happily with an empty variable has converted a deploy problem into a money problem." },
 
     { q: "Why does a multi stage build produce a smaller image?",
       options: [
-        "It removes files in a later layer",
         "It uses a different filesystem",
+        "It compresses the layers",
         "The final stage starts from a clean base and copies in only what runs, so the build tooling is never in the image at all",
-        "It compresses the layers"
+        "It removes files in a later layer"
       ],
       answer: 2,
       why: "Deleting in a later layer does not help: everything installed stays in the image forever." },
 
-    { q: "Where should dependency installation go in a Dockerfile?",
+    { q: "Your container needs to read one prefix of one S3 bucket. What is the right way to grant that?",
       options: [
-        "In the final stage only",
-        "Before copying the source, so a code change does not reinstall everything",
-        "It makes no difference",
-        "After copying the source, so the code is available"
+        "Make the bucket public",
+        "A task role with a policy allowing GetObject on that prefix, so the container receives short lived credentials with nothing to leak",
+        "A key stored in the secret manager",
+        "An access key in an environment variable"
       ],
       answer: 1,
-      why: "Order layers by how often they change: dependencies monthly, your code hourly." },
+      why: "Roles, never long lived access keys. A leaked key is a permanent credential in a format designed to be copied." },
 
     { q: "A syntax check over twenty files took 9.63 s as twenty processes and 0.61 s as one. What was the cost?",
       options: [
         "Process startup, not work: nothing was removed and nothing was made less strict",
         "Disk reads",
-        "Network",
-        "The check itself"
+        "The check itself",
+        "Network"
       ],
       answer: 0,
       why: "That one change took the whole gate from 15.97 s to 6.95 s." },
 
     { q: "The team keeps using the administrator override to skip a 25 minute pipeline. What is the fix?",
       options: [
-        "Remove the override entirely",
         "Require a manager to approve the override",
+        "Remove the override entirely",
         "Make the pipeline fast: time every step, split a fast merge gate from a slower post merge suite",
         "Run the pipeline only on the main branch"
       ],
       answer: 2,
       why: "The override is a symptom. Requiring approval moves it into direct messages, where nobody can audit it." },
 
-    { q: "Why must a merge gate build the artefact once and deploy that same one?",
+    { q: "In Kubernetes, which object decides how many copies run and how a new image is rolled out?",
       options: [
-        "Because a rebuild at deploy time might differ from what was tested",
-        "To keep the registry small",
-        "Because builds are slow",
-        "To save money"
+        "The Deployment",
+        "The Pod",
+        "The Ingress",
+        "The Service"
       ],
       answer: 0,
-      why: "What you tested is what you deploy, or you tested nothing in particular." },
+      why: "Pod is the unit, Deployment manages them, Service gives a stable address, Ingress lets traffic in." },
 
     { q: "What is drift in infrastructure as code?",
       options: [
@@ -405,10 +490,10 @@ FQ.registerLevel({
 
     { q: "Why must secrets never appear in Terraform files or variable defaults?",
       options: [
-        "They change too often",
+        "Terraform cannot read them",
         "They end up in the state file, which is a plaintext copy of everything, sitting in a bucket",
-        "They would be too long",
-        "Terraform cannot read them"
+        "They change too often",
+        "They would be too long"
       ],
       answer: 1,
       why: "Reference a secret manager and let the resource read it at run time." },
@@ -425,39 +510,39 @@ FQ.registerLevel({
 
     { q: "What does canary deployment require that the others do not?",
       options: [
-        "A feature flag service",
+        "A database migration",
         "Per version metrics, so the new version can be compared against the old on live traffic automatically",
-        "Twice the infrastructure",
-        "A database migration"
+        "A feature flag service",
+        "Twice the infrastructure"
       ],
       answer: 1,
       why: "Without them the comparison is somebody squinting at a dashboard during a deploy." },
 
     { q: "Why does a database migration make rollback hard?",
       options: [
-        "Because of replication lag",
+        "Because backups take time",
         "Because the old code can meet a schema it has never seen, so code and migration must not deploy together",
-        "Migrations are slow",
-        "Because backups take time"
+        "Because of replication lag",
+        "Migrations are slow"
       ],
       answer: 1,
       why: "Expand and contract exists so that every intermediate state works with both versions of the code." },
 
     { q: "Why must a feature flag be read at request time rather than at start?",
       options: [
+        "To reduce load on the flag service",
         "Because flags change rarely",
-        "It is faster",
         "Because otherwise turning a flag off requires a restart, which removes the point of having it",
-        "To reduce load on the flag service"
+        "It is faster"
       ],
       answer: 2,
       why: "And it should default to off, so an unreachable flag service leaves the new path dark." },
 
     { q: "Compute was sized for 200 payments a second while the average is 50. What does that tell you about the bill?",
       options: [
+        "That the service is inefficient",
         "That the average should be measured differently",
         "Nothing, peak sizing is required",
-        "That the service is inefficient",
         "That most of the compute line is idle capacity, which is the first place to look before cutting anything that removes headroom"
       ],
       answer: 3,
@@ -465,8 +550,8 @@ FQ.registerLevel({
 
     { q: "Why compute a cost per payment at all?",
       options: [
-        "To choose a cloud provider",
         "For the finance team's report",
+        "To choose a cloud provider",
         "Because it is required for compliance",
         "So you can compare infrastructure cost against the processing fee and say how much of the margin it takes"
       ],
@@ -490,6 +575,11 @@ FQ.registerLevel({
       'A table of your pipeline step timings, and at least one step you made faster with the reason',
       'Terraform for the database, cache, queue and alarms, with remote state and environment variables for sizing',
       'A destroy and rebuild of staging from the repository alone, timed',
+      'At least one service running on a real cloud account, or a written substitution naming the local equivalent of each managed service',
+      'An IAM role with the narrowest policy that works, and no long lived access key anywhere in the repository or the environment',
+      'A database with no public address, reachable only from the service security group',
+      'A billing alarm created before any other resource, with the threshold you chose',
+      'One component deployed to a local Kubernetes cluster, with a manifest you wrote and can explain line by line',
       'Blue green deployment with a health check that keeps a broken version from receiving traffic',
       'A timed rollback, measured from decision to first healthy response',
       'A feature flag service read at request time, defaulting to off, with a kill switch on the payout path',
@@ -513,6 +603,9 @@ FQ.registerLevel({
       'The image that integration tests ran against is the image that deploys',
       'A terraform plan against an untouched environment shows no changes',
       'Staging can be destroyed and rebuilt from the repository alone',
+      'No long lived cloud access key exists in the repository, the environment or the shell profile',
+      'The database refuses a connection from outside its security group',
+      'The Kubernetes readiness probe removes a pod from the Service while its dependency is unavailable',
       'A deliberately broken version deployed to the idle side receives no traffic',
       'A rollback completes within the time stated in your README',
       'Turning off the payout kill switch stops payouts without a deploy',
@@ -521,7 +614,7 @@ FQ.registerLevel({
     rubric: [
       { pts: 20, t: 'The artefact', d: 'Multi stage, ordered layers, non root, pinned, health checked, with sizes and build times reported.' },
       { pts: 20, t: 'The gate', d: 'Fast, deterministic, builds once, cannot be walked around, with step timings and one improvement.' },
-      { pts: 20, t: 'Infrastructure', d: 'Terraform with remote state, a clean plan, and staging rebuilt from the repository.' },
+      { pts: 20, t: 'Infrastructure', d: 'Terraform with remote state, a clean plan, staging rebuilt from the repository, roles rather than keys, and a private database.' },
       { pts: 25, t: 'Deploy and undo', d: 'Blue green, a timed rollback, flags with a kill switch, and a migration rollback proven mid flight.' },
       { pts: 15, t: 'Cost', d: 'A real cost model, a per payment number, and a defensible answer on what to cut and what not to.' }
     ],
@@ -538,8 +631,10 @@ FQ.registerLevel({
   faq: [
     { q: 'I cannot run a cloud account. Is this level still worth doing?',
       a: 'Yes. Docker Compose, a local registry and Terraform against a local provider give you the same shapes: an image, a gate, declared infrastructure, two environments and a switch. The reasoning transfers completely, and saying in your README which parts you ran locally is more honest than a screenshot of a console.' },
-    { q: 'Should I use Kubernetes?',
-      a: 'Not for this, and being able to say why is worth more than using it. Kubernetes solves scheduling many services across many machines, and it brings a large amount of operational work with it. Learn containers, health checks, rolling deploys and infrastructure as code first, because those are the concepts Kubernetes automates, and they are also what you will be asked about.' },
+    { q: 'How much Kubernetes do I actually need?',
+      a: 'Enough to read a manifest and name the objects: Pod, Deployment, Service, Ingress, ConfigMap, Secret, probes. Deploy one component to a local cluster you started yourself and stop there. You do not need it to run this platform, and saying so with a reason is a good answer; what is not a good answer is being unable to follow the conversation, because most large payments teams run on it.' },
+    { q: 'Which cloud, and will it cost me money?',
+      a: 'AWS, because it is what most payments employers use and what most job descriptions name. It will cost a little: a small database and a load balancer are a few dollars a day, and a NAT gateway is the line that surprises people. Set a billing alarm before creating anything, stop the database when you are not using it, and delete the environment when the level is finished.' },
     { q: 'How fast should the merge gate be?',
       a: 'Fast enough that people wait for it rather than working around it, which in practice means single digit minutes. Split it if you have to: a fast gate that blocks merging and a fuller suite that blocks deploying.' },
     { q: 'My integration tests are flaky in CI and fine locally',

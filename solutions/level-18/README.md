@@ -42,6 +42,7 @@ mvn verify && java -jar target/payments.jar && python -m bench.compare
 - Both @Transactional traps have failing tests before they have fixes: an internal call that bypasses the proxy, and a checked exception that commits under the default configuration.
 - Testcontainers runs a real Postgres so the level 8 lost update can be reproduced in CI and fixed twice. An in memory database would have passed the test and shipped the bug.
 - The benchmark states its conditions: warmed up, same hardware, same database, and the share of each request that is database time, so the comparison is about the runtime rather than about who wrote the faster query.
+- One component is written in Go rather than a second full port: the webhook sender, with a worker pool of goroutines, a timeout on every call, retries with backoff and jitter, and a graceful shutdown that marks a row published only after the send succeeded. The claim it supports is that an unfamiliar language can be picked up and shipped in, which is what a hiring manager probes, and the README says exactly that rather than claiming a speed result.
 
 ## Where people get stuck
 
@@ -69,6 +70,7 @@ mvn verify && java -jar target/payments.jar && python -m bench.compare
 - The lost update reproduces against a real Postgres and is fixed by both pessimistic and optimistic locking
 - The service refuses to start when a required configuration property is missing
 - A cold start reaches its steady state p99 within the readiness window you configured
+- Killing the Go worker under load loses no webhook and leaves no row marked published that was never sent
 
 ## How it is marked
 
@@ -78,7 +80,7 @@ mvn verify && java -jar target/payments.jar && python -m bench.compare
 | 20 | Types doing work | Records, enums and a sealed interface, with a compile failure demonstrated on purpose. |
 | 20 | Spring used properly | Constructor injection, one error shape, transactions with both traps understood, pool sized with arithmetic. |
 | 20 | Tested against reality | Testcontainers, the level 8 race reproduced and fixed twice, the level 7 suite passing unchanged. |
-| 20 | Measured honestly | Warm up curve, virtual threads with conditions recorded, and a benchmark whose limitations you state. |
+| 20 | Measured honestly | Warm up curve, virtual threads with conditions recorded, a benchmark whose limitations you state, and a Go component whose CV line claims only what it shows. |
 
 ---
 
