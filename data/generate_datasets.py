@@ -719,6 +719,149 @@ def gen_card_events():
           f"{approved} approved ({approved / len(auths):.1%})")
 
 
+# ---------------------------------------------------------------------------
+# LEVEL 10: what the processor says happened, which is never quite what you say
+# ---------------------------------------------------------------------------
+def gen_settlement():
+    """The processor's settlement file for the level 9 week, plus payouts.
+
+    Built from the same events, then made realistic: fees deducted, money
+    settled a day or two after capture, a few lines the ledger has never seen,
+    a few captures that settle later than the file covers, one duplicated line,
+    amounts that differ by rounding on foreign currency, and the chargebacks
+    with their dispute fees. Every break in it is a break somebody has spent a
+    morning on in a real job.
+    """
+    rng = random.Random(SEED + 10)
+
+    source = OUT / "level-09-card-events.csv"
+    events = list(csv.DictReader(source.open(encoding="utf-8")))
+    for e in events:
+        e["amount_minor"] = int(e["amount_minor"])
+        e["at"] = datetime.fromisoformat(e["at"])
+
+    PCT, FIXED = 0.029, 30                      # 2.9% plus 30 cents
+    DISPUTE_FEE = 1500                          # $15.00 per chargeback
+
+    def fee_for(amount):
+        return int(round(amount * PCT)) + FIXED
+
+    rows = []
+    breaks = {"missing_in_ledger": 0, "missing_in_file": 0, "never_settled": 0,
+              "amount": 0, "duplicate": 0, "fx_rounding": 0, "fee_mismatch": 0}
+
+    # a small set of payments the processor settled that the ledger never recorded:
+    # these are the level 9 timeouts that were actually approved at the network
+    timeouts = [e for e in events if e["event"] == "authorize" and e["result"] == "timeout"]
+    ghosts = set(rng.sample([e["payment_id"] for e in timeouts], 37))
+
+    def add(line_id, settled_at, payment_id, kind, gross, fee, currency="USD", note=""):
+        rows.append({
+            "settlement_id": line_id,
+            "settled_at": settled_at.strftime("%Y-%m-%d"),
+            "payment_id": payment_id,
+            "type": kind,
+            "gross_minor": gross,
+            "fee_minor": fee,
+            "net_minor": gross - fee,
+            "currency": currency,
+            "note": note,
+        })
+
+    cutoff = datetime(2026, 7, 20)              # the file covers everything up to here
+
+    # captures the processor simply never settled: real money the merchant is owed
+    captures = [e for e in events if e["event"] == "capture"]
+    never_settled = set(rng.sample([e["event_id"] for e in captures], 12))
+
+    for e in events:
+        if e["event"] not in {"capture", "refund", "chargeback"}:
+            continue
+        settle_days = rng.choices([1, 2, 3], weights=[62, 31, 7])[0]
+        settled = e["at"] + timedelta(days=settle_days)
+        if settled >= cutoff:
+            breaks["missing_in_file"] += 1       # captured, settles after this file
+            continue
+        if e["event_id"] in never_settled:
+            breaks["never_settled"] += 1         # the processor owes this and has not paid
+            continue
+
+        pid = e["payment_id"]
+        amount = e["amount_minor"]
+        line = f"S{len(rows):06d}"
+
+        if e["event"] == "capture":
+            fee = fee_for(amount)
+            currency, note = "USD", ""
+            if rng.random() < 0.0094:            # priced in euros, settled in dollars
+                currency, note = "EUR", "converted at 1.0961"
+                amount = int(round(amount * 1.0961))
+                fee = fee_for(amount) + rng.choice([-1, 1])
+                breaks["fx_rounding"] += 1
+            elif rng.random() < 0.0036:          # the processor charged a different fee
+                fee += rng.choice([-25, -12, 11, 40])
+                breaks["fee_mismatch"] += 1
+            elif rng.random() < 0.0021:          # the processor settled a different amount
+                amount += rng.choice([-100, -1, 1, 250])
+                fee = fee_for(amount)
+                breaks["amount"] += 1
+            add(line, settled, pid, "capture", amount, fee, currency, note)
+
+        elif e["event"] == "refund":
+            add(line, settled, pid, "refund", -amount, 0)
+        else:
+            add(line, settled, pid, "chargeback", -amount, DISPUTE_FEE)
+
+    # lines for payments the ledger never recorded at all
+    for pid in sorted(ghosts):
+        e = next(x for x in events if x["payment_id"] == pid)
+        amount = e["amount_minor"]
+        settled = e["at"] + timedelta(days=2)
+        if settled >= cutoff:
+            settled = cutoff - timedelta(days=1)
+        add(f"S{len(rows):06d}", settled, pid, "capture", amount, fee_for(amount),
+            "USD", "")
+        breaks["missing_in_ledger"] += 1
+
+    # one line the processor sent twice
+    victim = rng.choice([r for r in rows if r["type"] == "capture"])
+    duplicate = dict(victim)
+    duplicate["settlement_id"] = f"S{len(rows):06d}"
+    rows.append(duplicate)
+    breaks["duplicate"] += 1
+
+    rows.sort(key=lambda r: (r["settled_at"], r["settlement_id"]))
+    path = OUT / "level-10-settlement.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+
+    # payouts: one per settlement date, the net of everything settled that day
+    by_day = {}
+    for r in rows:
+        by_day.setdefault(r["settled_at"], []).append(r)
+    payouts = []
+    for day in sorted(by_day):
+        lines = by_day[day]
+        payouts.append({
+            "payout_id": f"PO-{day}",
+            "paid_at": day,
+            "line_count": len(lines),
+            "gross_minor": sum(r["gross_minor"] for r in lines),
+            "fee_minor": sum(r["fee_minor"] for r in lines),
+            "net_minor": sum(r["net_minor"] for r in lines),
+        })
+    ppath = OUT / "level-10-payouts.csv"
+    with ppath.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(payouts[0].keys()))
+        w.writeheader()
+        w.writerows(payouts)
+
+    print(f"{path.name}: {len(rows)} settlement lines, {ppath.name}: {len(payouts)} payouts")
+    print(f"   planted breaks: {breaks}")
+
+
 def gen_fx_snapshot():
     import json
     snapshot = {
@@ -744,5 +887,6 @@ if __name__ == "__main__":
     gen_aml()
     gen_loadtest()
     gen_card_events()
+    gen_settlement()
     gen_fx_snapshot()
     print("done, all datasets are synthetic")

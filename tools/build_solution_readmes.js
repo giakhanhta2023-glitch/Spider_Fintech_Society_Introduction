@@ -218,27 +218,32 @@ const NOTES = {
   },
   10: {
     files: [
-      ['`neobank/`', 'seven service modules, one per domain'],
-      ['`neobank/loaders.py`', 'the only module that touches a file'],
-      ['`app.py`', 'six-section Streamlit dashboard, no business logic'],
-      ['`tests/test_capstone.py`', '38 tests across seven modules'],
-      ['`data/generate.py`', 'regenerates every synthetic dataset']
+      ['`recon/load.py`', 'both sides normalised into one shape, with signs agreed'],
+      ['`recon/match.py`', 'the passes, most certain first, each recording why it matched'],
+      ['`recon/classify.py`', 'break types with owners, and the pending state that is not a break'],
+      ['`recon/payouts.py`', 'every payout tied to the lines that make it up'],
+      ['`recon/fees.py`', 'the contract recomputed, and the effective rate by payment size'],
+      ['`recon/queue.py`', 'stable break ids, first seen, last seen, owner, status'],
+      ['`recon/report.py`', 'the daily report a finance team signs']
     ],
-    run: 'pip install -r requirements.txt && python data/generate.py && pytest -q && streamlit run app.py',
+    run: 'python -m recon.report --settlement data/level-10-settlement.csv --ledger data/level-09-card-events.csv',
     design: [
-      'Dependencies run one way only: `app.py` calls services, services call `loaders`, and nothing calls upward. Two greppable rules enforce it: no `streamlit` anywhere in `neobank/`, and no `read_csv` outside `loaders.py`. Both are asserted.',
-      '`ledger.statement()` returns rows instead of printing them. That single change is the layer boundary made concrete: the service produces data, the interface decides how it looks.',
-      '`loaders.py` anchors paths to its own file location and validates the schema on load, so a malformed CSV fails immediately with a clear message rather than producing a wrong number ten functions later.',
-      'Reconciliation compares the ledger against an external statement and reports breaks without auto-adjusting anything. A break is a bug, a timing difference, or fraud, and silently "fixing" it destroys the evidence.',
-      'The test suite leads with invariants and refusals, because those are the properties that make a money system trustworthy.'
+      'Both sides are normalised before anything is compared. Signs are the first trap: the file writes a refund as negative gross and the ledger writes it as a positive refund event, and a single convention chosen at the boundary removes a whole class of confusion.',
+      'Matching runs in passes from certain to probable, and every automatic match records the rule that made it. A match nobody can explain later is not evidence.',
+      'pending_settlement is a classification, not a break. The settlement window is configuration, because the day a processor changes its timing every capture in the country looks broken at once.',
+      'The five results on the shipped data: 16,408 matched exactly, 193 amount mismatches worth $1,180.96 of which 163 are currency rounding, one duplicated line, 37 movements in the file with no ledger record worth $3,116.61, and 12 captures the processor never settled worth $1,690.07.',
+      'The 37 are resolved at the cause rather than by insertion. Every one is a level 9 authorisation that timed out and was approved anyway, so the fix is the resolver, and the break disappears because the entry now exists for a reason.',
+      'Fees are recomputed from the contract rather than trusted. 2.9% plus 30 cents comes out at an effective 3.2851% across the file, and the fixed part is the whole story: 7.03% under $10 against 2.99% over $200.',
+      'Breaks carry an id derived from what they are about, so the job is safe to run twice. A reconciliation that cannot be rerun will be run once, badly, by somebody in a hurry.'
     ],
     mistakes: [
-      ['`ModuleNotFoundError: neobank`', 'Run from the project root, the folder containing `app.py`.'],
-      ['Data file not found', '`python data/generate.py` first.'],
-      ['A service needs a DataFrame it cannot get', 'It is asking for data. Add a loader and pass the result in; do not read the file from the service.']
+      ['The match rate is far below 99%', 'Usually keys or signs. Print ten unmatched rows from each side side by side.'],
+      ['Thousands of breaks on the most recent day', 'Timing counted as breaks. Anything inside the settlement window is pending.'],
+      ['Rerunning the job doubles the queue', 'Break ids are generated from the run rather than from the break.'],
+      ['The payout totals do not tie', 'A duplicated line counted once in one place and twice in another, or a date parsed in the wrong timezone.'],
+      ['A break was closed to make the report clean', 'That is a plug. Leave it open, aged and owned, and write down what has been checked.']
     ]
   },
-
   11: {
     files: [
       ['`schema.sql`', 'tables, constraints, the deferred balancing trigger, the balance trigger'],

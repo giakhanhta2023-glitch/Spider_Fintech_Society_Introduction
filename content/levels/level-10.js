@@ -1,571 +1,589 @@
 /* =========================================================================
-   Level 10: capstone, the whole system
+   LEVEL 10: reconciliation
    ========================================================================= */
 FQ.registerLevel({
   id: 10,
-  codename: 'capstone',
-  title: 'Compliance, architecture and the capstone build',
-  tagline: 'Nine levels of parts become one system, with one README and a link worth putting on your CV.',
-  difficulty: 10,
-  minutes: 300,
-  tags: ['architecture', 'RegTech', 'documentation', 'capstone'],
-  summary: 'The final level covers the two things that separate a student project from a professional one (compliance ' +
-           'awareness and architecture) then asks you to assemble everything you have built into a single coherent product.',
+  codename: 'reconcile',
+  title: 'The processor says one thing, your ledger says another',
+  tagline: 'Every payments company runs this job before anybody arrives in the morning. 16,639 settlement lines against your own books, and the 49 that do not match are the entire job.',
+  difficulty: 8,
+  minutes: 420,
+  tags: ['reconciliation', 'settlement', 'fees', 'payouts'],
+  summary: 'Money you think you have and money that actually arrived are different numbers, and the difference has to be ' +
+           'explained to the cent every single day. This level builds the engine: load the processor\'s settlement file, ' +
+           'match it against the level 9 ledger, classify every break, and produce the report a finance team signs off. ' +
+           'The shipped file has real breaks planted in it, including 37 payments the processor paid you for that your ' +
+           'system has never heard of.',
 
   objectives: [
-    'Describe the compliance obligations a product that handles money carries: KYC, AML, PII, retention',
-    'Design a layered architecture and explain why the layers exist',
-    'Structure a multi-module Python project that a stranger can run',
-    'Write a README that gets your work taken seriously in thirty seconds',
-    'Integrate ledger, analytics, lending, risk and fraud into one application',
-    'Present the result honestly, including what it does not do'
+    'Explain what reconciliation is and why it runs every day',
+    'Read a settlement file: gross, fee, net, and what the merchant actually receives',
+    'Work out an effective fee rate, and why small payments cost so much more',
+    'Match two sets of records and handle the ones that do not match',
+    'Classify a break by cause and owner, rather than calling it a difference',
+    'Recognise a timing difference and stop it becoming an investigation',
+    'Refuse to make the numbers agree by force, and know why that matters'
   ],
 
   knowledge: [
-    { h: 'The rules you are building inside' },
-    { p: 'Handling other people\'s money is one of the most tightly regulated things a business can do. You do not need to ' +
-         'be a lawyer, but building a money product without knowing these four obligations is how teams get shut down. Each ' +
-         'one turns into code:' },
+    { h: 'Two records of the same money' },
+    { p: 'Level 9 built a service that knows every payment it processed. That service is confident, detailed and wrong at ' +
+         'the edges, because it only knows what it was told. Somebody else also knows: the processor that actually moved ' +
+         'the money, and the bank that received it.' },
     { table: {
-      head: ['Obligation', 'In plain words', 'What it means in your code'],
+      head: ['Source', 'What it knows', 'What it does not'],
       rows: [
-        ['**KYC**, know your customer', 'Check who someone is before they can hold money', 'A sign-up process with stages, and no payments until the person is verified'],
-        ['**AML**, anti-money-laundering', 'Spot and report money that looks like it comes from crime', 'Rules that watch payments, alerts, and records of what was investigated'],
-        ['**Data protection**', 'Collect little personal data, keep it safe, use it only for what you said', 'Store less, encrypt it, limit who can read it, record who did'],
-        ['**Audit and record keeping**', 'Be able to show, years later, exactly what happened and why', 'Records that are only ever added to, never changed, with versioned rules']
+        ['**Your ledger**', 'Every payment you tried and what you recorded', 'Anything that happened when your request timed out'],
+        ['**The processor\'s settlement file**', 'Every payment they actually processed, and what they charged you', 'Why you thought something should have happened'],
+        ['**Your bank statement**', 'Money that truly arrived in your account', 'Anything about individual payments']
       ]
     }},
-    { p: 'KYC in a real app is a sequence of states a new customer moves through, and the code refuses to skip any:' },
-    { code: 'signed_up  ->  documents_submitted  ->  verified  ->  active\n                      |\n                      +->  rejected\n\nOnly "active" customers can receive or send money.', lang: 'text', label: 'a KYC process' },
-    { p: 'And AML means watching for patterns, not single payments. A classic one: somebody deposits $9,500 in cash on ' +
-         'Monday, $9,600 on Tuesday and $9,400 on Wednesday. Each is below $10,000, the cash amount at which a US bank must file a report, which is ' +
-         'exactly the point, and exactly what an AML rule looks for. Level 19 builds a full monitoring system.' },
-    { p: 'Notice how much of this is **engineering** rather than paperwork. Keeping every record, never overwriting history, ' +
-         'and being able to explain every decision are choices you make in the first week of a project. Adding them later is ' +
-         'close to impossible, which is why they belong in your capstone from the first commit.' },
-    { check: {
-      q: 'Your project keeps a balance column it updates on each payment, and one KYC status per customer that it overwrites. ' +
-         'Someone asks what the balance was on 3 March and who approved that verification. What can you tell them?',
-      a: 'Nothing, and no amount of careful work will recover it. Both tables hold only the present, so every earlier state ' +
-         'was written over the moment it changed. A ledger of entries that are only ever added to answers the first question, ' +
-         'by adding up entries to that date. A status table with one row per change, each stamped with who and when, answers ' +
-         'the second. That is why these go in at the first commit: history you never stored cannot be recovered later, only ' +
-         'made up.'
-    }},
+    { p: '**Reconciliation** is comparing these and explaining every difference. Not resolving, not adjusting: explaining. ' +
+         'It runs daily in every company that touches money, and it is the job that catches bugs, fraud and processor ' +
+         'errors before anybody else does.' },
+    { money: 'This is also the work most engineering candidates have never seen, which is why it is worth having. Every ' +
+             'payments company has a reconciliation team and most of them are short of engineers who understand it. Saying ' +
+             '"I built a reconciliation engine and here are the five break types it found" is unusual and specific.' },
 
-    { h: 'Personal data: the information that changes your obligations' },
-    { p: '**PII**, personally identifiable information, is anything that can identify a real person. Some of it is obvious. ' +
-         'Some of it only identifies someone in combination:' },
-    { table: {
-      head: ['Obviously PII', 'PII in combination'],
-      rows: [
-        ['Full name', 'Postcode'],
-        ['Home address', 'Date of birth'],
-        ['National ID or passport number', 'Gender'],
-        ['Full card number', 'Employer and job title'],
-        ['Phone number, email', 'The exact times someone buys coffee']
-      ]
-    }},
-    { p: 'The right-hand column is the one people underestimate. A well-known study in 2000 estimated that about 87% of the US ' +
-         'population could be picked out uniquely by just postcode, date of birth and gender together.' },
-    { p: 'Five habits cover most of what you owe:' },
+    { h: 'What a settlement file looks like' },
+    { p: 'The shipped file covers the level 9 week and the two months of refunds and disputes that followed: **16,639 ' +
+         'lines**, 15,868 captures, 692 refunds and 79 chargebacks. Each line is one movement of money, from the ' +
+         'processor\'s point of view:' },
+    { code: 'settlement_id,settled_at,payment_id,type,gross_minor,fee_minor,net_minor,currency,note\nS000412,2026-05-06,P000817,capture,7140,237,6903,USD,\nS001904,2026-05-09,P004412,refund,-4500,0,-4500,USD,\nS009233,2026-06-14,P002187,chargeback,-8800,1500,-10300,USD,', lang: 'text' },
     { ul: [
-      '**Collect less.** Do not store what you do not need. The safest personal data is the field you never stored.',
-      '**Mask what you show.** Display `**** 4471`, not the full card number. The full number, called the **PAN**, is covered ' +
-      'by its own strict security standard, **PCI DSS**, and storing it pulls your whole system under those rules.',
-      '**Keep it apart.** Store who a person is in one place and what they did in another, linked by a meaningless id such as ' +
-      '`C0381`, so a leak of one is less harmful.',
-      '**Delete on schedule.** Decide how long you keep each kind of record, and actually delete it when the time is up.',
-      '**Record who looked.** In a regulated system, reading personal data is an event worth recording, not just changing it.'
+      '**gross** is the amount of the payment.',
+      '**fee** is what the processor charged you for handling it.',
+      '**net** is what you actually receive: gross minus fee. This is the number that reaches your bank.',
+      'A **negative gross** is money going the other way: a refund or a chargeback.'
     ]},
-    { check: {
-      q: 'A teammate wants to store the full card number so the profile page can show it. Talk them out of it, or agree with ' +
-         'them, using the five habits above.',
-      a: '"Collect less" decides it. The page shows `**** 4471`, so what it needs is the last four digits, and storing sixteen ' +
-         'to display four is keeping data you have no use for. The cost is real: a stored full card number puts the whole ' +
-         'system under PCI DSS, with the audits, key management and breach exposure that follow, for a feature nobody asked ' +
-         'for. The safest field is still the one you never stored.'
-    }},
-    { warn: 'Never commit real personal data to a repository, even a private one, even for a minute. Every dataset in this ' +
-            'course is made up for exactly this reason, and your capstone must be too. If you want realistic data, generate it.' },
-    { check: {
-      q: 'You export a dataset for a coursework partner, removing names, emails and account numbers, and leaving postcode, ' +
-         'date of birth and gender. Is that export anonymous?',
-      a: 'No. Those three fields together identify a large share of any population, as the 2000 study showed, and a partner ' +
-         'who holds an electoral roll or a marketing list can put the names back. Whether someone can be identified depends on ' +
-         'your file plus everything else that exists, so removing the obvious columns is not enough. Either group the rows ' +
-         'into totals, blur the fields (year of birth instead of date, the first half of the postcode), or generate made-up ' +
-         'data, which is what this course does and what your capstone should do.'
-    }},
+    { p: 'Note the chargeback line. The payment comes back, **and** a $15.00 dispute fee is charged, so a disputed $88.00 ' +
+         'sale costs the merchant $103.00. Across the file, disputes cost $1,185.00 in fees alone.' },
 
-    { h: 'Open banking, and what consent means' },
-    { p: 'In the UK, the EU and a growing list of other countries, the law makes banks share a customer\'s data with other ' +
-         'apps **when the customer agrees**. That is how a budgeting app can read your bank payments without ever asking for ' +
-         'your bank password. Level 18 builds one.' },
-    { p: 'The idea to carry into everything you build is what "agreeing" has to mean. Proper **consent** has four properties:' },
+    { h: 'The fee is not the rate you were quoted' },
+    { p: 'This processor charges **2.9% plus 30 cents** per capture, which is roughly the public price of every card ' +
+         'processor you have heard of. Across the whole file the fees come to **$41,817.30** on **$1,182,568.81** of gross, ' +
+         'an effective rate of **3.2851%**. The 30 cents is why. Split the captures by size:' },
     { table: {
-      head: ['Consent must be', 'Meaning'],
+      head: ['Payment size', 'Count', 'Gross', 'Effective fee rate'],
       rows: [
-        ['**Explicit**', 'The person actively said yes to this specific thing'],
-        ['**Scoped**', 'It covers only what was asked for: one account, not all of them'],
-        ['**Time limited**', 'It ends on a known date, often after 90 days, unless renewed'],
-        ['**Revocable**', 'The person can withdraw it whenever they like, easily']
+        ['Under $10', '568', '$4,122.57', '**7.03%**'],
+        ['$10 to $50', '7,021', '$205,204.76', '3.93%'],
+        ['$50 to $200', '7,221', '$688,114.54', '3.21%'],
+        ['Over $200', '1,058', '$339,419.42', '2.99%']
       ]
     }},
+    { p: 'A $5.89 payment pays 47 cents in fees: **8.0%**. The same percentage rate costs a small merchant more than twice ' +
+         'what it costs a large one, entirely because of a fixed 30 cents. This is why micropayments are hard, why ' +
+         'businesses batch small charges into one monthly bill, and why "2.9% plus 30 cents" is a more interesting sentence ' +
+         'than it looks.' },
+    { p: 'In the ledger the fee is its own entry, exactly as in level 4: customer out, merchant in, fee to the processor\'s ' +
+         'revenue account, and the whole transaction sums to zero. If your ledger only records the net, you have lost the ' +
+         'fee, and your merchant cannot see what they are paying.' },
     { check: {
-      q: 'Your app asks for access to every account a member holds, stores the access pass, and keeps renewing it quietly ' +
-         'after they stop using the product. Which parts of that consent standard have you broken?',
-      a: 'Three of the four. Scoped: you asked for every account when the budgeting feature reads one. Time limited: a pass ' +
-         'that renews itself has no end. Revocable: nothing in the product lets them stop it, and a member who cannot find ' +
-         'the off switch has not really agreed to what follows. Only explicit survives, and in its weakest form, a single ' +
-         'screen at sign-up. The fix is product work rather than clever code: ask for less, let it expire, and put a ' +
-         'disconnect button where it can be found.'
+      q: 'A merchant complains that your reported revenue is higher than the money in their bank account, and accuses your ' +
+         'system of inventing sales. Explain the gap without looking at any data.',
+      a: 'You are almost certainly reporting gross and they are looking at net. On this file the gap is $41,817.30 of fees ' +
+         'on $1,182,568.81 of sales, so around 3.3% of everything. Two other things widen it: refunds and chargebacks are ' +
+         'deducted from later payouts rather than from the sale they relate to, and money settles a day or two after the ' +
+         'capture, so the last day or two of sales has not arrived yet. The fix is a report that shows gross, fees, refunds ' +
+         'and net as separate lines rather than one number, which is exactly the report this level ends with.'
     }},
 
-    { h: 'Architecture: layers, and why they exist' },
-    { p: 'By now your code does five different jobs: showing pages, applying money rules, loading data, saving it, and ' +
-         'testing it. **Architecture** is the decision about how those pieces are arranged and which may talk to which. The ' +
-         'standard answer is **layers**:' },
-    { code: 'interface        Streamlit pages, command line, API endpoints\n     |           (no money rules here: just take input and show results)\nservices         ledger, lending, risk, fraud, fx\n     |           (the rules. Pure functions where possible. Fully tested)\ndata             loaders, input checks, data generators\n     |           (everything that touches a file or the network)\nstorage          CSV files, a SQLite database, the ledger\'s entry log', lang: 'text', label: 'four layers' },
-    { p: 'Follow one click through it. A member presses "Send $25". The **interface** reads the form and calls ' +
-         '`ledger.transfer("alice", "bob", 2500)`. The **service** checks the rules: enough money, both accounts exist. It asks ' +
-         'the **data** layer to save two entries, which writes them to **storage**. The answer travels back up, and the ' +
-         'interface shows "Sent".' },
-    { p: 'The one rule: **higher layers may call lower ones, never the other way round.** The ledger must not know a Streamlit ' +
-         'page exists. Keep to that and you can swap the interface for an API, test the rules without a browser, and think ' +
-         'about one layer at a time. Break it and everything becomes one tangle that can only be tested by clicking.' },
-    { table: {
-      head: ['Warning sign', 'What it means'],
-      rows: [
-        ['A calculation calls `st.write`', 'Screen code has leaked into the rules'],
-        ['A service opens a CSV file itself', 'Data loading has leaked into the rules'],
-        ['A test needs a browser to run', 'The rules are trapped inside the screen'],
-        ['Changing a chart breaks the ledger', 'There are no layers at all']
-      ]
-    }},
-    { check: {
-      q: '`fraud.py` opens `data/level-08-transactions.csv` using that relative path, and it works. Name two things it has ' +
-         'quietly broken.',
-      a: 'Anyone running the program from a different folder, because a relative path is looked up from wherever the program ' +
-         'was started, not from where `fraud.py` lives. And the tests, which now cannot check the scoring rules without that ' +
-         'CSV sitting in the right place, so a small test depends on a file on disk. Both come from one broken rule: a service ' +
-         'reached down into data loading. Pass the table in, or call a loader, and the rules become testable with four rows ' +
-         'written by hand.'
-    }},
+    { h: 'Payouts, and the day the merchant owes you money' },
+    { p: 'The processor does not send money per payment. It batches everything that settled on a day and sends one ' +
+         '**payout**. The shipped file has **59 payouts**, one per settlement date:' },
+    { code: '2026-05-05  lines   662  net $   51,709.53\n2026-05-06  lines  1563  net $  120,348.14\n...\n2026-05-18  lines    47  net $   -1,394.92\n2026-05-19  lines    39  net $   -2,953.72', lang: 'text' },
+    { p: 'Read the last two lines. **46 of the 59 payout days are negative**, totalling **-$36,883.51**. This merchant sold ' +
+         'for one week and then spent two months refunding and losing disputes, so on those days the refunds going out are ' +
+         'larger than the sales coming in.' },
+    { p: 'A negative payout means the processor takes money **from** the merchant\'s bank account rather than sending it. ' +
+         'If that fails, the merchant now owes the processor money, and this is one of the main ways a payments company ' +
+         'loses money: a merchant collects payments, the customers dispute them months later, and by then the merchant has ' +
+         'gone. That risk is why onboarding asks so many questions, and why processors hold reserves.' },
 
-    { h: 'A project a stranger can find their way around' },
-    { p: 'Here is how the capstone is laid out. Each file maps to a level you already finished:' },
-    { code: 'neobank/\n  README.md            <- the front door\n  requirements.txt\n  .gitignore\n  app.py               <- the Streamlit page\n  neobank/\n    __init__.py\n    ledger.py          <- level 4\n    analytics.py       <- level 3\n    lending.py         <- levels 2 and 6\n    risk.py            <- level 7\n    fraud.py           <- level 8\n    fx.py              <- level 5\n    loaders.py         <- all data loading, in one place\n  data/                <- made-up CSVs only\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_fraud.py\n  docs/\n    architecture.md\n    screenshots/', lang: 'text' },
-    { tip: 'A folder containing a file called `__init__.py` is a **package**: Python treats the folder as one importable unit, ' +
-           'so `from neobank.ledger import Ledger` works from anywhere in the project. One file per topic, named so a reviewer ' +
-           'knows where to look.' },
-
-    { h: 'The README is the product' },
-    { p: 'The **README** is the page GitHub shows first when someone opens your repository. A reviewer gives it about thirty ' +
-         'seconds before deciding whether to read any code. Spend those thirty seconds well, in this order:' },
+    { h: 'Matching: the part that is harder than it sounds' },
+    { p: 'Reconciliation is a matching problem. For each line in the file, find the thing in your ledger that it refers ' +
+         'to, and check they agree. Three things make it hard:' },
     { ol: [
-      '**One sentence** saying what it is and who it is for.',
-      '**A live link and a screenshot**: the fastest proof that it is real.',
-      '**Features**: five or six bullets of what it actually does.',
-      '**Architecture**: the layer diagram and one line per file.',
-      '**Run it yourself**: commands that work when copied, in order.',
-      '**Tests**: how to run them, and what passes.',
-      '**Data**: said plainly to be made up, with the script that generates it.',
-      '**Limitations and next steps**: what it does not do yet. The section that marks you out as serious.'
+      '**The two sides use different identifiers.** You call it `P000817`, they call it `S000412`, and the only link is a ' +
+      'reference somebody remembered to send. This is exactly why level 9 insisted on sending your own reference with every ' +
+      'network message.',
+      '**One is not always one.** A payment can settle in parts, several payments can arrive in one line, and a refund ' +
+      'relates to a capture that settled weeks earlier.',
+      '**Both sides are moving.** The file is a snapshot of a period, your ledger is live, and the last few hours of ' +
+      'activity are in one and not the other.'
     ]},
-    { money: 'That last section is the one people skip and the one interviewers notice. Writing "this ledger runs in one ' +
-             'process and would need database locking to handle two writers at once" tells a reviewer you know the difference ' +
-             'between a demo and a real system. Claiming it is ready for real customers when it is not does the opposite.' },
-    { check: {
-      q: 'Your ledger is a Python list inside one running program. Does that belong in the README, and if so, how do you ' +
-         'word it?',
-      a: 'It belongs under limitations, written as the consequence rather than the fact: two programs writing at once could ' +
-         'interleave their entries and the sum-to-zero rule could no longer be guaranteed, so this build runs as a single ' +
-         'program by design and would need database locking to go further. A reviewer reading that learns you know where the ' +
-         'edge is. The same reviewer reading "production ready" over the same code learns something worse, and finds the list ' +
-         'in about a minute.'
-    }},
-
-    { h: 'Reconciliation: checking your books against someone else\'s' },
-    { p: 'Every real money system runs a daily job called **reconciliation**: compare your own records with an independent ' +
-         'source, such as the bank\'s statement, and explain every difference. A difference is called a **break**. Here is ' +
-         'one, explained line by line:' },
+    { p: 'So a matching engine works in passes, from the most certain to the least, and anything still unmatched at the end ' +
+         'becomes a **break** for a human:' },
     { table: {
-      head: ['', 'Amount'],
+      head: ['Pass', 'Rule', 'Confidence'],
       rows: [
-        ['Your ledger says the account holds', '$12,430.00'],
-        ['The bank statement says', '$12,380.00'],
-        ['Break to explain', '**$50.00**'],
-        ['A $12.50 monthly bank fee, on the statement but never recorded in your ledger', '-$12.50'],
-        ['A $37.50 card payment the bank processed today; your ledger will record it tomorrow', '-$37.50'],
-        ['Left unexplained', '**$0.00**']
+        ['1', 'Exact reference and exact amount', 'Certain, match automatically'],
+        ['2', 'Exact reference, amount differs', 'Matched, and flagged as an amount break'],
+        ['3', 'No reference: same amount, same day, same last four digits', 'Probable. Match, and record why'],
+        ['4', 'Anything left', 'A break. A person looks at it']
       ]
     }},
-    { p: 'The fee is a genuine gap: you post it to the ledger, with a note. The card payment is a **timing difference**: both ' +
-         'sides will agree by tomorrow, and you check that they do. Only when every dollar has a reason is the reconciliation ' +
-         'finished.' },
-    { code: 'internal = sum of every ledger entry for the account\nexternal = closing balance on the statement\nbreak    = internal - external\n\nif break != 0:\n    find each cause, label it, and record the explanation', lang: 'text' },
-    { p: 'Even a simple reconciliation check puts your capstone ahead of most student projects, because it shows you ' +
-         'understand that a ledger is only trustworthy when something independent agrees with it.' },
+
+    { h: 'What the engine found' },
+    { p: 'Run against the level 9 ledger, the reconciliation comes out like this. These are the real results, and every one ' +
+         'of the five break types is a different problem with a different owner:' },
+    { table: {
+      head: ['Result', 'Count', 'Value', 'What it means'],
+      rows: [
+        ['Matched exactly', '**16,408**', '', 'Nothing to do'],
+        ['Amount mismatch', '193', '$1,180.96', 'Mostly currency rounding, a few real differences'],
+        ['Duplicate line in the file', '1', '', 'The processor sent the same line twice'],
+        ['**In the file, not in your ledger**', '**37**', '**$3,116.61**', 'They processed payments you have no record of'],
+        ['**In your ledger, not in the file**', '**12**', '**$1,690.07**', 'You captured money they never paid you']
+      ]
+    }},
+    { p: 'The last two rows are the ones that matter, and they fail in opposite directions.' },
+    { p: '**The 37.** Every one of them is a level 9 payment where the authorisation request timed out. Your service never ' +
+         'knew whether the issuer approved it, the issuer did, and the processor duly took the money and paid it to the ' +
+         'merchant. Without this job, $3,116.61 sits in a merchant\'s account with nothing in your system to explain it, and ' +
+         'no way to answer a customer asking what the charge was.' },
+    { p: '**The 12.** You captured $1,690.07 and the processor has not settled it. Sometimes that is timing. Sometimes the ' +
+         'capture never actually reached them. Occasionally it is money you are simply owed and nobody noticed. This is the ' +
+         'break type that pays for the whole job.' },
     { check: {
-      q: 'Your ledger says an account holds $12,430.00 and the bank statement says $12,380.00. Before you have looked at any ' +
-         'entries, what do you do about the $50 difference?',
-      a: 'Explain it before you touch anything. It could be a timing difference (something recorded on one side that the other ' +
-         'records tomorrow), a fee that was never recorded, or a bug, and all three look identical until you read the entries. ' +
-         'What you never do is adjust the ledger until the numbers agree. If a fee was missed, post the fee with a note saying ' +
-         'so; if the code is wrong, fix the code and let the correcting entry stand. A silent adjustment destroys the evidence ' +
-         'and makes the next break impossible to trust, which is exactly why fraudsters like them.'
+      q: 'Your reconciliation finds 37 payments in the processor\'s file that your ledger has never seen, all from last ' +
+         'Tuesday. A colleague suggests inserting them into the ledger so the report balances. What do you do instead?',
+      a: 'Find out what they are first, because inserting them would destroy the evidence. Here the cause is knowable: ' +
+         'every one is a payment whose authorisation timed out, so the ledger holds an unknown and the processor holds a ' +
+         'completed payment. The right sequence is to resolve each unknown through the level 9 resolver, which moves it to ' +
+         'authorised with the processor\'s reference, then let the normal capture flow post the entries, and then rerun the ' +
+         'reconciliation and watch the break disappear on its own. The rule, worth saying out loud in an interview: you ' +
+         'never write an entry to make a reconciliation balance. You write an entry because something happened, and the ' +
+         'reconciliation balances as a consequence.'
     }},
 
-    { h: 'Ethics is a design decision' },
-    { p: 'You have now built things that decide who gets a loan and whose card gets blocked. Three questions belong in your ' +
-         'capstone report, and in every design meeting you will ever attend:' },
-    { ul: [
-      '**Who is harmed if this is wrong?** A false fraud flag strands someone at a checkout with no other way to pay.',
-      '**Can the person affected find out why?** If your answer is "the model decided", you have built something you cannot ' +
-      'defend.',
-      '**Who does this work badly for?** Systems built around the average customer fail first for people with little credit ' +
-      'history, people new to the country, and people whose income arrives irregularly.'
+    { h: 'Timing differences are not breaks' },
+    { p: 'The most common false alarm: a capture from this afternoon that settles tomorrow is in your ledger and not in ' +
+         'today\'s file. Nothing is wrong. Treating those as breaks buries the real ones, and a queue full of noise is a ' +
+         'queue nobody reads.' },
+    { p: 'The engine needs a rule, written down: an unmatched capture younger than the processor\'s settlement window is ' +
+         '**pending**, not a break. It only becomes a break when it is older than the window plus a margin you chose. The ' +
+         'shipped file settles one to three days after capture, so anything unmatched after four days is worth a person\'s ' +
+         'attention.' },
+    { warn: 'Make the window a configured number, not a magic constant in an `if`. Processors change their settlement ' +
+            'timing, and the day yours does, every capture in the country looks like a break at once.' },
+
+    { h: 'Tolerance, and the difference between explaining and hiding' },
+    { p: 'Of the 193 amount mismatches, 163 are foreign currency lines: payments priced in euros and settled in dollars, ' +
+         'where the conversion leaves a cent or two of difference. The whole 193 are worth $1,180.96, against a file of ' +
+         '$1.18 million.' },
+    { p: 'It is tempting to add a rule that ignores differences under, say, five cents. That is acceptable **only** if all ' +
+         'three of these are true:' },
+    { ol: [
+      '**The tolerance is written down**, with the reason, and approved by whoever owns the money.',
+      '**Every tolerated difference is still recorded**, counted and totalled, so a systematic drift is visible even while ' +
+      'no single case is investigated.',
+      '**The total is watched.** A thousand one-cent differences all in the same direction is a bug rather than rounding, and a ' +
+      'tolerance that hides it is worse than no reconciliation at all.'
     ]},
-    { check: {
-      q: 'Take the first question seriously for one case: your fraud score blocks a member\'s card at a supermarket till, ' +
-         'wrongly. What does "who is harmed if this is wrong" change in the code you write?',
-      a: 'It turns into features with owners. A phone notification that arrives before they reach the front of the queue, ' +
-         'saying what was blocked and offering one tap to confirm it was them. A way to reach a human, with a stated response ' +
-         'time, that does not need an account number they cannot get to. A recorded reason for the block, in words, so ' +
-         'support can say more than "the system declined it". None of that is ethics as a paragraph at the end of a report. ' +
-         'It is the difference between a decline that costs a member ten seconds and one that leaves them with a full trolley ' +
-         'and no way to pay.'
+    { p: 'The general rule: a tolerance may stop you **investigating** a difference. It must never stop you **seeing** it.' },
+
+    { h: 'Never plug the gap' },
+    { p: 'A **plug** is an adjusting entry posted for no reason except to make two numbers agree. It is the single most ' +
+         'dangerous thing in this level, and it is always tempting at 6pm on a Friday.' },
+    { table: {
+      head: ['Situation', 'The plug', 'What to do instead'],
+      rows: [
+        ['A fee is higher than expected', 'Adjust the fee entry to match', 'Post the fee the processor actually charged, and raise a query with them'],
+        ['A payment is in the file and not the ledger', 'Insert it', 'Find out why it is missing, fix the cause, let the entry follow'],
+        ['A small difference persists', 'Write it off silently', 'Record it as a tolerated difference, with a total somebody watches'],
+        ['You cannot work it out today', 'Force it to balance', 'Leave the break open, aged, with an owner. Unexplained is a valid state']
+      ]
     }},
-    { p: 'Writing these answers down is not decoration. It is the difference between an engineer who ships features and one ' +
-         'who can be trusted with a product that touches people\'s money.' }
+    { p: 'The reason is not tidiness. A plug removes the evidence that something is wrong, so the next occurrence of the ' +
+         'same bug has nothing to attach to, and a pattern that would have been obvious across a month becomes invisible. ' +
+         'Fraud investigators look for plugs first, because that is where people hide things.' },
+    { check: {
+      q: 'A break has been open for eleven days: $412.00 that the processor settled and your ledger does not have. Nobody ' +
+         'has worked out why. What is the right state for it to be in, and what should be true about it?',
+      a: 'Open, aged eleven days, assigned to somebody by name, with a value and a written record of what has been checked ' +
+         'so far. Unexplained is a legitimate state for a break to be in; unowned and unaged is not. What must also be true ' +
+         'is that it is visible: an aging report that shows breaks by age and value, reviewed at a set time each week, so ' +
+         'that one at eleven days is a conversation rather than a discovery. The instinct to make it disappear is exactly ' +
+         'the instinct to resist, because in a year that same break type will have happened two hundred times and the ' +
+         'record of it is the only way anybody will see the pattern.'
+    }},
+
+    { h: 'The numbers that tell you the job is working' },
+    { p: 'A reconciliation engine is measured on four things, and a finance team will ask for all four:' },
+    { table: {
+      head: ['Metric', 'On this file', 'What a bad number means'],
+      rows: [
+        ['**Match rate**', '16,408 of 16,639 automatically: 98.6%', 'Below about 99%, your matching rules need work, not more people'],
+        ['**Break count by type**', '5 types, 243 items', 'One type dominating is a bug with a known address'],
+        ['**Value at risk**', '$4,806.68 unexplained in both directions', 'Rising week on week means something is broken upstream'],
+        ['**Age of the oldest open break**', 'Should be days, not months', 'An old break is either impossible or forgotten, and both need saying']
+      ]
+    }},
+    { p: 'And the job itself has to be repeatable: running it twice on the same file must produce the same result and ' +
+         'create no duplicate breaks, which means every break carries a stable identifier derived from what it is about, ' +
+         'not from when it was found.' },
+
+    { h: 'The third leg: does the bank agree?' },
+    { p: 'Matching your ledger to the processor\'s file proves you agree with the processor. It does not prove either of ' +
+         'you is right about what arrived. The third comparison closes that:' },
+    { code: 'your ledger      <-->   processor settlement file     (payments)\nsettlement file  <-->   your bank statement           (payouts)', lang: 'text' },
+    { p: 'Each payout in the file should appear on the bank statement as one credit for the same amount, a day or so later. ' +
+         'That check catches the failure the first comparison cannot: a processor that reports a payout and does not send ' +
+         'it, a payment that goes to the wrong account, or a bank fee nobody expected. It is the same matching code with ' +
+         'different inputs, which is why the engine is written to take two sources and a key rather than being hard wired ' +
+         'to one file format.' }
   ],
 
   tutorial: {
-    intro: 'This tutorial is about assembly rather than new syntax: turning nine notebooks into one installable, testable, ' +
-           'documented project. Work in Codespaces or locally: whichever you chose in level 9.',
+    intro: 'Two files ship with this level: the settlement lines and the payouts. Your ledger is the level 9 event file, or ' +
+           'your own database if you built it. Python and pandas are enough; the hard part is classification rather than ' +
+           'code.',
     steps: [
       {
-        t: 'Create the skeleton',
+        t: 'Load both sides and agree on shape',
         blocks: [
-          { code: 'mkdir -p neobank/neobank neobank/data neobank/tests neobank/docs/screenshots\ncd neobank\ntouch neobank/__init__.py app.py README.md requirements.txt.gitignore', lang: 'bash' },
-          { p: 'On Windows without a bash shell, create the folders in the VS Code explorer: the structure matters, ' +
-               'not the command that made it.' },
-          { code: '# .gitignore\n.venv/\n__pycache__/\n*.pyc\n.streamlit/secrets.toml\n*.cache.json', lang: 'text' }
+          { p: 'The first real task in any reconciliation is making two different formats comparable. Normalise both into ' +
+               'the same columns: a key, a type, a signed amount in minor units, a date, and where it came from.' },
+          { code: 'import pandas as pd\n\nsettle = pd.read_csv("data/level-10-settlement.csv", parse_dates=["settled_at"])\nevents = pd.read_csv("data/level-09-card-events.csv", parse_dates=["at"])\n\nledger = events[events.event.isin(["capture", "refund", "chargeback"])].copy()\nprint(len(settle), "settlement lines,", len(ledger), "ledger movements")', lang: 'python' },
+          { code: '16639 settlement lines, 16613 ledger movements', lang: 'text' },
+          { warn: 'Signs are the first trap. The file records a refund as a negative gross; your ledger may record it as a ' +
+                  'positive refund event. Decide one convention, convert at the boundary, and write a test with one refund ' +
+                  'in it.' }
         ],
-        check: 'The folder tree exists and `git status` shows no .venv or __pycache__ files.'
+        check: 'Both sides are in one shape, with amounts in minor units and refunds negative on both.'
       },
       {
-        t: 'Move your code into modules',
+        t: 'Match what is easy',
         blocks: [
-          { p: 'Copy each notebook\'s functions into the matching module. Two rules while you do it: **delete every print ' +
-               'statement from the service layer**, and **make every function take its inputs as arguments** rather than ' +
-               'reading a global.' },
-          { code: '# neobank/lending.py\n"""Loan pricing and amortization (FinQuest levels 2 and 6)."""\n\n\ndef monthly_payment(principal, annual_rate, years, periods_per_year=12):\n    if principal <= 0:\n        raise ValueError("principal must be positive")\n...\n\n\ndef schedule(principal, annual_rate, years, extra=0.0):\n...', lang: 'python' },
-          { code: '# app.py\nfrom neobank.lending import monthly_payment, schedule\nfrom neobank.fraud import score_transactions\nfrom neobank.risk import portfolio_stats', lang: 'python' },
-          { warn: 'If an import fails with `ModuleNotFoundError: neobank`, you are running from inside the package folder. ' +
-                  'Run from the project root, where `app.py` lives.' }
+          { p: 'Pass one: join on payment id and type, and compare amounts. Everything that agrees exactly is done, and ' +
+               'should be the overwhelming majority.' },
+          { code: 'merged = settle.merge(ledger, left_on=["payment_id", "type"],\n                      right_on=["payment_id", "event"], how="outer", indicator=True)\n\nprint(merged._merge.value_counts())', lang: 'python' },
+          { p: 'The `indicator=True` column is doing the work: `both` is a candidate match, `left_only` is in the file and ' +
+               'not your ledger, `right_only` is in your ledger and not the file. Those three groups are the whole job.' }
         ],
-        check: 'python -c "from neobank.lending import monthly_payment; print(monthly_payment(250000, 0.055, 30))" works from the project root.'
+        check: 'You can state how many lines are in both, and how many are only on one side.'
       },
       {
-        t: 'One loader module for all data access',
+        t: 'Classify, do not just count',
         blocks: [
-          { code: '# neobank/loaders.py\n"""Every file and network read lives here. Nothing else touches the disk."""\nfrom pathlib import Path\nimport pandas as pd\n\nDATA = Path(__file__).resolve().parent.parent / "data"\n\n\ndef load_transactions(path=None):\n    path = Path(path) if path else DATA / "transactions.csv"\n    if not path.exists():\n        raise FileNotFoundError(f"missing data file: {path}")\n    df = pd.read_csv(path, parse_dates=["date"])\n    required = {"date", "description", "category", "amount"}\n    missing = required - set(df.columns)\n    if missing:\n        raise ValueError(f"transactions file is missing columns: {sorted(missing)}")\n    return df', lang: 'python' },
-          { p: 'Two things worth stealing here. `Path(__file__).resolve().parent.parent` finds the project root regardless ' +
-               'of where the app was started from. The fix for "it works on my machine". And **validating the schema on ' +
-               'load** means a malformed CSV fails immediately with a clear message instead of producing a wrong number ten ' +
-               'functions later.' }
+          { p: 'A difference with no cause attached is useless. Write a classifier that turns every unmatched or mismatched ' +
+               'row into a named break type with an owner:' },
+          { code: 'def classify(row, window_days=4):\n    if row.side == "both" and row.amount_file != row.amount_ledger:\n        if row.currency != "USD":\n            return "fx_rounding", "engineering"\n        return "amount_mismatch", "processor query"\n    if row.side == "file_only":\n        return "missing_in_ledger", "engineering"\n    if row.side == "ledger_only":\n        if row.age_days <= window_days:\n            return "pending_settlement", None        # not a break at all\n        return "unsettled_capture", "processor query"\n    return "matched", None', lang: 'python' },
+          { code: 'matched              16408\namount mismatches      193   $1,180.96\nduplicate lines          1\nin file, not ledger     37   $3,116.61\nin ledger, not file     12   $1,690.07', lang: 'text', label: 'the target output' }
         ],
-        check: 'Loading works from any working directory, and a file with a missing column raises a clear error.'
+        check: 'Your counts match those five lines, and every break has a type and an owner.'
       },
       {
-        t: 'Tests per module',
+        t: 'Find the duplicate',
         blocks: [
-          { code: '# tests/test_ledger.py\nimport pytest\nfrom neobank.ledger import Ledger, InsufficientFunds\n\n\ndef make_ledger():\n    led = Ledger()\n    led.open_account("world", allow_negative=True)\n    led.open_account("alice")\n    led.open_account("bob")\n    led.deposit("alice", 10_000)\n    return led\n\n\ndef test_transfer_moves_money():\n    led = make_ledger()\n    led.transfer("alice", "bob", 2_500)\n    assert led.balance("alice") == 7_500\n    assert led.balance("bob") == 2_500\n    assert led.check_invariant()\n\n\ndef test_overdraft_refused_and_nothing_written():\n    led = make_ledger()\n    before = len(led.entries)\n    with pytest.raises(InsufficientFunds):\n        led.transfer("alice", "bob", 999_999)\n    assert len(led.entries) == before\n\n\ndef test_idempotent_retry():\n    led = make_ledger()\n    first = led.transfer("alice", "bob", 100, key="abc")\n    count = len(led.entries)\n    second = led.transfer("alice", "bob", 100, key="abc")\n    assert first == second and len(led.entries) == count', lang: 'python' },
-          { code: 'pytest -q', lang: 'bash' },
-          { p: 'A helper like `make_ledger()` that builds a known starting state keeps every test short and readable. ' +
-               'Aim for one test per behaviour, named so a failure tells you what broke without opening the file.' }
+          { p: 'One line in the file is sent twice. Find it with a group by, and be careful about what makes a line unique: ' +
+               'the settlement id is different, everything else is identical.' },
+          { code: 'dupes = settle.groupby(["payment_id", "type", "gross_minor", "settled_at"]).size()\nprint(dupes[dupes > 1])', lang: 'python' },
+          { tip: 'Then ask the harder question: if the processor really did pay you twice, is it a duplicate line or a ' +
+                 'duplicate payment? The answer changes who owes whom, and the only way to know is to check whether the ' +
+                 'payout total includes it.' }
         ],
-        check: 'pytest runs every test file from the project root and all pass.'
+        check: 'You find exactly one duplicated line and can say whether the payout included it once or twice.'
       },
       {
-        t: 'Wire the dashboard together',
+        t: 'Tie the payouts to the lines',
         blocks: [
-          { code: '# app.py\nimport streamlit as st\n\nfrom neobank import analytics, fraud, lending, risk\nfrom neobank.loaders import load_transactions, load_prices\n\nst.set_page_config(page_title="NeoBank analytics", page_icon="\\U0001F3E6", layout="wide")\n\nPAGES = {\n    "Overview": "overview",\n    "Spending": "spending",\n    "Lending": "lending",\n    "Portfolio risk": "risk",\n    "Fraud queue": "fraud",\n}\nchoice = st.sidebar.radio("Section", list(PAGES))\nst.sidebar.caption("Synthetic data. Educational project. Not financial advice.")\n\n\n@st.cache_data(ttl=3600)\ndef get_transactions():\n    return load_transactions()\n\n\nif choice == "Spending":\n    df = get_transactions()\n    st.header("Spending")\n    st.metric("Savings rate", f"{analytics.savings_rate(df):.1%}")\n    st.bar_chart(analytics.by_category(df))\n# ... one branch per section', lang: 'python' },
-          { p: 'Each branch does the same three things: load (cached), call a service, display. No branch contains a formula. ' +
-               'If you find yourself computing something inside `app.py`, it belongs in a module.' }
+          { p: 'Each payout should equal the sum of the lines that settled that day. This is the check that catches a ' +
+               'processor error and a parsing bug at the same time.' },
+          { code: 'by_day = settle.groupby(settle.settled_at.dt.date).net_minor.sum()\npayouts = pd.read_csv("data/level-10-payouts.csv", parse_dates=["paid_at"])\ncheck = payouts.set_index(payouts.paid_at.dt.date).net_minor.sub(by_day)\nprint(check[check != 0])       # should be empty', lang: 'python' },
+          { p: 'Then look at the negative payout days: 46 of the 59. Print them, and write one sentence in your README ' +
+               'explaining what a negative payout means for the merchant\'s bank account.' }
         ],
-        check: 'Every sidebar section renders without error and app.py contains no financial formulas.'
+        check: 'Every payout equals the sum of its lines, and you can list the negative days and their total.'
       },
       {
-        t: 'Add a reconciliation check',
+        t: 'Work out the fees for yourself',
         blocks: [
-          { code: '# neobank/reconcile.py\ndef reconcile(ledger, external_balances):\n    """Compare ledger balances against an external source and report breaks."""\n    breaks = []\n    for account, external in external_balances.items():\n        internal = ledger.balance(account)\n        if internal != external:\n            breaks.append({\n                "account": account,\n                "internal": internal,\n                "external": external,\n                "difference": internal - external,\n            })\n    return breaks', lang: 'python' },
-          { p: 'Display it as a green "all accounts reconciled" line or a red table of breaks. It is a dozen lines of code ' +
-               'that demonstrates you know what a ledger is *for*.' }
+          { p: 'Recompute what the fee should have been, at 2.9% plus 30 cents, and compare with what was charged. Then ' +
+               'produce the effective rate by payment size.' },
+          { code: 'expected = (settle.gross_minor * 0.029).round().astype(int) + 30\ndiff = settle.fee_minor - expected\nprint(diff[diff != 0].describe())', lang: 'python' },
+          { code: 'under $10     568 payments   $  4,122.57   fee 7.03%\n$10 to $50   7021 payments   $205,204.76   fee 3.93%\n$50 to $200  7221 payments   $688,114.54   fee 3.21%\nover $200    1058 payments   $339,419.42   fee 2.99%', lang: 'text' },
+          { p: 'That table belongs in your README. It is a finding about the business, produced by an engineer, from data ' +
+               'nobody asked you to look at.' }
         ],
-        check: 'The dashboard reports reconciliation status, and deliberately corrupting a balance makes a break appear.'
+        check: 'You can name the payments whose fee differs from the contract, and show the effective rate by size.'
       },
       {
-        t: 'Write the README last, and properly',
+        t: 'The exception queue',
         blocks: [
-          { code: '# NeoBank analytics\n\nA personal-finance and risk platform built across the FinQuest fintech course:\nledger, spending analytics, loan pricing, portfolio risk, and fraud scoring\nin one Streamlit application.\n\n**Live demo:** https://your-app.streamlit.app\n\n![Dashboard](docs/screenshots/overview.png)\n\n## Features\n- Double-entry ledger with idempotent transfers and reversals\n- Spending analytics with recurring-charge detection\n- Loan pricing, amortization, and early-payoff comparison\n- Portfolio risk: volatility, Sharpe, drawdown, correlation, VaR\n- Fraud scoring with a cost-tuned threshold and an explained review queue\n- Daily reconciliation against an external balance file\n\n## Architecture\n    app.py         Streamlit interface, no business logic\n    neobank/       services: ledger, analytics, lending, risk, fraud, fx\n    neobank/loaders.py   all file and network access\n    data/          synthetic datasets (see data/generate.py)\n    tests/         pytest suite, 31 tests, all passing\n\n## Run locally\n    python -m venv.venv && source.venv/bin/activate\n    pip install -r requirements.txt\n    pytest -q\n    streamlit run app.py\n\n## Data\nAll data is synthetic and generated by `data/generate.py`. No real customer\ndata is used anywhere in this project.\n\n## Limitations and next steps\n- The ledger is single-process; concurrent writes would need row-level locking\n- Fraud thresholds are tuned on one static sample and would drift in production\n- Risk statistics assume the past resembles the future, which is the standard\n  weakness of every historical risk measure\n- Next: move storage to SQLite, add an authentication layer, schedule the\n  reconciliation job', lang: 'text', label: 'README.md' },
-          { tip: 'Take screenshots at a normal window size and commit them under `docs/screenshots/`. A README with a ' +
-                 'picture gets read; one without usually does not.' }
+          { p: 'Breaks go somewhere a person works through them. Give each one a stable id derived from what it is about, so ' +
+               'rerunning the job does not create it again:' },
+          { code: 'break_id = sha256(f"{source}|{payment_id}|{break_type}|{period}".encode()).hexdigest()[:16]', lang: 'python' },
+          { code: 'create table recon_break (\n  id            text primary key,\n  first_seen    timestamptz not null default now(),\n  last_seen     timestamptz not null default now(),\n  break_type    text not null,\n  owner         text,\n  payment_id    text,\n  value_minor   bigint not null,\n  status        text not null default \'open\',\n  resolution    text\n);', lang: 'sql' },
+          { p: 'Then run the whole job twice and prove it: the same breaks, updated `last_seen`, no duplicates, nothing ' +
+               'reopened.' }
         ],
-        check: 'A classmate can clone your repo and have it running from the README alone, without asking you anything.'
+        check: 'Running the reconciliation twice leaves the same number of open breaks.'
+      },
+      {
+        t: 'The report somebody signs',
+        blocks: [
+          { p: 'Finish with the daily report: the totals, the match rate, the breaks by type with values, the aging, and the ' +
+               'one line that matters most.' },
+          { code: 'Reconciliation 2026-05-05 to 2026-07-10\n  settlement lines           16,639\n  matched automatically      16,408   98.6%\n  gross                  $1,182,568.81\n  fees                      $41,817.30   3.2851% effective\n  net                    $1,140,751.51\n\n  breaks                        243\n    amount mismatch             193   $1,180.96   (163 currency rounding)\n    missing in ledger            37   $3,116.61   engineering\n    unsettled capture            12   $1,690.07   processor query\n    duplicate line                1               processor query\n\n  unexplained value          $4,806.68\n  oldest open break             0 days', lang: 'text' },
+          { tip: 'Add one sentence under it saying what changed since yesterday. A report nobody compares to yesterday is a ' +
+                 'report nobody reads.' }
+        ],
+        check: 'The report runs from one command, and a reader with no context can tell whether today was normal.'
       }
     ]
   },
 
   glossary: [
-    { t: 'KYC', d: 'Identity verification required before a customer may hold or move money.' },
-    { t: 'AML', d: 'Monitoring and reporting designed to stop criminal funds moving through the system.' },
-    { t: 'PII', d: 'Personally identifiable information: data that identifies a person, alone or combined.' },
-    { t: 'PAN masking', d: 'Displaying only the last four digits of a card number.' },
-    { t: 'PCI DSS', d: 'The security standard that applies when you store or process full card numbers.' },
-    { t: 'Data minimisation', d: 'Collecting only the personal data you actually need.' },
-    { t: 'Retention policy', d: 'A defined lifetime for records, after which they are deleted.' },
-    { t: 'Audit log', d: 'An immutable record of what happened and who did it.' },
-    { t: 'Open banking', d: 'Regulated, consented API access to a customer\'s bank data.' },
-    { t: 'Layered architecture', d: 'Interface, services, data, storage: upper layers call lower ones only.' },
-    { t: 'Package', d: 'A folder with __init__.py that can be imported as a module path.' },
-    { t: 'Reconciliation', d: 'Comparing internal records against an external source and explaining every difference.' },
-    { t: 'Break', d: 'An unexplained difference found during reconciliation.' },
-    { t: 'Thin file', d: 'A customer with little credit history, whom scoring systems serve badly.' }
+    { t: 'Reconciliation', d: 'Comparing two records of the same money and explaining every difference.' },
+    { t: 'Settlement file', d: 'The processor\'s record of what they actually processed and charged, usually daily.' },
+    { t: 'Gross', d: 'The full amount of a payment, before fees.' },
+    { t: 'Fee', d: 'What the processor charged for handling it. Its own entry in your ledger.' },
+    { t: 'Net', d: 'Gross minus fee: what actually reaches the bank account.' },
+    { t: 'Effective fee rate', d: 'Fees divided by gross, which is higher than the quoted rate because of the fixed part.' },
+    { t: 'Payout', d: 'One transfer covering everything that settled in a period, rather than one per payment.' },
+    { t: 'Negative payout', d: 'A day where refunds and disputes exceed sales, so the processor takes money back.' },
+    { t: 'Break', d: 'A difference between two sources that has not been explained yet.' },
+    { t: 'Timing difference', d: 'A difference caused only by the two sides being as of different moments. Not a break.' },
+    { t: 'Match rate', d: 'The share of lines matched automatically. Below about 99% means the rules need work.' },
+    { t: 'Tolerance', d: 'A threshold below which a difference is not investigated. It must still be recorded and totalled.' },
+    { t: 'Plug', d: 'An adjusting entry posted only to make numbers agree. Never do this.' },
+    { t: 'Aging', d: 'How long each open break has been open. The number that stops breaks being forgotten.' },
+    { t: 'Exception queue', d: 'Where unmatched items go for a person to work through, with owners and status.' },
+    { t: 'Three-way reconciliation', d: 'Ledger against processor, and processor against bank. The second catches what the first cannot.' },
+    { t: 'Dispute fee', d: 'A fixed charge for each chargeback, payable by the merchant win or lose. $15.00 in this file.' }
   ],
 
   quiz: [
-    { q: "What does KYC require of a product that handles money?",
+    { q: "What is the goal of a reconciliation run?",
       options: [
-        "Verifying a customer's identity before they can hold or move money",
-        "Reporting profits to regulators quarterly",
-        "Encrypting all customer data",
-        "Keeping customer funds in a separate bank"
+        "To explain every difference between them",
+        "To correct the processor's file",
+        "To make the two sets of numbers agree",
+        "To calculate the fees"
       ],
       answer: 0,
-      why: "KYC is identity verification at onboarding. In code it usually appears as a state machine where no transaction is permitted until verification completes." },
+      why: "Adjusting until things agree destroys the evidence. Explaining is the job; agreement is the consequence." },
 
-    { q: "Which is the best example of data minimisation?",
+    { q: "A settlement line shows gross 7140, fee 237, net 6903. What reaches the merchant's bank?",
       options: [
-        "Encrypting the full card number at rest",
-        "Backing up data twice a day",
-        "Storing data in a different country",
-        "Not collecting a date of birth at all if the product never needs one"
+        "7140",
+        "7377",
+        "237",
+        "6903"
       ],
       answer: 3,
-      why: "The safest PII is the field you never stored. Minimisation reduces breach impact, compliance scope, and retention obligations simultaneously." },
+      why: "Net is what arrives. Reporting gross as revenue and comparing it to the bank is the most common merchant complaint there is." },
 
-    { q: "Why store a masked card number like `**** 4471` rather than the full PAN?",
+    { q: "The processor charges 2.9% plus 30 cents. Across the file the effective rate is 3.2851%. Why is it higher?",
       options: [
-        "It uses less disk space",
-        "Masking makes queries faster",
-        "Storing full card numbers puts you in scope for PCI DSS and raises breach impact enormously",
-        "Full card numbers cannot be stored in a database"
+        "Hidden fees",
+        "Chargeback fees",
+        "The fixed 30 cents is a large share of a small payment: under $10 the effective rate is 7.03%",
+        "Currency conversion"
       ],
       answer: 2,
-      why: "Full PANs carry a heavy security standard and severe consequences if leaked. Most products only ever need the last four digits to help a user recognise a card." },
+      why: "Which is why small payments are batched, and why the sentence \"2.9% plus 30 cents\" is more interesting than it looks." },
 
-    { q: "In a layered architecture, which dependency direction is allowed?",
+    { q: "A chargeback on an $88.00 sale costs the merchant:",
       options: [
-        "The interface may call services, but services must never know the interface exists",
-        "Storage may call services",
-        "Any layer may call any other",
-        "Services may import the interface"
+        "$88.00 plus a $15.00 dispute fee, whether they win or lose",
+        "The fee only",
+        "Nothing if they win",
+        "$88.00"
       ],
       answer: 0,
-      why: "Dependencies that point one way are what make the middle testable and the interface swappable. A service calling st.write is the classic violation." },
+      why: "In this file disputes cost $1,185.00 in fees on top of the money returned." },
 
-    { q: "What does \"a test needs a browser\" tell you about a codebase?",
+    { q: "46 of the 59 payout days in the file are negative. What does a negative payout mean?",
       options: [
-        "The test framework is misconfigured",
-        "The app is too fast to test",
-        "Business logic is trapped inside the interface layer",
-        "The tests are thorough"
+        "The fees exceeded the rate card",
+        "The payout was cancelled",
+        "The merchant owes money, so the processor debits their bank account instead of paying them",
+        "The processor made an error"
       ],
       answer: 2,
-      why: "Pure logic can be tested by importing a function. Needing a browser means the calculation and the UI are the same code." },
+      why: "And if that debit fails, the processor is exposed, which is why onboarding and reserves exist." },
 
-    { q: "What is the purpose of `__init__.py` in a folder?",
+    { q: "The reconciliation finds 37 payments in the file that your ledger has never seen. In this data, what are they?",
       options: [
-        "It marks the folder as a package so it can be imported as a module path",
-        "It runs when the app starts",
-        "It stores configuration",
-        "It initialises the database"
+        "Payments whose authorisation timed out in level 9, which the issuer actually approved",
+        "Duplicate lines",
+        "Test transactions",
+        "Chargebacks"
       ],
       answer: 0,
-      why: "It makes `from neobank.ledger import Ledger` work. It may be empty; its presence is what matters." },
+      why: "Worth $3,116.61. Without this job they are money in a merchant account with nothing to explain it." },
 
-    { q: "Why does `loaders.py` build paths from `Path(__file__).resolve().parent.parent`?",
+    { q: "The right response to those 37 is:",
       options: [
-        "Because pandas requires absolute paths",
-        "To make the code shorter",
-        "To hide the file location from users",
-        "So data files are found regardless of which directory the app was started from"
+        "Tolerate them, since the value is small",
+        "Insert them into the ledger so the report balances",
+        "Ask the processor to remove them",
+        "Resolve the underlying unknown payments, let the normal flow post the entries, and rerun"
       ],
       answer: 3,
-      why: "Relative paths depend on the working directory, which is why \"it works on my machine\" happens. Anchoring to the module's own location removes the ambiguity." },
+      why: "You never write an entry to make a reconciliation balance. You write it because something happened." },
 
-    { q: "What is reconciliation?",
+    { q: "12 captures are in your ledger and not in the file, worth $1,690.07. Why does this break type matter most?",
       options: [
-        "Correcting a failed payment",
-        "Comparing internal records against an external source and explaining every difference",
-        "Rebalancing a portfolio to target weights",
-        "Merging two customer accounts"
+        "It affects the fee calculation",
+        "It is money you captured that the processor has not paid you",
+        "It is the largest by value",
+        "It is always a parsing error"
       ],
       answer: 1,
-      why: "Every real money system reconciles daily. An unexplained break is a bug, a timing difference, or fraud, and you cannot tell which without investigating." },
+      why: "Sometimes timing, sometimes a capture that never arrived, sometimes money simply owed. This break type pays for the job." },
 
-    { q: "Your ledger says $10,450 and the bank statement says $10,400. What is the correct response?",
+    { q: "A capture from this afternoon is not in today's file. What is it?",
       options: [
-        "Ignore it, since it is under 1%",
-        "Record the $50 break and investigate its cause before changing anything",
-        "Adjust the ledger to match the statement",
-        "Delete the most recent ledger entry"
+        "A failed capture",
+        "A timing difference, pending until the settlement window has passed",
+        "A break to investigate",
+        "A duplicate"
       ],
       answer: 1,
-      why: "Silently adjusting destroys the evidence and may be hiding a real problem. Ledgers are append-only: investigate, then post a documented correcting entry if one is warranted." },
+      why: "Treating timing as breaks fills the queue with noise, and a queue full of noise is a queue nobody reads." },
 
-    { q: "Which README section most signals professional maturity?",
+    { q: "Your matching rules ignore differences under five cents. What must still be true?",
       options: [
-        "Limitations and next steps",
-        "A complete list of every function",
-        "The programming languages used",
-        "A long installation troubleshooting guide"
+        "The tolerance is written down and approved, every tolerated difference is still recorded and totalled, and somebody watches the total",
+        "Nothing: that is what a tolerance means",
+        "The tolerance must be under one cent",
+        "It must apply only to foreign currency"
       ],
       answer: 0,
-      why: "Knowing and stating what your system does not do is the difference between a demo and an engineer. Overclaiming has the opposite effect on a reviewer." },
+      why: "A tolerance may stop you investigating a difference. It must never stop you seeing it." },
 
-    { q: "What belongs at the very top of a portfolio README?",
+    { q: "What is a plug?",
       options: [
-        "The licence",
-        "One sentence on what it is, then a live link and a screenshot",
-        "The full architecture diagram",
-        "Your contact details"
+        "A rule that matches two records",
+        "An adjusting entry posted only to make two numbers agree",
+        "A tolerance threshold",
+        "A processor fee"
       ],
       answer: 1,
-      why: "A reviewer gives you about thirty seconds. A sentence, a link, and a picture is the fastest possible proof the thing is real." },
+      why: "It removes the evidence that something is wrong, which is why fraud investigators look for them first." },
 
-    { q: "Why must every dataset in your capstone be synthetic?",
+    { q: "A break has been open eleven days with no explanation. The correct state is:",
       options: [
-        "Real data is too large for GitHub",
-        "Committing real personal or financial data is a serious privacy and legal risk, and history cannot be un-pushed",
-        "Synthetic data produces better charts",
-        "Regulators require open source projects to use synthetic data"
+        "Written off",
+        "Open, aged, owned by a named person, with what has been checked recorded",
+        "Closed, since nobody could explain it",
+        "Reclassified as a timing difference"
       ],
       answer: 1,
-      why: "Repositories keep history forever and may become public. Generate realistic data instead, and say clearly in the README that it is generated." },
+      why: "Unexplained is a legitimate state. Unowned and unaged is not." },
 
-    { q: "Open banking is best summarised as:",
+    { q: "An automatic match rate of 98.6% suggests:",
       options: [
-        "Banks publishing their source code",
-        "Cryptocurrency exchanges connecting to banks",
-        "Regulated API access to a customer's bank data with their explicit, scoped, revocable consent",
-        "Free banking for everyone"
+        "The engine is broken",
+        "The tolerance is too wide",
+        "A reasonable result, with the remaining items genuinely needing a person or better rules",
+        "The processor is unreliable"
       ],
       answer: 2,
-      why: "The consent model is the part worth internalising: explicit, limited in scope, time limited, and revocable. Anything reading someone else's data should meet that bar." },
+      why: "Below about 99% the answer is usually better matching rules rather than more people." },
 
-    { q: "Which question belongs in an ethics section for a fraud model?",
+    { q: "Why must every break carry an id derived from what it is about?",
       options: [
-        "How fast does the model train?",
-        "How large is the dataset?",
-        "Who is harmed when it is wrong, and can they find out why?",
-        "Which library version was used?"
+        "To sort the queue",
+        "To link it to the payout",
+        "So that rerunning the job updates the same break rather than creating a duplicate",
+        "Because the database requires it"
       ],
       answer: 2,
-      why: "A false flag can strand someone at a checkout with no other way to pay. If your explanation is \"the model decided\", you have built something you cannot defend." },
+      why: "A reconciliation that cannot be run twice safely will be run once, badly, by somebody in a hurry." },
 
-    { q: "Which statement is the most honest in a capstone report?",
+    { q: "What does comparing the settlement file to the bank statement catch that comparing it to your ledger cannot?",
       options: [
-        "\"This is a production-ready banking platform.\"",
-        "\"No known limitations.\"",
-        "\"The model is 99% accurate.\"",
-        "\"The ledger is single-process; concurrent writes would need row-level locking.\""
+        "Fee errors",
+        "Chargebacks",
+        "Duplicate payments",
+        "A payout that was reported but never actually sent, or money that went to the wrong account"
       ],
       answer: 3,
-      why: "A specific, technically accurate limitation demonstrates understanding. The other three are claims a reviewer will test in the first two minutes of an interview." }
+      why: "Agreeing with the processor does not prove either of you is right about what arrived." }
   ],
 
   project: {
-    title: 'NeoBank analytics, the capstone',
-    story: 'One repository, one deployed application, and everything you have learned so far pulled together. Aim ' +
-           'for something you would be glad to have an interviewer open in front of you.',
-    scope: 'Uses everything from levels 2 through 9 and nothing new: your ledger, analytics, lending, risk, fraud and FX ' +
-           'code, restructured into modules behind one Streamlit interface, with tests and documentation.',
+    title: 'reconcile: the job that runs before anybody arrives',
+    story: 'Build the reconciliation engine: load the processor\'s settlement file, match it against your ledger, classify ' +
+           'every difference by cause and owner, tie the payouts to the lines, and produce the report a finance team signs ' +
+           'off. Then find the 37 payments the processor paid you for that your system has never heard of, and fix the ' +
+           'cause rather than the symptom.',
+    scope: 'Uses levels 4, 6 and 9. Python and pandas, or SQL if you prefer, with the breaks stored in the level 6 ' +
+           'database. The settlement and payout files ship with the level.',
+    dataset: '{{RAW}}/data/level-10-settlement.csv',
     requirements: [
-      'A public repository named `neobank-analytics` (or your own name) with the layered structure from the tutorial',
-      'A `neobank/` package with at least five modules: ledger, analytics, lending, risk, fraud',
-      'All data access confined to `loaders.py`, with schema validation and clear errors on malformed files',
-      'No business logic in `app.py` and no `streamlit` import anywhere inside the package',
-      'Ledger: double-entry, idempotent transfers, reversals, and an invariant check exposed in the UI',
-      'Analytics: spending by category, monthly trend, recurring-charge detection, savings rate',
-      'Lending: payment, schedule, total interest, and an overpayment comparison',
-      'Risk: returns, volatility, Sharpe, max drawdown, correlation matrix, and VaR for a chosen weighting',
-      'Fraud: engineered features, a scored review queue with reasons, and a stated threshold with its cost justification',
-      'A reconciliation view comparing ledger balances against an external balances file, listing any breaks',
-      'A Streamlit app with at least five navigable sections and a visible note that the data is synthetic',
-      'A `tests/` suite of at least 20 tests across at least four modules, all passing with `pytest -q`',
-      'Tests must include the ledger invariant, a refused overdraft that writes nothing, and an idempotent retry',
-      '`data/generate.py` producing every dataset the app uses, so the repo is reproducible from scratch',
-      'requirements.txt that works on a clean machine, and a .gitignore excluding .venv, __pycache__, and secrets',
-      'Deployed to a public URL that loads and works on a phone',
-      'A README with: a description in one line, live link, screenshot, features, architecture diagram, local run steps, test instructions, a statement that the data is synthetic, and a limitations-and-next-steps section',
-      '`docs/architecture.md` explaining each layer and why the boundaries are where they are',
-      'An ethics section answering: who is harmed when this is wrong, can they find out why, and who does it serve badly',
-      'A three-minute demo script (written, or recorded) walking a stranger through the app'
+      'A loader that normalises both sides into one shape: key, type, signed minor units, date, source',
+      'A matching engine with named passes, from exact reference and amount down to probable matches, each recording why it matched',
+      'A classifier producing named break types with an owner, including a `pending_settlement` type that is explicitly not a break',
+      'The settlement window as configuration, not a constant buried in a condition',
+      'Reproduction of the five headline results: 16,408 matched, 193 amount mismatches worth $1,180.96, 1 duplicate, 37 missing in ledger worth $3,116.61, 12 unsettled captures worth $1,690.07',
+      'Detection of the duplicated settlement line, and a statement of whether the payout included it',
+      'A payout check proving every payout equals the sum of the lines that settled that day',
+      'A fee check recomputing 2.9% plus 30 cents per capture and listing every line that differs',
+      'An effective fee rate table by payment size, reproducing 7.03% under $10 and 2.99% over $200',
+      'An exception queue with stable break ids, first seen, last seen, owner, status and resolution',
+      'Proof that running the job twice changes nothing: same breaks, no duplicates, nothing reopened',
+      'A daily report with totals, match rate, breaks by type and value, aging, and unexplained value',
+      'A written resolution of the 37: what they are, and the change that stops them recurring',
+      'A README stating the tolerance you chose, why, and what you do with tolerated differences',
+      'The repository public on GitHub as `reconcile`'
     ],
     starter: {
-      lang: 'text',
-      code: 'neobank-analytics/\n  README.md\n  requirements.txt\n  .gitignore\n  app.py                    # Streamlit entry point: interface only\n  neobank/\n    __init__.py\n    ledger.py               # Level 4\n    analytics.py            # Level 3\n    lending.py              # Levels 2 + 6\n    risk.py                 # Level 7\n    fraud.py                # Level 8\n    fx.py                   # Level 5   (optional but recommended)\n    reconcile.py            # Level 10\n    loaders.py              # all file and network access\n  data/\n    generate.py             # produces every CSV below\n    transactions.csv\n    prices.csv\n    card_transactions.csv\n    external_balances.csv\n  tests/\n    test_ledger.py\n    test_lending.py\n    test_analytics.py\n    test_fraud.py\n  docs/\n    architecture.md\n    demo-script.md\n    screenshots/\n\n# Build order that works:\n#   1. Loaders.py + data/generate.py      (get data flowing)\n#   2. One service module + its tests     (prove the pattern)\n#   3. The remaining services + tests\n#   4. App.py, one section at a time\n#   5. Reconciliation, README, deploy\n'
+      lang: 'python',
+      code: '"""FinQuest level 10: reconciliation.\n\nLayout:\n  recon/load.py       read both sides into one normalised shape\n  recon/match.py      the passes, most certain first\n  recon/classify.py   break types, owners, and what is merely pending\n  recon/payouts.py    payouts against the lines that make them up\n  recon/fees.py       recompute the contract and find differences\n  recon/queue.py      stable break ids, first seen, last seen, status\n  recon/report.py     the daily report somebody signs\n"""\n\nfrom dataclasses import dataclass\nfrom datetime import date\n\nSETTLEMENT_WINDOW_DAYS = 4      # configuration, not a magic number\nFEE_PERCENT, FEE_FIXED = 0.029, 30\n\n\n@dataclass(frozen=True)\nclass Movement:\n    """One movement of money, from either side, in one shape."""\n    key: str\n    kind: str              # capture | refund | chargeback\n    amount_minor: int      # signed: refunds and chargebacks negative\n    at: date\n    source: str            # "ledger" or "settlement"\n\n\ndef load_settlement(path: str) -> list[Movement]:\n    # TODO\n    raise NotImplementedError\n\n\ndef load_ledger(path: str) -> list[Movement]:\n    # TODO\n    raise NotImplementedError\n\n\ndef reconcile(ledger: list[Movement], settlement: list[Movement], as_of: date):\n    """Return (matched, breaks). A break has a type, an owner and a value."""\n    # TODO\n    raise NotImplementedError\n'
     },
     tests: [
-      'A fresh clone plus `pip install -r requirements.txt` then `pytest -q` passes with 20 or more tests',
-      '`streamlit run app.py` starts with no errors on a machine that has never run the project',
-      'grep for "streamlit" inside neobank/ returns nothing',
-      'grep for "read_csv" outside loaders.py returns nothing',
-      'Ledger invariant holds after every operation exercised by the test suite',
-      'A refused overdraft leaves the entry count unchanged',
-      'A repeated idempotency key returns the same transaction id and adds no entries',
-      'Deleting a data file produces a clear error message, not a traceback',
-      'Every app section renders with the default dataset',
-      'The reconciliation view reports zero breaks on clean data and lists the break when one is introduced',
-      'The deployed URL loads on a phone and every section is usable'
+      'Loading both files produces movements with refunds negative on both sides',
+      'The reconciliation reports 16,408 exact matches',
+      'It reports 193 amount mismatches totalling $1,180.96, with the currency ones separated',
+      'It finds exactly one duplicated settlement line',
+      'It reports 37 movements in the file with no ledger record, totalling $3,116.61',
+      'It reports 12 captures in the ledger that never settled, totalling $1,690.07',
+      'A capture two days old with no settlement line is classified pending, not a break',
+      'The same capture five days old is classified as a break',
+      'Every payout equals the sum of the lines that settled that day',
+      'The fee check recomputes 2.9% plus 30 cents and finds the lines that differ',
+      'The effective rate table reproduces 7.03% under $10 and 2.99% over $200',
+      'Running the whole job twice produces the same open breaks with no duplicates',
+      'Every break has a type, a value and an owner, and none is silently dropped'
     ],
     rubric: [
-      { pts: 20, t: 'It runs for a stranger', d: 'Clone, install, test, run: all from the README, with no undocumented steps.' },
-      { pts: 20, t: 'Architecture', d: 'Clean layers, no logic in the interface, all data access in one module, imports pointing one way.' },
-      { pts: 15, t: 'Integration', d: 'All five domains genuinely present and working together, not five disconnected demos.' },
-      { pts: 15, t: 'Tests', d: '20+ meaningful tests across modules, covering invariants and refusals, all passing.' },
-      { pts: 10, t: 'Deployed', d: 'A public URL that works on a phone.' },
-      { pts: 10, t: 'Documentation', d: 'README that sells it in thirty seconds, plus an architecture document.' },
-      { pts: 10, t: 'Judgement', d: 'Honest limitations, a real ethics section, and a reconciliation view that shows you know what a ledger is for.' }
+      { pts: 25, t: 'Matching that works', d: 'Named passes, a match rate above 98%, and every automatic match recording the rule that made it.' },
+      { pts: 25, t: 'Classification, not counting', d: 'Five break types with owners, timing separated from breaks, and the window configurable.' },
+      { pts: 20, t: 'Repeatable and operable', d: 'Stable break ids, a queue with aging, and a second run that changes nothing.' },
+      { pts: 15, t: 'The money checks', d: 'Payouts tied to lines, fees recomputed from the contract, effective rate by size.' },
+      { pts: 15, t: 'Judgement', d: 'The 37 resolved at the cause, a stated tolerance with its reasoning, and a report a finance team could sign.' }
     ],
     stretch: [
-      'Replace CSV storage with SQLite and prove balances reconstruct identically from the entry table',
-      'Add a scheduled GitHub Action that runs the test suite and the reconciliation job daily',
-      'Add an audit log recording every ledger write with a timestamp and an actor',
-      'Add a FastAPI service exposing the same engine, so one core serves both a UI and an API',
-      'Write the case study: the problem, your design decisions, what you would change, and what you learned'
+      'Add the third leg: a synthetic bank statement, and reconcile payouts against credits',
+      'Add a second processor with a different file format, and see whether your engine needed rewriting or just configuring',
+      'Add multi currency properly: settle euros in euros, hold a separate balance per currency, and reconcile each',
+      'Produce a break aging report by week, and a chart of unexplained value over time',
+      'Make the job resumable: if it dies halfway through 16,639 lines, restarting must not double count'
     ],
     solutionPath: 'solutions/level-10'
   },
 
   faq: [
-    { q: 'ModuleNotFoundError: No module named "neobank"',
-      a: 'Run from the project root (the folder containing app.py), not from inside the package. Confirm neobank/__init__.py exists.' },
-    { q: 'How much of my old notebook code can I reuse?',
-      a: 'All of it: that is the point. Strip the prints, turn globals into arguments, and move each function into the module that owns its domain.' },
-    { q: 'How many tests are enough for the capstone?',
-      a: 'Twenty across four modules is the floor. Prioritise invariants (the ledger balances), refusals (bad input raises), and known values (a payment you can verify by hand).' },
-    { q: 'Can I use real bank data for realism?',
-      a: 'No. Generate synthetic data instead. Repository history is permanent and may become public; committing real financial data is a serious privacy risk.' },
-    { q: 'My app is slow after combining everything',
-      a: 'Cache every data load with @st.cache_data and compute only what the selected section needs. Streamlit re-runs the entire script on every interaction.' },
-    { q: 'What goes in the limitations section?',
-      a: 'Concrete technical facts: single-process ledger, thresholds tuned on one static sample, risk statistics assuming the past resembles the future. Specific beats modest.' },
-    { q: 'How do I present this in an interview?',
-      a: 'Open the live URL, complete one user journey in ninety seconds, then show the ledger invariant test. Lead with a limitation you have already identified: it changes the whole conversation.' }
+    { q: 'Why not just trust the processor?',
+      a: 'Because they are reconciling too, against you. Processors make mistakes, files get truncated, and duplicate lines happen, all of which are in the shipped file. This is not suspicion. Two independent records are the only way either side can be sure.' },
+    { q: 'Should reconciliation run in the database or in Python?',
+      a: 'Either. SQL is excellent at the matching and terrible at expressing "why". Most real engines do the joins in SQL and the classification in code. What matters more is that the output is a queue with owners rather than a printed list.' },
+    { q: 'My match rate is 82% and I cannot see why',
+      a: 'Almost always keys or signs. Check that you are matching on the same identifier both sides use, and that refunds have the same sign in both. Print ten unmatched rows from each side next to each other: the answer is usually visible in the first three.' },
+    { q: 'How big should a tolerance be?',
+      a: 'Small enough that a real error cannot hide inside it, and always paired with a total. On this file the currency rounding differences are one or two cents each; a five cent tolerance is defensible, a five dollar one is not.' },
+    { q: 'What happens to a break that is never explained?',
+      a: 'After an agreed period it is written off, deliberately, by somebody with the authority to do that, with the reason recorded. That is a business decision, not an engineering one, and the engineering job is to make sure it is a decision rather than a disappearance.' },
+    { q: 'Is this not just an accounting job?',
+      a: 'The investigation is. The engine, the matching rules, the classification, the queue and the daily report are engineering, and they are what decide whether the accountants spend their day on ten items or two thousand.' },
+    { q: 'What do I say about this project in an interview?',
+      a: 'The 37. Explain that your reconciliation found 37 payments the processor had settled that your system had no record of, that every one traced back to an authorisation timeout, and that you fixed the cause rather than inserting the rows. That answers the reconciliation question, the idempotency question and the judgement question in one story.' }
   ]
 });
