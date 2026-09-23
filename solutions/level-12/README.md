@@ -1,6 +1,6 @@
-# Level 12: The payment API other people depend on
+# Level 12: The payout that half happened
 
-> **The payments service** · build project · difficulty 8/10
+> **payout-saga: the orchestrator that finishes what it started** · build project · difficulty 9/10
 
 ## Read this second
 
@@ -10,66 +10,72 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-Another society is building an app that will move money through your level 11 ledger. They need an HTTP API they can integrate against in an afternoon, and they will retry on every network wobble, so it has to be impossible for them to charge somebody twice by accident.
+Build the service that pays merchants. It touches your ledger and a bank that rejects, times out and loses answers, and your own process dies in the middle. Measure how bad the naive version is, then add compensation, an unknown state and a sweeper, and prove that nothing is left broken.
 
-**Scope:** Uses this level plus level 11 (the ledger) and level 9 (tests, project layout). FastAPI, pydantic, psycopg, httpx, pytest. No frontend, no ORM, no queue: the retry loop is yours to write, which is how you learn what a queue does for you later.
+**Scope:** Uses levels 4, 6, 8, 9 and 11. The bank is a simulator you write. The orchestrator can be a plain Python process with a scheduler: no workflow framework, because the point is understanding what one does for you.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `main.py` | the app, the routes and the request id middleware |
-| `api/idempotency.py` | the key store, the body fingerprint, and the three cases |
-| `api/state.py` | the transition table and the one function that moves a transfer |
-| `api/webhooks.py` | sign, deliver with backoff, dead letter, verify |
-| `tests/` | every status code, a tampered webhook and a replayed one |
+| `saga/bank.py` | the other side: rejects, times out, remembers references |
+| `saga/orchestrator.py` | the steps, with state committed before each external call |
+| `saga/compensate.py` | the undo for each step, idempotent by constraint |
+| `saga/sweeper.py` | the job that resolves everything left mid flight |
+| `saga/stuck.py` | the query that should always return nothing |
+| `bench/naive.py` | the version without any of this, for the numbers |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-pip install -r requirements.txt && pytest -q && fastapi dev main.py
+python -m bench.naive && python -m saga.orchestrator --runs 200 && python -m saga.sweeper
 ```
 
 ## Why the solution is shaped this way
 
-- The idempotency store keeps the key, a sha256 of the request body and the response that was sent. Without the fingerprint a key reused by mistake looks exactly like a retry, and the client believes forty payments went through when one did.
-- Legal transitions live in one dictionary and one function. Every write path goes through it, so an illegal transition is a 409 rather than a second refund that still balances.
-- Errors are a code, a message and a request id. The code is what a client branches on, the message is for a person, and the id is what a partner quotes when they report something.
-- Webhook signatures cover a timestamp and the raw bytes. Verification reads the body before anything parses it, refuses a timestamp older than five minutes, and compares with `hmac.compare_digest`.
-- Delivery is at least once by design: retry with backoff, dead letter after the last attempt, and document that the receiver must be idempotent on the event id.
+- The naive orchestrator stays in the repository, because the fix only means something next to the failure. Measured over 200 payouts: 26 ended with money debited and nobody paid, which is 13.0%.
+- Three causes, two categories. Nine rejections are failure, where the outcome is known. Seven timeouts and ten crashes after submitting are uncertainty, where it is not, and the two need different mechanisms.
+- Compensation covers the known case. A rejected payout credits the merchant back as a new balanced transaction, which takes the inconsistent count from 26 to 17. The debit and its reversal both stay in the ledger: a semantic rollback, not a database one.
+- A timeout writes the state `unknown` and stops. No retry, because that risks paying twice; no compensation, because that risks cancelling a real payment. Recording that we do not know is the only correct action available.
+- The sweeper covers the unknown case. It asks the bank about every unfinished payout and finishes it: 17 turned out to have been paid, and the inconsistent count went to zero. With the sweeper but no compensation, nine are still broken, which is the argument for having both.
+- The bank is idempotent on the reference we generate, which is why the lookup works and why no payout was sent twice. The reference is created once, at creation, and stored before the first attempt.
+- Stuck detection is the last net: anything in a non final state for more than fifteen minutes is alerted on, because it catches the failures neither mechanism predicted.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| The signature verifies in tests and fails in production | You are verifying re-serialised JSON. Read the raw body once, verify those bytes, parse afterwards. |
-| Insufficient funds returns 500 | It is 422 with a code. 500 tells a well behaved client to retry forever against an account that will never have the money. |
-| The second identical request creates a second transfer | The key is being read after the write, or not at all. Look it up before touching the ledger. |
+| A payout went out twice | The reference was generated per attempt rather than once at creation, so the bank saw two different payouts. |
+| A real payment was cancelled | Compensating on timeout. A timeout is uncertainty, not failure, and only the sweeper can resolve it. |
+| After a crash, nobody knows what happened | State written after the external call instead of before it. Mark it submitting and commit, then call. |
+| Money missing with no alert | A compensation that failed and was logged. There is nothing further back to unwind to, so it is a page. |
+| Two sweepers processed the same payout | No for update skip locked on the query that picks up unfinished work. |
 
 ## Self-checks the solution satisfies
 
-- POST /v1/transfers with a new key returns 201 and a transfer id
-- The same key and body again returns 200 with an identical body, and the ledger holds one transfer
-- The same key with a different body returns 409 with code idempotency_key_reused
-- amount_cents of 0 returns 422 naming the field, and no ledger row is written
-- A transfer from an account without the money returns 422 with code insufficient_funds
-- Reversing twice returns 201 then 409 with code illegal_transition
-- A request without a bearer token returns 401, and the token never appears in the logs
-- A webhook is delivered with a valid FQ-Signature that the test receiver verifies
-- A receiver returning 500 is retried with backoff and the event lands in the dead letter list
-- An incoming webhook with a tampered body returns 401, and one with a timestamp ten minutes old returns 401
-- The same incoming event id twice is processed once and acknowledged twice
+- The naive orchestrator leaves a measurable percentage of payouts debited and unpaid
+- A rejected payout returns the money exactly once, even when the compensation runs three times
+- A timed out payout lands in unknown, with no retry and no compensation attempted
+- The sweeper marks as paid every payout the bank actually sent
+- The sweeper compensates every payout the bank never received
+- After compensation plus sweeping, no payout is left debited and unpaid
+- With the sweeper but no compensation, the rejected payouts remain broken
+- Two sweepers running at once never process the same payout
+- Killing the process between any two steps leaves a state the sweeper can act on
+- The stuck query returns rows when the sweeper is paused and none when it runs
+- A thousand payouts with injected crashes end with every payout in a final state
+- No bank reference is ever used for two payouts, and no payout is paid twice
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | Cannot charge twice | All three idempotency cases are implemented and tested, including the reuse with a different body. |
-| 20 | Errors a client can use | Correct status codes, a stable machine readable code, and a request id in every response. |
-| 20 | Webhooks both ways | Signed with a timestamp, retried with backoff, dead lettered. Verified against raw bytes with compare_digest and replay protection. |
-| 20 | State handled | Transitions in one table, illegal ones refused with 409, and no path that mutates state without going through it. |
-| 15 | Shipped | Runs from a clean clone, tests pass with no server, README documents every endpoint and says what is missing. |
+| 25 | The problem measured | A naive version kept in the repository with its inconsistency rate, and the three causes named. |
+| 25 | Saga done properly | Compensation per step, idempotent by constraint, run in reverse, with the measured improvement. |
+| 20 | Uncertainty handled | An explicit unknown state, no guessing, and a sweeper that resolves every one of them. |
+| 15 | Operable | State committed before each call, stuck detection with a threshold and a reason, skip locked sweepers. |
+| 15 | Proven | The chaos test with its three assertions, and the before and after table in the README. |
 
 ---
 

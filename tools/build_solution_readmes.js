@@ -273,27 +273,31 @@ const NOTES = {
   },
   12: {
     files: [
-      ['`main.py`', 'the app, the routes and the request id middleware'],
-      ['`api/idempotency.py`', 'the key store, the body fingerprint, and the three cases'],
-      ['`api/state.py`', 'the transition table and the one function that moves a transfer'],
-      ['`api/webhooks.py`', 'sign, deliver with backoff, dead letter, verify'],
-      ['`tests/`', 'every status code, a tampered webhook and a replayed one']
+      ['`saga/bank.py`', 'the other side: rejects, times out, remembers references'],
+      ['`saga/orchestrator.py`', 'the steps, with state committed before each external call'],
+      ['`saga/compensate.py`', 'the undo for each step, idempotent by constraint'],
+      ['`saga/sweeper.py`', 'the job that resolves everything left mid flight'],
+      ['`saga/stuck.py`', 'the query that should always return nothing'],
+      ['`bench/naive.py`', 'the version without any of this, for the numbers']
     ],
-    run: 'pip install -r requirements.txt && pytest -q && fastapi dev main.py',
+    run: 'python -m bench.naive && python -m saga.orchestrator --runs 200 && python -m saga.sweeper',
     design: [
-      'The idempotency store keeps the key, a sha256 of the request body and the response that was sent. Without the fingerprint a key reused by mistake looks exactly like a retry, and the client believes forty payments went through when one did.',
-      'Legal transitions live in one dictionary and one function. Every write path goes through it, so an illegal transition is a 409 rather than a second refund that still balances.',
-      'Errors are a code, a message and a request id. The code is what a client branches on, the message is for a person, and the id is what a partner quotes when they report something.',
-      'Webhook signatures cover a timestamp and the raw bytes. Verification reads the body before anything parses it, refuses a timestamp older than five minutes, and compares with `hmac.compare_digest`.',
-      'Delivery is at least once by design: retry with backoff, dead letter after the last attempt, and document that the receiver must be idempotent on the event id.'
+      'The naive orchestrator stays in the repository, because the fix only means something next to the failure. Measured over 200 payouts: 26 ended with money debited and nobody paid, which is 13.0%.',
+      'Three causes, two categories. Nine rejections are failure, where the outcome is known. Seven timeouts and ten crashes after submitting are uncertainty, where it is not, and the two need different mechanisms.',
+      'Compensation covers the known case. A rejected payout credits the merchant back as a new balanced transaction, which takes the inconsistent count from 26 to 17. The debit and its reversal both stay in the ledger: a semantic rollback, not a database one.',
+      'A timeout writes the state `unknown` and stops. No retry, because that risks paying twice; no compensation, because that risks cancelling a real payment. Recording that we do not know is the only correct action available.',
+      'The sweeper covers the unknown case. It asks the bank about every unfinished payout and finishes it: 17 turned out to have been paid, and the inconsistent count went to zero. With the sweeper but no compensation, nine are still broken, which is the argument for having both.',
+      'The bank is idempotent on the reference we generate, which is why the lookup works and why no payout was sent twice. The reference is created once, at creation, and stored before the first attempt.',
+      'Stuck detection is the last net: anything in a non final state for more than fifteen minutes is alerted on, because it catches the failures neither mechanism predicted.'
     ],
     mistakes: [
-      ['The signature verifies in tests and fails in production', 'You are verifying re-serialised JSON. Read the raw body once, verify those bytes, parse afterwards.'],
-      ['Insufficient funds returns 500', 'It is 422 with a code. 500 tells a well behaved client to retry forever against an account that will never have the money.'],
-      ['The second identical request creates a second transfer', 'The key is being read after the write, or not at all. Look it up before touching the ledger.']
+      ['A payout went out twice', 'The reference was generated per attempt rather than once at creation, so the bank saw two different payouts.'],
+      ['A real payment was cancelled', 'Compensating on timeout. A timeout is uncertainty, not failure, and only the sweeper can resolve it.'],
+      ['After a crash, nobody knows what happened', 'State written after the external call instead of before it. Mark it submitting and commit, then call.'],
+      ['Money missing with no alert', 'A compensation that failed and was logged. There is nothing further back to unwind to, so it is a page.'],
+      ['Two sweepers processed the same payout', 'No for update skip locked on the query that picks up unfinished work.']
     ]
   },
-
   13: {
     files: [
       ['`schema.sql`', 'events, snapshots, balances, and the revoked permissions'],
