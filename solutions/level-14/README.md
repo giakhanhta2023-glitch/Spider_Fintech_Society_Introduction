@@ -82,4 +82,4 @@ docker compose up -d redis && python -m lab.generate --rps 100 --seconds 15 && p
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 14 of 10
+Part of [FinQuest](../../README.md) · Level 14 of 20

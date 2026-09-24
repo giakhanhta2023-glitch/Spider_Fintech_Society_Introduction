@@ -52,4 +52,4 @@ Open Colab, paste `check_setup.py` into a cell, press Shift + Enter.
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 1 of 10
+Part of [FinQuest](../../README.md) · Level 1 of 20

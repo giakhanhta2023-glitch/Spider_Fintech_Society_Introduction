@@ -80,4 +80,4 @@ pip install -e ".[dev]" && ruff check . && mypy src/moneykit --strict && pytest 
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 5 of 10
+Part of [FinQuest](../../README.md) · Level 5 of 20

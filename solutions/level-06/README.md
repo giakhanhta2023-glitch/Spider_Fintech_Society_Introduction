@@ -78,4 +78,4 @@ export DATABASE_URL=... && python -m ledgerdb.migrate && python -m ledgerdb.seed
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 6 of 10
+Part of [FinQuest](../../README.md) · Level 6 of 20

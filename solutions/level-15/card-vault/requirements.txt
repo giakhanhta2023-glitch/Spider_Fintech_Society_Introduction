@@ -1,0 +1,7 @@
+cryptography>=42.0
+pyjwt>=2.8
+pytest>=8.0
+
+# Only for tests/integration/test_audit_role.py, which needs a real Postgres.
+# Everything else runs with no service of any kind.
+psycopg[binary]>=3.2
