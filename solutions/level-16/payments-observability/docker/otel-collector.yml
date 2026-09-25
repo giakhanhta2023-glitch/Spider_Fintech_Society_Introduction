@@ -1,0 +1,58 @@
+# The collector, with tail sampling in it rather than in the application.
+#
+# Not exercised on the machine this was written on: see compose.yml. The policy
+# below is the same policy `obs/sampling.py` implements and tests, written in the
+# collector's own configuration language so the two can be compared line by line.
+#
+# Tail sampling belongs here rather than in the service for one reason: the
+# decision needs the whole trace, and no single service ever has it. The service
+# that started the trace does not know the worker failed twenty minutes later.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Buffering every unfinished trace is what tail sampling costs. Ten seconds of
+  # traces at 200 requests a second is what this has to hold in memory, and that
+  # is the trade being made in exchange for keeping every failure.
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 200
+    policies:
+      - name: keep-every-error
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+
+      - name: keep-everything-slow
+        type: latency
+        latency:
+          threshold_ms: 250          # the latency objective, not a round number
+
+      - name: keep-one-percent-of-the-rest
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 1
+
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  # Where a real deployment sends traces. Left as a log exporter here so the
+  # stack runs without an account anywhere.
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [tail_sampling, batch]
+      exporters: [debug]

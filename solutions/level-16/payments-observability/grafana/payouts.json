@@ -1,0 +1,67 @@
+{
+  "title": "Payouts: freshness and correctness",
+  "uid": "payouts",
+  "schemaVersion": 39,
+  "refresh": "1m",
+  "tags": [
+    "payouts",
+    "slo"
+  ],
+  "description": "The payout path fails differently from the payment path: the API can be perfectly healthy while no money moves. Both panels here are about work that is not happening rather than requests that are failing.",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Queue depth",
+      "description": "Depth alone is not an alert. A spike drains.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "queue_depth{queue=\"payouts\"}",
+          "legendFormat": "depth",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Queue slope over 15 minutes",
+      "description": "Depth plus a positive slope for fifteen minutes is a queue that will not catch up. That pair is the alert.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "deriv(queue_depth{queue=\"payouts\"}[15m])",
+          "legendFormat": "slope",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Payouts in a non final state over 15 minutes old",
+      "description": "Level 12. Every unit on this graph is a merchant debited for a payment that has not happened. The objective is zero and there is no budget.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "payouts_non_final_older_than_15m",
+          "legendFormat": "stuck",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

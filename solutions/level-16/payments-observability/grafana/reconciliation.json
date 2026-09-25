@@ -1,0 +1,49 @@
+{
+  "title": "Reconciliation",
+  "uid": "reconciliation",
+  "schemaVersion": 39,
+  "refresh": "15m",
+  "tags": [
+    "reconciliation",
+    "slo"
+  ],
+  "description": "Correctness rather than availability. Every request can succeed and the money can still stop matching, which no RED dashboard will ever show.",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Unexplained breaks per run",
+      "description": "Level 10's day produced 193 explainable amount mismatches. The count is not the signal; a change in the count is.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "reconciliation_breaks_unexplained",
+          "legendFormat": "unexplained",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Breaks by type",
+      "description": "The composition is the diagnosis. Two hundred amount mismatches is Tuesday; twenty missing on our side is a problem; one duplicate is an incident.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (break_type) (reconciliation_breaks_total)",
+          "legendFormat": "{{break_type}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

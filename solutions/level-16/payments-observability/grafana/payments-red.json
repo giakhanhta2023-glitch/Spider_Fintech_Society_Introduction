@@ -1,0 +1,103 @@
+{
+  "title": "Payments: RED",
+  "uid": "payments-red",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "tags": [
+    "payments",
+    "slo"
+  ],
+  "description": "Rate, errors, duration, in that order, because that is the order the questions get asked in. The worst instance panel is fourth and is the one that finds a single bad node: every aggregate on this dashboard hides it.",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Rate",
+      "description": "Requests a second. Context for everything else: a zero error rate on no traffic is not good news.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
+      "targets": [
+        {
+          "expr": "payments:requests:rate5m",
+          "legendFormat": "requests",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Errors, as a share of the budget rate",
+      "description": "Divided by the budget rate, so 1 is exactly on budget and 14.4 is the fast burn threshold. Reading a burn rate directly beats reading a percentage and doing the arithmetic at 4am.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "payments:errors:ratio5m / 0.001",
+          "legendFormat": "burn rate",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Duration, p99 aggregated across instances",
+      "description": "Computed by summing histogram buckets. Never avg() of a per instance quantile: with one instance three times slower the average read 361.6 ms while the true p99 was 393.4 ms.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "payments:latency:p99_5m",
+          "legendFormat": "p99",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Duration, p99 of the worst instance",
+      "description": "The panel that catches one broken instance. During the measured case this read 906.2 ms while panel 3 read 393.4 ms.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "payments:latency:p99_worst_instance_5m",
+          "legendFormat": "worst instance",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "In flight",
+      "description": "Saturation. Not RED, and the first thing anybody asks for during an incident: how close to the wall are we.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "http_requests_in_flight",
+          "legendFormat": "in flight",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

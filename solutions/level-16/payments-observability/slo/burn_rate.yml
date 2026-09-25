@@ -1,0 +1,163 @@
+# Prometheus alerting rules. Every rule here pages a human, so every rule here
+# has a runbook, and a test fails the build if one does not.
+#
+# The recording rules exist so the alerts read like the objective rather than
+# like PromQL. A rule nobody can read during an incident gets silenced during an
+# incident.
+#
+# Replayed over a synthetic month in slo/replay.py:
+#   this ruleset             2 pages, 0 false, 35% incident found in 2 minutes
+#   error rate above 1%      4 pages, 2 false, both incidents found instantly
+#
+# Objective: 99.9% of payment requests succeed over 30 days.
+# Budget: 43 minutes 12 seconds. Fast burn is 14.4x that rate, slow burn 6x.
+
+groups:
+  - name: payments-slo-recording
+    interval: 30s
+    rules:
+      # 4xx is deliberately excluded from the numerator: a card declined by the
+      # issuer and a malformed request from a client are not our failures, and
+      # counting them means the objective moves whenever a customer ships a bug.
+      # The reason is in OBJECTIVES.md, where a reviewer will find it.
+      - record: payments:requests:rate5m
+        expr: sum(rate(http_requests_total{endpoint="POST /payments"}[5m]))
+
+      - record: payments:errors:ratio5m
+        expr: |
+          sum(rate(http_requests_total{endpoint="POST /payments", status_class="5xx"}[5m]))
+            / sum(rate(http_requests_total{endpoint="POST /payments"}[5m]))
+
+      - record: payments:errors:ratio30m
+        expr: |
+          sum(rate(http_requests_total{endpoint="POST /payments", status_class="5xx"}[30m]))
+            / sum(rate(http_requests_total{endpoint="POST /payments"}[30m]))
+
+      - record: payments:errors:ratio1h
+        expr: |
+          sum(rate(http_requests_total{endpoint="POST /payments", status_class="5xx"}[1h]))
+            / sum(rate(http_requests_total{endpoint="POST /payments"}[1h]))
+
+      - record: payments:errors:ratio6h
+        expr: |
+          sum(rate(http_requests_total{endpoint="POST /payments", status_class="5xx"}[6h]))
+            / sum(rate(http_requests_total{endpoint="POST /payments"}[6h]))
+
+      # Percentiles are aggregated by summing buckets across instances. Never
+      # avg() of a per instance quantile: with ten instances and one of them
+      # three times slower, the average of the instance p99s read 361.6 ms when
+      # the true p99 was 393.4 and the sick instance was at 906.2.
+      - record: payments:latency:p99_5m
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(http_request_duration_seconds_bucket{endpoint="POST /payments"}[5m])))
+
+      # The panel that catches one broken instance, which every aggregate hides.
+      - record: payments:latency:p99_worst_instance_5m
+        expr: |
+          max(
+            histogram_quantile(0.99,
+              sum by (le, instance) (
+                rate(http_request_duration_seconds_bucket{endpoint="POST /payments"}[5m]))))
+
+  - name: payments-slo-alerts
+    rules:
+      - alert: PaymentsErrorBudgetFastBurn
+        expr: |
+          payments:errors:ratio1h > (14.4 * 0.001)
+            and
+          payments:errors:ratio5m > (14.4 * 0.001)
+        for: 2m
+        labels:
+          severity: page
+          slo: payments-availability
+        annotations:
+          summary: Payments are failing fast enough to empty the 30 day budget in about 2 days
+          description: >-
+            {{ $value | humanizePercentage }} of payment requests are returning 5xx.
+            The short window confirms it is still happening now rather than an hour ago.
+          runbook: runbooks/payments-error-budget-fast-burn.md
+          dashboard: grafana/payments-red.json
+
+      - alert: PaymentsErrorBudgetSlowBurn
+        expr: |
+          payments:errors:ratio6h > (6 * 0.001)
+            and
+          payments:errors:ratio30m > (6 * 0.001)
+        for: 15m
+        labels:
+          severity: page
+          slo: payments-availability
+        annotations:
+          summary: Payments have been failing slowly enough to be ignored and fast enough to matter
+          description: >-
+            Six hours above six times the budget rate. Nothing is on fire and the
+            budget is going to run out on Thursday.
+          runbook: runbooks/payments-error-budget-slow-burn.md
+          dashboard: grafana/payments-red.json
+
+      - alert: PaymentsLatencyObjectiveBreached
+        expr: payments:latency:p99_5m > 0.5
+        for: 10m
+        labels:
+          severity: page
+          slo: payments-latency
+        annotations:
+          summary: p99 payment latency above the 500 ms objective for ten minutes
+          description: >-
+            Aggregated across instances by summing buckets. Check the worst
+            instance panel before assuming it is everywhere.
+          runbook: runbooks/payments-latency.md
+          dashboard: grafana/payments-red.json
+
+      - alert: PayoutQueueNotDraining
+        expr: |
+          queue_depth{queue="payouts"} > 500
+            and
+          deriv(queue_depth{queue="payouts"}[15m]) > 0
+        for: 15m
+        labels:
+          severity: page
+          slo: payouts-freshness
+        annotations:
+          summary: The payout queue is growing and not draining
+          description: >-
+            Depth alone is not an alert: a spike drains. Depth plus a positive
+            slope for fifteen minutes is a queue that will not catch up.
+          runbook: runbooks/payout-queue-not-draining.md
+          dashboard: grafana/payouts.json
+
+      # From level 12. A payout stuck between debited and paid is money taken
+      # from a merchant with nothing to show for it, and no error rate shows it.
+      - alert: PayoutsStuckInNonFinalState
+        expr: payouts_non_final_older_than_15m > 0
+        for: 5m
+        labels:
+          severity: page
+          slo: payouts-correctness
+        annotations:
+          summary: A payout has been in a non final state for over fifteen minutes
+          description: >-
+            The saga sweeper should have resolved this. Every minute here is a
+            merchant debited for a payment that has not happened.
+          runbook: runbooks/payouts-stuck.md
+          dashboard: grafana/payouts.json
+
+      # From level 10. Correctness, not availability: the service can be up and
+      # perfectly healthy while the money stops matching.
+      - alert: ReconciliationBreaksAboveBaseline
+        expr: reconciliation_breaks_unexplained > 250
+        for: 5m
+        labels:
+          severity: ticket
+          slo: reconciliation
+        annotations:
+          summary: More unexplained differences than a normal day produces
+          description: >-
+            Level 10's day produced 193 amount mismatches, all of them explainable
+            by fees, rounding and timing. The threshold sits just above that
+            baseline, because the alert is for a change in the pipeline rather
+            than for the existence of breaks. A ticket, not a page: the money is
+            already wrong and five more minutes will not make it worse.
+          runbook: runbooks/reconciliation-breaks.md
+          dashboard: grafana/reconciliation.json

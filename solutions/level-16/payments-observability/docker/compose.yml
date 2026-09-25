@@ -1,0 +1,54 @@
+# Prometheus, Grafana and an OpenTelemetry collector.
+#
+#   docker compose -f docker/compose.yml up -d
+#
+# **This file was not exercised while writing this solution**, and saying so is
+# the point of the first comment in it. No Docker was available on the machine
+# this was written on, so every number in the README comes from the Python
+# experiments in `obs/experiments.py` and `slo/replay.py`, which need no
+# containers at all. That is why they are written that way: a measurement that
+# only runs on somebody else's laptop is a measurement nobody repeats.
+#
+# What this stack adds, once it runs, is the part that cannot be simulated: a
+# real scrape against a real endpoint, a real 15 second interval, and the
+# experience of watching a scrape take longer than its interval.
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      # Deliberately small, so a cardinality accident shows up as a failure here
+      # rather than as a bill somewhere else.
+      - --storage.tsdb.retention.size=512MB
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../slo/burn_rate.yml:/etc/prometheus/rules/burn_rate.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      # A local stack. Never do this anywhere a real person can reach.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ../grafana:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    command: ["--config=/etc/otel/config.yml"]
+    volumes:
+      - ./otel-collector.yml:/etc/otel/config.yml:ro
+    ports:
+      - "4317:4317"      # OTLP over gRPC, which is what the SDK sends
+      - "4318:4318"      # OTLP over HTTP
+    depends_on:
+      - prometheus
