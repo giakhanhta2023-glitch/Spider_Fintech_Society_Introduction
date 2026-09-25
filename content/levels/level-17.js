@@ -262,18 +262,19 @@ FQ.registerLevel({
     { h: 'What your design costs per payment' },
     { p: 'Nobody asks a junior engineer what their architecture costs, and being able to answer is a way to sound like ' +
          'somebody who has run something. The arithmetic is not difficult; what is rare is doing it at all.' },
-    { code: 'Assume 200 payments per second at peak, 50 average, so 130 million a month.\nUnit prices are illustrative: look up the real ones, the method is the point.\n\n  compute   6 instances x 2 vCPU x $0.04 per vCPU hour x 730 h   =  $3,504\n  database  1 primary + 1 replica, 8 vCPU each, managed           =  $2,200\n  cache     2 nodes, small                                        =    $180\n  queue     130 M messages                                        =    $130\n  logs      21.6 GB a day x 30 x $0.50 per GB ingested            =    $324\n  metrics   40,000 series                                         =    $200\n  traces    1% tail sampled                                       =    $150\n  egress    2 TB x $0.09 per GB                                   =    $184\n  ---------------------------------------------------------------------------\n  total                                                              $6,872\n  per payment                                                     $0.000053', lang: 'text' },
-    { p: 'Three things fall out of that table, and they are the same three every time. **Logs and metrics are a real ' +
-         'line item**, which is why level 16 sampled them. **Egress is charged and ingress usually is not**, so moving ' +
-         'data out of a region costs money that nobody budgeted. And **idle capacity is most of the bill**: the compute ' +
-         'line is sized for 200 payments a second at peak while the average is 50, so three quarters of it is insurance.' },
-    { money: 'Five thousandths of a cent per payment sounds like nothing, and that is the point of computing it. Now ' +
+    { code: 'Assume 200 payments per second at peak, 50 average, so 130 million a month.\nUnit prices are illustrative: look up the real ones, the method is the point.\n\n  database  1 primary + 1 replica, 8 vCPU each, managed           =  $2,200\n  compute   6 instances x 2 vCPU x $0.04 per vCPU hour x 730 h    =    $350\n  logs      8 GB a day x 30 x $0.50 per GB ingested               =    $120\n  queue     394 M requests, three per payment                     =    $158\n  cache     2 nodes, small                                        =    $180\n  metrics   900 series                                            =    $270\n  traces    1% tail sampled                                       =     $26\n  egress    2 TB x $0.09 per GB                                   =    $184\n  ---------------------------------------------------------------------------\n  total                                                              $3,488\n  per payment                                                     $0.000027', lang: 'text' },
+    { p: 'Four things fall out of that table. **The managed database is usually the biggest line**, and it is the one ' +
+         'nobody questions. **Logs and metrics are a real line item**, which is why level 16 sampled them: unsampled, the ' +
+         'logs line alone is fourteen times larger. **Egress is charged and ingress usually is not**, so moving data out ' +
+         'of a region costs money nobody budgeted. And **most of the compute line is idle**: it is sized for 200 payments ' +
+         'a second at peak while the average is 50, so three quarters of it is insurance against a spike.' },
+    { money: 'Under three thousandths of a cent per payment sounds like nothing, and that is the point of computing it. Now ' +
              'compare it with your processing fee of roughly 2.9% plus 30 cents, and you can say exactly how much of ' +
              'your margin the infrastructure takes. An engineer who can hold both numbers at once is talking the same ' +
              'language as the person deciding the budget.' },
     { check: {
-      q: 'Your finance team asks you to cut the cloud bill by 30%. The compute line is the biggest. What do you look at ' +
-         'first, and what would you refuse to do?',
+      q: 'Your finance team asks you to cut the cloud bill by 30%. The database is the biggest line and the compute ' +
+         'line is mostly idle. What do you look at first, and what would you refuse to do?',
       a: 'Look first at the gap between peak and average, because that is where the waste is: sized for 200 a second ' +
          'while averaging 50 means most instances are idle most of the day, and autoscaling on a metric that reflects ' +
          'real load recovers a lot of it without touching reliability. Next, the things nobody has looked at since they ' +

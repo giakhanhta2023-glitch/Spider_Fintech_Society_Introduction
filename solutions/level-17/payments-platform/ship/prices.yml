@@ -1,0 +1,160 @@
+# Unit prices for the cost model.
+#
+# **Every price in this file is marked `verified: false`, and that is not a
+# placeholder to be ignored.** The machine this solution was written on has no
+# cloud account, so nothing here was read off an invoice or a pricing API. The
+# values are the order of magnitude published for us-east-1 at the time of
+# writing, and they are inputs to the model rather than findings of it.
+#
+# Fill them in properly before quoting any total to anybody:
+#
+#   aws pricing get-products --service-code AmazonEC2 --region us-east-1 \
+#     --filters 'Type=TERM_MATCH,Field=instanceType,Value=m7g.large'
+#   aws ce get-cost-and-usage --time-period Start=2026-08-01,End=2026-09-01 \
+#     --granularity MONTHLY --metrics UnblendedCost --group-by Type=DIMENSION,Key=SERVICE
+#
+# The second command is the better one: it prices your account rather than the
+# list, including the discounts, the free tiers and the things nobody remembers
+# switching on. A cost model built from list prices is a starting point, and the
+# bill is the measurement.
+#
+# `sensitivity` marks the lines worth arguing about. The model prints those
+# separately, because a total is less useful than knowing which two numbers move
+# it.
+
+region: us-east-1
+currency: USD
+checked: "2026-09-24"
+verified: false
+
+prices:
+  fargate_vcpu_hour:
+    value: 0.04048
+    unit: per vCPU hour
+    source: https://aws.amazon.com/fargate/pricing/
+    verified: false
+    sensitivity: high
+
+  fargate_gb_hour:
+    value: 0.004445
+    unit: per GB of memory per hour
+    source: https://aws.amazon.com/fargate/pricing/
+    verified: false
+
+  rds_r7g_2xlarge_hour:
+    value: 0.96
+    unit: per instance hour, 8 vCPU, PostgreSQL, single availability zone
+    source: https://aws.amazon.com/rds/postgresql/pricing/
+    verified: false
+    sensitivity: high
+
+  rds_storage_gb_month:
+    value: 0.115
+    unit: per GB month, general purpose SSD
+    source: https://aws.amazon.com/rds/postgresql/pricing/
+    verified: false
+
+  elasticache_t4g_medium_hour:
+    value: 0.068
+    unit: per node hour
+    source: https://aws.amazon.com/elasticache/pricing/
+    verified: false
+
+  sqs_million_requests:
+    value: 0.40
+    unit: per million requests, standard queue
+    source: https://aws.amazon.com/sqs/pricing/
+    verified: false
+
+  nat_gateway_hour:
+    value: 0.045
+    unit: per gateway hour
+    source: https://aws.amazon.com/vpc/pricing/
+    verified: false
+    sensitivity: high
+
+  nat_gateway_gb:
+    value: 0.045
+    unit: per GB processed, in either direction
+    source: https://aws.amazon.com/vpc/pricing/
+    verified: false
+
+  alb_hour:
+    value: 0.0225
+    unit: per load balancer hour
+    source: https://aws.amazon.com/elasticloadbalancing/pricing/
+    verified: false
+
+  alb_lcu_hour:
+    value: 0.008
+    unit: per capacity unit hour
+    source: https://aws.amazon.com/elasticloadbalancing/pricing/
+    verified: false
+
+  logs_gb_ingested:
+    value: 0.50
+    unit: per GB ingested
+    source: https://aws.amazon.com/cloudwatch/pricing/
+    verified: false
+    sensitivity: high
+
+  logs_gb_stored_month:
+    value: 0.03
+    unit: per GB month of retention
+    source: https://aws.amazon.com/cloudwatch/pricing/
+    verified: false
+
+  metrics_series_month:
+    value: 0.30
+    unit: per custom metric per month
+    source: https://aws.amazon.com/cloudwatch/pricing/
+    verified: false
+    sensitivity: high
+
+  traces_million_spans:
+    value: 5.00
+    unit: per million spans recorded
+    source: https://aws.amazon.com/xray/pricing/
+    verified: false
+
+  kms_key_month:
+    value: 1.00
+    unit: per customer managed key per month
+    source: https://aws.amazon.com/kms/pricing/
+    verified: false
+
+  kms_10k_requests:
+    value: 0.03
+    unit: per 10,000 requests
+    source: https://aws.amazon.com/kms/pricing/
+    verified: false
+
+  secret_month:
+    value: 0.40
+    unit: per secret per month
+    source: https://aws.amazon.com/secrets-manager/pricing/
+    verified: false
+
+  s3_gb_month:
+    value: 0.023
+    unit: per GB month, standard storage
+    source: https://aws.amazon.com/s3/pricing/
+    verified: false
+
+  egress_gb:
+    value: 0.09
+    unit: per GB out to the internet, first 10 TB
+    source: https://aws.amazon.com/ec2/pricing/on-demand/
+    verified: false
+
+# The fee the business pays to accept a card, which is the number the
+# infrastructure total should be compared against. Roughly 2.9% plus 30 cents is
+# the published small business rate for several processors; a company doing 130
+# million payments a month is not paying list either, and would say so.
+processing_fee:
+  percent: 2.9
+  fixed_cents: 30
+  verified: false
+  note: >-
+    Published small business card rate, order of magnitude. Negotiated rates at
+    this volume are materially lower and are under a contract nobody publishes.

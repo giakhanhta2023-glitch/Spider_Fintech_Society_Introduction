@@ -1,0 +1,45 @@
+# The file everybody forgets, and the one that makes `COPY . .` safe.
+#
+# Without it, the build context is the whole repository: the git history, the
+# virtual environment, the test data, the coverage reports and, on somebody's
+# machine, a .env file with real credentials in it. All of it is uploaded to the
+# daemon, and whatever the Dockerfile copies ends up in a layer that anybody who
+# can pull the image can unpack.
+
+.git
+.github
+.gitignore
+
+# Anything that could hold a secret. This block is the reason the file exists.
+.env
+.env.*
+*.pem
+*.key
+secrets/
+**/credentials
+
+# Local environments and caches: large, machine specific, and never wanted.
+.venv
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Tests and tooling live in the builder stage, which installs them itself.
+tests/
+ship/
+infra/
+k8s/
+docs/
+*.md
+!README.md
+
+# Data. The repository's datasets are synthetic and they are still 40 MB of
+# build context that the service never reads.
+data/
+*.csv
+*.sqlite

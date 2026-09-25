@@ -1,0 +1,60 @@
+[project]
+name = "payments-platform"
+version = "0.1.0"
+description = "Everything from levels 7 to 16, deployable"
+requires-python = ">=3.11"
+
+# The gate's configuration lives here rather than in the workflow file, so
+# `ruff check .` on a laptop and `ruff check .` in the pipeline are the same
+# command with the same rules. A linter configured in CI only is a linter that
+# fails for the first time in a pull request.
+
+[tool.ruff]
+line-length = 96
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "F",      # pyflakes: unused imports, undefined names
+    "E", "W", # pycodestyle
+    "I",      # import ordering, so a diff never argues about it
+    "N",      # pep8-naming. This is why do_GET carries a noqa
+    "UP",     # pyupgrade: syntax this Python version made better
+    "B",      # bugbear: mutable defaults, except-pass, loop variable capture
+    "A",      # builtin shadowing
+    "C4",     # comprehensions
+    "DTZ",    # naive datetimes, which is a money bug waiting to happen
+    "RUF",    # ruff's own rules
+]
+ignore = [
+    # A dataclass field named `id` or `type` shadows a builtin, and renaming it
+    # would make the JSON it serialises to wrong. Shadowing inside a class scope
+    # is harmless.
+    "A003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests may be long, may use assert, and their names are the documentation.
+"tests/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+# Not --strict. The level 5 library is strict because a money library with a
+# missing annotation is a bug in waiting; this is deployment code with a stdlib
+# HTTP handler in it, and strict mode here means annotating third party stubs
+# rather than finding mistakes. The line is drawn deliberately and this comment
+# is the reason, because an unexplained relaxation is how strict becomes nominal.
+[[tool.mypy.overrides]]
+module = ["ship.*"]
+check_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

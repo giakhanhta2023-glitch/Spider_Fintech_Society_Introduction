@@ -1,0 +1,25 @@
+# A stable name for a changing set of Pods.
+#
+# Pods come and go and their addresses change every time. A Service is the name
+# that does not: `payments-api.default.svc.cluster.local` resolves to whichever
+# Pods are ready right now, and "ready" is the readiness probe from the
+# Deployment. That is the connection between the two files, and it is the reason
+# the probe matters: a Pod whose readiness fails is removed from this Service's
+# endpoints within seconds and receives nothing.
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-api
+  labels:
+    app: payments-api
+spec:
+  # ClusterIP, not LoadBalancer. One LoadBalancer Service per component means one
+  # cloud load balancer per component, each with an hourly charge. The Ingress
+  # shares one.
+  type: ClusterIP
+  selector:
+    app: payments-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http      # the named port from the container, not a number

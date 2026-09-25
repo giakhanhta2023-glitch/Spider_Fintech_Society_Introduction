@@ -1,0 +1,200 @@
+# One component on Kubernetes, explained line by line, because being able to do
+# that is the whole point of the exercise.
+#
+# Not applied: there is no cluster on the machine this was written on. Run it
+# against kind or minikube, which is what the README says to do:
+#
+#   kind create cluster --name payments
+#   kubectl apply -f k8s/
+#   kubectl rollout status deployment/payments-api
+#
+# The object model, smallest to largest, because interviews ask for it in exactly
+# these words:
+#
+#   Container    one process, one image
+#   Pod          one or more containers sharing a network namespace and a
+#                lifecycle. The smallest thing Kubernetes schedules. Never
+#                created directly in production
+#   ReplicaSet   keeps N identical Pods running. Created by a Deployment
+#   Deployment   the desired state of a stateless service, and the rollout
+#                strategy that gets there. This file
+#   Service      a stable name and address for a changing set of Pods
+#   Ingress      an HTTP route from outside the cluster to a Service
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-api
+  labels:
+    app: payments-api
+spec:
+  # Three rather than two. With two, one Pod being replaced during a rollout
+  # leaves one serving, and a node failing at the same moment leaves none.
+  replicas: 3
+
+  # How a new version replaces the old one. maxUnavailable: 0 means capacity
+  # never drops below three during a rollout, and maxSurge: 1 means it adds one
+  # at a time. Slower, and it cannot cause the outage it is deploying to prevent.
+  #
+  # Note what this is not: it is not blue green. A rolling update has one version
+  # arriving gradually, and its rollback is another rolling update in the other
+  # direction at the same speed. The measured comparison is in the README.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  # How the Deployment finds the Pods it owns. It must match the Pod labels
+  # below, and it is immutable after creation: changing it means deleting the
+  # Deployment, which is a surprise worth having in staging rather than later.
+  selector:
+    matchLabels:
+      app: payments-api
+
+  template:
+    metadata:
+      labels:
+        app: payments-api
+        version: v2
+    spec:
+      # Thirty seconds between SIGTERM and SIGKILL. It has to be longer than the
+      # slowest request plus the time the endpoints controller takes to remove
+      # this Pod from the Service, or requests in flight are cut off mid write.
+      terminationGracePeriodSeconds: 30
+
+      securityContext:
+        # The same decisions as the Dockerfile, enforced by the platform rather
+        # than trusted from the image. A cluster policy can require this; an
+        # image cannot be trusted to have set it.
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: api
+          # A digest, not a tag. `:latest` means the Pod restarted at 3am is
+          # running something nobody chose, and `:v2` can be moved by anybody
+          # with push access.
+          image: ghcr.io/finquest/payments-api@sha256:REPLACE_WITH_THE_DIGEST_YOU_BUILT
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 8000
+
+          # Requests are what the scheduler reserves; limits are what the kernel
+          # enforces. Two rules that cost people weeks:
+          #
+          # Memory limit equal to the request, because exceeding a memory limit
+          # is an immediate kill with no warning and no stack trace: exit code
+          # 137, which reads as a mystery until you know it.
+          #
+          # No CPU limit, only a request. A CPU limit throttles the process even
+          # when the node is idle, and for a latency sensitive service that shows
+          # up as a p99 nobody can explain. The request is what guarantees a
+          # share; the limit only takes it away.
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              memory: "512Mi"
+
+          # Three probes, three different questions.
+          #
+          # startup: is it still booting? While this is failing the other two are
+          # not run at all, which is what stops a slow start from being read as a
+          # crash loop. 30 x 2s gives a minute before anybody panics.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+
+          # liveness: is it broken beyond recovery? Restarts the container on
+          # failure, so it must not touch the database. A liveness probe that
+          # checks a dependency turns a thirty second database blip into every
+          # Pod restarting at once, with cold caches, which is a much longer
+          # outage than the blip.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          # readiness: should it receive traffic right now? Removes the Pod from
+          # the Service endpoints without restarting it. This one does check the
+          # dependencies, and it is the probe the level's test exercises: with
+          # the database unreachable, /readyz returns 503 and the Pod leaves the
+          # Service while staying alive to be inspected.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+            successThreshold: 2
+
+          env:
+            - name: ENVIRONMENT
+              value: staging
+            - name: PORT
+              value: "8000"
+
+            # A reference, never a value. The Secret object holds base64, which
+            # is an encoding rather than encryption: anybody with get on the
+            # Secret has the password. In production this comes from the secret
+            # manager through the external secrets operator or a CSI driver, so
+            # the value never becomes a Kubernetes object at all.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: payments-database
+                  key: url
+
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: redis-url
+
+            - name: VAULT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: vault-url
+
+          # The filesystem is read only, because a payments service has no
+          # business writing to its own image. Anything that does need a writable
+          # path gets an explicit empty volume, which is visible in review.
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
+      # Spread the three Pods across nodes, so losing one node does not take all
+      # three. Without this the scheduler is free to put them on one node, and it
+      # often does, because that node had room.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: payments-api

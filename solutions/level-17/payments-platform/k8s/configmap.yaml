@@ -1,0 +1,10 @@
+# Configuration that is not secret. Everything here is visible to anybody who can
+# read the namespace, which is why the database URL is not in it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-config
+data:
+  redis-url: "redis://payments-redis:6379/0"
+  vault-url: "https://card-vault.internal:8443"
+  log-sample-one-in: "20"

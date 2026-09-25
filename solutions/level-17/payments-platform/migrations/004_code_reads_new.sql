@@ -1,0 +1,17 @@
+-- Deploy 4. Code only. The application now reads fee_minor.
+--
+--   select id, amount_minor, fee_minor from l17_payments where id = $1
+--
+-- This is the deploy whose rollback the level asks to be proved safe, and it is
+-- safe for one reason: deploy 2 is still writing both columns, so the previous
+-- version of the code reading fee_bps gets correct answers for every row,
+-- including rows written in the last five minutes.
+--
+-- The rollback plan in the pull request reads, in one line:
+--
+--   Rollback: revert this deploy. No migration in this change. fee_bps is still
+--   being written, so the previous version is correct.
+--
+-- Verified on PostgreSQL 18.6: see migrations/README.md, which records both
+-- code versions returning the same fee for the same rows at this point in the
+-- sequence.

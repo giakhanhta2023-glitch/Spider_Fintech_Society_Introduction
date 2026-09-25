@@ -1,0 +1,16 @@
+# The object that stops a routine node upgrade from becoming an outage.
+#
+# `kubectl drain`, a cluster autoscaler removing a node, and a managed node group
+# upgrade all evict Pods. Without a disruption budget they can evict all three at
+# once, and the service is down for reasons nobody deployed.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: payments-api
+spec:
+  # Two of three must stay up. Written as minAvailable rather than
+  # maxUnavailable, so it stays correct if the replica count changes.
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: payments-api

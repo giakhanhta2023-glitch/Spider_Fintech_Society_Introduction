@@ -1,0 +1,23 @@
+-- Deploy 2. Code only, no migration. This file documents what the code does,
+-- because the repository should show the whole sequence in one place.
+--
+-- The application now writes both columns on every insert and update:
+--
+--   insert into l17_payments (id, amount_minor, fee_bps, fee_minor)
+--   values ($1, $2, $3, $4)
+--
+-- Both, not either. This is the deploy that makes the rollback in deploy 4 safe:
+-- while both columns are being written, code that reads either one is correct.
+--
+-- It is also the deploy people skip, because writing the same fact twice feels
+-- wasteful. The cost is one integer per row for a few days. The alternative is a
+-- deploy that cannot be undone.
+
+-- Verification that the code is doing it, which belongs in the pipeline rather
+-- than in somebody's head:
+--
+--   select count(*) from l17_payments
+--   where created_at > now() - interval '5 minutes' and fee_minor is null;
+--
+-- Anything other than zero means deploy 2 did not fully roll out, and deploy 3
+-- must wait.

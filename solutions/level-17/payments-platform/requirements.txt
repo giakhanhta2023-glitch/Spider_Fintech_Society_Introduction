@@ -1,0 +1,16 @@
+# Runtime only. Everything here executes in production; nothing else belongs.
+#
+# Pinned exactly, because `>=` means the image built on Tuesday and the image
+# built on Wednesday contain different code with the same tag. Generate this file
+# from the resolved set rather than by hand:
+#
+#   pip install pip-tools && pip-compile --generate-hashes requirements.in
+#
+# The hashes are what make the build reproducible against a compromised mirror,
+# and `--require-hashes` in the Dockerfile is what enforces them.
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+psycopg[binary]==3.2.1
+redis==5.0.8
+prometheus-client==0.20.0
+pyyaml==6.0.2

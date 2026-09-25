@@ -1,0 +1,35 @@
+# The route in from outside. One load balancer, many services.
+#
+# The annotations are the part that is not portable: every ingress controller has
+# its own, and copying them between clusters is where an afternoon goes. These
+# are nginx's.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: payments
+  annotations:
+    # Timeouts shorter than the caller's, so this layer gives up before the
+    # customer does. Level 14 again: work done for a caller who has left is
+    # capacity spent on nobody.
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "2"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "10"
+    # Retries are off. The ingress retrying a POST /payments is how one payment
+    # becomes two, and the idempotency key from level 7 is what makes that
+    # survivable rather than something to rely on.
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "off"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["api.staging.example"]
+      secretName: payments-tls
+  rules:
+    - host: api.staging.example
+      http:
+        paths:
+          - path: /payments
+            pathType: Prefix
+            backend:
+              service:
+                name: payments-api
+                port:
+                  name: http

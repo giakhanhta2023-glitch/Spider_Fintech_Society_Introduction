@@ -1,0 +1,17 @@
+-- Deploy 5. Code only. The application stops writing fee_bps.
+--
+-- **This is the deploy that closes the rollback window, and it is the one nobody
+-- writes down.** From here, rows created by the new code have a stale or null
+-- fee_bps, so rolling back to code that reads fee_bps returns wrong fees for
+-- recent payments. It will not error. It will quietly report the wrong money.
+--
+-- So the rollback plan changes, and the pull request has to say so:
+--
+--   Rollback: revert this deploy, then run migrations/003_backfill.sql in
+--   reverse (fee_bps = fee_minor * 10000 / amount_minor) for rows created after
+--   this deploy. NOT a plain revert.
+--
+-- The honest options at this step are: leave several days between deploy 4 and
+-- deploy 5 so confidence in the new column is real, or keep writing both for a
+-- release longer than feels necessary. The wrong option is to do 4 and 5 in one
+-- deploy, which is what turns a reversible sequence into a one way door.

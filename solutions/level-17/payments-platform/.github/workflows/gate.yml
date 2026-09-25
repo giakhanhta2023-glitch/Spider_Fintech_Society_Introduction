@@ -1,0 +1,208 @@
+# The merge gate. Nothing reaches main without passing it, and nothing deploys
+# without the artefact it built.
+#
+# Ordered by how fast each step fails. A gate that takes four minutes to tell you
+# about a missing comma is a gate people work around, and a gate people work
+# around is worse than no gate, because it is a gate everybody believes in.
+#
+# Timed step by step in ship/gate.py rather than guessed at. The finding: process
+# startup dominated. Checking twenty files by launching twenty interpreters took
+# 9.63 s; the same twenty files in one interpreter took 0.61 s, and that single
+# change took the whole gate from 15.97 s to 6.95 s with nothing removed and
+# nothing relaxed.
+
+name: gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel the previous run when a branch is pushed again. Two runs of the same
+# branch are one wasted runner and a queue behind it.
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # For the OIDC token that the deploy job exchanges for a role. There is no
+  # access key in this repository's secrets, which is the point of level 17's
+  # "no long lived cloud access key anywhere".
+  id-token: write
+  packages: write
+
+jobs:
+  # ------------------------------------------------------------ fast checks
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+          # Caching the wheel download, which is the slowest part of a cold
+          # runner. Keyed on the lockfile, so it is invalidated exactly when the
+          # dependencies change and not when the code does.
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      # Lint first, because it fails in seconds and catches the most common
+      # mistakes. Format checking is part of it rather than a separate job: one
+      # process, one cache, one download.
+      - name: lint and format
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: types
+        run: mypy app deploy ship
+
+      - name: tests
+        run: pytest -q --cov=app --cov=deploy --cov-fail-under=90
+
+      # The gate's own timings, printed in the log. Cheap, and it means the
+      # question "why is the pipeline slow" has an answer rather than opinions.
+      - name: time the gate
+        run: python -m ship.gate
+
+  # ---------------------------------------------------------- one image only
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Built once. Every later job refers to this image by digest, which is how
+      # the level's test "the image that integration tests ran against is the
+      # image that deploys" is satisfied: there is only one image, and a digest
+      # cannot be moved.
+      - name: build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+      # Two checks on the artefact itself, which are the level's first two tests.
+      - name: the image contains no test tooling
+        run: |
+          image=ghcr.io/${{ github.repository }}@${{ steps.push.outputs.digest }}
+          for tool in pytest mypy ruff hypothesis coverage; do
+            if docker run --rm --entrypoint python "$image" -c "import $tool" 2>/dev/null; then
+              echo "::error::$tool is in the production image"
+              exit 1
+            fi
+          done
+
+      - name: the image does not run as root
+        run: |
+          image=ghcr.io/${{ github.repository }}@${{ steps.push.outputs.digest }}
+          uid=$(docker run --rm --entrypoint id "$image" -u)
+          test "$uid" != "0" || { echo "::error::running as root"; exit 1; }
+
+      - name: scan the image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}@${{ steps.push.outputs.digest }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+
+  # ------------------------------------------- integration, against that image
+  integration:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_PASSWORD: gate-only-never-real
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-retries 10
+        ports: ["5432:5432"]
+      redis:
+        image: redis:7.4
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: run the image that was just built
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
+        run: |
+          docker run -d --name api --network host \
+            -e ENVIRONMENT=staging \
+            -e DATABASE_URL=postgres://postgres:gate-only-never-real@localhost:5432/postgres \
+            -e REDIS_URL=redis://localhost:6379/0 \
+            -e VAULT_URL=https://localhost:8443 \
+            "$IMAGE"
+
+      # The readiness gate, used the same way the deploy uses it. If the
+      # container cannot become ready here, it would not have taken traffic in
+      # staging either, and finding that out now costs nothing.
+      - name: wait for readiness
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS localhost:8000/readyz; then exit 0; fi
+            sleep 2
+          done
+          docker logs api
+          exit 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q tests/integration --base-url http://localhost:8000
+
+  # --------------------------------------------------------------- the deploy
+  deploy:
+    # Only after everything above. The dependency chain is what makes the level's
+    # test "the deploy step cannot run without the gate" true by construction
+    # rather than by policy.
+    needs: [check, build, integration]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging          # a protected environment, with its own reviewers
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # No access key. The runner exchanges its OIDC token for the role whose
+      # trust policy names this repository and this branch, in infra/iam.tf.
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: deploy the exact image the tests ran against
+        run: |
+          ./deploy/bluegreen.sh staging \
+            "ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}"
+
+      - name: rollback if the new side never became healthy
+        if: failure()
+        run: ./deploy/rollback.sh staging

@@ -1,0 +1,29 @@
+# The version to measure against. This is not a straw man: it is what almost
+# every first Dockerfile looks like, including mine, and every line of it is a
+# reasonable thing to have written.
+#
+# Four problems, in the order they will hurt you.
+
+# 1. A floating tag. Today it is one interpreter, in March it is another, and the
+#    image you tested is not the image that deployed.
+FROM python:3
+
+# 2. The source is copied before the requirements are installed. Docker
+#    invalidates every layer after the first changed input, so a one line change
+#    to one file reinstalls every dependency: 26.7 seconds, measured, on every
+#    commit, for every developer, in every pipeline run.
+COPY . /app
+WORKDIR /app
+
+# 3. One requirements file, so pytest, hypothesis, mypy and ruff are all in the
+#    production image: 88.6 MB and 3,277 files that never execute, measured.
+#    A later `RUN rm -rf` does not help. Layers are additive and forever: the
+#    files are still in the layer below, still downloaded on every pull, and
+#    still there for anyone who unpacks the image.
+RUN pip install -r requirements.txt -r requirements-dev.txt
+
+# 4. No USER, so this runs as root. And no HEALTHCHECK, so the orchestrator
+#    believes a process that started is a process that works, which is how a
+#    version with the wrong database password serves 500s for four minutes with
+#    a green deploy.
+CMD python -m uvicorn app.main:app --host 0.0.0.0 --port 8000

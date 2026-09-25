@@ -1,0 +1,36 @@
+{
+  "_comment": [
+    "Read at request time by app/flags.py. In production this is a flag service",
+    "or a table with a five second cache, and the shape is the same: every flag",
+    "has a description, a removal date and a rollout, and an unknown flag is off.",
+    "The gate fails when a flag is past its expiry, which is the only mechanism",
+    "that has ever worked against a codebase with sixty stale flags in it."
+  ],
+  "flags": {
+    "payouts_enabled": {
+      "description": "Kill switch on the payout path. Setting rollout to null stops payouts without a deploy and without a restart.",
+      "rollout": 1.0,
+      "expires": "2027-06-30",
+      "kill_switch": true
+    },
+    "payouts_v2": {
+      "description": "Level 12's saga orchestrator, replacing the naive sequence. One percent, plus the internal test merchant.",
+      "rollout": 0.01,
+      "merchants": ["mer_internal_test"],
+      "expires": "2026-12-01",
+      "kill_switch": false
+    },
+    "vault_tokenisation": {
+      "description": "Level 15's vault in the payment path. Off falls back to the legacy column, which is why it is a kill switch rather than a rollout.",
+      "rollout": 1.0,
+      "expires": "2026-11-15",
+      "kill_switch": true
+    },
+    "fraud_provider_b": {
+      "description": "Second fraud provider, shadow mode. Off routes every decision to provider A.",
+      "rollout": null,
+      "expires": "2026-11-01",
+      "kill_switch": true
+    }
+  }
+}
