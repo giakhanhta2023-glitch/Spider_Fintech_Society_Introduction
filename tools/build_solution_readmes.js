@@ -518,29 +518,39 @@ const NOTES = {
   },
   19: {
     files: [
-      ['`bench/complexity.py`', 'the five comparisons, timed on your own machine'],
-      ['`problems/`', 'forty files, each with a test, a complexity and a named pattern'],
-      ['`exercises/`', 'four practical exercises, timed, each with a submission note'],
-      ['`log.md`', 'every attempt: date, minutes, outcome'],
-      ['`redo.md`', 'the failures, with the dates you came back to them'],
-      ['`stories.md`', 'five STAR stories, each with a number in it']
+      ['`complexity/measure.py`', 'the five comparisons, at three sizes where it matters'],
+      ['`problems/`', 'forty files, eight patterns, each with tests and a stated complexity'],
+      ['`exercises/api_integration/`', 'timeouts, safe retries, jitter, and the test that counts charges'],
+      ['`exercises/bug_hunt/`', 'a one line money bug in unfamiliar code, and how it was found'],
+      ['`exercises/feature_addition/`', 'paging added in the conventions already there'],
+      ['`exercises/pr_review/`', 'a 68 line diff with ten real problems, and the review of it'],
+      ['`tools/check_problems.py`', 'the checker that fails the build when the discipline slips'],
+      ['`log/LOG.md`', 'every attempt, and what the empty minutes column means'],
+      ['`log/redo.md`', 'the eight that went wrong, grouped by what they have in common'],
+      ['`stories/STAR.md`', 'five stories with numbers that can be re-run']
     ],
-    run: 'python -m bench.complexity && pytest -q problems/',
+    run: 'pytest -q && python -m tools.check_problems && python -m complexity.measure',
     design: [
-      'Complexity is felt before it is studied. The level 10 reconciliation matched two 8,000 row files in 8,528.3 ms with nested loops and 7.0 ms with a dictionary index, and at 2,000 rows the same pair was 187.2 ms against 1.1 ms.',
-      'The growth is reported honestly rather than theoretically. Four times the rows made the nested version forty five times slower, not sixteen, because the inner list stopped fitting in cache. Complexity describes the number of operations; the cost of each one moves too.',
-      'The extrapolation is the argument: at a million rows a side, quadratic matching is about 36 hours and indexed matching is under a second. That is why the expected answer is a dictionary, said in the first minute.',
-      'Four more comparisons separate class changes from constant factors: list against set membership at 19,708.9 ms against 6.82 ms, grouping by repeated filtering at 9,527.8 ms against 59.1 ms in one pass, sorting for a top ten at 309.1 ms against 41.8 ms with a heap, and string concatenation at 195.2 ms against 82.8 ms with join. The first two grow without limit; the last two do not.',
-      'Every problem file records the first instinct, including when it was wrong, because that note is the most useful line in the file a week later.',
-      'The log includes failures with times, and the redo list has at least two dated attempts per entry. Repetition on what was got wrong is the mechanism; the log is what keeps it targeted.',
-      'The practical exercises are built rather than found, because building them teaches what they test. The API integration one is required to have a timeout, backoff with jitter, and a test proving the retry is safe.'
+      'The complexity work is measured at three sizes rather than one, because one size cannot tell a constant factor from a change of class. Reconciling two files: 2,000 rows a side took 119.9 ms nested against 0.8 ms indexed, and 8,000 rows took 4,300.6 ms against 4.7 ms. Four times the rows made the nested version 36 times slower, which is worse than quadratic growth predicts, because at 8,000 the inner list no longer fits in cache.',
+      'Extrapolation is what makes it land. At 8,000 rows a side the nested version takes 4.3 seconds, and a real settlement file has a million rows, so the quadratic version is around 36 hours while the indexed version stays under a second.',
+      'The string concatenation comparison turned out to change kind as it grows: 1.8x at 25,000 lines, 2.5x at 50,000, 11.6x at 100,000 and 21.1x at 200,000. CPython extends a string in place while it holds the only reference, and once the buffer is a few megabytes the allocator cannot, so every append copies. The level text was corrected to match the measurement.',
+      'Every problem file carries the same header: problem, pattern, time, space, first instinct and outcome. The first instinct line is the point of the repository, because anybody can paste forty correct solutions and the line saying what you reached for first is what makes it a record of learning.',
+      'Eight of the forty went wrong the first time, and the redo list groups them rather than listing them: four were ties or boundaries, two were invariants held wrongly, one was a wrong model rather than a wrong implementation, and one was duplicate handling. The conclusion is to write the boundary test first, which is worth more than any individual fix.',
+      'One problem is filed under the wrong pattern on purpose. The level lists grouping payments under sorting and the right answer is a hash map, and recognising that the obvious family is the wrong family is the skill being practised.',
+      'The API integration exercise is scored on one test: the fake processor creates the charge and then times out, and the assertion is that the processor ends up with one charge. Asserting that the client retried would prove nothing about the money.',
+      'The pull request review exercise has ten problems planted in 68 lines, every one of which would pass review at a company that had not read levels 4 through 17. The review is ordered by what would hurt: irreversible, then wrong money, then leaked data, then privileges, then speed.',
+      'The repository checks itself, and the checker has its own lesson attached. Its first version counted any two dates in a redo row, which the "return by" column satisfied on its own, so it reported green while every second attempt was outstanding. A check with a loophole is worse than no check.',
+      'What cannot honestly be provided is stated rather than faked. The log has no minutes because these were written rather than attempted under a clock, the second attempts are scheduled and outstanding, and the behavioural stories are drawn from building this course and say plainly that yours have to be yours.'
     ],
     mistakes: [
-      ['Three hundred problems and still failing screens', 'No record of the failures, so the practice was never targeted.'],
-      ['Solved it but did not pass', 'Silence. The approach and its complexity go out loud before any code is written.'],
-      ['Ran out of time optimising', 'A working slow answer first, said to be slow, then improved. Correct beats elegant.'],
-      ['The practical exercise was unfinished and scored badly', 'No submission note. Say what breaks, why, and what you would do next.'],
-      ['The failure story sounded rehearsed and empty', 'No number and no change afterwards. Use one of your own levels.']
+      ['Three hundred problems solved and still failing screens', 'Breadth without a record. Forty with a log beats three hundred skimmed, because the log is what makes the repetition targeted.'],
+      ['The pattern arrives ten minutes in', 'Not enough repetition on the ones you got wrong. That is what the redo list is for, and why it has dates.'],
+      ['A memorised solution collapsed on the follow up', 'Memorise the eight patterns and the shape of each, never the solutions.'],
+      ['The complexity was recited rather than understood', 'Measure it at three sizes. One size cannot distinguish a constant factor from a class change.'],
+      ['The practical exercise was a happy path', 'No timeout, no retry, no failure handling. In payments that is the wrong answer even when it works.'],
+      ['The retry made a second payment', 'The idempotency key was generated inside the retry loop rather than once per payment.'],
+      ['The behavioural answers had no numbers in them', 'A story with no number is an opinion about yourself. Every one needs a measurement and a change made afterwards.'],
+      ['The log looks perfect', 'Then it is not a log. A record with no failures in it is a trophy cabinet and tells you nothing about what to practise.']
     ]
   },
   20: {

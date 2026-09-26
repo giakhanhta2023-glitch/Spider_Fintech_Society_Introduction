@@ -74,13 +74,20 @@ FQ.registerLevel({
         ['"Have I seen this reference?" 10,000 times, over 100,000 known references', 'A list: 19,708.9 ms', 'A set: 6.82 ms', '**2,891x**'],
         ['Group 200,000 payments by merchant, 500 merchants', 'Filter once per merchant: 9,527.8 ms', 'One pass into a dictionary: 59.1 ms', '**161x**'],
         ['Top 10 merchants out of 200,000', 'Sort everything: 309.1 ms', 'A heap of 10: 41.8 ms', '7.4x'],
-        ['Build a 200,000 line export', 'String += in a loop: 195.2 ms', '`"".join(...)`: 82.8 ms', '2.4x']
+        ['Build a 200,000 line export', 'String += in a loop: 4,257.8 ms', '`"".join(...)`: 201.5 ms', '**21.1x**']
       ]
     }},
     { p: 'Notice the sizes of the ratios. The first two are changes of complexity class, so they grow without limit as ' +
-         'the data does. The last two are constant factor improvements, valuable but bounded. **Interviewers care much ' +
+         'the data does. The top ten row is a constant factor: real, useful and bounded. **Interviewers care much ' +
          'more about the first kind**, and so should you: getting a 7x speedup is nice, and turning `O(n²)` into `O(n)` ' +
          'is the answer to the question.' },
+    { p: 'The last row is the one that teaches the distinction properly, because it changes kind as it grows. ' +
+         'Measured at four sizes, `+=` against `join` is 1.8x at 25,000 lines, 2.5x at 50,000, 11.6x at 100,000 ' +
+         'and 21.1x at 200,000. CPython extends a string in place while it holds the only reference, which is why ' +
+         'the small sizes look like a mild constant factor. Once the buffer is a few megabytes the allocator cannot ' +
+         'extend it, every append copies the whole string, and the quadratic behaviour arrives. **One measurement at ' +
+         'one size cannot tell a constant factor from a class change**, which is the argument for measuring at ' +
+         'three.' },
     { check: {
       q: 'In a screen you write a solution and say "this is O(n log n)". The interviewer asks whether it could be O(n). ' +
          'You cannot immediately see how. What is the best thing to say?',

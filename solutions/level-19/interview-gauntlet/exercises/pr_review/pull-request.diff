@@ -1,0 +1,54 @@
+# The change under review. Four files, 68 added lines, one approving comment
+# already on it from somebody who did not read the SQL.
+#
+# Everything wrong with it is wrong in a way that would pass code review at a
+# company that had not read levels 4 through 17. That is the point of the
+# exercise: none of it looks reckless.
+
+--- a/payments/api.py
++++ b/payments/api.py
+@@ -12,6 +12,7 @@ from payments.ledger import Ledger
+ from payments.vault import Vault
+
++FEE_RATE = 0.029
++
+ @app.post("/payments")
+-def take_payment(body: PaymentIn):
++def take_payment(body: PaymentIn, background: BackgroundTasks):
+     card = body.card_number
+-    payment = ledger.record(body.amount_minor, body.merchant_id)
++    fee = body.amount_minor * FEE_RATE
++    payment = ledger.record(body.amount_minor - fee, body.merchant_id, pan=card)
++    log.info(f"took payment {payment.id} for card {card} fee {fee}")
++    background.add_task(notify_merchant, body.merchant_id, payment.id)
+     return {"id": payment.id}
+
+--- a/payments/reporting.py
++++ b/payments/reporting.py
+@@ -30,3 +30,12 @@ def merchant_summary(merchant_id: str):
+     rows = db.query("select * from payments where merchant_id = %s", merchant_id)
++    total = 0
++    for row in rows:
++        # one query per payment to get the refunds
++        refunds = db.query("select * from refunds where payment_id = %s", row["id"])
++        total += row["amount_minor"] - sum(r["amount_minor"] for r in refunds)
++    metrics.gauge("merchant_total", total, tags={"merchant_id": merchant_id})
++    return total
+
+--- a/infra/iam.tf
++++ b/infra/iam.tf
+@@ -8,7 +8,7 @@ data "aws_iam_policy_document" "task" {
+   statement {
+-    actions   = ["s3:GetObject"]
+-    resources = [aws_s3_bucket.settlement.arn]
++    actions   = ["s3:*"]
++    resources = ["*"]
+   }
+ }
+
+--- a/migrations/014_add_fee.sql
++++ b/migrations/014_add_fee.sql
+@@ -0,0 +1,3 @@
++alter table payments add column fee_minor bigint not null default 0;
++update payments set fee_minor = amount_minor * 0.029;
++alter table payments drop column legacy_fee;

@@ -1,0 +1,23 @@
+[project]
+name = "interview-gauntlet"
+version = "0.1.0"
+description = "Forty problems, four exercises, and a log"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+# One file per problem, numbered, with its tests inside it. That is the shape the
+# level asks for and it is the shape that makes the repository readable: a
+# reviewer opens one file and sees the problem, the solution, the complexity and
+# the tests together.
+#
+# pytest collects `test_*.py` by default, so the numbered files need saying.
+python_files = ["test_*.py", "*_test.py", "[0-9][0-9]_*.py"]
+testpaths = ["problems", "exercises", "tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 96
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP", "B", "C4", "RUF"]
