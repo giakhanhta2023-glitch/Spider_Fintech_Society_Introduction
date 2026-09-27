@@ -1,0 +1,81 @@
+# Configuration, with the two lines that cause most Spring Boot incidents.
+#
+# Never run: see NOT_BUILT.md.
+
+spring:
+  application:
+    name: payments-api
+
+  datasource:
+    url: ${DATABASE_URL}
+    hikari:
+      # The pool size, with the arithmetic rather than a number somebody liked.
+      #
+      # Level 14 measured this service's shape: 8 worker slots over a 70 ms mean
+      # service time is 114 requests a second per instance. Of those 70 ms, about
+      # 40 ms is database time, so the concurrent database work per instance is
+      # 114 x 0.040 = 4.6 connections. Ten is that with headroom for a spike and
+      # for the background jobs.
+      #
+      # The number people reach for is 50, and it is worse: Postgres does not go
+      # faster with more connections, it goes slower, because each one is a process
+      # with its own memory and the scheduler has more to do. The database's own
+      # max_connections is the ceiling and every instance is competing for it.
+      maximum-pool-size: 10
+      minimum-idle: 2
+      # Shorter than the caller's timeout, so a connection starvation shows up as a
+      # fast failure rather than as a request that hangs past the client's patience.
+      connection-timeout: 2000
+      max-lifetime: 1800000
+
+  jpa:
+    # The line that ruins an afternoon if it is left on.
+    #
+    # `open-in-view: true` is Spring Boot's default and it holds a database
+    # connection for the entire request, including while the response is being
+    # serialised and written to a slow client. The pool then runs out under load
+    # that has nothing to do with the database, and the stack trace points at the
+    # pool rather than at this setting.
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate      # never `update` against a real database
+    properties:
+      hibernate:
+        jdbc:
+          # Batching, which is off by default and is free.
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  threads:
+    virtual:
+      # Measured both ways in finquest.bench.VirtualThreads. On for this service
+      # because its handlers wait on the database: with every request blocked 20 ms
+      # on a dependency and a thousand concurrent, virtual threads gave a p50 of
+      # 61.67 ms against 133.92 ms for a pool of 200, and no failures against 4.9%.
+      enabled: true
+
+server:
+  port: 8000
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only what a probe and a scrape need. The full actuator surface on a public
+        # port is an information disclosure that shows up in a penetration test.
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true       # /readyz and /healthz semantics, separately
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+  pattern:
+    # JSON in production, so level 16's allowlist and request id have somewhere to
+    # go. Plain text locally, because a human reads that one.
+    console: '{"at":"%d{ISO8601}","level":"%p","request_id":"%X{requestId}","logger":"%logger{0}","event":"%m"}%n'
