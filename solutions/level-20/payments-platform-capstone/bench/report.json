@@ -1,0 +1,37 @@
+{
+  "sustained": {
+    "offered_rps": 50.0,
+    "offered": 180001,
+    "accepted": 180001,
+    "refused": 0,
+    "slower_than_objective": 0,
+    "seconds": 3600.0,
+    "p50_ms": 0.171,
+    "p95_ms": 1.504,
+    "p99_ms": 6.358,
+    "max_ms": 410.288,
+    "mean_ms": 0.537,
+    "service_p50_ms": 0.161,
+    "service_p99_ms": 1.225,
+    "throughput_per_second": 50.0,
+    "goodput_per_second": 50.0
+  },
+  "reconciliation": {
+    "breaks": [],
+    "checks": {
+      "ledger_entries": 901255,
+      "payments": 180251,
+      "outbox_backlog": 0,
+      "duplicates_refused": 0,
+      "payouts_paid": 180251,
+      "payouts_unknown": 0,
+      "payouts_submitted": 0,
+      "payouts_compensated": 0
+    },
+    "totals": {
+      "bank_clearing_minor": 384787191,
+      "bank_paid_minor": 384787191
+    }
+  },
+  "objective_ms": 500.0
+}

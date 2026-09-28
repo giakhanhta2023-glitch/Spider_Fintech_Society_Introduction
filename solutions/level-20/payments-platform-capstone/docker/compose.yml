@@ -1,0 +1,107 @@
+# Every service, one command.
+#
+# **This file has never been run.** There is no container runtime on the machine
+# this capstone was written on, and saying so in the first line is the point:
+# every number in the README comes from `platform_/platform.py`, which runs the
+# same six services in one process, and `decisions/0001-one-process-for-the-
+# capstone.md` lists exactly what that does and does not prove.
+#
+#   docker compose -f docker/compose.yml up -d
+#   python seed.py                 # the smoke test, against the containers
+#
+# What this stack adds, once it runs, is the part one process cannot simulate:
+# serialisation, connection pools, TLS, partial socket failure, and an
+# orchestrator that can kill a service while it holds a lock.
+
+services:
+  postgres:
+    image: postgres:16.4
+    environment:
+      POSTGRES_PASSWORD: capstone-local-only-never-real
+      POSTGRES_DB: payments
+    command:
+      # Small on purpose. A capstone that only works with sixteen gigabytes of
+      # shared buffers has not been tested.
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - log_min_duration_statement=200ms
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d payments"]
+      interval: 5s
+      retries: 10
+    ports: ["5432:5432"]
+
+  redis:
+    image: redis:7.4
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    ports: ["6379:6379"]
+
+  vault:
+    build: { context: .., dockerfile: docker/Dockerfile.vault }
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgres://postgres:capstone-local-only-never-real@postgres:5432/payments
+      # The master key lives in the key service, never here. Locally that is a
+      # generated key in an environment variable and the comment saying what it
+      # would be: an AWS KMS key id and a task role.
+      KEY_SERVICE: local
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["8443:8443"]
+
+  gateway:
+    build: { context: .., dockerfile: docker/Dockerfile.gateway }
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgres://postgres:capstone-local-only-never-real@postgres:5432/payments
+      REDIS_URL: redis://redis:6379/0
+      VAULT_URL: http://vault:8443
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      vault: { condition: service_started }
+    ports: ["8000:8000"]
+
+  worker:
+    build: { context: .., dockerfile: docker/Dockerfile.worker }
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgres://postgres:capstone-local-only-never-real@postgres:5432/payments
+      BANK_URL: http://bank-simulator:9000
+    depends_on:
+      postgres: { condition: service_healthy }
+    # Two of them, so the level 12 claim about `for update skip locked` is
+    # exercised rather than asserted: two sweepers must not pay one payout twice.
+    deploy:
+      replicas: 2
+
+  bank-simulator:
+    build: { context: .., dockerfile: docker/Dockerfile.bank }
+    environment:
+      LATENCY_MS: "200"
+      TIMEOUT_RATE: "0.0"      # the chaos runner changes these at runtime
+      FAILURE_RATE: "0.0"
+    ports: ["9000:9000"]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.size=512MB
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    depends_on: [prometheus]
+    ports: ["3000:3000"]

@@ -1,0 +1,110 @@
+[
+  {
+    "scenario": "database loss",
+    "detected_after_seconds": 0.027,
+    "detected_by": "PaymentsFailing",
+    "recovered_after_seconds": 0.0,
+    "during_failure": {
+      "offered": 200,
+      "accepted": 0,
+      "refused": 200,
+      "payments_recorded_during_outage": 0,
+      "payouts_submitted_at_worst": 1
+    },
+    "after": {
+      "payments": 401,
+      "payouts_paid": 401,
+      "payouts_unknown": 0,
+      "payouts_compensated": 0,
+      "outbox_backlog": 0,
+      "ledger_total_minor": 0,
+      "bank_paid_minor": 778341,
+      "duplicates_refused": 0
+    },
+    "breaks": [],
+    "money_lost": false,
+    "money_duplicated": false,
+    "notes": "Every refusal was a 503 before anything was written. The count of payments recorded during the outage beyond those accepted is zero, which is the assertion that nothing was half written."
+  },
+  {
+    "scenario": "slow then failing bank",
+    "detected_after_seconds": 0.087,
+    "detected_by": "PayoutsUnknown",
+    "recovered_after_seconds": 0.0,
+    "during_failure": {
+      "payouts_unknown_at_worst": 2,
+      "resolved_as_paid": 0,
+      "resolved_as_compensated": 0,
+      "still_unknown": 0
+    },
+    "after": {
+      "payments": 300,
+      "payouts_paid": 300,
+      "payouts_unknown": 0,
+      "payouts_compensated": 0,
+      "outbox_backlog": 0,
+      "ledger_total_minor": 0,
+      "bank_paid_minor": 582300,
+      "duplicates_refused": 0
+    },
+    "breaks": [],
+    "money_lost": false,
+    "money_duplicated": false,
+    "notes": "Every unknown payout was resolved by asking the bank about a reference generated before the first attempt. The bank had paid all of them, because the simulator records the payment and then fails to answer, which is the exact case that makes a naive retry a double payment."
+  },
+  {
+    "scenario": "stopped publisher",
+    "detected_after_seconds": 0.112,
+    "detected_by": "EventBacklogGrowing",
+    "recovered_after_seconds": 0.6,
+    "during_failure": {
+      "backlog_at_worst": 700,
+      "accepted_during_outage": 700,
+      "events_delivered_before": 100,
+      "events_delivered_after": 800,
+      "events_lost": 0
+    },
+    "after": {
+      "payments": 800,
+      "payouts_paid": 800,
+      "payouts_unknown": 0,
+      "payouts_compensated": 0,
+      "outbox_backlog": 0,
+      "ledger_total_minor": 0,
+      "bank_paid_minor": 1552800,
+      "duplicates_refused": 0
+    },
+    "breaks": [],
+    "money_lost": false,
+    "money_duplicated": false,
+    "notes": "Payments kept succeeding throughout, which is the point of the outbox: the publisher is not on the payment path. The backlog is lag rather than loss, and the alert that fired is the backlog rule rather than an error rate, because nothing was erroring."
+  },
+  {
+    "scenario": "revoked vault credential",
+    "detected_after_seconds": 0.005,
+    "detected_by": "VaultRefusingCredential",
+    "recovered_after_seconds": 0.0,
+    "during_failure": {
+      "offered": 60,
+      "accepted": 0,
+      "refused": 60,
+      "status_returned": 503,
+      "error": "the vault rejected this credential. Rotate it or restore the",
+      "vault_refusals": 61
+    },
+    "after": {
+      "payments": 101,
+      "payouts_paid": 101,
+      "payouts_unknown": 0,
+      "payouts_compensated": 0,
+      "outbox_backlog": 0,
+      "ledger_total_minor": 0,
+      "bank_paid_minor": 196041,
+      "duplicates_refused": 0
+    },
+    "breaks": [],
+    "money_lost": false,
+    "money_duplicated": false,
+    "notes": "Every payment during the revocation returned 503 with the credential named, and nothing was written: no ledger entry, no event, no payout. The alert fires on the refusal counter rather than on the error rate, so it says which dependency rather than that something is wrong."
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "steps": [
+    {
+      "step": "1 expand: add fee_minor, nullable",
+      "seconds": 1.0,
+      "requests_during": 181,
+      "failed_during": 0
+    },
+    {
+      "step": "2 code writes both columns",
+      "seconds": 1.001,
+      "requests_during": 180,
+      "failed_during": 0
+    },
+    {
+      "step": "3 backfill in batches of 200",
+      "seconds": 1.025,
+      "requests_during": 165,
+      "failed_during": 0
+    },
+    {
+      "step": "4 code reads fee_minor",
+      "seconds": 1.002,
+      "requests_during": 170,
+      "failed_during": 0
+    },
+    {
+      "step": "5 code stops writing fee_bps",
+      "seconds": 1.0,
+      "requests_during": 151,
+      "failed_during": 0
+    },
+    {
+      "step": "6 contract: drop fee_bps",
+      "seconds": 1.002,
+      "requests_during": 141,
+      "failed_during": 0
+    }
+  ],
+  "requests": 1170,
+  "failed": 0,
+  "failures": [],
+  "rows_migrated": 1170,
+  "disagreements_at_step_4": 0,
+  "sampled_at_step_4": 500,
+  "reconciliation_breaks": []
+}
