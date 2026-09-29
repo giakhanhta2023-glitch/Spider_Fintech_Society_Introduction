@@ -10,7 +10,8 @@ __pycache__/
 .streamlit/secrets.toml
 
 # derived / cached data
-*.db                  # every SQLite file here is rebuilt from the CSVs on demand
+# every SQLite file here is rebuilt from the CSVs on demand
+*.db
 fx_cache.json
 *.cache.json
 .DS_Store
