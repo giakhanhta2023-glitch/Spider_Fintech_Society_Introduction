@@ -21,6 +21,16 @@ FILES = ['README.md', 'index.html']
 SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '.venv'}
 
 # Words the skill bans outright.
+# Terms of art that contain a banned word and are not slop. A rule against
+# "leverage our expertise" should not also ban "operating leverage", which is
+# the name of a thing in finance and has no synonym worth using. The exception
+# is deliberately narrow: the whole phrase, not the word.
+ALLOWED_PHRASES = [
+    'operating leverage',       # profit moving faster than revenue
+    'financial leverage',       # the debt kind
+    'leverage ratio',           # the regulatory one
+]
+
 BANNED = [
     'delve', 'foster', 'leverage', 'utilize', 'facilitate', 'empower',
     'streamline', 'robust', 'cutting-edge', 'paradigm shift', 'game changer',
@@ -107,8 +117,11 @@ def scan():
             stripped = line.strip()
             if not stripped:
                 continue
+            cleaned = line
+            for phrase in ALLOWED_PHRASES:
+                cleaned = re.sub(re.escape(phrase), '', cleaned, flags=re.I)
             for w, rx in word_res:
-                if rx.search(line):
+                if rx.search(cleaned):
                     hits.append((path, i, 'banned word', w, stripped))
             for p, rx in phrase_res:
                 if rx.search(line):

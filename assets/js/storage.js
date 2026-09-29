@@ -23,22 +23,49 @@
       test: function (s) { return countWhere(s, function (l) { return l.quizPassed; }) >= total(); } },
     { id: 'shipper', ico: '🚀', name: 'Shipper', hint: 'Finish every build',
       test: function (s) { return countWhere(s, function (l) { return l.projectDone; }) >= total(); } },
-    { id: 'cfo', ico: '👑', name: 'Principal engineer', hint: 'Clear the whole course',
+    { id: 'cfo', ico: '👑', name: 'Principal engineer', hint: 'Clear the whole track',
       test: function (s) { return clearedCount(s) >= total(); } }
   ];
 
+  /* ------------------------------------------------------------- tracks */
+  /* Every count in this file is a count within one track, because "how many
+     levels are there" has two answers: twenty for engineering and five for the
+     analyst track. The active track is remembered per device. */
+  function activeTrack() {
+    var want = (state && state.track) || DEFAULT();
+    return w.FQ && w.FQ.track && w.FQ.track(want) ? want : DEFAULT();
+  }
+
+  function DEFAULT() {
+    return (w.FQ && w.FQ.DEFAULT_TRACK) || 'eng';
+  }
+
+  function trackLevels(trackId) {
+    if (w.FQ && w.FQ.levelsIn) return w.FQ.levelsIn(trackId || activeTrack());
+    return (w.FQ && w.FQ.levels) || [];
+  }
+
   /* How many levels there are is a question for the curriculum, not for this
-     file: register an eleventh level and every count here follows it. */
+     file: register a sixth analyst level and every count here follows it. */
   function total() {
-    return (w.FQ && w.FQ.levels && w.FQ.levels.length) || 0;
+    return trackLevels().length;
   }
 
   function ids() {
-    return ((w.FQ && w.FQ.levels) || []).map(function (l) { return l.id; });
+    return trackLevels().map(function (l) { return l.id; });
+  }
+
+  /* A badge is earned inside a track, so finishing five analyst levels does not
+     hand out the badge for twenty engineering ones. Keys for the default track
+     keep their old shape, so saves written before the second track still read. */
+  function badgeKey(id, trackId) {
+    trackId = trackId || activeTrack();
+    return trackId === DEFAULT() ? id : trackId + ':' + id;
   }
 
   function blank() {
-    return { xp: 0, levels: {}, badges: [], started: Date.now(), tutorAsked: 0 };
+    return { xp: 0, levels: {}, badges: [], started: Date.now(), tutorAsked: 0,
+             track: DEFAULT() };
   }
 
   function read() {
@@ -50,6 +77,7 @@
       obj.levels = obj.levels || {};
       obj.badges = obj.badges || [];
       obj.xp = obj.xp || 0;
+      obj.track = obj.track || DEFAULT();
       return obj;
     } catch (e) { return blank(); }
   }
@@ -97,11 +125,22 @@
     return ids().some(function (i) { return i >= (from || 1) && fn(lvl(i, s)); });
   }
 
+  /* The badge list as the active track names it: the last one is that track's
+     title rather than always an engineering one. */
+  function badgeList(trackId) {
+    var track = w.FQ && w.FQ.track ? w.FQ.track(trackId || activeTrack()) : null;
+    return BADGES.map(function (b) {
+      if (b.id !== 'cfo' || !track || !track.finalBadge) return b;
+      return { id: b.id, ico: b.ico, name: track.finalBadge, hint: b.hint, test: b.test };
+    });
+  }
+
   function checkBadges() {
     var fresh = [];
-    BADGES.forEach(function (b) {
-      if (state.badges.indexOf(b.id) === -1 && b.test(state)) {
-        state.badges.push(b.id);
+    badgeList().forEach(function (b) {
+      var key = badgeKey(b.id);
+      if (state.badges.indexOf(key) === -1 && b.test(state)) {
+        state.badges.push(key);
         fresh.push(b);
       }
     });
@@ -112,6 +151,29 @@
 
   var store = {
     BADGES: BADGES,
+
+    /* ----------------------------- tracks ----------------------------- */
+    track: activeTrack,
+    trackOf: function (id) {
+      return w.FQ && w.FQ.trackOfLevel ? w.FQ.trackOfLevel(id) : DEFAULT();
+    },
+    setTrack: function (trackId) {
+      if (!trackId || trackId === state.track) return activeTrack();
+      state.track = trackId;
+      /* The new track may already be finished, so its badges are checked on
+         arrival rather than only after the next quiz. */
+      checkBadges();
+      write();
+      return activeTrack();
+    },
+    badgeList: badgeList,
+    badgesEarned: function () {
+      var mine = 0;
+      badgeList().forEach(function (b) {
+        if (state.badges.indexOf(badgeKey(b.id)) !== -1) mine++;
+      });
+      return mine;
+    },
 
     /* Fold a saved state from the server into this device's state, keeping the
        better of the two everywhere. Signing in on a new laptop pulls your
@@ -153,10 +215,24 @@
 
     onChange: function (fn) { listeners.push(fn); },
 
+    /* The previous level in the same track, not the previous id: the analyst
+       track starts open rather than behind twenty engineering levels. */
     isUnlocked: function (id) {
       id = parseInt(id, 10);
-      if (id <= 1) return true;
-      return cleared(id - 1);
+      var order = ids();
+      if (w.FQ && w.FQ.trackOfLevel) order = trackLevels(w.FQ.trackOfLevel(id))
+        .map(function (l) { return l.id; });
+      var at = order.indexOf(id);
+      if (at <= 0) return true;                /* first in its track, or unknown */
+      return cleared(order[at - 1]);
+    },
+
+    /* What to tell somebody standing in front of a locked row. */
+    previousIn: function (id) {
+      id = parseInt(id, 10);
+      var levels = trackLevels(store.trackOf(id));
+      var at = levels.map(function (l) { return l.id; }).indexOf(id);
+      return at > 0 ? levels[at - 1] : null;
     },
     isCleared: function (id) { return cleared(id); },
     clearedCount: function () { return clearedCount(state); },
@@ -171,7 +247,9 @@
 
     rank: function () {
       var n = clearedCount(state);
-      return CFG.ranks[Math.min(n, CFG.ranks.length - 1)];
+      var track = w.FQ && w.FQ.track ? w.FQ.track(activeTrack()) : null;
+      var ladder = (track && track.ranks) || CFG.ranks;
+      return ladder[Math.min(n, ladder.length - 1)];
     },
 
     /* XP needed for the next rank tier: purely cosmetic pacing */
@@ -233,7 +311,9 @@
       write();
     },
 
-    badgeEarned: function (bid) { return state.badges.indexOf(bid) !== -1; },
+    badgeEarned: function (bid) {
+      return state.badges.indexOf(badgeKey(bid)) !== -1;
+    },
 
     bumpTutor: function () { state.tutorAsked = (state.tutorAsked || 0) + 1; write(); },
 

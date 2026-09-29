@@ -1,0 +1,193 @@
+month,cost_centre,cost_centre_name,account_code,account_name,budget_amount
+2025-01,CC900,Corporate,4000,Transaction fees,1587701
+2025-01,CC900,Corporate,4100,Subscription fees,685800
+2025-01,CC900,Corporate,4200,FX markup,161331
+2025-01,CC900,Corporate,5000,Scheme and interchange costs,845067
+2025-01,CC900,Corporate,5100,Hosting,105291
+2025-01,CC300,Marketing,6100,Marketing programmes,180000
+2025-01,CC500,General and administrative,6200,Facilities,156880
+2025-01,CC900,Corporate,7000,Depreciation,84556
+2025-01,CC900,Corporate,8000,Interest expense,35625
+2025-01,CC900,Corporate,9000,Income tax,12960
+2025-01,CC100,Engineering,6000,Salaries and wages,507400
+2025-01,CC200,Sales,6000,Salaries and wages,169200
+2025-01,CC300,Marketing,6000,Salaries and wages,62300
+2025-01,CC400,Customer support,6000,Salaries and wages,117600
+2025-01,CC500,General and administrative,6000,Salaries and wages,109200
+2025-01,CC600,New product,6000,Salaries and wages,96000
+2025-02,CC900,Corporate,4000,Transaction fees,1731422
+2025-02,CC900,Corporate,4100,Subscription fees,698400
+2025-02,CC900,Corporate,4200,FX markup,175935
+2025-02,CC900,Corporate,5000,Scheme and interchange costs,921564
+2025-02,CC900,Corporate,5100,Hosting,107186
+2025-02,CC300,Marketing,6100,Marketing programmes,180000
+2025-02,CC500,General and administrative,6200,Facilities,156880
+2025-02,CC900,Corporate,7000,Depreciation,85388
+2025-02,CC900,Corporate,8000,Interest expense,34635
+2025-02,CC900,Corporate,9000,Income tax,20161
+2025-02,CC100,Engineering,6000,Salaries and wages,554600
+2025-02,CC200,Sales,6000,Salaries and wages,169200
+2025-02,CC300,Marketing,6000,Salaries and wages,62300
+2025-02,CC400,Customer support,6000,Salaries and wages,128800
+2025-02,CC500,General and administrative,6000,Salaries and wages,109200
+2025-02,CC600,New product,6000,Salaries and wages,96000
+2025-03,CC900,Corporate,4000,Transaction fees,1917284
+2025-03,CC900,Corporate,4100,Subscription fees,714600
+2025-03,CC900,Corporate,4200,FX markup,194821
+2025-03,CC900,Corporate,5000,Scheme and interchange costs,1020490
+2025-03,CC900,Corporate,5100,Hosting,109116
+2025-03,CC300,Marketing,6100,Marketing programmes,180000
+2025-03,CC500,General and administrative,6200,Facilities,156880
+2025-03,CC900,Corporate,7000,Depreciation,86202
+2025-03,CC900,Corporate,8000,Interest expense,33646
+2025-03,CC900,Corporate,9000,Income tax,43548
+2025-03,CC100,Engineering,6000,Salaries and wages,554600
+2025-03,CC200,Sales,6000,Salaries and wages,169200
+2025-03,CC300,Marketing,6000,Salaries and wages,71200
+2025-03,CC400,Customer support,6000,Salaries and wages,128800
+2025-03,CC500,General and administrative,6000,Salaries and wages,109200
+2025-03,CC600,New product,6000,Salaries and wages,96000
+2025-04,CC900,Corporate,4000,Transaction fees,1922498
+2025-04,CC900,Corporate,4100,Subscription fees,730800
+2025-04,CC900,Corporate,4200,FX markup,195351
+2025-04,CC900,Corporate,5000,Scheme and interchange costs,1023265
+2025-04,CC900,Corporate,5100,Hosting,111080
+2025-04,CC300,Marketing,6100,Marketing programmes,180000
+2025-04,CC500,General and administrative,6200,Facilities,156880
+2025-04,CC900,Corporate,7000,Depreciation,86996
+2025-04,CC900,Corporate,8000,Interest expense,32656
+2025-04,CC900,Corporate,9000,Income tax,46026
+2025-04,CC100,Engineering,6000,Salaries and wages,554600
+2025-04,CC200,Sales,6000,Salaries and wages,169200
+2025-04,CC300,Marketing,6000,Salaries and wages,71200
+2025-04,CC400,Customer support,6000,Salaries and wages,134400
+2025-04,CC500,General and administrative,6000,Salaries and wages,109200
+2025-04,CC600,New product,6000,Salaries and wages,96000
+2025-05,CC900,Corporate,4000,Transaction fees,2032924
+2025-05,CC900,Corporate,4100,Subscription fees,741600
+2025-05,CC900,Corporate,4200,FX markup,206571
+2025-05,CC900,Corporate,5000,Scheme and interchange costs,1082040
+2025-05,CC900,Corporate,5100,Hosting,113079
+2025-05,CC300,Marketing,6100,Marketing programmes,180000
+2025-05,CC500,General and administrative,6200,Facilities,156880
+2025-05,CC900,Corporate,7000,Depreciation,87772
+2025-05,CC900,Corporate,8000,Interest expense,31667
+2025-05,CC900,Corporate,9000,Income tax,59211
+2025-05,CC100,Engineering,6000,Salaries and wages,554600
+2025-05,CC200,Sales,6000,Salaries and wages,169200
+2025-05,CC300,Marketing,6000,Salaries and wages,71200
+2025-05,CC400,Customer support,6000,Salaries and wages,134400
+2025-05,CC500,General and administrative,6000,Salaries and wages,118300
+2025-05,CC600,New product,6000,Salaries and wages,96000
+2025-06,CC900,Corporate,4000,Transaction fees,2069161
+2025-06,CC900,Corporate,4100,Subscription fees,757800
+2025-06,CC900,Corporate,4200,FX markup,210253
+2025-06,CC900,Corporate,5000,Scheme and interchange costs,1101327
+2025-06,CC900,Corporate,5100,Hosting,115115
+2025-06,CC300,Marketing,6100,Marketing programmes,180000
+2025-06,CC500,General and administrative,6200,Facilities,156880
+2025-06,CC900,Corporate,7000,Depreciation,88529
+2025-06,CC900,Corporate,8000,Interest expense,30677
+2025-06,CC900,Corporate,9000,Income tax,59133
+2025-06,CC100,Engineering,6000,Salaries and wages,590000
+2025-06,CC200,Sales,6000,Salaries and wages,169200
+2025-06,CC300,Marketing,6000,Salaries and wages,71200
+2025-06,CC400,Customer support,6000,Salaries and wages,134400
+2025-06,CC500,General and administrative,6000,Salaries and wages,118300
+2025-06,CC600,New product,6000,Salaries and wages,96000
+2025-07,CC900,Corporate,4000,Transaction fees,2051292
+2025-07,CC900,Corporate,4100,Subscription fees,768600
+2025-07,CC900,Corporate,4200,FX markup,208438
+2025-07,CC900,Corporate,5000,Scheme and interchange costs,1091817
+2025-07,CC900,Corporate,5100,Hosting,117187
+2025-07,CC300,Marketing,6100,Marketing programmes,180000
+2025-07,CC500,General and administrative,6200,Facilities,156880
+2025-07,CC900,Corporate,7000,Depreciation,89269
+2025-07,CC900,Corporate,8000,Interest expense,29688
+2025-07,CC900,Corporate,9000,Income tax,54934
+2025-07,CC100,Engineering,6000,Salaries and wages,590000
+2025-07,CC200,Sales,6000,Salaries and wages,188000
+2025-07,CC300,Marketing,6000,Salaries and wages,71200
+2025-07,CC400,Customer support,6000,Salaries and wages,134400
+2025-07,CC500,General and administrative,6000,Salaries and wages,118300
+2025-07,CC600,New product,6000,Salaries and wages,96000
+2025-08,CC900,Corporate,4000,Transaction fees,2079160
+2025-08,CC900,Corporate,4100,Subscription fees,788400
+2025-08,CC900,Corporate,4200,FX markup,211269
+2025-08,CC900,Corporate,5000,Scheme and interchange costs,1106649
+2025-08,CC900,Corporate,5100,Hosting,119296
+2025-08,CC300,Marketing,6100,Marketing programmes,180000
+2025-08,CC500,General and administrative,6200,Facilities,156880
+2025-08,CC900,Corporate,7000,Depreciation,89991
+2025-08,CC900,Corporate,8000,Interest expense,28698
+2025-08,CC900,Corporate,9000,Income tax,58509
+2025-08,CC100,Engineering,6000,Salaries and wages,590000
+2025-08,CC200,Sales,6000,Salaries and wages,188000
+2025-08,CC300,Marketing,6000,Salaries and wages,71200
+2025-08,CC400,Customer support,6000,Salaries and wages,151200
+2025-08,CC500,General and administrative,6000,Salaries and wages,118300
+2025-08,CC600,New product,6000,Salaries and wages,96000
+2025-09,CC900,Corporate,4000,Transaction fees,2196195
+2025-09,CC900,Corporate,4100,Subscription fees,801000
+2025-09,CC900,Corporate,4200,FX markup,223162
+2025-09,CC900,Corporate,5000,Scheme and interchange costs,1168942
+2025-09,CC900,Corporate,5100,Hosting,121444
+2025-09,CC300,Marketing,6100,Marketing programmes,180000
+2025-09,CC500,General and administrative,6200,Facilities,156880
+2025-09,CC900,Corporate,7000,Depreciation,90696
+2025-09,CC900,Corporate,8000,Interest expense,27708
+2025-09,CC900,Corporate,9000,Income tax,74757
+2025-09,CC100,Engineering,6000,Salaries and wages,590000
+2025-09,CC200,Sales,6000,Salaries and wages,188000
+2025-09,CC300,Marketing,6000,Salaries and wages,71200
+2025-09,CC400,Customer support,6000,Salaries and wages,151200
+2025-09,CC500,General and administrative,6000,Salaries and wages,118300
+2025-09,CC600,New product,6000,Salaries and wages,96000
+2025-10,CC900,Corporate,4000,Transaction fees,2316787
+2025-10,CC900,Corporate,4100,Subscription fees,819000
+2025-10,CC900,Corporate,4200,FX markup,235415
+2025-10,CC900,Corporate,5000,Scheme and interchange costs,1233128
+2025-10,CC900,Corporate,5100,Hosting,123630
+2025-10,CC300,Marketing,6100,Marketing programmes,240000
+2025-10,CC500,General and administrative,6200,Facilities,156880
+2025-10,CC900,Corporate,7000,Depreciation,91385
+2025-10,CC900,Corporate,8000,Interest expense,26719
+2025-10,CC900,Corporate,9000,Income tax,79960
+2025-10,CC100,Engineering,6000,Salaries and wages,590000
+2025-10,CC200,Sales,6000,Salaries and wages,188000
+2025-10,CC300,Marketing,6000,Salaries and wages,71200
+2025-10,CC400,Customer support,6000,Salaries and wages,151200
+2025-10,CC500,General and administrative,6000,Salaries and wages,118300
+2025-10,CC600,New product,6000,Salaries and wages,96000
+2025-11,CC900,Corporate,4000,Transaction fees,2639766
+2025-11,CC900,Corporate,4100,Subscription fees,819000
+2025-11,CC900,Corporate,4200,FX markup,268234
+2025-11,CC900,Corporate,5000,Scheme and interchange costs,1405037
+2025-11,CC900,Corporate,5100,Hosting,125855
+2025-11,CC300,Marketing,6100,Marketing programmes,240000
+2025-11,CC500,General and administrative,6200,Facilities,156880
+2025-11,CC900,Corporate,7000,Depreciation,92057
+2025-11,CC900,Corporate,8000,Interest expense,25729
+2025-11,CC900,Corporate,9000,Income tax,118176
+2025-11,CC100,Engineering,6000,Salaries and wages,590000
+2025-11,CC200,Sales,6000,Salaries and wages,188000
+2025-11,CC300,Marketing,6000,Salaries and wages,71200
+2025-11,CC400,Customer support,6000,Salaries and wages,151200
+2025-11,CC500,General and administrative,6000,Salaries and wages,118300
+2025-11,CC600,New product,6000,Salaries and wages,96000
+2025-12,CC900,Corporate,4000,Transaction fees,2765912
+2025-12,CC900,Corporate,4100,Subscription fees,819000
+2025-12,CC900,Corporate,4200,FX markup,281052
+2025-12,CC900,Corporate,5000,Scheme and interchange costs,1472179
+2025-12,CC900,Corporate,5100,Hosting,128120
+2025-12,CC300,Marketing,6100,Marketing programmes,180000
+2025-12,CC500,General and administrative,6200,Facilities,156880
+2025-12,CC900,Corporate,7000,Depreciation,92714
+2025-12,CC900,Corporate,8000,Interest expense,24740
+2025-12,CC900,Corporate,9000,Income tax,145453
+2025-12,CC100,Engineering,6000,Salaries and wages,590000
+2025-12,CC200,Sales,6000,Salaries and wages,188000
+2025-12,CC300,Marketing,6000,Salaries and wages,71200
+2025-12,CC400,Customer support,6000,Salaries and wages,151200
+2025-12,CC500,General and administrative,6000,Salaries and wages,118300
+2025-12,CC600,New product,6000,Salaries and wages,96000

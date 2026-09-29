@@ -262,12 +262,13 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
   const brief = project || setup;
   const items = project ? project.requirements : setup.checklist;
   const keyUrl = `${CFG.repoUrl}/tree/${CFG.repo.branch}/${brief.solutionPath}`;
+  const next = siblings(level).next;
 
   return html`
     <div class="stack stack-6">
       <div class="grid">
         <div class="col-1-7">
-          <span class="kicker">${project ? 'build' : 'setup'} <b>/</b> level ${String(level.id).padStart(2, '0')}</span>
+          <span class="kicker">${project ? 'build' : 'setup'} <b>/</b> level ${num(level)}</span>
           <h2 class="display display-l" style=${{ marginBottom: '20px' }}>${brief.title}</h2>
           <p class="lede">${md(brief.story)}</p>
         </div>
@@ -373,12 +374,13 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
                   ${project ? 'Shipped.' : 'Lab ready.'}
                 </h3>
                 <p class="index-sub" style=${{ margin: 0 }}>
-                  ${level.id < 10 ? `Level ${String(level.id + 1).padStart(2, '0')} is open.` : 'The course is complete.'}
+                  ${next ? `Level ${num(next)}, ${next.title}, is open.`
+                         : `That is the last level of ${FQ.track(FQ.trackIdOf(level)).title.toLowerCase()}.`}
                 </p>
                 <div class="btn-row">
-                  ${level.id < 10
+                  ${next
                     ? html`<${Btn} variant="accent" arrow
-                        onClick=${() => navigate(`#/level/${level.id + 1}`)}>next level<//>`
+                        onClick=${() => navigate(`#/level/${next.id}`)}>next level<//>`
                     : html`<${Btn} variant="accent" arrow
                         onClick=${() => navigate('#/progress')}>see how you did<//>`}
                   <${Btn} variant="quiet" onClick=${onReopen}>reopen it<//>
@@ -391,7 +393,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
                 <p class="index-sub" style=${{ margin: 0, maxWidth: '56ch' }}>
                   ${project
                     ? 'Mark it complete once your code runs, the checks below pass, and it is safely in your portfolio repo. That opens the next level.'
-                    : 'Mark it complete once your notebook runs and your repository is live. That opens level 02.'}
+                    : `Mark it complete once your notebook runs and your repository is live. That opens level ${num(next)}.`}
                 </p>
                 <div class="btn-row">
                   <${Btn} variant="accent" onClick=${onComplete} arrow>
@@ -406,6 +408,19 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
 }
 
 /* ------------------------------------------------------------------- page */
+/* The number a reader sees, and the levels either side of this one. Both are
+   within the level's own track: the analyst track counts 01 to 05 and does not
+   continue the engineering numbering. */
+function num(level) {
+  return level ? String(FQ.positionOf(level)).padStart(2, '0') : '';
+}
+
+function siblings(level) {
+  const all = FQ.levelsIn(FQ.trackIdOf(level));
+  const at = all.indexOf(level);
+  return { all, at, prev: all[at - 1] || null, next: all[at + 1] || null };
+}
+
 export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
   const level = FQ.level(id);
   const [, force] = useState(0);
@@ -422,13 +437,14 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
   }
 
   if (!store.isUnlocked(level.id)) {
+    const back = siblings(level).prev;
     return html`
       <div class="page section">
-        <span class="kicker">level ${String(level.id).padStart(2, '0')}</span>
+        <span class="kicker">level ${num(level)}</span>
         <h1 class="display display-l" style=${{ margin: '0 0 24px', maxWidth: '18ch' }}>${level.title}</h1>
         <p class="notice" style=${{ maxWidth: '60ch' }}>
           This one is still locked. Finish
-          ${' '}<a class="link" href=${`#/level/${level.id - 1}`}>level ${String(level.id - 1).padStart(2, '0')}</a>
+          ${' '}<a class="link" href=${`#/level/${back.id}`}>level ${num(back)}, ${back.title}</a>
           ${' '}(pass its drill, mark its build complete) and it opens straight away.
         </p>
       </div>`;
@@ -449,8 +465,11 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
       toast(`Build shipped, +${CFG.xp.projectComplete} XP`, 'moss');
       (res.badges || []).forEach((b, i) =>
         setTimeout(() => toast(`Badge unlocked: ${b.name}`), 700 * (i + 1)));
-      if (level.id === 10) {
-        setTimeout(() => toast('Course complete. You are a principal engineer.', 'moss'), 1400);
+      const track = FQ.track(FQ.trackIdOf(level));
+      if (!siblings(level).next && track) {
+        setTimeout(() => toast(
+          `${track.title} complete. You are a ${track.ranks[track.ranks.length - 1]}.`,
+          'moss'), 1400);
       }
     }
     refresh();
@@ -471,7 +490,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
           <!-- The number and the name, and nothing else. The tagline and the
                codename both belong on the level list, where you are choosing;
                here you have already chosen. -->
-          <span class="kicker">level ${String(level.id).padStart(2, '0')}</span>
+          <span class="kicker">${FQ.track(FQ.trackIdOf(level)).name} <b>/</b> level ${num(level)}</span>
           <h1 class="display display-l" style=${{ margin: '0' }}>${level.title}</h1>
         </div>
 

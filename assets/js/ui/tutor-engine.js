@@ -123,8 +123,13 @@ export function search(query, levelId, limit) {
     });
     if (!score) return null;
     score *= (kindBoost[doc.kind] || 1);
-    if (levelId && doc.lv === levelId) score *= 1.6;      // prefer where the learner is
-    if (levelId && doc.lv > levelId) score *= 0.55;       // do not spoil later levels
+    /* Prefer where the learner is, do not spoil what comes later, and prefer
+       their own track: an analyst asking about a variance should not be sent to
+       the payout saga first. "Later" is only meaningful inside one track. */
+    const sameTrack = !levelId || FQ.trackOfLevel(doc.lv) === FQ.trackOfLevel(levelId);
+    if (levelId && doc.lv === levelId) score *= 1.6;
+    if (levelId && sameTrack && doc.lv > levelId) score *= 0.55;
+    if (!sameTrack) score *= 0.7;
     return { doc, score };
   }).filter(Boolean);
 
@@ -179,7 +184,7 @@ export function offlineAnswer(question, ctx) {
   if (/^(hi|hey|hello|yo|good (morning|evening|afternoon))\b/.test(q)) {
     return {
       text: lv
-        ? `Hello. You are on **level ${lv.id}, ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
+        ? `Hello. You are on **${FQ.labelOf(lv.id)}, ${lv.title}**.\n\n${sentences(lv.summary, 2)}` +
           '\n\nAsk me about any concept here, paste an error message, or say **hint** if the build has you stuck.'
         : 'Hello, I am Mou, your tutor for this course. Open a level and I will follow you into it, or ' +
           'just ask me anything about fintech, Python, or the tools.',
@@ -240,7 +245,7 @@ export function offlineAnswer(question, ctx) {
     return {
       text: `**${errorMatch[1]}**: ${ERROR_HELP[errorMatch[1]]}` +
             (hitsErr.length
-              ? `\n\nRelated, from level ${hitsErr[0].doc.lv}: ${sentences(hitsErr[0].doc.text.join(' '), 2)}` +
+              ? `\n\nRelated, from ${FQ.labelOf(hitsErr[0].doc.lv)}: ${sentences(hitsErr[0].doc.text.join(' '), 2)}` +
                 '\n\n' + levelLink(hitsErr[0].doc.lv, hitsErr[0].doc.tab, 'Open the section')
               : '') +
             '\n\nPaste the **last line** of the traceback if you want me to be more specific.',
@@ -264,7 +269,7 @@ export function offlineAnswer(question, ctx) {
       text: 'I could not find that in the course material.\n\nI answer from the course levels in front of you, so try ' +
             'naming a concept (**compounding**, **idempotency**, **drawdown**, **precision**), pasting an error message, ' +
             'or asking for a **hint** on the build you are on.' +
-            (lv ? `\n\nYou are on level ${lv.id}, which covers ${lv.tags.join(', ')}.` : ''),
+            (lv ? `\n\nYou are on ${FQ.labelOf(lv.id)}, which covers ${lv.tags.join(', ')}.` : ''),
       chips: lv ? lv.glossary.slice(0, 3).map((g) => 'What is ' + g.t + '?')
                   : ['What is fintech?', 'What is a ledger?', 'What is APR?']
     };
@@ -274,8 +279,8 @@ export function offlineAnswer(question, ctx) {
   /* A check reads here the way it reads on the page: the question, then the
      answer under it. Everything else reads as a section title and its text. */
   let answer = best.kind === 'check'
-    ? `From level ${best.lv}, a question much like yours:\n\n> ${best.title}\n\n${sentences(best.text.join(' '), 6)}`
-    : `**${best.title}** (level ${best.lv})\n\n${sentences(best.text.join(' '), 4)}`;
+    ? `From ${FQ.labelOf(best.lv)}, a question much like yours:\n\n> ${best.title}\n\n${sentences(best.text.join(' '), 6)}`
+    : `**${best.title}** (${FQ.labelOf(best.lv)})\n\n${sentences(best.text.join(' '), 4)}`;
   if (best.code) {
     answer += '\n\n```\n' + best.code.code.split('\n').slice(0, 14).join('\n') + '\n```';
   }
@@ -284,7 +289,7 @@ export function offlineAnswer(question, ctx) {
   const related = hits.slice(1).map((h) => h.doc);
   return {
     text: answer,
-    source: `level ${best.lv}, ${best.kind}`,
+    source: `${FQ.labelOf(best.lv)}, ${best.kind}`,
     chips: related.length
       ? related.map((doc) => {
           /* A question, or a check's scenario, is already the thing to ask:
@@ -309,7 +314,7 @@ function grounding(question, levelId) {
   if (!hits.length) return '';
   const parts = hits.map((h) => {
     const body = sentences(h.doc.text.join(' '), 6);
-    return `[level ${h.doc.lv}, ${h.doc.kind}] ${h.doc.title}\n${body}`;
+    return `[${FQ.labelOf(h.doc.lv)}, ${h.doc.kind}] ${h.doc.title}\n${body}`;
   });
   let out = '';
   for (const part of parts) {

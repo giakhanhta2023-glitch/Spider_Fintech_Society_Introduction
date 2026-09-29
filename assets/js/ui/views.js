@@ -20,8 +20,10 @@ function IndexRow({ level }) {
     current && 'is-current',
     !unlocked && 'is-locked'].filter(Boolean).join(' ');
 
+  const previous = store.previousIn(level.id);
+
   const body = html`
-    <span class="index-num">${String(level.id).padStart(2, '0')}</span>
+    <span class="index-num">${String(FQ.positionOf(level)).padStart(2, '0')}</span>
 
     <span>
       <span class="index-title">${level.title}</span>
@@ -43,14 +45,46 @@ function IndexRow({ level }) {
 
   return unlocked
     ? html`<a class=${cls} href=${`#/level/${level.id}`}>${body}</a>`
-    : html`<div class=${cls} title=${`Clear level ${level.id - 1} first`}>${body}</div>`;
+    : html`<div class=${cls}
+        title=${previous ? `Clear level ${String(FQ.positionOf(previous)).padStart(2, '0')}, ${previous.title}, first`
+                         : 'Not open yet'}>${body}</div>`;
+}
+
+/* The two ladders, as a ruled choice rather than a tab bar. Switching changes
+   what every count on the page is counting, which is the reason it sits
+   directly above the numbers. */
+function TrackSwitch({ active, onPick }) {
+  return html`
+    <div class="trackswitch">
+      ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t) => {
+        const levels = FQ.levelsIn(t.id);
+        const done = levels.filter((lv) => store.isCleared(lv.id)).length;
+        const on = t.id === active;
+        return html`
+          <button key=${t.id} type="button"
+            class=${`trackswitch-opt${on ? ' is-on' : ''}`}
+            aria-pressed=${on ? 'true' : 'false'}
+            onClick=${() => onPick(t.id)}>
+            <span class="kicker">${t.name} track</span>
+            <span class="title title-m">${FQ.plural(levels.length, 'level', 'levels')}</span>
+            <span class="index-sub">${t.audience}</span>
+            <span class="trackswitch-meta">${done}/${levels.length} cleared</span>
+          </button>`;
+      })}
+    </div>`;
 }
 
 export function Home({ onAskTutor }) {
+  const [track, setTrack] = useState(store.track());
+  const pickTrack = (id) => { store.setTrack(id); setTrack(store.track()); };
+
+  const meta = FQ.track(track);
+  const levels = FQ.levelsIn(track);
   const cleared = store.clearedCount();
   const current = store.currentLevel();
-  const questions = FQ.levels.reduce((n, l) => n + l.quiz.length, 0);
-  const projects = FQ.levels.filter((l) => !!l.project).length;
+  const questions = levels.reduce((n, l) => n + l.quiz.length, 0);
+  const projects = levels.filter((l) => !!l.project).length;
+  const first = levels.length ? String(FQ.positionOf(levels[0])).padStart(2, '0') : '01';
 
   return html`
     <div class="page">
@@ -83,11 +117,13 @@ export function Home({ onAskTutor }) {
           <p class="lede">
             Every level hands you the knowledge, a walkthrough you can follow along with, a
             15-question drill with a full answer key, and something to build using only what
-            you just learned.
+            you just learned. Two ladders: ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t, i) => html`<span key=${t.id}
+              >${i ? ', and ' : ''}${FQ.plural(FQ.levelsIn(t.id).length, 'level', 'levels')} for ${t.audience}<//>`)}.
           </p>
           <div class="btn-row" style=${{ marginTop: '28px' }}>
             <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
-              ${cleared ? `continue level ${current}` : 'start level 01'}
+              ${cleared ? `continue level ${String(FQ.positionOf(FQ.level(current))).padStart(2, '0')}`
+                        : `start ${meta.name} level ${first}`}
             <//>
             <button class="mou-btn mou-btn-l" type="button" onClick=${onAskTutor}>
               <${Mou} mood="idle" size=${30} title="Mou" />
@@ -97,20 +133,26 @@ export function Home({ onAskTutor }) {
         </div>
       </section>
 
+      <!-- Which ladder, then the numbers for it. -->
+      <${TrackSwitch} active=${track} onPick=${pickTrack} />
+
       <!-- The numbers, set as a ruled table rather than four glowing cards. -->
       <div class="datastrip">
-        <div><span class="v">${cleared}/${FQ.levels.length}</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${cleared}/${levels.length}</span><span class="k">levels cleared</span></div>
         <div><span class="v">${questions}</span><span class="k">drill questions</span></div>
         <div><span class="v">${projects}</span><span class="k">things to build</span></div>
         <div><span class="v">${store.xp().toLocaleString()}</span><span class="k">experience</span></div>
       </div>
 
-      <!-- Contents page. -->
+      <!-- Contents page, for the chosen ladder. -->
       <section class="section">
-        <${SectionHead} title=${`The ${FQ.levels.length} levels`}
+        <${SectionHead} title=${meta.title}
           note="pass the drill, ship the build, the next level opens" />
+        <p class="index-sub" style=${{ maxWidth: '58ch', marginBottom: '18px' }}>
+          ${md(meta.blurb)} <b>Ends at:</b> ${meta.outcome}.
+        </p>
         <div class="index">
-          ${FQ.levels.map((lv) => html`<${IndexRow} key=${lv.id} level=${lv} />`)}
+          ${levels.map((lv) => html`<${IndexRow} key=${lv.id} level=${lv} />`)}
         </div>
       </section>
 
@@ -139,9 +181,12 @@ export function Glossary() {
   const [query, setQuery] = useState('');
 
   /* Ordered the way the course teaches it: level by level, and alphabetically
-     inside each level, so reading top to bottom follows your own progress. */
-  const groups = useMemo(() => FQ.levels.map((lv) => ({
+     inside each level, so reading top to bottom follows your own progress. The
+     words belong to the track you are on, because an analyst looking up a term
+     should not have to read past twenty levels of engineering to find it. */
+  const groups = useMemo(() => FQ.levelsIn(store.track()).map((lv) => ({
     id: lv.id,
+    num: String(FQ.positionOf(lv)).padStart(2, '0'),
     title: lv.title,
     terms: (lv.glossary || [])
       .map((g) => ({ ...g, lv: lv.id, blob: (g.t + ' ' + g.d).toLowerCase() }))
@@ -184,7 +229,7 @@ export function Glossary() {
           ? html`<p class="notice">Nothing matches that one. Try a shorter word, or just ask the tutor.</p>`
           : shown.map((g) => html`
             <div key=${g.id} style=${{ marginBottom: '44px' }}>
-              <${SectionHead} title=${`Level ${String(g.id).padStart(2, '0')}, ${g.title}`}
+              <${SectionHead} title=${`Level ${g.num}, ${g.title}`}
                 note=${html`
                   ${g.terms.length} ${g.terms.length === 1 ? 'word' : 'words'}
                   ${' '}<a class="link" href=${`#/level/${g.id}`}>open the level →</a>`} />
@@ -204,9 +249,14 @@ export function Glossary() {
 export function Dossier() {
   const all = store.all();
   const cleared = store.clearedCount();
+  /* Everything on this page is about the track you are on. Two ladders with one
+     set of totals would report a number that belongs to neither. */
+  const track = FQ.track(store.track());
+  const levels = FQ.levelsIn(store.track());
+  const badges = store.badgeList();
 
   let quizzes = 0, projects = 0, answered = 0, totalQ = 0;
-  FQ.levels.forEach((lv) => {
+  levels.forEach((lv) => {
     const st = store.level(lv.id);
     if (st.quizPassed) quizzes++;
     if (st.projectDone) projects++;
@@ -218,21 +268,23 @@ export function Dossier() {
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
+          <span class="kicker">${track.name} track</span>
           <h1 class="display display-l">How you are doing</h1>
         </div>
       </section>
 
       <div class="datastrip">
         <div><span class="v">${all.xp.toLocaleString()}</span><span class="k">experience</span></div>
-        <div><span class="v">${cleared}/${FQ.levels.length}</span><span class="k">levels cleared</span></div>
-        <div><span class="v">${quizzes}/${FQ.levels.length}</span><span class="k">drills passed</span></div>
+        <div><span class="v">${cleared}/${levels.length}</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${quizzes}/${levels.length}</span><span class="k">drills passed</span></div>
         <div><span class="v">${answered}/${totalQ}</span><span class="k">best answers</span></div>
       </div>
 
       <section class="section-tight">
-        <${SectionHead} title="Badges" note=${`${store.all().badges.length} of ${store.BADGES.length}`} />
+        <${SectionHead} title="Badges"
+          note=${`${store.badgesEarned()} of ${badges.length} on this track`} />
         <div class="grid" style=${{ rowGap: '16px' }}>
-          ${store.BADGES.map((b) => {
+          ${badges.map((b) => {
             const got = store.badgeEarned(b.id);
             return html`
               <div key=${b.id} style=${{ gridColumn: 'span 3' }}
@@ -253,14 +305,14 @@ export function Dossier() {
               <tr><th>level</th><th>best drill</th><th>attempts</th><th>build</th><th>status</th></tr>
             </thead>
             <tbody>
-              ${FQ.levels.map((lv) => {
+              ${levels.map((lv) => {
                 const st = store.level(lv.id);
                 const status = store.isCleared(lv.id) ? 'cleared'
                   : store.isUnlocked(lv.id) ? 'open' : 'locked';
                 return html`
                   <tr key=${lv.id}>
                     <td><a class="link" href=${`#/level/${lv.id}`}>
-                      ${String(lv.id).padStart(2, '0')} ${lv.title}</a></td>
+                      ${String(FQ.positionOf(lv)).padStart(2, '0')} ${lv.title}</a></td>
                     <td><span class="figure">${st.quizBest}/${lv.quiz.length}</span></td>
                     <td><span class="figure">${st.attempts || 0}</span></td>
                     <td><span class="figure">${st.projectDone ? 'yes' : 'no'}</span></td>
@@ -305,6 +357,11 @@ export function Ranking() {
     return () => { cancelled = true; };
   }, []);
 
+  /* The board counts the engineering ladder, because that is what the API's
+     query counts: level keys of one or two digits. The analyst track's levels
+     are numbered above a hundred and are deliberately not mixed in, since five
+     cleared out of five is not comparable with five out of twenty. */
+  const engLevels = FQ.levelsIn('eng').length;
   const rankOf = (cleared) => CFG.ranks[Math.min(cleared, CFG.ranks.length - 1)];
 
   const notice = {
@@ -319,7 +376,15 @@ export function Ranking() {
     <div class="page">
       <section class="section grid">
         <div class="col-1-7">
+          <span class="kicker">the engineering ladder</span>
           <h1 class="display display-l">The ranking</h1>
+        </div>
+        <div class="col-9-12">
+          <p class="lede">
+            Twenty engineering levels, one row per member. The analyst track is not on
+            this board: five cleared out of five and five out of twenty are different
+            things, and one column cannot say both.
+          </p>
         </div>
       </section>
 
@@ -336,7 +401,7 @@ export function Ranking() {
             <span class="k">rank</span>
           </div>
           <div>
-            <span class="v">${state.you ? state.you.cleared : 0}/${FQ.levels.length}</span>
+            <span class="v">${state.you ? state.you.cleared : 0}/${engLevels}</span>
             <span class="k">your levels</span>
           </div>
           <div>
@@ -365,7 +430,7 @@ export function Ranking() {
                       ${row.you ? html`${' '}<${Tag} variant="accent">you<//>` : null}
                     </td>
                     <td class="col-wide"><span class="mono-s">${rankOf(row.cleared)}</span></td>
-                    <td><span class="figure">${row.cleared}/${FQ.levels.length}</span></td>
+                    <td><span class="figure">${row.cleared}/${engLevels}</span></td>
                     <td><span class="figure">${row.xp.toLocaleString()}</span></td>
                     <td class="col-wide"><span class="mono-s">${row.active || 'not yet'}</span></td>
                   </tr>`)}

@@ -108,6 +108,15 @@ function App({ user }) {
       : 'FinQuest, a fintech training arcade';
   }, [route]);
 
+  /* Opening a level from a link, a bookmark or the tutor moves you to its
+     track, so every count on every other page is counting the ladder you are
+     actually standing on. */
+  useEffect(() => {
+    if (route.name === 'level' && FQ.level(route.id)) {
+      store.setTrack(FQ.trackOfLevel(route.id));
+    }
+  }, [route.name, route.id]);
+
   const toast = useCallback((text, tone = 'accent') => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => prev.concat([{ id, text, tone }]));

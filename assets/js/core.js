@@ -10,15 +10,75 @@
 
   var LEVELS = [];
   var QUOTES = [];
+  var TRACKS = [];
+
+  /* A level with no track belongs to the engineering one, so the twenty
+     original files needed no edit when the second track arrived. */
+  var DEFAULT_TRACK = 'eng';
 
   var FQ = {
     levels: LEVELS,
     quotes: QUOTES,
+    tracks: TRACKS,
+    DEFAULT_TRACK: DEFAULT_TRACK,
 
     /* ---------------------------- registry ---------------------------- */
     registerLevel: function (level) {
       LEVELS.push(level);
       LEVELS.sort(function (a, b) { return a.id - b.id; });
+    },
+
+    /* { id, name, kicker, blurb, ranks, finalBadge } */
+    registerTrack: function (track) {
+      TRACKS.push(track);
+    },
+
+    trackIdOf: function (level) {
+      return (level && level.track) || DEFAULT_TRACK;
+    },
+
+    track: function (id) {
+      id = id || DEFAULT_TRACK;
+      for (var i = 0; i < TRACKS.length; i++) {
+        if (TRACKS[i].id === id) return TRACKS[i];
+      }
+      return TRACKS.length ? TRACKS[0] : null;
+    },
+
+    /* The levels of one track, in order. Everything that counts levels asks
+       this rather than reading FQ.levels, because "how many levels are there"
+       has two answers now. */
+    levelsIn: function (trackId) {
+      trackId = trackId || DEFAULT_TRACK;
+      return LEVELS.filter(function (l) { return FQ.trackIdOf(l) === trackId; });
+    },
+
+    trackOfLevel: function (id) {
+      var L = FQ.level(id);
+      return L ? FQ.trackIdOf(L) : DEFAULT_TRACK;
+    },
+
+    /* Where a level sits inside its own track: the number a reader sees. The
+       engineering ids are already 1 to 20, so only a second track needs to say
+       it. */
+    positionOf: function (level) {
+      if (!level) return 0;
+      if (level.position) return level.position;
+      return FQ.levelsIn(FQ.trackIdOf(level)).indexOf(level) + 1;
+    },
+
+    /* How to name a level in a sentence. Ids are global and positions are per
+       track, so anything written for a reader says the position, and says which
+       track when it is not the default one. */
+    labelOf: function (id) {
+      var L = FQ.level(id);
+      if (!L) return 'level ' + id;
+      var n = String(FQ.positionOf(L));
+      if (n.length < 2) n = '0' + n;
+      var trackId = FQ.trackIdOf(L);
+      if (trackId === DEFAULT_TRACK) return 'level ' + n;
+      var track = FQ.track(trackId);
+      return (track ? track.name : trackId) + ' level ' + n;
     },
 
     /* Each line is { q: what was said, who: who said it }. */

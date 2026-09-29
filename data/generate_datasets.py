@@ -878,6 +878,12 @@ def gen_fx_snapshot():
     print(f"{path.name}: {len(snapshot['rates'])} currencies")
 
 
+def gen_analyst_track():
+    """The analyst track's company, which has its own file next door."""
+    import generate_fpa_datasets
+    generate_fpa_datasets.main()
+
+
 if __name__ == "__main__":
     gen_transactions()
     gen_prices()
@@ -889,4 +895,5 @@ if __name__ == "__main__":
     gen_card_events()
     gen_settlement()
     gen_fx_snapshot()
+    gen_analyst_track()
     print("done, all datasets are synthetic")

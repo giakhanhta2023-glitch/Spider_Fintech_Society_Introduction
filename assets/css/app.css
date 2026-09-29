@@ -428,6 +428,49 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 /* ==========================================================================
    DATA STRIP: a broadsheet market table, not floating stat cards
    ========================================================================== */
+/* -------------------------------------------------- the track chooser ----
+   Two ladders, set as two ruled panels rather than a tab bar: this is a
+   decision about what you are studying, not a filter. The chosen one carries
+   the accent rule and the bone text; the other stays quiet and clickable. */
+.trackswitch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+  border-top: 1px solid var(--rule-mid);
+  margin-top: 8px;
+}
+.trackswitch-opt {
+  display: block;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 2px solid transparent;
+  margin-top: -1px;
+  padding: 20px 0 22px;
+  cursor: pointer;
+  color: var(--graphite);
+  font: inherit;
+}
+.trackswitch-opt .title { margin: 6px 0 4px; color: var(--ash); }
+.trackswitch-opt .index-sub { margin: 0; max-width: 34ch; }
+.trackswitch-opt:hover .title { color: var(--bone); }
+.trackswitch-opt.is-on { border-top-color: var(--accent); }
+.trackswitch-opt.is-on .kicker { color: var(--accent); }
+.trackswitch-opt.is-on .title { color: var(--bone); }
+.trackswitch-meta {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--graphite);
+}
+@media (max-width: 700px) {
+  .trackswitch { grid-template-columns: minmax(0, 1fr); }
+  .trackswitch-opt { border-top: 1px solid var(--rule); }
+  .trackswitch-opt.is-on { border-top: 2px solid var(--accent); }
+}
+
 .datastrip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -73,7 +73,7 @@ const summary = [];
 /* Every level file there is, rather than a fixed ten: the advanced track adds
    more, and a tool that quietly skipped them would be worse than useless. */
 const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
-  .filter((f) => /^level-\d+\.js$/.test(f))
+  .filter((f) => /^(?:level|fpa)-\d+\.js$/.test(f))
   .sort();
 
 for (const name of levelFiles) {
@@ -104,7 +104,11 @@ for (const name of levelFiles) {
   });
 
   const dist = LETTERS.map((l, j) => `${l}:${counts[j]}`).join(' ');
-  summary.push(`level ${String(id).padStart(2)}  ${dist}${balanced ? '' : '   needs balancing'}`);
+  /* Two tracks means two level 1s, so the line says which ladder it is. */
+  const where = (level.track && level.track !== 'eng')
+    ? `${level.track} ${String(level.position || id).padStart(2)}`
+    : `level ${String(id).padStart(2)}`;
+  summary.push(`${where.padEnd(9)}  ${dist}${balanced ? '' : '   needs balancing'}`);
 
   /* Already even: leave it alone. The shuffle is not a fixed point, so
      rewriting a balanced level would move its answers for no reason and
