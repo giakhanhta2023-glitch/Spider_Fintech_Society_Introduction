@@ -69,12 +69,19 @@ const NOTES = {
     ]
   },
   4: {
-    files: [['`ledger.py`', 'the ledger, the exceptions, eight test groups, and a worked demo']],
-    run: 'python ledger.py',
+    files: [
+      ['`ledger.py`', 'the ledger, the exceptions, eight test groups, and a worked demo'],
+      ['`replay.py`', 'a day of real traffic driven through it: 77 instructions, 4 of them refused']
+    ],
+    run: 'python ledger.py && python replay.py',
     design: [
       '`_post` is the only method that appends, and it refuses anything that does not sum to zero. Every public method funnels through it, so the invariant cannot be bypassed by accident.',
       'Validation happens **before** any write. A refused transfer leaves `len(entries)` unchanged: the tests assert exactly that, because a half-written transaction is worse than a rejected one.',
       'The idempotency key is stored **after** a successful post. Storing it first would make a failed attempt permanently "already done".',
+      'The level had no data to practise on, which was a gap: every other build level from 3 to 12 hands you a file and this one asked the reader to invent their own transactions. `data/level-04-instructions.csv` is a day at the society wallet, 77 instructions over 12 accounts, and `replay.py` drives it through the ledger one row at a time.',
+      'Four of the seventy seven are there to be refused, one per failure the level teaches: an overdraft, an account nobody opened, an amount of zero, and a payment that arrives twice with the same key. The replay counts them by reason and carries on, because a batch that dies on the first bad row is a batch somebody has to babysit at six in the morning.',
+      'The reversal instruction names the payment it cancels by its idempotency key rather than by a transaction id, because a file written the night before cannot know the id the ledger will hand out tomorrow. The replay keeps its own key to id map, which is the same map the idempotency check already needs.',
+      'The expected answer is known before any code runs: the generator prints the closing balances it built, and the replay prints the ones the ledger arrived at, and they agree. 169 entries summing to zero, fee income of $8.75, and alice closing at $42.26.',
       '`reverse` writes the mirror image rather than deleting. The error and the correction both stay visible, which is what an audit needs.',
       '`split_payment` uses `divmod` and hands the leftover cents to the first recipients in order. Dropping the remainder would silently break the invariant.'
     ],

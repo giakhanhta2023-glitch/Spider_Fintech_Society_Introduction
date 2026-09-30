@@ -878,6 +878,160 @@ def gen_fx_snapshot():
     print(f"{path.name}: {len(snapshot['rates'])} currencies")
 
 
+
+# ---------------------------------------------------------------------------
+# LEVEL 4: a day of payment instructions to replay through your own ledger
+# ---------------------------------------------------------------------------
+def gen_ledger_day():
+    """One day at the society wallet: accounts, then instructions to replay.
+
+    The level builds a ledger and, until this file existed, had nothing to run
+    it against except whatever the reader typed by hand. A ledger is only
+    interesting once something has gone through it, so this is a day of real
+    looking traffic with every refusal the level teaches planted in it and
+    counted here, so the expected answer is known before anybody writes code.
+
+    Two files, because that is the shape the data arrives in:
+
+        level-04-accounts.csv       who exists, and which may go negative
+        level-04-instructions.csv   what happened, in order
+
+    The instruction kinds are the methods the level asks for: deposit,
+    transfer, split and reverse. Amounts are text with decimal points, so the
+    reader has to parse them into cents rather than trusting a float.
+    """
+    rng = random.Random(SEED + 4)
+
+    accounts = [
+        ("alice", "customer", 0), ("bob", "customer", 0), ("carol", "customer", 0),
+        ("dan", "customer", 0), ("erin", "customer", 0), ("frank", "customer", 0),
+        ("grace", "customer", 0), ("henry", "customer", 0),
+        ("ticket_shop", "merchant", 0), ("merch_stall", "merchant", 0),
+        ("coffee_cart", "merchant", 0),
+        ("society_float", "treasury", 1),      # allowed to run negative
+    ]
+    customers = [a for a, kind, _ in accounts if kind == "customer"]
+    merchants = [a for a, kind, _ in accounts if kind == "merchant"]
+
+    rows = []
+    balances = {a: 0 for a, _, _ in accounts}
+    expected = {"deposits": 0, "transfers": 0, "splits": 0, "reversals": 0,
+                "refused_overdraft": 0, "refused_unknown": 0, "refused_amount": 0,
+                "retries_ignored": 0, "fee_income": 0}
+    seq = 0
+    keys_used = []
+
+    def add(kind, src="", dst="", amount="", fee="", key="", memo=""):
+        nonlocal seq
+        seq += 1
+        rows.append({"seq": seq, "kind": kind, "src": src, "dst": dst,
+                     "amount": amount, "fee": fee, "key": key, "memo": memo})
+        return seq
+
+    def cents(text):
+        return int(round(float(text) * 100))
+
+    # --- everybody is funded from the outside world -----------------------
+    for name in customers:
+        amount = rng.choice(["120.00", "85.50", "200.00", "64.25", "150.75"])
+        add("deposit", src=name, amount=amount, memo="top up")
+        balances[name] += cents(amount)
+        expected["deposits"] += 1
+
+    add("deposit", src="society_float", amount="500.00", memo="opening float")
+    balances["society_float"] += cents("500.00")
+    expected["deposits"] += 1
+
+    # --- an ordinary day of spending --------------------------------------
+    memos = ["event ticket", "hoodie", "flat white", "raffle", "pin badge",
+             "society dinner", "printed notes", "poster"]
+    for i in range(70):
+        payer = rng.choice(customers)
+        shop = rng.choice(merchants)
+        amount = f"{rng.randint(150, 2400) / 100:.2f}"
+        fee = f"{rng.choice([0, 0, 0, 25, 50]) / 100:.2f}"
+        if balances[payer] < cents(amount) + cents(fee) + 500:
+            continue                       # leave everyone a little headroom
+        key = f"pay_{seq + 1:04d}"
+        add("transfer", src=payer, dst=shop, amount=amount, fee=fee, key=key,
+            memo=rng.choice(memos))
+        balances[payer] -= cents(amount) + cents(fee)
+        balances[shop] += cents(amount)
+        expected["transfers"] += 1
+        expected["fee_income"] += cents(fee)
+        keys_used.append(key)
+
+    # --- the four refusals the level teaches, planted on purpose ----------
+    # 1. The phone retried: the same key twice. It must post once.
+    retry_key = keys_used[12]
+    retry = next(r for r in rows if r["key"] == retry_key)
+    add("transfer", src=retry["src"], dst=retry["dst"], amount=retry["amount"],
+        fee=retry["fee"], key=retry_key, memo="retry after a timeout")
+    expected["retries_ignored"] += 1
+
+    # 2. More than the account holds. Nothing may be written.
+    broke = min(customers, key=lambda name: balances[name])
+    add("transfer", src=broke, dst="ticket_shop",
+        amount=f"{(balances[broke] + 50_00) / 100:.2f}", fee="0.00",
+        key=f"pay_{seq + 1:04d}", memo="tries to buy the expensive ticket")
+    expected["refused_overdraft"] += 1
+
+    # 3. An account nobody opened.
+    add("transfer", src="alice", dst="ghost_shop", amount="5.00", fee="0.00",
+        key=f"pay_{seq + 1:04d}", memo="shop that closed last term")
+    expected["refused_unknown"] += 1
+
+    # 4. A zero amount, which is not a payment.
+    add("transfer", src="bob", dst="coffee_cart", amount="0.00", fee="0.00",
+        key=f"pay_{seq + 1:04d}", memo="mis-keyed amount")
+    expected["refused_amount"] += 1
+
+    # --- a split, and a reversal ------------------------------------------
+    # 100.00 three ways is 33.34 and two of 33.33: the leftover cent has to go
+    # somewhere and the transaction still has to balance.
+    add("split", src="society_float", dst="alice;bob;carol", amount="100.00",
+        memo="prize money, three ways")
+    balances["society_float"] -= 100_00
+    balances["alice"] += 33_34
+    balances["bob"] += 33_33
+    balances["carol"] += 33_33
+    expected["splits"] += 1
+
+    # The reversal names the key of the payment it cancels, because a reader
+    # only knows the transaction id once their own ledger has posted it.
+    wrong = keys_used[30]
+    original = next(r for r in rows if r["key"] == wrong)
+    add("reverse", src=wrong, memo="paid the wrong stall")
+    balances[original["src"]] += cents(original["amount"]) + cents(original["fee"])
+    balances[original["dst"]] -= cents(original["amount"])
+    expected["fee_income"] -= cents(original["fee"])
+    expected["reversals"] += 1
+
+    path = OUT / "level-04-accounts.csv"
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["account_id", "kind", "allow_negative"])
+        for account_id, kind, negative in accounts:
+            w.writerow([account_id, kind, negative])
+
+    ipath = OUT / "level-04-instructions.csv"
+    with ipath.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+
+    print(f"{path.name}: {len(accounts)} accounts, "
+          f"{ipath.name}: {len(rows)} instructions")
+    print(f"   expected: {expected['deposits']} deposits, {expected['transfers']} transfers, "
+          f"{expected['splits']} split, {expected['reversals']} reversal")
+    print(f"   expected refusals: {expected['refused_overdraft']} overdraft, "
+          f"{expected['refused_unknown']} unknown account, "
+          f"{expected['refused_amount']} invalid amount, "
+          f"{expected['retries_ignored']} retry ignored")
+    print(f"   expected fee income: {expected['fee_income'] / 100:,.2f}")
+    for name in sorted(balances):
+        print(f"   closing {name:<16}{balances[name] / 100:>12,.2f}")
+
 def gen_analyst_track():
     """The analyst track's company, which has its own file next door."""
     import generate_fpa_datasets
@@ -886,6 +1040,7 @@ def gen_analyst_track():
 
 if __name__ == "__main__":
     gen_transactions()
+    gen_ledger_day()
     gen_prices()
     gen_fraud()
     gen_applications()

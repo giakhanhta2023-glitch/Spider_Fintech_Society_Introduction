@@ -389,6 +389,26 @@ FQ.registerLevel({
                'balance was after each event: the first thing support asks for.' }
         ],
         check: 'Your statement prints entries in order with a running balance that ends at the current balance.'
+      },
+      {
+        t: 'Replay a day through it',
+        blocks: [
+          { p: 'Everything so far has been transactions you typed yourself, which is the one kind of traffic that ' +
+               'never surprises you. The last step is a real day: **77 instructions**, in order, from a file.' },
+          { code: 'seq,kind,src,dst,amount,fee,key,memo\n1,deposit,alice,,120.00,,,top up\n11,transfer,grace,merch_stall,2.42,0.50,pay_0011,printed notes\n73,transfer,erin,ticket_shop,56.24,0.00,pay_0073,tries to buy the expensive ticket\n74,transfer,alice,ghost_shop,5.00,0.00,pay_0074,shop that closed last term\n75,transfer,bob,coffee_cart,0.00,0.00,pay_0075,mis-keyed amount\n76,split,society_float,alice;bob;carol,100.00,,,prize money three ways\n77,reverse,pay_0040,,,,,paid the wrong stall', lang: 'text' },
+          { p: 'Four of the seventy seven are there to be **refused**: one overdraft, one account nobody opened, one ' +
+               'amount of zero, and one payment that arrives twice with the same key because a phone retried. Your ' +
+               'ledger already knows how to say no to all four. What the replay adds is what a batch job has to do ' +
+               'next: **count the refusal and carry on**. A batch that dies on the first bad row is a batch somebody ' +
+               'has to babysit at six in the morning.' },
+          { code: 'for row in instructions:\n    try:\n        ...                       # deposit, transfer, split or reverse\n    except InsufficientFunds:\n        refused["overdraft"] += 1\n    except UnknownAccount:\n        refused["unknown account"] += 1\n    except InvalidAmount:\n        refused["invalid amount"] += 1\n\n    ledger.check_invariant()      # after every single one, refused ones included', lang: 'python' },
+          { warn: 'The reversal names the payment it cancels by its **idempotency key**, not by a transaction id. A ' +
+                  'file written the night before cannot know the id your ledger will hand out tomorrow, which is ' +
+                  'exactly why the key exists. Keep a `key -> txn_id` dictionary as you go.' },
+          { tip: 'Check the invariant after the refused instructions too. A refusal that wrote one leg and then ' +
+                 'raised is the worst thing that can happen in this level, and that one line is what would catch it.' }
+        ],
+        check: '62 transfers, 9 deposits, one split and one reversal posted; 3 refused and 1 retry ignored; 169 entries summing to zero.'
       }
     ]
   },
@@ -573,6 +593,7 @@ FQ.registerLevel({
     story: 'The society is launching a little wallet for event tickets and merch, and you are writing the piece it ' +
            'all rests on. It needs a ledger that cannot lose money, cannot charge twice when the phone retries, and ' +
            'can explain every last cent to a treasurer.',
+    dataset: '{{RAW}}/data/level-04-instructions.csv',
     scope: 'Uses only this level: classes, dicts, lists, custom exceptions, integer arithmetic, f-strings. ' +
            'No pandas, no database, no external libraries beyond `datetime`. **This is the first build in the ' +
            'course that needs object oriented code**: you should be able to read a class, make an object from ' +
@@ -594,6 +615,10 @@ FQ.registerLevel({
       '`statement(id)` printing entries with a running balance and a closing line',
       '`split_payment(src, recipients, amount)` dividing an amount evenly and allocating leftover cents deterministically so the transaction still balances',
       'A `demo()` function running an end-to-end story: open accounts, deposit, pay with a fee, retry with the same key, attempt an overdraft, reverse a payment, print statements, assert the invariant',
+      'A `replay()` that reads `level-04-accounts.csv` and `level-04-instructions.csv` and applies all 77 instructions in order',
+      'The replay counts refusals by reason and keeps going, rather than stopping at the first bad instruction',
+      'The replay keeps its own `key -> txn_id` map, because the reversal instruction names a key rather than a transaction id',
+      '`check_invariant()` called after every instruction in the replay, including the refused ones',
       'At least 8 assert-based tests covering the happy path and every error case',
       'Saved to your portfolio repo as `level-04-ledger.ipynb` (or `.py`)'
     ],
@@ -612,7 +637,10 @@ FQ.registerLevel({
       'transfer("alice", "bob", 0) raises InvalidAmount',
       'reverse(txn) restores both balances exactly and leaves the original entries in place',
       'split_payment("alice", ["b", "c", "d"], 100) posts 34 + 33 + 33 and check_invariant() passes',
-      'check_invariant() returns True after every single operation above'
+      'check_invariant() returns True after every single operation above',
+      'Replaying the day posts 9 deposits, 62 transfers, 1 split and 1 reversal',
+      'The replay refuses exactly 3 instructions, one per reason, and ignores 1 repeated key',
+      'After the replay the ledger holds 169 entries summing to zero, fee_income is $8.75 and alice closes at $42.26'
     ],
     rubric: [
       { pts: 25, t: 'Invariant holds', d: 'Every path leaves the ledger summing to zero; check_invariant is asserted throughout the demo.' },

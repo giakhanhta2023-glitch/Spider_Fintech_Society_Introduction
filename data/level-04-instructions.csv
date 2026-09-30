@@ -1,0 +1,78 @@
+seq,kind,src,dst,amount,fee,key,memo
+1,deposit,alice,,120.00,,,top up
+2,deposit,bob,,150.75,,,top up
+3,deposit,carol,,150.75,,,top up
+4,deposit,dan,,120.00,,,top up
+5,deposit,erin,,85.50,,,top up
+6,deposit,frank,,64.25,,,top up
+7,deposit,grace,,85.50,,,top up
+8,deposit,henry,,120.00,,,top up
+9,deposit,society_float,,500.00,,,opening float
+10,transfer,alice,coffee_cart,19.12,0.00,pay_0010,pin badge
+11,transfer,grace,merch_stall,2.42,0.50,pay_0011,printed notes
+12,transfer,bob,coffee_cart,11.02,0.25,pay_0012,event ticket
+13,transfer,alice,merch_stall,15.18,0.25,pay_0013,flat white
+14,transfer,dan,merch_stall,11.50,0.00,pay_0014,pin badge
+15,transfer,erin,merch_stall,22.59,0.00,pay_0015,society dinner
+16,transfer,henry,coffee_cart,3.72,0.50,pay_0016,society dinner
+17,transfer,bob,merch_stall,15.05,0.00,pay_0017,society dinner
+18,transfer,carol,merch_stall,19.22,0.00,pay_0018,society dinner
+19,transfer,grace,coffee_cart,1.71,0.50,pay_0019,poster
+20,transfer,alice,ticket_shop,21.45,0.00,pay_0020,printed notes
+21,transfer,alice,ticket_shop,10.86,0.25,pay_0021,society dinner
+22,transfer,alice,ticket_shop,22.11,0.00,pay_0022,raffle
+23,transfer,grace,merch_stall,6.72,0.00,pay_0023,printed notes
+24,transfer,alice,ticket_shop,8.08,0.25,pay_0024,event ticket
+25,transfer,alice,coffee_cart,8.00,0.00,pay_0025,hoodie
+26,transfer,frank,merch_stall,12.70,0.00,pay_0026,raffle
+27,transfer,grace,ticket_shop,3.68,0.00,pay_0027,society dinner
+28,transfer,bob,merch_stall,13.08,0.25,pay_0028,flat white
+29,transfer,grace,ticket_shop,7.47,0.50,pay_0029,flat white
+30,transfer,erin,ticket_shop,12.17,0.50,pay_0030,pin badge
+31,transfer,carol,ticket_shop,2.79,0.50,pay_0031,hoodie
+32,transfer,bob,coffee_cart,1.95,0.00,pay_0032,poster
+33,transfer,henry,merch_stall,13.23,0.00,pay_0033,flat white
+34,transfer,dan,merch_stall,20.44,0.00,pay_0034,raffle
+35,transfer,frank,merch_stall,21.42,0.50,pay_0035,flat white
+36,transfer,bob,ticket_shop,2.32,0.00,pay_0036,hoodie
+37,transfer,carol,merch_stall,1.83,0.50,pay_0037,raffle
+38,transfer,dan,merch_stall,23.06,0.00,pay_0038,raffle
+39,transfer,erin,merch_stall,6.54,0.25,pay_0039,raffle
+40,transfer,bob,ticket_shop,12.62,0.00,pay_0040,hoodie
+41,transfer,grace,coffee_cart,2.85,0.50,pay_0041,pin badge
+42,transfer,dan,coffee_cart,21.02,0.00,pay_0042,poster
+43,transfer,erin,coffee_cart,3.92,0.00,pay_0043,printed notes
+44,transfer,grace,ticket_shop,20.02,0.00,pay_0044,printed notes
+45,transfer,grace,coffee_cart,2.00,0.00,pay_0045,poster
+46,transfer,carol,ticket_shop,14.71,0.00,pay_0046,printed notes
+47,transfer,erin,merch_stall,9.43,0.00,pay_0047,flat white
+48,transfer,erin,coffee_cart,3.05,0.50,pay_0048,pin badge
+49,transfer,dan,coffee_cart,4.52,0.00,pay_0049,pin badge
+50,transfer,erin,coffee_cart,5.31,0.00,pay_0050,hoodie
+51,transfer,grace,ticket_shop,1.68,0.50,pay_0051,pin badge
+52,transfer,henry,ticket_shop,2.46,0.50,pay_0052,raffle
+53,transfer,bob,coffee_cart,21.87,0.00,pay_0053,raffle
+54,transfer,henry,merch_stall,16.96,0.00,pay_0054,poster
+55,transfer,erin,merch_stall,11.86,0.00,pay_0055,flat white
+56,transfer,erin,ticket_shop,3.14,0.00,pay_0056,society dinner
+57,transfer,alice,coffee_cart,5.53,0.00,pay_0057,hoodie
+58,transfer,grace,ticket_shop,18.53,0.00,pay_0058,event ticket
+59,transfer,henry,ticket_shop,10.08,0.00,pay_0059,raffle
+60,transfer,henry,coffee_cart,20.78,0.00,pay_0060,event ticket
+61,transfer,grace,coffee_cart,4.23,0.50,pay_0061,event ticket
+62,transfer,carol,merch_stall,17.68,0.00,pay_0062,flat white
+63,transfer,frank,coffee_cart,19.33,0.50,pay_0063,hoodie
+64,transfer,carol,ticket_shop,9.52,0.00,pay_0064,society dinner
+65,transfer,carol,merch_stall,19.03,0.00,pay_0065,hoodie
+66,transfer,carol,merch_stall,9.02,0.00,pay_0066,flat white
+67,transfer,bob,coffee_cart,8.27,0.25,pay_0067,flat white
+68,transfer,dan,merch_stall,19.91,0.00,pay_0068,pin badge
+69,transfer,carol,merch_stall,20.72,0.00,pay_0069,flat white
+70,transfer,bob,coffee_cart,1.69,0.00,pay_0070,raffle
+71,transfer,henry,coffee_cart,7.53,0.00,pay_0071,pin badge
+72,transfer,alice,ticket_shop,22.11,0.00,pay_0022,retry after a timeout
+73,transfer,erin,ticket_shop,56.24,0.00,pay_0073,tries to buy the expensive ticket
+74,transfer,alice,ghost_shop,5.00,0.00,pay_0074,shop that closed last term
+75,transfer,bob,coffee_cart,0.00,0.00,pay_0075,mis-keyed amount
+76,split,society_float,alice;bob;carol,100.00,,,"prize money, three ways"
+77,reverse,pay_0040,,,,,paid the wrong stall

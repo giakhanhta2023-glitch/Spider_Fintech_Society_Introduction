@@ -1,0 +1,13 @@
+account_id,kind,allow_negative
+alice,customer,0
+bob,customer,0
+carol,customer,0
+dan,customer,0
+erin,customer,0
+frank,customer,0
+grace,customer,0
+henry,customer,0
+ticket_shop,merchant,0
+merch_stall,merchant,0
+coffee_cart,merchant,0
+society_float,treasury,1
