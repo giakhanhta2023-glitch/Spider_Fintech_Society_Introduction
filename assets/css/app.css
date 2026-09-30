@@ -330,14 +330,6 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 .mainnav a[aria-current='page'] { color: var(--bone); border-bottom-color: var(--accent); }
 
 .masthead-meta { margin-left: auto; display: flex; align-items: center; gap: clamp(12px, 2vw, 24px); }
-.rank-plate {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--bone);
-  border: 1px solid var(--rule-mid);
-  padding: 4px 10px;
-  white-space: nowrap;
-}
 .xp-plate { display: flex; align-items: baseline; gap: 8px; }
 .xp-plate b { font-family: var(--mono); font-size: 0.95rem; color: var(--bone); font-weight: 500; }
 .xp-plate span { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
@@ -345,7 +337,6 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 /* Small screens keep the nav: it drops to a second row under the wordmark
    rather than disappearing behind a menu the reader has to find. */
 @media (max-width: 860px) {
-  .rank-plate { display: none; }
   .masthead-inner { flex-wrap: wrap; min-height: 0; }
   .wordmark { border-right: 0; padding-right: 0; min-height: 58px; }
   .mainnav {

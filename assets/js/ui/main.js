@@ -60,11 +60,10 @@ function Masthead({ route, onOpenTutor, user }) {
 
         <div class="masthead-meta">
           <${Tooltip} content=${`${progress.into} of ${progress.tier} XP into this tier`}>
-            <span class="rank-plate">${store.rank()}</span>
+            <span class="xp-plate">
+              <b>${store.xp().toLocaleString()}</b><span>XP</span>
+            </span>
           <//>
-          <span class="xp-plate">
-            <b>${store.xp().toLocaleString()}</b><span>XP</span>
-          </span>
           <button class="mou-btn" type="button" onClick=${onOpenTutor}
             title="Ask Mou, or press Ctrl and K">
             <${Mou} mood="rest" size=${24} title="Mou" />
