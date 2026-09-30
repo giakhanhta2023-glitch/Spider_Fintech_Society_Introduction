@@ -146,6 +146,61 @@ FQ.registerLevel({
          'otherwise have gone missing on every split you ever ran.'
     }},
 
+    { h: 'The Python this level needs' },
+    { p: 'Levels 2 and 3 were functions over numbers and tables. This level needs **classes**, and it is the first ' +
+         'time the course asks for one. The reason is the rule you have just read: a ledger has an invariant to ' +
+         'enforce, and a plain dictionary cannot enforce anything. If you have written a class before, skim this and ' +
+         'move on. If you have not, this page is what makes the rest of the level readable.' },
+    { p: 'A **class** is a description of a kind of thing: what it knows and what it can do. An **object** is one ' +
+         'actual thing of that kind. `Account` is the description. `alice` is an account.' },
+    { code: 'class Account:\n    def __init__(self, account_id, kind="customer", allow_negative=False):\n        self.id = account_id\n        self.kind = kind\n        self.allow_negative = allow_negative\n\nalice = Account("alice")\nfees  = Account("fee_income", kind="revenue", allow_negative=True)\n\nprint(alice.id)                # alice\nprint(fees.allow_negative)     # True', lang: 'python' },
+    { table: {
+      head: ['What you see', 'What it means', 'Why it is there'],
+      rows: [
+        ['`class Account:`', 'The description of an account', 'One place that says what an account is made of'],
+        ['`def __init__(self, ...)`', 'The setup, run once when you make one', 'You never call `__init__` yourself. Python calls it the moment you write `Account("alice")`'],
+        ['`self`', '**The particular account this line is working on**', 'Inside the class it is `self.id`; outside it is `alice.id`, and they are the same value'],
+        ['`self.id = account_id`', 'Keep the argument on the object', 'Without this line the id is forgotten the instant `__init__` ends'],
+        ['`kind="customer"`', 'A default', 'Most accounts are customer accounts, so you say it only when they are not'],
+        ['`Account("alice")`', 'Make one', 'The class is the description, this is the object'],
+        ['`alice.id`', 'Read something it knows', 'An **attribute**: a thing it has'],
+        ['`ledger.transfer(...)`', 'Ask it to do something', 'A **method**: a thing it does, written as a `def` inside the class']
+      ]
+    }},
+    { p: 'Three more pieces of the same idea are in the code you are about to write.' },
+    { p: '**Names wrapped in two underscores are hooks Python calls for you**, at the moment it decides rather than ' +
+         'when you ask. `__init__` runs when the object is made and `__repr__` decides what it looks like when it is ' +
+         'printed. The language has a few dozen of these and you need exactly those two today.' },
+    { p: '**One class can be a kind of another.** The exceptions use this and nothing else does: ' +
+         '`class UnknownAccount(LedgerError)` says an unknown account is a kind of ledger error. A caller can then ' +
+         'catch the whole family with `except LedgerError`, or one specific failure with `except UnknownAccount`, and ' +
+         'both stay possible. `pass` in the body means there is nothing to add beyond the name.' },
+    { p: '**A leading underscore means internal.** `_post` and `_keys` are the ledger\'s own business. Python will not ' +
+         'stop anybody touching them, and every Python programmer reads the underscore as "do not": the public ' +
+         'methods validate first and then call `_post`, which is the only thing that writes.' },
+    { p: 'And four lines of ordinary Python that carry a lot of this level:' },
+    { table: {
+      head: ['Line', 'How to read it'],
+      rows: [
+        ['`sum(e["amount"] for e in self.entries if e["account"] == account_id)`', 'In three parts: go through every entry, keep the ones for this account, add up their amounts. That single line is the whole balance calculation'],
+        ['`for account_id, amount in legs:`', 'Each leg is a pair, and this names both halves at once instead of writing `leg[0]` and `leg[1]`'],
+        ['`sum(amount for _, amount in legs)`', 'The same unpacking, where `_` means "I do not need this half". A name nobody is meant to read'],
+        ['`f"TXN{self._next_id:05d}"`', '`:05d` pads the number to five digits, so it reads TXN00001 rather than TXN1 and the ids still sort in order when they are treated as text']
+      ]
+    }},
+    { tip: 'You do not have to be fluent in classes to finish this level. You have to be able to read one, know that ' +
+           '`self` is the object the method is working on, and know why a class can refuse where a dictionary cannot.' },
+    { check: {
+      q: 'The `transfer` method checks the accounts and the balance, then calls `self._post(...)` to write. Why not ' +
+         'let a caller use `_post` directly, since it is shorter?',
+      a: 'Because `_post` writes whatever it is handed as long as the legs sum to zero, and every other rule lives in ' +
+         '`transfer`: the accounts exist, the amount is positive, the source can cover it, the idempotency key has ' +
+         'not been seen before. A caller reaching past `transfer` gets a perfectly balanced transaction that ' +
+         'overdraws an account nobody opened. The underscore is the signpost, and the real protection is that all the ' +
+         'validation sits on the one path anybody sensible uses. That is also the answer to why the ledger is a class ' +
+         'at all: a dictionary cannot refuse anything.'
+    }},
+
     { h: 'When the same request arrives twice' },
     { p: 'Here is a payment going wrong, second by second:' },
     { table: {
@@ -253,10 +308,18 @@ FQ.registerLevel({
       {
         t: 'Your first class',
         blocks: [
-          { p: 'A class bundles data (**attributes**) with the operations allowed on it (**methods**). `__init__` runs when ' +
-               'you create an instance; `self` is the instance itself.' },
+          { p: 'A class bundles what a thing knows, its **attributes**, with what it is allowed to do, its ' +
+               '**methods**. `__init__` is the setup, and Python runs it for you the moment you write ' +
+               '`Account("alice")`. `self` is the particular account being worked on, which is why every line inside ' +
+               'the class says `self.something`.' },
           { code: 'class Account:\n    def __init__(self, account_id, kind="customer", allow_negative=False):\n        self.id = account_id\n        self.kind = kind\n        self.allow_negative = allow_negative\n\n    def __repr__(self):\n        return f"Account({self.id}, {self.kind})"\n\n\na = Account("alice")\nb = Account("fee_income", kind="revenue", allow_negative=True)\nprint(a, b)', lang: 'python' },
-          { p: '`__repr__` controls how the object prints. Adding one takes ten seconds and saves hours of debugging.' },
+          { p: '`__repr__` controls how the object prints. Adding one takes ten seconds and saves hours of ' +
+               'debugging: without it, printing an account gives you `<__main__.Account object at 0x000001C3>`, ' +
+               'which tells you nothing about which account you are holding.' },
+          { p: 'Read the first line slowly, because every part of it recurs all level. ' +
+               '`def __init__(self, account_id, kind="customer", allow_negative=False)` takes the object itself, one ' +
+               'argument you must supply, and two with defaults. `self.id = account_id` is the line that makes the id ' +
+               'survive past the end of the function, and `Account("alice")` is how you get one back.' },
           { tip: 'Why a class instead of a dict? Because a class can *refuse*. A dict will happily let anyone set ' +
                  '`balance = -999999`; a class exposes only the methods you allow.' }
         ],
@@ -286,7 +349,7 @@ FQ.registerLevel({
         t: 'Build the ledger core',
         blocks: [
           { p: 'The ledger owns its entries. Nothing outside the class may touch the list. That is what makes the invariant enforceable.' },
-          { code: 'from datetime import datetime\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}          # id -> Account\n        self.entries = []           # append-only list of dicts\n        self._next_id = 1\n\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        if account_id in self.accounts:\n            raise LedgerError(f"account {account_id} already exists")\n        self.accounts[account_id] = Account(account_id, kind, allow_negative)\n        return self.accounts[account_id]\n\n    def balance(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return sum(e["amount"] for e in self.entries if e["account"] == account_id)\n\n    def _post(self, legs, memo):\n        """Write a balanced set of legs: [(account_id, signed_cents),...]"""\n        if sum(amount for _, amount in legs) != 0:\n            raise LedgerError("transaction does not balance")\n        txn_id = f"TXN{self._next_id:05d}"\n        self._next_id += 1\n        stamp = datetime.now().isoformat(timespec="seconds")\n        for account_id, amount in legs:\n            self.entries.append({\n                "txn_id": txn_id, "account": account_id, "amount": amount,\n                "memo": memo, "at": stamp,\n            })\n        return txn_id', lang: 'python' },
+          { code: 'from datetime import datetime\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}          # id -> Account\n        self.entries = []           # append-only list of dicts\n        self._keys = {}             # idempotency key -> txn_id, for step 6\n        self._next_id = 1\n\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        if account_id in self.accounts:\n            raise LedgerError(f"account {account_id} already exists")\n        self.accounts[account_id] = Account(account_id, kind, allow_negative)\n        return self.accounts[account_id]\n\n    def balance(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return sum(e["amount"] for e in self.entries if e["account"] == account_id)\n\n    def _post(self, legs, memo):\n        """Write a balanced set of legs: [(account_id, signed_cents),...]"""\n        if sum(amount for _, amount in legs) != 0:\n            raise LedgerError("transaction does not balance")\n        txn_id = f"TXN{self._next_id:05d}"\n        self._next_id += 1\n        stamp = datetime.now().isoformat(timespec="seconds")\n        for account_id, amount in legs:\n            self.entries.append({\n                "txn_id": txn_id, "account": account_id, "amount": amount,\n                "memo": memo, "at": stamp,\n            })\n        return txn_id', lang: 'python' },
           { p: 'The leading underscore in `_post` is a convention meaning *internal*: callers should use `transfer`, ' +
                'which validates first. Python will not stop them, but every Python programmer reads it as "do not touch".' }
         ],
@@ -295,9 +358,14 @@ FQ.registerLevel({
       {
         t: 'A validated, idempotent transfer',
         blocks: [
-          { code: 'class Ledger(Ledger):        # (in the notebook, just extend the class above)\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        if amount <= 0:\n            raise InvalidAmount("deposit must be positive")\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return self._post([(account_id, amount), ("world", -amount)], memo)\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        if key is not None and key in self._keys:\n            return self._keys[key]                     # idempotent replay\n        if amount <= 0:\n            raise InvalidAmount("amount must be positive")\n        for acct in (src, dst):\n            if acct not in self.accounts:\n                raise UnknownAccount(acct)\n        if not self.accounts[src].allow_negative and self.balance(src) < amount + fee:\n            raise InsufficientFunds(f"{src} holds {money(self.balance(src))}")\n\n        legs = [(src, -(amount + fee)), (dst, amount)]\n        if fee:\n            legs.append(("fee_income", fee))\n        txn_id = self._post(legs, memo)\n        if key is not None:\n            self._keys[key] = txn_id\n        return txn_id', lang: 'python' },
-          { p: 'Note the order: **validate everything, then write**. Never write one leg and then discover the second is invalid. ' +
-               'Remember to create `self._keys = {}` in `__init__`.' },
+          { code: 'class Ledger(Ledger):        # a notebook trick, explained below\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        if amount <= 0:\n            raise InvalidAmount("deposit must be positive")\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return self._post([(account_id, amount), ("world", -amount)], memo)\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        if key is not None and key in self._keys:\n            return self._keys[key]                     # idempotent replay\n        if amount <= 0:\n            raise InvalidAmount("amount must be positive")\n        for acct in (src, dst):\n            if acct not in self.accounts:\n                raise UnknownAccount(acct)\n        if not self.accounts[src].allow_negative and self.balance(src) < amount + fee:\n            raise InsufficientFunds(f"{src} holds {money(self.balance(src))}")\n\n        legs = [(src, -(amount + fee)), (dst, amount)]\n        if fee:\n            legs.append(("fee_income", fee))\n        txn_id = self._post(legs, memo)\n        if key is not None:\n            self._keys[key] = txn_id\n        return txn_id', lang: 'python' },
+          { p: 'That first line is a notebook convenience rather than something to copy into a file. ' +
+               '`class Ledger(Ledger):` makes a new class that starts as a copy of the old one and adds these two ' +
+               'methods, so you can keep building in a fresh cell without scrolling back. **In a .py file you write ' +
+               'one class with all of its methods inside it**, which is what the solution does.' },
+          { p: 'Note the order inside `transfer`: **validate everything, then write**. Never write one leg and then ' +
+               'discover the second is invalid, because a half written transaction is the exact thing the invariant ' +
+               'exists to prevent.' },
           { tip: 'The `"world"` account is the outside world: money entering your system from a bank rail. It is allowed to go ' +
                  'negative, and its balance is the mirror image of all customer money you hold. Real ledgers call this a ' +
                  'contra or nostro account.' }
@@ -337,6 +405,14 @@ FQ.registerLevel({
     { t: 'Chargeback', d: 'A forced reversal initiated by the cardholder\'s bank after a dispute.' },
     { t: 'Contra account', d: 'An account representing the outside world, allowed to hold a negative balance.' },
     { t: 'Penny splitting', d: 'Deciding deterministically who receives the leftover unit when an amount cannot divide evenly.' },
+    { t: 'Object', d: 'One actual thing of that kind. Account is the class, alice is the object.' },
+    { t: 'Attribute', d: 'Something an object knows, read with a dot: alice.kind.' },
+    { t: 'Method', d: 'Something an object does, written as a def inside the class: ledger.transfer(...).' },
+    { t: 'self', d: 'Inside a class, the object the method is working on. self.id and alice.id are the same value.' },
+    { t: '__init__', d: 'The setup Python runs when an object is made. You never call it yourself.' },
+    { t: '__repr__', d: 'What an object looks like when it is printed. Ten seconds to write, hours saved.' },
+    { t: 'Subclass', d: 'A class that is a kind of another one. UnknownAccount is a kind of LedgerError.' },
+    { t: 'Leading underscore', d: 'A convention meaning internal. Python does not enforce it and every reader respects it.' },
     { t: 'Class', d: 'A Python construct bundling data with the methods allowed to change it.' }
   ],
 
@@ -498,7 +574,10 @@ FQ.registerLevel({
            'all rests on. It needs a ledger that cannot lose money, cannot charge twice when the phone retries, and ' +
            'can explain every last cent to a treasurer.',
     scope: 'Uses only this level: classes, dicts, lists, custom exceptions, integer arithmetic, f-strings. ' +
-           'No pandas, no database, no external libraries beyond `datetime`.',
+           'No pandas, no database, no external libraries beyond `datetime`. **This is the first build in the ' +
+           'course that needs object oriented code**: you should be able to read a class, make an object from ' +
+           'it, and say what `self` means. The knowledge section The Python this level needs covers exactly ' +
+           'that much, and the tutorial builds the first class one line at a time.',
     requirements: [
       'Custom exceptions: `LedgerError` base plus `UnknownAccount`, `InsufficientFunds`, `InvalidAmount`, `DuplicateAccount`',
       'An `Account` class holding id, kind, and an `allow_negative` flag, with a readable `__repr__`',

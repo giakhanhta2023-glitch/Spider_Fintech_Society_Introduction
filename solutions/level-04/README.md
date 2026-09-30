@@ -12,7 +12,7 @@ your own project skips the only step that actually teaches you anything.
 
 The society is launching a little wallet for event tickets and merch, and you are writing the piece it all rests on. It needs a ledger that cannot lose money, cannot charge twice when the phone retries, and can explain every last cent to a treasurer.
 
-**Scope:** Uses only this level: classes, dicts, lists, custom exceptions, integer arithmetic, f-strings. No pandas, no database, no external libraries beyond `datetime`.
+**Scope:** Uses only this level: classes, dicts, lists, custom exceptions, integer arithmetic, f-strings. No pandas, no database, no external libraries beyond `datetime`. **This is the first build in the course that needs object oriented code**: you should be able to read a class, make an object from it, and say what `self` means. The knowledge section The Python this level needs covers exactly that much, and the tutorial builds the first class one line at a time.
 
 ## Files here
 
