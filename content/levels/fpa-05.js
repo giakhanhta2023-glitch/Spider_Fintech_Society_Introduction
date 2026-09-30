@@ -160,7 +160,10 @@ FQ.registerLevel({
         blocks: [
           { code: '@dataclass\nclass Stage:\n    name: str\n    ok: bool = True\n    fatal: bool = False\n    milliseconds: float = 0.0\n    lines: list[str] = field(default_factory=list)\n    data: dict = field(default_factory=dict)\n\n    def fail(self, text, fatal=True):\n        self.ok = False\n        self.fatal = self.fatal or fatal\n        self.lines.append(text)', lang: 'python' },
           { p: 'Two booleans rather than one. `ok` is whether there is anything to say, `fatal` is whether the close ' +
-               'can continue, and the whole design of the pipeline is in the gap between them.' }
+               'can continue, and the whole design of the pipeline is in the gap between them.' },
+          { p: 'If the `@dataclass` line is unfamiliar, level 4 has a page on it: a class is a shape for a thing and ' +
+               '`@dataclass` is the instruction that makes Python write the repetitive parts. `field(default_factory=list)` ' +
+               'gives each stage its own empty list rather than one list shared by all of them.' }
         ],
         check: 'A stage can be not ok and not fatal, which is the state the reconciliation uses.'
       },

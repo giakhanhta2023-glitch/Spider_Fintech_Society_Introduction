@@ -12,7 +12,7 @@ your own project skips the only step that actually teaches you anything.
 
 The board wants a fifteen month forecast from the September close, with an upside, a downside, and the case that puts the company on its facility. They want to know which driver matters most, and when the money runs short in the bad case. Build it so that somebody can check it.
 
-**Scope:** Python, from the closing balance sheet in fpa-history.csv. Revenue from drivers, costs by behaviour, working capital in days, a debt schedule, a revolver, and tests for the identities.
+**Scope:** Python, from the closing balance sheet in fpa-history.csv. Revenue from drivers, costs by behaviour, working capital in days, a debt schedule, a revolver, and tests for the identities. **This is the first level that needs classes**: you should be able to read a class, make an object from it, and read a field off it with a dot. The knowledge section "The Python this level uses" covers exactly that much and nothing more, and it is enough for the whole build.
 
 ## Files here
 

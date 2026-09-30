@@ -21,7 +21,8 @@ FQ.registerLevel({
     'Model working capital as days, and see what a collections slip costs in cash',
     'Build scenarios as multiples of one base case instead of four separate models',
     'Resolve the circular reference a revolving facility creates, and know when it has not converged',
-    'Use a sensitivity table to find which argument is worth having'
+    'Use a sensitivity table to find which argument is worth having',
+    'Read and write a small class, which is the last new piece of Python this track needs'
   ],
 
   knowledge: [
@@ -44,6 +45,63 @@ FQ.registerLevel({
     { p: 'Retained earnings are negative because the company has raised more than it has earned, which is the normal ' +
          'state of a growing payments business and not a problem by itself. Somebody will ask about it in a review, ' +
          'and the answer is one sentence: **cumulative losses since founding, against twenty two million raised.**' },
+
+    { h: 'The Python this level uses, in one page' },
+    { p: 'Level 3 was functions and tables. This level needs one more idea, and it is the last new piece of Python ' +
+         'in the track: **a class**. If you have never met one, read this section before the code starts. If you ' +
+         'have, skip to the next heading, because there is nothing unusual here.' },
+    { p: 'A **class** is a shape for a thing, and an **object** is one thing of that shape. In spreadsheet terms, a ' +
+         'class is the template and an object is one filled in row. This model needs a shape called an assumption: ' +
+         'a number, where the number came from, and whether it was measured or decided. Twenty of those, each with ' +
+         'three parts, and the alternative is three parallel dictionaries that drift apart the first time somebody ' +
+         'adds a driver to one of them.' },
+    { code: '@dataclass(frozen=True, slots=True)\nclass Driver:\n    value: float\n    source: str\n    judgement: bool = False\n\ntake_rate = Driver(0.0058, "the last twelve months of actuals", judgement=True)\n\ntake_rate.value       # 0.0058\ntake_rate.source      # "the last twelve months of actuals"', lang: 'python' },
+    { p: 'Six lines, and every part of them is doing something worth knowing:' },
+    { table: {
+      head: ['What you see', 'What it means', 'Why it is there'],
+      rows: [
+        ['`class Driver:`', 'Define a shape called Driver', 'One place that says what an assumption is made of'],
+        ['`value: float`', 'A driver has a value, and it is a number', 'The three lines under the class are its fields, in order'],
+        ['`judgement: bool = False`', 'And a true or false flag, false unless you say otherwise', 'So most drivers need only two arguments'],
+        ['`@dataclass`', 'Python writes the boring parts for you', 'Without it you would hand write the code that builds one, prints one, and compares two'],
+        ['`frozen=True`', '**Once made, it cannot be changed**', 'An assumption quietly reassigned halfway through a run is the model version of typing over a formula'],
+        ['`slots=True`', 'A misspelt field is an error, not a new field', '`driver.sorce = 0.006` stops the program instead of being silently ignored'],
+        ['`Driver(0.0058, "...")`', 'Make one', 'This is an object. The class is the template, this is the row'],
+        ['`take_rate.value`', 'Read a field off it, with a dot', 'Like `B4` on a tab, except the name says what it is']
+      ]
+    }},
+    { p: 'Two more pieces appear in the model, and both exist for a reason you already believe from level 1.' },
+    { p: '**A property is a number worked out when you ask for it, never stored.** Assets are cash plus receivables ' +
+         'plus fixed assets, every single time anybody reads them, so they cannot go stale after one of the three ' +
+         'moves. It is the same rule as the check cell: a balance is worked out, never typed in.' },
+    { code: '@property\ndef assets(self):\n    return self.cash + self.receivables + self.ppe\n\nmonth.assets          # no brackets: it reads like a field and runs like a formula', lang: 'python' },
+    { p: '`self` is the object the line is working on, handed in automatically. Inside the class you write ' +
+         '`self.cash`; outside it you write `month.cash`, and they are the same number.' },
+    { p: '**And `replace` makes a copy with one or two fields changed, leaving the original alone.** That is how the ' +
+         'four scenarios are built out of one base case: the upside is the base with two numbers swapped, rather ' +
+         'than a second file.' },
+    { code: 'from dataclasses import replace\n\nupside = replace(base, name="upside", volume_growth=Driver(0.029, "..."))\n\nbase.volume_growth.value      # still 0.0215: the original never moved', lang: 'python' },
+    { table: {
+      head: ['Also in the code', 'What it means'],
+      rows: [
+        ['`def scaled(self, name, **factors)`', 'The named arguments you pass get collected into a dictionary called `factors`, so the function works with whatever drivers you hand it rather than a fixed list'],
+        ['`getattr(self, "take_rate")`', 'Read a field whose name is in a variable. The loop does not know the names in advance, so it cannot write a dot'],
+        ['`field(default_factory=list)`', 'Give each object its own empty list. Writing `= []` instead would share one list between every object ever made, which is the oldest trap in Python'],
+        ['`lambda f: f["revenue"]`', 'A small function with no name, written where it is used'],
+        ['`for attempt in range(1, 51): ... break`', 'Try up to fifty times and stop early when the answer stops moving. The attempt number is the evidence that it converged rather than gave up']
+      ]
+    }},
+    { tip: 'You do not need to be able to write these from memory to finish the level. You need to be able to read ' +
+           'them, because everything the model knows about an assumption is carried in a Driver, and everything a ' +
+           'reviewer will ask you about is in the `source` field of one.' },
+    { check: {
+      q: 'Why is `Driver` frozen, when it would be more convenient to be able to change a value in place?',
+      a: 'Because a model is judged on whether its inputs can be traced, and a value that can be reassigned anywhere ' +
+         'in a run cannot be. Frozen means the only way to get a different assumption is to make a new one, which is ' +
+         'exactly what the scenarios do: `replace(base, take_rate=...)` produces a second object and leaves the first ' +
+         'untouched. It is the same instinct as never typing over a formula in the workbook, and it turns an entire ' +
+         'class of "why is this number different from yesterday" into something that cannot happen.'
+    }},
 
     { h: 'Revenue from drivers' },
     { p: 'Growing last month\'s revenue by a percentage produces a trend line with an opinion attached, ' +
@@ -170,6 +228,8 @@ FQ.registerLevel({
         t: 'The opening balance sheet, and a refusal',
         blocks: [
           { code: 'def opening_from_history(path):\n    rows = list(csv.DictReader(open(path)))\n    last = rows[-1]\n    opening = Opening(...)\n    if not opening.balances:\n        raise ValueError(f"the opening balance sheet at {opening.month} does not balance")\n    return opening', lang: 'python' },
+          { p: '`raise ValueError(...)` stops the program there and prints that message. It is the code version of ' +
+               'the red check cell: the model refuses to produce anything rather than producing something wrong.' },
           { p: 'Starting from a sheet that does not balance guarantees fifteen months that do not balance, and you ' +
                'will spend the afternoon looking for the error in the forecast.' }
         ],
@@ -181,6 +241,11 @@ FQ.registerLevel({
           { code: '@dataclass(frozen=True)\nclass Driver:\n    value: float\n    source: str\n    judgement: bool = False', lang: 'python' },
           { p: 'Three fields, and the third one is the useful one. When somebody asks where 0.58% came from, the ' +
                'model answers rather than you.' },
+          { p: 'Reading it line by line: `class Driver` names the shape, the three indented lines are what one is ' +
+               'made of, and `= False` on the last one means you can leave it out and get false. `@dataclass` is ' +
+               'the instruction that makes Python write the code to build one, and `frozen=True` means that once ' +
+               'built it cannot be edited, only replaced. Making one is `Driver(0.0058, "the last twelve months")` ' +
+               'and reading it back is `take_rate.value`.' },
           { tip: 'Write the source as you type the number. Going back to fill them in afterwards is the same job ' +
                  'twice, and the ones you cannot remember are exactly the ones that needed a source.' }
         ],
@@ -200,7 +265,10 @@ FQ.registerLevel({
         blocks: [
           { code: 'operations = (net_income + depreciation\n              - (receivables - opening_receivables)\n              + (payables - opening_payables))\ncash = opening_cash + operations - capex + financing', lang: 'python' },
           { p: 'Then assert it. This is the line that separates a model from a spreadsheet, and it costs one test:' },
-          { code: 'assert month.cash == pytest.approx(\n    previous + month.cash_from_operations - month.capex + month.financing, abs=0.005)', lang: 'python' }
+          { code: 'assert month.cash == pytest.approx(\n    previous + month.cash_from_operations - month.capex + month.financing, abs=0.005)', lang: 'python' },
+          { p: '`assert` says "this must be true, and stop everything if it is not". `pytest.approx(x, abs=0.005)` ' +
+               'means "equal to x, within half a cent", which is how you compare two numbers that have each been ' +
+               'through a division without demanding they match to the last bit of floating point.' }
         ],
         check: 'Fifteen months, all balancing, with no plug anywhere.'
       },
@@ -219,6 +287,11 @@ FQ.registerLevel({
         t: 'Scenarios as multiples',
         blocks: [
           { code: 'def scaled(self, name, **factors):\n    changes = {}\n    for field_name, factor in factors.items():\n        current = getattr(self, field_name)\n        changes[field_name] = Driver(current.value * factor,\n                                     f"{current.source}, scaled {factor:g}x", judgement=True)\n    return replace(self, name=name, **changes)', lang: 'python' },
+          { p: 'Four pieces of syntax in six lines, and each one is doing a job. `**factors` collects whatever named ' +
+               'arguments you passed into a dictionary, so `scaled("stress", take_rate=0.85, dso_days=1.55)` arrives ' +
+               'as two entries the loop can walk. `getattr(self, field_name)` reads a field whose name is in a ' +
+               'variable, which a dot cannot do. And `replace(self, ...)` hands back a copy with those fields ' +
+               'changed, leaving the base case exactly as it was.' },
           { p: 'A scaled driver keeps its own source and says it was scaled, so a reader of the stress case can see ' +
                'both the original evidence and the judgement applied to it.' }
         ],
@@ -237,6 +310,14 @@ FQ.registerLevel({
   },
 
   glossary: [
+    { t: 'Class', d: 'A shape for a thing: what it is made of. The template, in spreadsheet terms.' },
+    { t: 'Object', d: 'One thing of that shape. The filled in row.' },
+    { t: 'Field', d: 'One of the parts an object is made of, read with a dot: `driver.value`.' },
+    { t: 'dataclass', d: 'A class where Python writes the repetitive parts: building one, printing it, comparing two.' },
+    { t: 'frozen', d: 'Cannot be changed after it is made. The code version of not typing over a formula.' },
+    { t: 'Property', d: 'A value worked out when it is read rather than stored, so it cannot go stale.' },
+    { t: 'self', d: 'Inside a class, the object being worked on. `self.cash` and `month.cash` are the same number.' },
+    { t: 'replace', d: 'A copy with some fields changed, leaving the original alone. How the scenarios are built.' },
     { t: 'Three statement model', d: 'A forecast where the profit and loss, balance sheet and cash flow are linked, so cash is derived rather than typed.' },
     { t: 'Driver', d: 'An input the forecast is built from: volume, take rate, days to collect. The thing you argue about.' },
     { t: 'Operating leverage', d: 'Profit growing faster than revenue, because part of the cost base does not move with it. Works in both directions.' },
@@ -412,7 +493,10 @@ FQ.registerLevel({
            'case that puts the company on its facility. They want to know which driver matters most, and when the ' +
            'money runs short in the bad case. Build it so that somebody can check it.',
     scope: 'Python, from the closing balance sheet in fpa-history.csv. Revenue from drivers, costs by behaviour, ' +
-           'working capital in days, a debt schedule, a revolver, and tests for the identities.',
+           'working capital in days, a debt schedule, a revolver, and tests for the identities. **This is the ' +
+           'first level that needs classes**: you should be able to read a class, make an object from it, and ' +
+           'read a field off it with a dot. The knowledge section "The Python this level uses" covers exactly ' +
+           'that much and nothing more, and it is enough for the whole build.',
     dataset: '{{RAW}}/data/fpa-history.csv',
     requirements: [
       'A drivers module where every assumption carries its source, and judgements are marked as such',
