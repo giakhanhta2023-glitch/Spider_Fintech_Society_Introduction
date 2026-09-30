@@ -446,25 +446,14 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   border: 0;
   border-top: 2px solid transparent;
   margin-top: -1px;
-  padding: 20px 0 22px;
+  padding: 16px 0 18px;
   cursor: pointer;
   color: var(--graphite);
   font: inherit;
 }
-.trackswitch-opt .title { margin: 6px 0 4px; color: var(--ash); }
-.trackswitch-opt .index-sub { margin: 0; max-width: 34ch; }
-.trackswitch-opt:hover .title { color: var(--bone); }
+.trackswitch-opt:hover .kicker { color: var(--ash); }
 .trackswitch-opt.is-on { border-top-color: var(--accent); }
 .trackswitch-opt.is-on .kicker { color: var(--accent); }
-.trackswitch-opt.is-on .title { color: var(--bone); }
-.trackswitch-meta {
-  display: block;
-  margin-top: 10px;
-  font-family: var(--mono);
-  font-size: 0.76rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--graphite);
-}
 @media (max-width: 700px) {
   .trackswitch { grid-template-columns: minmax(0, 1fr); }
   .trackswitch-opt { border-top: 1px solid var(--rule); }

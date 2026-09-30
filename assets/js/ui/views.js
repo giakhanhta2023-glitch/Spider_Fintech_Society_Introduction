@@ -57,8 +57,6 @@ function TrackSwitch({ active, onPick }) {
   return html`
     <div class="trackswitch">
       ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t) => {
-        const levels = FQ.levelsIn(t.id);
-        const done = levels.filter((lv) => store.isCleared(lv.id)).length;
         const on = t.id === active;
         return html`
           <button key=${t.id} type="button"
@@ -66,9 +64,6 @@ function TrackSwitch({ active, onPick }) {
             aria-pressed=${on ? 'true' : 'false'}
             onClick=${() => onPick(t.id)}>
             <span class="kicker">${t.name} track</span>
-            <span class="title title-m">${FQ.plural(levels.length, 'level', 'levels')}</span>
-            <span class="index-sub">${t.audience}</span>
-            <span class="trackswitch-meta">${done}/${levels.length} cleared</span>
           </button>`;
       })}
     </div>`;
@@ -114,13 +109,7 @@ export function Home({ onAskTutor }) {
         </div>
 
         <div class="col-9-12">
-          <p class="lede">
-            Every level hands you the knowledge, a walkthrough you can follow along with, a
-            15-question drill with a full answer key, and something to build using only what
-            you just learned. Two ladders: ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t, i) => html`<span key=${t.id}
-              >${i ? ', and ' : ''}${FQ.plural(FQ.levelsIn(t.id).length, 'level', 'levels')} for ${t.audience}<//>`)}.
-          </p>
-          <div class="btn-row" style=${{ marginTop: '28px' }}>
+          <div class="btn-row">
             <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
               ${cleared ? `continue level ${String(FQ.positionOf(FQ.level(current))).padStart(2, '0')}`
                         : `start ${meta.name} level ${first}`}
@@ -146,8 +135,7 @@ export function Home({ onAskTutor }) {
 
       <!-- Contents page, for the chosen ladder. -->
       <section class="section">
-        <${SectionHead} title=${meta.title}
-          note="pass the drill, ship the build, the next level opens" />
+        <${SectionHead} title=${meta.title} />
         <p class="index-sub" style=${{ maxWidth: '58ch', marginBottom: '18px' }}>
           ${md(meta.blurb)} <b>Ends at:</b> ${meta.outcome}.
         </p>
