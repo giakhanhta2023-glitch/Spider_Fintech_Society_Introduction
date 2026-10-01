@@ -175,6 +175,7 @@ FQ.registerLevel({
          '`class UnknownAccount(LedgerError)` says an unknown account is a kind of ledger error. A caller can then ' +
          'catch the whole family with `except LedgerError`, or one specific failure with `except UnknownAccount`, and ' +
          'both stay possible. `pass` in the body means there is nothing to add beyond the name.' },
+    { p: '**Not everything belongs to an object.** `to_cents` and `money` are written as plain functions outside any class, and code inside the `Ledger` calls them by name: `money(self.balance(src))`, never `self.money(...)`. The rule is about ownership rather than style: `self.` is for things that belong to this particular ledger, and turning 2500 into `$25.00` belongs to nothing. It takes a number, gives back a string, and would do the same work in any program, so anything in the same file can call it.' },
     { p: '**A leading underscore means internal.** `_post` and `_keys` are the ledger\'s own business. Python will not ' +
          'stop anybody touching them, and every Python programmer reads the underscore as "do not": the public ' +
          'methods validate first and then call `_post`, which is the only thing that writes.' },
@@ -359,6 +360,7 @@ FQ.registerLevel({
         t: 'A validated, idempotent transfer',
         blocks: [
           { code: 'class Ledger(Ledger):        # a notebook trick, explained below\n\n    def deposit(self, account_id, amount, memo="deposit"):\n        if amount <= 0:\n            raise InvalidAmount("deposit must be positive")\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return self._post([(account_id, amount), ("world", -amount)], memo)\n\n    def transfer(self, src, dst, amount, memo="transfer", fee=0, key=None):\n        if key is not None and key in self._keys:\n            return self._keys[key]                     # idempotent replay\n        if amount <= 0:\n            raise InvalidAmount("amount must be positive")\n        for acct in (src, dst):\n            if acct not in self.accounts:\n                raise UnknownAccount(acct)\n        if not self.accounts[src].allow_negative and self.balance(src) < amount + fee:\n            raise InsufficientFunds(f"{src} holds {money(self.balance(src))}")\n\n        legs = [(src, -(amount + fee)), (dst, amount)]\n        if fee:\n            legs.append(("fee_income", fee))\n        txn_id = self._post(legs, memo)\n        if key is not None:\n            self._keys[key] = txn_id\n        return txn_id', lang: 'python' },
+          { p: 'The `money(...)` in that error message is the helper from step 3, not a method: it is a plain function in the same notebook, so the class can call it by name.' },
           { p: 'That first line is a notebook convenience rather than something to copy into a file. ' +
                '`class Ledger(Ledger):` makes a new class that starts as a copy of the old one and adds these two ' +
                'methods, so you can keep building in a fresh cell without scrolling back. **In a .py file you write ' +
