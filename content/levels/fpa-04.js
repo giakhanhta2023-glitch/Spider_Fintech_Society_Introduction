@@ -1,489 +1,561 @@
 /* =========================================================================
-   ANALYST TRACK, LEVEL 5: the pack that rebuilds itself
+   ANALYST TRACK, LEVEL 4: a model that ties
    ========================================================================= */
 FQ.registerLevel({
   id: 104,
   track: 'fpa',
   position: 4,
-  codename: 'close',
-  title: 'The pack that rebuilds itself',
-  tagline: 'Six stages, 258 milliseconds, one document, and a run that stops rather than publishing a number it cannot defend.',
-  difficulty: 7,
-  minutes: 360,
-  tags: ['pipeline', 'reconciliation', 'reporting', 'capstone'],
-  summary: 'The capstone. The spreadsheet, the queries, the script and the model become one command that goes from ' +
-           'raw files to a pack somebody can read, with a reconciliation between two systems in the middle and a ' +
-           'refusal to publish when anything is wrong.',
+  codename: 'model',
+  title: 'A model that ties',
+  tagline: 'Fifteen months, four scenarios, sixty forecast months, and a balance sheet that balances to the cent in every one of them.',
+  difficulty: 6,
+  minutes: 300,
+  tags: ['three statement model', 'forecasting', 'working capital', 'scenarios'],
+  summary: 'The three statement model is the thing a finance interview is really asking about. This level builds one ' +
+           'from a real closing balance sheet: revenue from drivers, costs that behave differently from each other, ' +
+           'working capital, a debt schedule, and the circular reference every real model contains.',
 
   objectives: [
-    'Assemble four levels of work into one pipeline without copying any of it',
-    'Reconcile two systems that were built separately, and find the row where they disagree',
-    'Tell the difference between a stage that must stop the close and one that only needs a sentence',
-    'Produce a document in the order a reader needs rather than the order you computed it',
-    'Report provenance: which command produced this, from what, and whether it tied',
-    'Hand over something a colleague can run next month without asking you anything'
+    'Forecast revenue from drivers rather than from a growth rate on a total',
+    'Build the three statements so that cash is an output and the balance sheet is an identity',
+    'Model working capital as days, and see what a collections slip costs in cash',
+    'Build scenarios as multiples of one base case instead of four separate models',
+    'Resolve the circular reference a revolving facility creates, and know when it has not converged',
+    'Use a sensitivity table to find which argument is worth having',
+    'Read and write a small class, which is the last new piece of Python this track needs'
   ],
 
   knowledge: [
-    { h: 'What a close actually is' },
-    { p: 'Four working days, every month, for the rest of your career. The books close, the numbers arrive, and ' +
-         'somebody has to turn them into a document that a person who was not there can act on. Everything in this ' +
-         'track so far is one stage of that, and this level is the part where they have to work together.' },
-    { p: 'Assembly is where you find out which of your work only ever worked on its own. The pack cannot be built if ' +
-         'the ledger will not load. The reconciliation needs both the ledger and the billing detail. The reforecast ' +
-         'needs the month that just closed. **A dependency between two things that used to be separate is the whole ' +
-         'exercise**, and it is the same lesson the engineering track learns in its own capstone.' },
-    { money: 'The number this level ends on: six stages, **258 milliseconds**, one document, and an exit code. The ' +
-             'exit code is the part that matters. A close that can say "do not send this" is a different thing from ' +
-             'a spreadsheet that can only be wrong quietly.' },
+    { h: 'Why the three statements are one model' },
+    { p: 'A profit and loss says what you earned. A balance sheet says what you own and owe. A cash flow statement ' +
+         'says what actually moved. They are three views of one set of facts, and the reason a model links them is ' +
+         'that **a company can be profitable and run out of money**, which is not a hypothetical: it is the single ' +
+         'most common way a growing business dies.' },
+    { p: 'The link is mechanical. Net income goes to retained earnings. Depreciation is a cost that moves no cash. ' +
+         'Receivables are revenue you have not collected. Put them together and cash falls out at the bottom, which ' +
+         'is the only correct way to forecast it.' },
+    { money: 'The rule that makes a model a model: **cash is an output**. If you type a cash forecast in and plug ' +
+             'the balance sheet to match, you have built a spreadsheet of hopes. Every month in this level is ' +
+             'asserted to balance to the cent, and the assertion is what turns the identity into a test.' },
 
-    { h: 'The six stages' },
+    { h: 'Start from a balance sheet, not from zero' },
+    { p: 'A forecast begins at the last closed month. September is the last month closed, so the model starts from ' +
+         'the September balance sheet, and the first thing it does is refuse to start if that sheet does not ' +
+         'balance:' },
+    { code: 'cash                     8,995,577\naccounts receivable      4,201,313\nfixed assets, net        3,888,709\n                        ----------\nassets                  17,085,598\n\naccounts payable         3,257,960\ndebt                     3,375,000\npaid in capital         22,000,000\nretained earnings      -11,547,361\n                        ----------\nliabilities and equity  17,085,598', lang: 'text' },
+    { p: 'Retained earnings are negative because the company has raised more than it has earned, which is the normal ' +
+         'state of a growing payments business and not a problem by itself. Somebody will ask about it in a review, ' +
+         'and the answer is one sentence: **cumulative losses since founding, against twenty two million raised.**' },
+
+    { h: 'The Python this level uses, in one page' },
+    { p: 'Level 3 was functions and tables. This level needs one more idea, and it is the last new piece of Python ' +
+         'in the track: **a class**. If you have never met one, read this section before the code starts. If you ' +
+         'have, skip to the next heading, because there is nothing unusual here.' },
+    { p: 'A **class** is a shape for a thing, and an **object** is one thing of that shape. In spreadsheet terms, a ' +
+         'class is the template and an object is one filled in row. This model needs a shape called an assumption: ' +
+         'a number, where the number came from, and whether it was measured or decided. Twenty of those, each with ' +
+         'three parts, and the alternative is three parallel dictionaries that drift apart the first time somebody ' +
+         'adds a driver to one of them.' },
+    { code: '@dataclass(frozen=True, slots=True)\nclass Driver:\n    value: float\n    source: str\n    judgement: bool = False\n\ntake_rate = Driver(0.0058, "the last twelve months of actuals", judgement=True)\n\ntake_rate.value       # 0.0058\ntake_rate.source      # "the last twelve months of actuals"', lang: 'python' },
+    { p: 'Six lines, and every part of them is doing something worth knowing:' },
     { table: {
-      head: ['Stage', 'What it does', 'Where it came from'],
+      head: ['What you see', 'What it means', 'Why it is there'],
       rows: [
-        ['**load the data**', 'Every file into one SQLite database, rebuilt each run', 'Level 1'],
-        ['**check the data**', 'The loader\'s repairs, and the gates that can stop everything', 'Level 2'],
-        ['**build the pack**', 'Actual against budget, with the tie to the ledger', 'Level 2'],
-        ['**query the detail**', 'Segments, the largest merchants, receivables ageing', 'Level 1'],
-        ['**reconcile**', 'Billing against the ledger, month by month', 'New: it needs two systems that only now exist together'],
-        ['**reforecast**', 'Four scenarios from the month that just closed', 'Level 3']
+        ['`class Driver:`', 'Define a shape called Driver', 'One place that says what an assumption is made of'],
+        ['`value: float`', 'A driver has a value, and it is a number', 'The three lines under the class are its fields, in order'],
+        ['`judgement: bool = False`', 'And a true or false flag, false unless you say otherwise', 'So most drivers need only two arguments'],
+        ['`@dataclass`', 'Python writes the boring parts for you', 'Without it you would hand write the code that builds one, prints one, and compares two'],
+        ['`frozen=True`', '**Once made, it cannot be changed**', 'An assumption quietly reassigned halfway through a run is the model version of typing over a formula'],
+        ['`slots=True`', 'A misspelt field is an error, not a new field', '`driver.sorce = 0.006` stops the program instead of being silently ignored'],
+        ['`Driver(0.0058, "...")`', 'Make one', 'This is an object. The class is the template, this is the row'],
+        ['`take_rate.value`', 'Read a field off it, with a dot', 'Like `B4` on a tab, except the name says what it is']
       ]
     }},
-    { p: 'Each stage is timed and each one returns a verdict. The first fatal verdict stops the rest, because there ' +
-         'is no point querying revenue detail when the ledger would not load.' },
-
-    { h: 'Three states, and the one everybody gets wrong' },
+    { p: 'Two more pieces appear in the model, and both exist for the same reason the pack refuses to print when it ' +
+         'does not tie: a number you cannot trace is a number nobody can defend.' },
+    { p: '**A property is a number worked out when you ask for it, never stored.** Assets are cash plus receivables ' +
+         'plus fixed assets, every single time anybody reads them, so they cannot go stale after one of the three ' +
+         'moves. It is the same rule as the check cell: a balance is worked out, never typed in.' },
+    { code: '@property\ndef assets(self):\n    return self.cash + self.receivables + self.ppe\n\nmonth.assets          # no brackets: it reads like a field and runs like a formula', lang: 'python' },
+    { p: '`self` is the object the line is working on, handed in automatically. Inside the class you write ' +
+         '`self.cash`; outside it you write `month.cash`, and they are the same number.' },
+    { p: '**And `replace` makes a copy with one or two fields changed, leaving the original alone.** That is how the ' +
+         'four scenarios are built out of one base case: the upside is the base with two numbers swapped, rather ' +
+         'than a second file.' },
+    { code: 'from dataclasses import replace\n\nupside = replace(base, name="upside", volume_growth=Driver(0.029, "..."))\n\nbase.volume_growth.value      # still 0.0215: the original never moved', lang: 'python' },
     { table: {
-      head: ['State', 'Means', 'What happens'],
+      head: ['Also in the code', 'What it means'],
       rows: [
-        ['`ok`', 'Nothing to say', 'Continue'],
-        ['`note`', 'The numbers are right and somebody needs to know', 'Continue, and say so at the end'],
-        ['`STOP`', 'The output would be wrong', '**Nothing after it runs, and nothing is written**']
+        ['`def scaled(self, name, **factors)`', 'The named arguments you pass get collected into a dictionary called `factors`, so the function works with whatever drivers you hand it rather than a fixed list'],
+        ['`getattr(self, "take_rate")`', 'Read a field whose name is in a variable. The loop does not know the names in advance, so it cannot write a dot'],
+        ['`field(default_factory=list)`', 'Give each object its own empty list. Writing `= []` instead would share one list between every object ever made, which is the oldest trap in Python'],
+        ['`lambda f: f["revenue"]`', 'A small function with no name, written where it is used'],
+        ['`for attempt in range(1, 51): ... break`', 'Try up to fifty times and stop early when the answer stops moving. The attempt number is the evidence that it converged rather than gave up']
       ]
     }},
-    { p: 'The middle one is the state people leave out, and leaving it out breaks the pipeline in one of two ways. ' +
-         'Treat every difference as fatal and the close never finishes, so somebody adds a flag to skip the checks ' +
-         'and within two months the flag is always on. Treat none of them as fatal and a wrong pack goes out with a ' +
-         'warning nobody read.' },
-    { p: 'In this close the reconciliation is a `note`. One month of billing detail disagrees with the ledger by ' +
-         '**4,820**, which is exactly one credit note raised in the billing system and never posted to the books. ' +
-         'That is not a reason to refuse to close. It is a reason to name the row, put it in the commentary, and send ' +
-         'it to whoever posts corrections.' },
-    { code: '   [note] reconcile billing to the ledger         17 ms\n           21 months compared\n           2025-06: billing 3,012,917.75 against ledger 3,017,737.75,\n                    difference -4,820.00\n           1 month(s) do not agree, which goes in the commentary', lang: 'text' },
+    { tip: 'You do not need to be able to write these from memory to finish the level. You need to be able to read ' +
+           'them, because everything the model knows about an assumption is carried in a Driver, and everything a ' +
+           'reviewer will ask you about is in the `source` field of one.' },
     { check: {
-      q: 'Your pipeline finds the same 4,820 difference every month from now on, because nobody posts the ' +
-         'correction. What should the pipeline do about it?',
-      a: 'Keep reporting it, and keep not stopping. What should change is the commentary: a break that is three ' +
-         'months old is a different sentence from a new one, and if the pipeline can say "first seen in the June ' +
-         'close, still open" then the document carries its own ageing. What it must not do is start ignoring ' +
-         'differences below some threshold, because the threshold is where the next real break will hide. The ' +
-         'pressure to silence a persistent warning is exactly the pressure that makes checks useless, and the answer ' +
-         'is to fix the thing rather than the alarm.'
+      q: 'Why is `Driver` frozen, when it would be more convenient to be able to change a value in place?',
+      a: 'Because a model is judged on whether its inputs can be traced, and a value that can be reassigned anywhere ' +
+         'in a run cannot be. Frozen means the only way to get a different assumption is to make a new one, which is ' +
+         'exactly what the scenarios do: `replace(base, take_rate=...)` produces a second object and leaves the first ' +
+         'untouched. It is the same instinct as never typing over a formula in the workbook, and it turns an entire ' +
+         'class of "why is this number different from yesterday" into something that cannot happen.'
     }},
 
-    { h: 'Reconciliation, the check that needs two systems' },
-    { p: 'Every check before this one could be done inside a single file. This one cannot: it asks whether the ' +
-         'billing system and the general ledger agree about revenue, month by month, and the answer is only ' +
-         'interesting because they were built separately.' },
-    { code: 'billed  = SELECT month, ROUND(SUM(amount), 2) FROM invoices GROUP BY month\nledger  = the revenue rows of the ledger, by month, sign normalised\n\ndifference = billed - ledger        -> zero in twenty of twenty one months', lang: 'text' },
-    { p: 'Twenty months agree to the cent. One does not, by one row. That is what a working reconciliation looks ' +
-         'like: **almost all zeroes and one specific thing to go and ask about.** A reconciliation that produces a ' +
-         'long list of small differences has a tolerance problem rather than a data problem, and the fix is upstream.' },
-    { warn: 'Reconcile in both directions. This one compares billing to the ledger, and the same query the other way ' +
-            'round would catch revenue in the ledger with no invoice behind it, which is the more dangerous of the ' +
-            'two: it means somebody booked revenue nobody billed.' },
-
-    { h: 'Importing your own earlier work' },
-    { p: 'The pack code lives in the level 2 folder and the model lives in the level 3 folder. The capstone imports ' +
-         'both rather than copying either:' },
-    { code: 'SOLUTIONS = Path(__file__).resolve().parents[3]\nEARLIER = [SOLUTIONS / "fpa-03" / "close-pack",\n           SOLUTIONS / "fpa-04" / "three-statement"]\n\nfor folder in EARLIER:\n    sys.path.insert(0, str(folder))\n\nfrom closepack import pack as closepack_pack\nfrom model import forecast as model_forecast', lang: 'python' },
-    { p: 'In a real repository these would be one package, or two dependencies installed from a private index. This ' +
-         'is the smallest honest version of that, and the file says so in its own docstring rather than making the ' +
-         'imports look like they came from nowhere.' },
-    { p: 'The reason not to copy is the reason this whole track exists. **Two copies of the same logic drift apart ' +
-         'from the first bug fix onwards**, and then the monthly pack and the quarterly pack disagree and nobody can ' +
-         'say which is right.' },
-
-    { h: 'The document, in reading order' },
-    { p: 'The pipeline computes in dependency order and the document is written in reading order, and they are not ' +
-         'the same. A reader wants:' },
-    { code: '1. The five numbers            revenue, gross profit, margin, opex, EBITDA\n2. What moved                 the material variances, largest first\n3. The split                  volume against price\n4. Where the revenue came from  segments\n5. What has not been collected  receivables ageing, and the DSO\n6. Does billing agree           the reconciliation, with the break named\n7. What it means for next year  the four scenarios\n8. Worth knowing                the warnings\n9. How this was produced        the command, the source, the tie', lang: 'text' },
-    { p: 'Nine sections, and the last one is the one that stops the pack being questioned every month. It names the ' +
-         'command, the files, and the tie difference, so a reader who doubts a number has somewhere to start that is ' +
-         'not your inbox.' },
-    { tip: 'Write the document as a file rather than as an email body. A file can be regenerated, diffed against ' +
-           'last month, and committed. An email body exists once and then only in somebody\'s memory of it.' },
-
-    { h: 'What a script must not write' },
-    { p: 'Every cause in the generated document is the word TODO. The pipeline knows marketing is 210,000 over; it ' +
-         'does not know that the campaign moved, and a tool that guesses is worse than one that leaves a gap.' },
-    { code: '**Marketing programmes, -210,000 unfavourable.** TODO: why. TODO: what happens next.\n**Scheme and interchange, -167,096 unfavourable.** TODO: why. TODO: what happens next.\n**Transaction fees, +151,993 favourable.** TODO: why. TODO: what happens next.', lang: 'text' },
-    { p: 'What the pipeline **can** guarantee is that no material variance is ever missing from the list, which is ' +
-         'exactly what a person writing at 7pm gets wrong. That division of labour is the point: the machine does the ' +
-         'completeness, the person does the causation, and the document will not go out with TODO in it because a ' +
-         'human has to read it first.' },
-    { check: {
-      q: 'Your colleague asks whether the close could run itself overnight and email the pack to the leadership team ' +
-         'automatically. What do you say?',
-      a: 'The numbers can. The document cannot go out unread while it still contains TODO, because the causes are ' +
-         'the part that carries the judgement and the part somebody will be asked about in the meeting. A sensible ' +
-         'middle is to run the pipeline on a schedule so the numbers and the exit code are waiting first thing, with ' +
-         'the document in a folder rather than in an inbox, and a person spending twenty minutes on the commentary ' +
-         'before it goes anywhere. Automate the completeness, keep the accountability.'
-    }},
-
-    { h: 'Handing it over' },
-    { p: 'The last requirement of the capstone is the one that is easiest to skip and hardest to fake: somebody else ' +
-         'runs it next month without asking you anything. That means the README says the command, the numbers it ' +
-         'should produce, and what the thing deliberately does not do.' },
+    { h: 'Revenue from drivers' },
+    { p: 'Growing last month\'s revenue by a percentage produces a trend line with an opinion attached, ' +
+         'which is a different object from a forecast. Drive it from the things the business actually does:' },
+    { code: 'transaction fees  = payment volume x take rate\nsubscription fees = merchants x platform fee\nFX markup         = payment volume x cross border share x markup\n\nvolume next month = volume x (1 + volume growth)\nmerchants         = merchants x (1 + net merchant growth)', lang: 'text' },
+    { p: 'Two reasons this is better, and the second is the one that matters in a review. It **decomposes**: when the ' +
+         'forecast misses, you know whether it was volume or price, which is the same split the pack uses on the ' +
+         'month that just closed. And it is **arguable**: a sales director can disagree with 2.15% monthly volume growth and that ' +
+         'is a useful conversation, where disagreeing with "revenue grows 26% a year" is not.' },
     { table: {
-      head: ['A reader needs to know', 'Where it goes'],
+      head: ['Driver', 'Value', 'Where it came from'],
       rows: [
-        ['The one command', 'The top of the README, before any explanation'],
-        ['What it produces, exactly', 'A pasted run, with the real numbers in it'],
-        ['When it will stop, and why', 'The table of the three states'],
-        ['What it cannot do', 'A "what is not here" section, written honestly'],
-        ['Whether it is currently right', 'The tie difference, printed every run']
+        ['volume growth', '2.15% a month', 'Measured: the median of the last six months of history'],
+        ['take rate', '0.58%', '**Judgement**: the last twelve months of actuals. The plan still says 0.62% and the business has not run at that since January'],
+        ['scheme cost rate', '0.33%', 'Measured: stable in every month of history'],
+        ['DSO', '38 days', 'Measured: receivables over revenue, unchanged across the history'],
+        ['minimum cash', '5,000,000', '**Judgement**: the board\'s stated floor, and the reason the facility ever draws']
       ]
     }},
-    { p: 'And then the part that is not documentation: **run it on a machine that is not yours**. A clean checkout, ' +
-         'a fresh clone, no files left over from development. Half of everything that breaks at a handover breaks ' +
-         'because of a file that existed only on the machine it was written on.' }
+    { p: 'Every driver in the model carries its source, and the three that are opinions rather than measurements are ' +
+         'marked as such. A model that cannot tell you which of its inputs are facts will be believed too much, and ' +
+         'the first question in any review is where a number came from.' },
+
+    { h: 'Costs do not all behave the same way' },
+    { p: 'The most common modelling shortcut is to forecast every cost as a percentage of revenue. It is wrong in a ' +
+         'specific and expensive way: it makes the model unable to show operating leverage, which is the whole ' +
+         'economic story of a scaling business.' },
+    { table: {
+      head: ['Cost', 'Behaviour', 'In this model'],
+      rows: [
+        ['Scheme and interchange', 'Variable with volume', '0.33% of payment volume'],
+        ['Cloud hosting', 'Steps with scale, not with revenue', 'Grows 1.8% a month on its own trend'],
+        ['Payroll', 'Fixed until somebody is hired', 'The approved hiring plan, 0.8% a month'],
+        ['Marketing', 'A decision, not a consequence', '180,000 a month, set by a person'],
+        ['Facilities', 'Fixed', 'Flat']
+      ]
+    }},
+    { p: 'Model them that way and the base case shows EBITDA margin going from 7.9% in September to 19.3% across ' +
+         '2026, because revenue grows at 2.15% a month and most of the cost base does not. **That is ' +
+         'operating leverage, and a percentage of revenue model cannot produce it.**' },
+    { warn: 'Operating leverage runs backwards just as well, which is what the stress case is for. If volume stops growing and ' +
+            'pricing is conceded, the costs stay where they are, and EBITDA falls from 19.3% to 1.2% without a ' +
+            'single dramatic event.' },
+
+    { h: 'Working capital, in days' },
+    { p: 'Receivables and payables are forecast as days of the thing they follow, because days are stable and ' +
+         'comparable while balances are not:' },
+    { code: 'receivables = revenue x DSO / 30.4\npayables    = (cogs + opex) x DPO / 30.4', lang: 'text' },
+    { p: 'The cash effect is the **change** in the balance, not the balance. Growing revenue consumes cash through ' +
+         'receivables even when every invoice is paid on time, which is why profitable growing companies raise ' +
+         'money. And a slip in collections is a one off cash cost you can size in one line:' },
+    { code: 'DSO from 38 days to 57 days, on revenue of 3.36m a month:\n\n   3,360,000 x (57 - 38) / 30.4  =  2.1 million of cash, once', lang: 'text' },
+    { check: {
+      q: 'Revenue is growing 2% a month, every customer pays exactly on the agreed terms, and the cash balance keeps ' +
+         'falling. What is happening, and what would you look at first?',
+      a: 'Growth is consuming working capital. Each month\'s revenue is collected 38 days later, so a growing ' +
+         'business is always lending the growth to its customers, and the faster it grows the more it lends. The ' +
+         'first thing to look at is the change in receivables against the change in revenue: if receivables are ' +
+         'growing faster than revenue then DSO is slipping as well, which is a collections problem on top of a ' +
+         'growth one. If they are growing in line, the business is working exactly as designed and needs funding ' +
+         'rather than fixing.'
+    }},
+
+    { h: 'The circular reference every real model has' },
+    { p: 'The company has a revolving facility and a floor on cash. When the forecast dips below the floor, it ' +
+         'draws. Drawing costs interest, interest reduces cash, less cash means a bigger draw. **Interest depends on ' +
+         'the draw and the draw depends on interest**, and that is a circular reference.' },
+    { code: 'draw      = max(0, minimum cash - cash before financing)\ninterest  = term loan interest + (revolver + draw / 2) x revolver rate / 12\ncash      = cash before financing + draw     <- which changes the draw', lang: 'text' },
+    { p: 'Excel resolves this with an iterative calculation setting most people never find, and when it fails to ' +
+         'converge it quietly shows a stale number. A script does it in a loop and can say what happened:' },
+    { code: 'for attempt in range(1, 51):\n    interest = ...\n    new_draw = ...\n    if abs(new_draw - draw) < 0.005:\n        break\n    draw = new_draw\n\n# balance sheet ties in every month,\n# worst case 5 passes to resolve the circularity', lang: 'python' },
+    { p: 'Five passes in the stress case, and the model reports it. Two things are then testable that a spreadsheet ' +
+         'cannot test: that the loop **converges** rather than hitting its cap, and that it **iterates at all**, ' +
+         'because a scenario that never draws proves nothing about the mechanism.' },
+    { tip: 'If a model with a revolver never draws in any scenario, the circularity has never been exercised and you ' +
+           'do not know whether it works. Build a case severe enough to need the facility, even if nobody believes ' +
+           'it will happen. That case is also the one the board will ask about.' },
+
+    { h: 'Scenarios, and the mistake of four files' },
+    { p: 'The tempting way to build three cases is to save the file twice and change some numbers. Within a month ' +
+         'they have drifted, and nobody can say whether the difference between base and downside is the assumption ' +
+         'or the drift.' },
+    { code: 'base     = Assumptions()\nupside   = base.scaled("upside",   volume_growth=1.35, take_rate=1.02)\ndownside = base.scaled("downside", volume_growth=0.35, take_rate=0.95, payroll_growth=1.4)\nstress   = base.scaled("stress",   volume_growth=-0.2, take_rate=0.85,\n                                   dso_days=1.55, payroll_growth=1.8)', lang: 'python' },
+    { p: 'One base, three sets of multiples. Correct a measured driver and all four cases move together, and the ' +
+         'only difference between them remains the thing being varied.' },
+    { table: {
+      head: ['Case', 'FY2026 revenue', 'FY2026 EBITDA', 'Margin', 'Revolver'],
+      rows: [
+        ['base', '49.0m', '9.5m', '19.3%', 'never'],
+        ['upside', '52.6m', '11.6m', '22.0%', 'never'],
+        ['downside', '42.7m', '5.2m', '12.1%', 'never'],
+        ['**stress**', '**36.6m**', '**0.4m**', '**1.2%**', '**September 2026, peaking at 1,001,355**']
+      ]
+    }},
+
+    { h: 'The sensitivity table, and what it is for' },
+    { p: 'A two way table of FY2026 EBITDA against the take rate and volume growth. Twenty full fifteen month ' +
+         'models, every one of them balancing, in about a second:' },
+    { code: '   growth            0.50%        0.54%        0.58%        0.62%        0.66%\n    -0.50%            1.6m         3.4m         5.3m         7.2m         9.0m\n     0.50%            2.7m         4.7m         6.7m         8.8m        10.8m\n     2.15%            4.7m         7.1m         9.5m        11.8m        14.2m\n     3.00%            5.9m         8.5m        11.0m        13.6m        16.2m', lang: 'text' },
+    { p: 'Read across, then down. **Sixteen basis points of take rate is worth more than three and a half points of ' +
+         'monthly volume growth.** Moving the rate from 0.50% to 0.66% at base growth takes FY2026 EBITDA from 4.7m ' +
+         'to 14.2m; moving growth from -0.5% to 3.0% at the base rate takes it from 5.3m to 11.0m.' },
+    { p: 'The company argues about volume in every sales meeting and about pricing almost never. The table says that ' +
+         'is the wrong way round, and **that** is what a sensitivity table is for: not to widen the forecast into a ' +
+         'range nobody acts on, but to say which argument is worth having.' },
+    { check: {
+      q: 'Your model shows the base case reaching 19.3% EBITDA margin in 2026, up from 7.9% today. The CFO says it ' +
+         'looks like a hockey stick. How do you answer?',
+      a: 'Show the cost behaviour rather than defending the number. The margin rises because revenue grows 2.15% a ' +
+         'month and payroll grows 0.8%, marketing is flat and facilities are flat, so the only costs that scale with ' +
+         'the business are the scheme fees. Then show the stress case: with volume flat and pricing conceded, the ' +
+         'same structure gives 1.2%. If the answer to "what if you are wrong" is a number rather than a shrug, the ' +
+         'hockey stick stops being the question. And if the CFO still thinks payroll will grow faster, that is a ' +
+         'driver to change rather than an argument about the shape of a line.'
+    }}
   ],
 
   tutorial: {
-    intro: 'Python, and about three hours if levels 3 and 4 are finished. If they are not, this level will tell you ' +
-           'so immediately, which is itself the lesson about assembly.',
+    intro: 'Python, and about three hours. Build it in the order the month loop runs, and run the balance check ' +
+           'after every step rather than at the end: a model that has never balanced is much harder to fix than one ' +
+           'that balanced ten minutes ago.',
     steps: [
       {
-        t: 'A stage type, before any stages',
+        t: 'The opening balance sheet, and a refusal',
         blocks: [
-          { code: '@dataclass\nclass Stage:\n    name: str\n    ok: bool = True\n    fatal: bool = False\n    milliseconds: float = 0.0\n    lines: list[str] = field(default_factory=list)\n    data: dict = field(default_factory=dict)\n\n    def fail(self, text, fatal=True):\n        self.ok = False\n        self.fatal = self.fatal or fatal\n        self.lines.append(text)', lang: 'python' },
-          { p: 'Two booleans rather than one. `ok` is whether there is anything to say, `fatal` is whether the close ' +
-               'can continue, and the whole design of the pipeline is in the gap between them.' },
-          { p: 'If the `@dataclass` line is unfamiliar, level 3 has a page on it: a class is a shape for a thing and ' +
-               '`@dataclass` is the instruction that makes Python write the repetitive parts. `field(default_factory=list)` ' +
-               'gives each stage its own empty list rather than one list shared by all of them.' }
+          { code: 'def opening_from_history(path):\n    rows = list(csv.DictReader(open(path)))\n    last = rows[-1]\n    opening = Opening(...)\n    if not opening.balances:\n        raise ValueError(f"the opening balance sheet at {opening.month} does not balance")\n    return opening', lang: 'python' },
+          { p: '`raise ValueError(...)` stops the program there and prints that message. It is the code version of ' +
+               'the red check cell: the model refuses to produce anything rather than producing something wrong.' },
+          { p: 'Starting from a sheet that does not balance guarantees fifteen months that do not balance, and you ' +
+               'will spend the afternoon looking for the error in the forecast.' }
         ],
-        check: 'A stage can be not ok and not fatal, which is the state the reconciliation uses.'
+        check: 'Assets of 17,085,598 against the same in liabilities and equity, at 2025-09.'
       },
       {
-        t: 'Import the earlier levels',
+        t: 'Drivers with sources',
         blocks: [
-          { code: 'for folder in [SOLUTIONS / "fpa-03" / "close-pack",\n               SOLUTIONS / "fpa-04" / "three-statement"]:\n    if not folder.exists():\n        raise ModuleNotFoundError(\n            f"{folder} is missing. The close is the assembly of levels 3 and 4.")\n    sys.path.insert(0, str(folder))', lang: 'python' },
-          { warn: 'Resist copying the files in. It will work today and it will be two implementations by the end of ' +
-                  'the quarter.' }
+          { code: '@dataclass(frozen=True)\nclass Driver:\n    value: float\n    source: str\n    judgement: bool = False', lang: 'python' },
+          { p: 'Three fields, and the third one is the useful one. When somebody asks where 0.58% came from, the ' +
+               'model answers rather than you.' },
+          { p: 'Reading it line by line: `class Driver` names the shape, the three indented lines are what one is ' +
+               'made of, and `= False` on the last one means you can leave it out and get false. `@dataclass` is ' +
+               'the instruction that makes Python write the code to build one, and `frozen=True` means that once ' +
+               'built it cannot be edited, only replaced. Making one is `Driver(0.0058, "the last twelve months")` ' +
+               'and reading it back is `take_rate.value`.' },
+          { tip: 'Write the source as you type the number. Going back to fill them in afterwards is the same job ' +
+                 'twice, and the ones you cannot remember are exactly the ones that needed a source.' }
         ],
-        check: 'The close imports the pack and the model, and says something useful if either folder is missing.'
+        check: 'Every driver has a non empty source, and the judgement calls are marked.'
       },
       {
-        t: 'Stage one: everything into one database',
+        t: 'The month loop, in the right order',
         blocks: [
-          { code: 'path.unlink(missing_ok=True)          # rebuilt from scratch every run\nconnection = sqlite3.connect(path)\nfor name in TABLES:\n    frame = pd.read_csv(DATA / f"fpa-{name}.csv", dtype={"account_code": str})\n    frame.to_sql(name.replace("-", "_"), connection, index=False, if_exists="replace")', lang: 'python' },
-          { p: 'Deleting the file first is deliberate. A database that accumulates state between runs is a database ' +
-               'where last month\'s bad row lives forever, and a close has to be reproducible from the files alone.' }
+          { code: '1. volume, merchants, hosting, payroll roll forward\n2. revenue from drivers\n3. costs, each on its own behaviour\n4. EBITDA, depreciation, EBIT\n5. working capital balances from days\n6. interest, tax, net income        <- the circular bit\n7. cash flow: operations, investing, financing\n8. balance sheet, with cash as the closing line', lang: 'text' },
+          { warn: 'Depreciation is computed on the **opening** fixed assets, not the closing ones. Using the closing ' +
+                  'balance is circular for no reason and produces a number 2% out every month.' }
         ],
-        check: 'Six tables, and deleting the .db file changes nothing about the output.'
+        check: 'The first forecast month balances. If it does not, nothing after it will.'
       },
       {
-        t: 'Stages two and three: the gates, then the pack',
+        t: 'Cash as an output',
         blocks: [
-          { p: 'Both come from level 2 with no changes. The only new thing is that their findings become the ' +
-               'pipeline\'s verdict.' },
-          { code: 'findings = closepack_checks.run(frame, budget, month, report.duplicates_removed)\nif closepack_checks.fatal(findings):\n    stage.fail(f"{len(...)} fatal finding(s): the close stops here")', lang: 'python' }
+          { code: 'operations = (net_income + depreciation\n              - (receivables - opening_receivables)\n              + (payables - opening_payables))\ncash = opening_cash + operations - capex + financing', lang: 'python' },
+          { p: 'Then assert it. This is the line that separates a model from a spreadsheet, and it costs one test:' },
+          { code: 'assert month.cash == pytest.approx(\n    previous + month.cash_from_operations - month.capex + month.financing, abs=0.005)', lang: 'python' },
+          { p: '`assert` says "this must be true, and stop everything if it is not". `pytest.approx(x, abs=0.005)` ' +
+               'means "equal to x, within half a cent", which is how you compare two numbers that have each been ' +
+               'through a division without demanding they match to the last bit of floating point.' }
         ],
-        check: 'Asking for a month the plan does not cover stops the run at stage two, and writes nothing.'
+        check: 'Fifteen months, all balancing, with no plug anywhere.'
       },
       {
-        t: 'Stage five: the reconciliation',
+        t: 'The revolver, and the loop that resolves it',
         blocks: [
-          { code: 'joined = billed.merge(ledger, on="month", how="outer").fillna(0.0)\njoined["difference"] = (joined["billed"] - joined["ledger"]).round(2)\nbreaks = joined[joined["difference"].abs() > 0.005]\n\nif not breaks.empty:\n    stage.fail(f"{len(breaks)} month(s) do not agree, "\n               f"which goes in the commentary", fatal=False)', lang: 'python' },
-          { p: 'An **outer** join, so a month present in one system and missing from the other shows up rather than ' +
-               'disappearing. And `fatal=False`, which is the single most important argument in the file.' }
+          { p: 'Draw when cash would fall below the floor, repay when there is spare above it, and iterate until the ' +
+               'draw stops moving.' },
+          { code: 'draw = 0.0\nfor attempt in range(1, MAX_PASSES + 1):\n    interest = term_loan_interest + (revolver + draw / 2) * revolver_rate / 12\n    ...\n    new_draw = max(0.0, minimum_cash - cash_before_financing)\n    passes = attempt\n    if abs(new_draw - draw) < 0.005:\n        break\n    draw = new_draw', lang: 'python' },
+          { p: 'Record the pass count. It is the only evidence you have that the thing converged rather than ran out ' +
+               'of patience.' }
         ],
-        check: 'Twenty one months compared, one difference of -4,820 in June, and the close continues.'
+        check: 'The base case takes one pass, because it never draws, and the stress case takes five.'
       },
       {
-        t: 'Stage six, then the document',
+        t: 'Scenarios as multiples',
         blocks: [
-          { p: 'Run the four scenarios from level 3, assert they all balance, then write the document in reading ' +
-               'order with every cause left as TODO.' },
-          { code: 'for assumptions in model_drivers.scenarios():\n    forecast = model_forecast.run(assumptions)\n    if not forecast.balances:\n        stage.fail(f"the {assumptions.name} case does not balance")', lang: 'python' },
-          { tip: 'A forecast that does not balance is fatal here even though nothing else depends on it, because a ' +
-                 'pack containing a broken model is worse than a pack with no model in it.' }
+          { code: 'def scaled(self, name, **factors):\n    changes = {}\n    for field_name, factor in factors.items():\n        current = getattr(self, field_name)\n        changes[field_name] = Driver(current.value * factor,\n                                     f"{current.source}, scaled {factor:g}x", judgement=True)\n    return replace(self, name=name, **changes)', lang: 'python' },
+          { p: 'Four pieces of syntax in six lines, and each one is doing a job. `**factors` collects whatever named ' +
+               'arguments you passed into a dictionary, so `scaled("stress", take_rate=0.85, dso_days=1.55)` arrives ' +
+               'as two entries the loop can walk. `getattr(self, field_name)` reads a field whose name is in a ' +
+               'variable, which a dot cannot do. And `replace(self, ...)` hands back a copy with those fields ' +
+               'changed, leaving the base case exactly as it was.' },
+          { p: 'A scaled driver keeps its own source and says it was scaled, so a reader of the stress case can see ' +
+               'both the original evidence and the judgement applied to it.' }
         ],
-        check: 'A markdown file with nine sections, three TODOs, and a footer naming the command that made it.'
+        check: 'Four cases, one base. Changing a measured driver moves all four.'
       },
       {
-        t: 'Test the stopping, not just the running',
+        t: 'The sensitivity grid',
         blocks: [
-          { code: 'def test_a_fatal_stage_stops_everything_after_it(monkeypatch, tmp_path):\n    monkeypatch.setattr(stages, "quality_gates", broken)\n    monkeypatch.setattr(close_run, "OUT", tmp_path)\n    code, done = close_run.run("2025-09", quiet=True)\n\n    assert code == 1\n    assert all(not s.ok for s in done[2:])\n    assert not list(tmp_path.glob("close-*.md"))   # and nothing was written', lang: 'python' },
-          { p: 'The last assertion is the one that matters. A pipeline that stops but has already written half a ' +
-               'pack has not stopped in any useful sense.' }
+          { p: 'Five take rates by four growth rates, each one a full model run. Then read it rather than admiring ' +
+               'it: find the driver that moves the answer most and write one sentence about what that means.' },
+          { code: 'for growth in VOLUME_GROWTH:\n    for rate in TAKE_RATES:\n        cell = run(base.scaled("cell", take_rate=rate / base.take_rate.value,\n                                       volume_growth=growth / base.volume_growth.value))', lang: 'python' }
         ],
-        check: 'Nine tests, and the ones about stopping outnumber the ones about running.'
-      },
-      {
-        t: 'Run it somewhere else',
-        blocks: [
-          { p: 'Clone your own repository into a new folder and run the command. No editing, no environment ' +
-               'variables you forgot you set, no file sitting in your downloads.' },
-          { tip: 'If it fails, that failure is the most valuable thing this level will give you, and fixing it is ' +
-                 'what "handed over" means.' }
-        ],
-        check: 'A fresh clone produces the same document, byte for byte apart from the timings.'
+        check: 'A table from 1.6m to 16.2m, where every cell came from a model that balanced.'
       }
     ]
   },
 
   glossary: [
-    { t: 'Close', d: 'The monthly process of finalising the books and reporting on them. Four working days, every month.' },
-    { t: 'Pipeline', d: 'A sequence of stages where each one can stop the rest. Different from a script that does everything and hopes.' },
-    { t: 'Stage', d: 'One step with a name, a timing and a verdict.' },
-    { t: 'Fatal', d: 'A verdict that stops the run. Reserved for cases where the output would be wrong.' },
-    { t: 'Reconciliation', d: 'Comparing two systems that arrived at the same fact independently, and explaining every difference.' },
-    { t: 'Break', d: 'A difference a reconciliation finds. Normal in small numbers, and each one needs an owner.' },
-    { t: 'Outer join', d: 'A join that keeps rows from both sides. What a reconciliation needs, because a missing row is a finding.' },
-    { t: 'Exit code', d: 'Zero if the run was clean. The thing that lets something other than a person act on the result.' },
-    { t: 'Provenance', d: 'Which command produced this, from what, and when. The footer that stops a pack being re-litigated monthly.' },
-    { t: 'Idempotent', d: 'Running it twice gives the same result. Why the database is deleted and rebuilt each run.' },
-    { t: 'Reading order', d: 'The order a reader needs, which is rarely the order the pipeline computed.' },
-    { t: 'Handover', d: 'Somebody else runs it next month without asking you anything. The only real test of documentation.' },
-    { t: 'Clean checkout', d: 'A fresh clone with nothing left over from development. Where handovers actually break.' }
+    { t: 'Class', d: 'A shape for a thing: what it is made of. The template, in spreadsheet terms.' },
+    { t: 'Object', d: 'One thing of that shape. The filled in row.' },
+    { t: 'Field', d: 'One of the parts an object is made of, read with a dot: `driver.value`.' },
+    { t: 'dataclass', d: 'A class where Python writes the repetitive parts: building one, printing it, comparing two.' },
+    { t: 'frozen', d: 'Cannot be changed after it is made. The code version of not typing over a formula.' },
+    { t: 'Property', d: 'A value worked out when it is read rather than stored, so it cannot go stale.' },
+    { t: 'self', d: 'Inside a class, the object being worked on. `self.cash` and `month.cash` are the same number.' },
+    { t: 'replace', d: 'A copy with some fields changed, leaving the original alone. How the scenarios are built.' },
+    { t: 'Three statement model', d: 'A forecast where the profit and loss, balance sheet and cash flow are linked, so cash is derived rather than typed.' },
+    { t: 'Driver', d: 'An input the forecast is built from: volume, take rate, days to collect. The thing you argue about.' },
+    { t: 'Operating leverage', d: 'Profit growing faster than revenue, because part of the cost base does not move with it. Works in both directions.' },
+    { t: 'Working capital', d: 'Receivables plus inventory less payables. The cash tied up in operating the business.' },
+    { t: 'DSO', d: 'Days sales outstanding. Receivables expressed as days of revenue.' },
+    { t: 'DPO', d: 'Days payable outstanding. Payables expressed as days of cost.' },
+    { t: 'Depreciation', d: 'The cost of using up a fixed asset. A charge in the profit and loss that moves no cash.' },
+    { t: 'EBITDA', d: 'Earnings before interest, tax, depreciation and amortisation.' },
+    { t: 'Revolver', d: 'A credit facility you can draw on and repay as cash allows. The usual source of a model\'s circular reference.' },
+    { t: 'Circular reference', d: 'A calculation that depends on its own result. Resolved by iterating until the answer stops moving.' },
+    { t: 'Plug', d: 'A number typed in to make a statement balance. The thing a model must never contain.' },
+    { t: 'Retained earnings', d: 'Cumulative profit since the company started, less dividends. Moves by net income and nothing else.' },
+    { t: 'Sensitivity table', d: 'One output across a grid of two inputs. Shows which input the answer actually depends on.' },
+    { t: 'Scenario', d: 'A coherent set of driver changes with a story attached, rather than one number moved.' },
+    { t: 'Terminal value', d: 'What a business is assumed to be worth after the forecast ends. Not in this model, on purpose.' }
   ],
 
   quiz: [
-    { q: "The reconciliation finds one month out by 4,820. Should it stop the close?",
+    { q: "Why must cash be an output of the model rather than an input?",
       options: [
-        "Yes, unless it is under a materiality threshold",
-        "Only if it is in the current month",
-        "No: the pack is right, the break has an owner, and it belongs in the commentary",
-        "Yes: a difference means the numbers cannot be trusted"
+        "Because auditors require it",
+        "Because it is the closing line of the cash flow statement, and typing it in means plugging the balance sheet",
+        "Because cash is hard to predict",
+        "Because the bank provides the forecast"
       ],
-      answer: 2,
-      why: "A break is a thing somebody has to own, not a reason to publish nothing. Treating every difference as fatal is how a team ends up with a flag that skips the checks." },
+      answer: 1,
+      why: "Cash falls out of net income, non cash charges, working capital movements, capex and financing. Forecast it directly and the balance sheet only balances by accident or by plug." },
 
-    { q: "What makes a stage fatal rather than a note?",
+    { q: "Revenue grows 2.15% a month, payroll 0.8%, and marketing and facilities are flat. What does the margin do?",
       options: [
-        "Whether the output would be wrong if the run continued",
-        "The size of the number involved",
-        "Whether it happened in the current month",
-        "Whether the person running it has time to fix it"
+        "Rises, because most of the cost base does not grow with revenue. That is operating leverage",
+        "Stays flat, since costs are a percentage of revenue",
+        "Cannot be determined without the tax rate",
+        "Falls, because costs compound faster"
       ],
       answer: 0,
-      why: "An unmapped account means money that appears nowhere in the pack, so the pack would be wrong. A credit note not yet posted leaves the pack correct and needs a sentence." },
+      why: "From 7.9% to 19.3% here. A model that forecasts every cost as a percentage of revenue cannot show this, which is the main reason not to build one that way." },
 
-    { q: "Why does the pipeline delete and rebuild the database on every run?",
+    { q: "What does DSO moving from 38 days to 57 days cost, on revenue of 3.36 million a month?",
       options: [
-        "To save disk space",
-        "To avoid locking",
-        "Because SQLite requires it",
-        "So the close is reproducible from the files alone, and last month's bad row cannot survive"
+        "About 2.1 million of cash, once, as receivables step up",
+        "19 days of revenue every month",
+        "Nothing, it is a timing difference",
+        "It depends on the tax rate"
+      ],
+      answer: 0,
+      why: "3.36m x 19 / 30.4. It is a one off cash cost because the balance steps to a new level and stays there. The recurring cost is the interest on financing it." },
+
+    { q: "A profitable, growing company keeps running out of cash. What is the most likely cause?",
+      options: [
+        "The tax rate is wrong",
+        "Revenue is being recognised too early",
+        "Depreciation is too high",
+        "Growth is consuming working capital: each month sells more and collects it 38 days later"
       ],
       answer: 3,
-      why: "State that accumulates between runs is state nobody can account for. A close has to be reproducible from the source files and nothing else." },
+      why: "A growing business lends its growth to its customers. It is the normal reason profitable companies raise money, and it is visible only in a model that links the three statements." },
 
-    { q: "Why import levels 2 and 3 rather than copying their code into the capstone?",
+    { q: "Why is depreciation calculated on the opening fixed asset balance?",
       options: [
-        "Imports are faster",
-        "The files are too large",
-        "Two copies of the same logic drift apart from the first bug fix onwards, and then two packs disagree",
-        "Copying would break the tests"
+        "Because capex arrives at the end of the month",
+        "Using the closing balance makes it circular for no reason, since closing assets depend on depreciation",
+        "Accounting standards require it",
+        "It produces a larger charge"
+      ],
+      answer: 1,
+      why: "Depreciation reduces the closing balance, so calculating it on the closing balance depends on itself. Opening balance, then add capex, then subtract the charge." },
+
+    { q: "What creates the circular reference in this model?",
+      options: [
+        "Receivables, which depend on revenue",
+        "The revolver: a draw costs interest, interest reduces cash, and less cash means a bigger draw",
+        "Depreciation and fixed assets",
+        "Tax, which depends on profit"
+      ],
+      answer: 1,
+      why: "Interest depends on the draw and the draw depends on interest. Excel needs iterative calculation turned on; a script loops until the draw stops moving." },
+
+    { q: "The stress case resolves the circularity in five passes and the base case in one. Why one?",
+      options: [
+        "It converges faster with higher revenue",
+        "The base case is simpler arithmetic",
+        "The base case never draws, so there is nothing to iterate. A case that never draws proves nothing about the mechanism",
+        "The loop is skipped for profitable scenarios"
       ],
       answer: 2,
-      why: "It is the same lesson as the mapping table and the sign rule: one implementation, one place to fix it. The monthly pack and the quarterly pack disagreeing is how it shows up." },
+      why: "That is why a stress case severe enough to need the facility is worth building even if nobody expects it: it is the only thing that exercises the circular logic." },
 
-    { q: "The reconciliation uses an outer join rather than an inner one. Why?",
+    { q: "Why build scenarios as multiples of a base case rather than as separate files?",
       options: [
-        "Outer joins are faster on small tables",
-        "A month present in one system and missing from the other is a finding, and an inner join hides it",
-        "To keep the column order",
-        "Because pandas defaults to it"
+        "Because Excel cannot handle four files",
+        "It is faster to calculate",
+        "Because separate copies drift, and then nobody can say whether a difference is the assumption or the drift",
+        "It uses less disk space"
       ],
-      answer: 1,
-      why: "In a reconciliation, the missing row is usually the interesting one. An inner join is a decision to only compare what both sides already agree exists." },
+      answer: 2,
+      why: "Correct a measured driver once and all four cases move. The only difference between them stays the thing being varied, which is the entire point of having them." },
 
-    { q: "Why does the generated document leave every cause as TODO?",
+    { q: "The sensitivity table shows 16 basis points of take rate worth more than 3.5 points of monthly volume growth. What is that for?",
       options: [
-        "The pipeline knows what moved and cannot know why, and an invented cause is worse than a gap",
-        "The feature is unfinished",
-        "To keep the document short",
-        "Because the data is synthetic"
+        "Deciding which argument is worth having: the company debates volume constantly and pricing almost never",
+        "Widening the forecast into a range",
+        "Proving the model is accurate",
+        "Setting the budget"
       ],
       answer: 0,
-      why: "The machine guarantees completeness, which is what a person writing at 7pm gets wrong. The person supplies causation, which is what they are accountable for." },
+      why: "A range nobody acts on is decoration. A table that says the meeting is about the wrong thing changes what happens next week." },
 
-    { q: "What is the strongest test of a pipeline that can stop?",
+    { q: "What does it mean when a driver is marked as a judgement rather than measured?",
       options: [
-        "That it retries",
-        "That when a stage fails, nothing after it runs and nothing is written",
-        "That it runs successfully on good data",
-        "That it logs the failure"
+        "It is a placeholder to be filled in later",
+        "It came from a person's decision rather than from the history, so a reviewer knows which inputs are opinions",
+        "It is less important",
+        "It cannot be changed in scenarios"
       ],
       answer: 1,
-      why: "A pipeline that stops after writing half a pack has not stopped in any useful sense. Assert the absence of the output file, not just the exit code." },
+      why: "The take rate, the cash floor and the facility rate are decisions. Marking them is how a model stops being believed more than it deserves." },
 
-    { q: "Six stages take 258 ms and the whole command takes about 4.4 seconds. What is the rest?",
+    { q: "Retained earnings in the opening balance sheet are negative 11.5 million. What is the one sentence answer?",
       options: [
-        "Writing the document",
-        "Starting Python and importing pandas and matplotlib",
-        "The four forecast scenarios",
-        "The database rebuild"
-      ],
-      answer: 1,
-      why: "Import time dominates everything at this size. Knowing that stops anybody optimising the wrong thing, and the honest way to report it is both numbers." },
-
-    { q: "What belongs in the document's footer?",
-      options: [
-        "The analyst's name and the date",
-        "A disclaimer about accuracy",
-        "The version of Python",
-        "The command that produced it, the files it read, and whether the pack tied"
+        "The company has a going concern problem",
+        "Dividends exceeded profits",
+        "An error in the ledger",
+        "Cumulative losses since founding, against twenty two million raised. Normal for a growing business"
       ],
       answer: 3,
-      why: "Provenance is what stops a pack being re-litigated every month. A reader who doubts a number gets somewhere to start that is not your inbox." },
+      why: "Retained earnings are cumulative profit since day one. A company that has raised more than it has earned has a negative balance, and it says nothing on its own about whether the business works." },
 
-    { q: "The document is written in a different order from the pipeline's computation. Why?",
+    { q: "Retained earnings should move each month by exactly what?",
       options: [
-        "To make the file shorter",
-        "To hide the implementation",
-        "Because the forecast depends on the pack",
-        "Because a reader wants the five numbers first, and the pipeline has to load the data first"
+        "Net income plus depreciation",
+        "EBITDA",
+        "Net income",
+        "Cash flow from operations"
+      ],
+      answer: 2,
+      why: "Net income and nothing else, absent dividends or equity issues. It is one of the identities worth asserting in a test, because when it breaks the model is wrong whatever the assumptions were." },
+
+    { q: "Your model hits its 50 pass iteration cap. What has happened?",
+      options: [
+        "Python ran out of memory",
+        "The forecast is too long",
+        "The revolver rate is too high",
+        "The circular calculation is not converging, and any number it shows is meaningless"
       ],
       answer: 3,
-      why: "Dependency order and reading order are different problems. Writing the document in computation order is the most common way a technically correct pack goes unread." },
+      why: "Hitting the cap is a failure, not a result. Excel in the same situation shows a stale number with no warning, which is worse." },
 
-    { q: "A colleague asks to have the pack emailed automatically overnight. What is the right answer?",
+    { q: "Which cost is a decision rather than a consequence?",
       options: [
-        "The numbers can run overnight; the document should not go out while it still contains TODO",
-        "Only if the reconciliation is clean",
-        "No, automation is unsafe",
-        "Yes, it is fully automated"
-      ],
-      answer: 0,
-      why: "Automate the completeness and keep the accountability. Run it on a schedule so the numbers and the exit code are waiting, and have a person spend twenty minutes on the commentary." },
-
-    { q: "The same 4,820 break appears for three months running. What changes?",
-      options: [
-        "Adjust the ledger to match billing",
-        "Remove the reconciliation stage",
-        "The commentary: \"first seen in June, still open\". The break keeps being reported",
-        "Add a threshold so it stops being reported"
+        "Scheme and interchange fees",
+        "Depreciation",
+        "Marketing spend",
+        "Receivables"
       ],
       answer: 2,
-      why: "A threshold is where the next real break will hide. Ageing the break in the document keeps the pressure on the fix rather than on the alarm." },
+      why: "Scheme fees follow volume, depreciation follows the asset base, receivables follow revenue. Marketing is a number a person chooses, and modelling it as a percentage of revenue hides that." },
 
-    { q: "Which reconciliation direction is more dangerous to leave out?",
+    { q: "What is the strongest evidence that a three statement model is right?",
       options: [
-        "Neither, if the totals match",
-        "Billing against the ledger",
-        "The ledger against billing, because it catches revenue booked with no invoice behind it",
-        "They are equivalent"
-      ],
-      answer: 2,
-      why: "Comparing one way finds the things you know about. Revenue in the books with nothing billed is the break that costs the most to explain." },
-
-    { q: "What is the real test of the handover documentation?",
-      options: [
-        "That somebody else runs it next month from a clean checkout without asking you anything",
-        "That it covers every function",
-        "That it is under two pages",
-        "That it has a diagram"
+        "The balance sheet balances in every month of every scenario, with no plug",
+        "The forecast looks reasonable",
+        "It matches last year",
+        "The CFO approved it"
       ],
       answer: 0,
-      why: "Half of what breaks at a handover breaks because of a file that existed only on the machine it was written on. A fresh clone is the only way to find that." },
-
-    { q: "What single feature separates this pipeline from doing the same work in a spreadsheet?",
-      options: [
-        "It uses a database",
-        "It can refuse: it stops, writes nothing, and returns a non zero exit code",
-        "It produces charts",
-        "It is faster"
-      ],
-      answer: 1,
-      why: "A spreadsheet cannot decline to show you a number. Everything else in this track is a convenience next to that." }
+      why: "Balancing is not proof that the assumptions are good, and it is proof that the mechanics are. Sixty forecast months balancing to the cent means every linkage is doing what it should." }
   ],
 
   project: {
-    title: 'monthly-close: raw files to a finished pack, in one command',
-    story: 'It is the third working day. Run one command and get the pack, the chart, the detail behind the revenue, ' +
-           'the receivables position, a reconciliation between billing and the ledger, and a reforecast, as one ' +
-           'document. If anything is wrong, produce nothing and say why.',
-    scope: 'Python. Assemble levels 1 to 4 by importing them rather than copying. SQLite for the detail, pandas for ' +
-           'the pack, the model for the forecast, markdown for the output.',
-    dataset: '{{RAW}}/data/fpa-actuals.csv',
+    title: 'three-statement: the model, with its own tests',
+    story: 'The board wants a fifteen month forecast from the September close, with an upside, a downside, and the ' +
+           'case that puts the company on its facility. They want to know which driver matters most, and when the ' +
+           'money runs short in the bad case. Build it so that somebody can check it.',
+    scope: 'Python, from the closing balance sheet in fpa-history.csv. Revenue from drivers, costs by behaviour, ' +
+           'working capital in days, a debt schedule, a revolver, and tests for the identities. **This is the ' +
+           'first level that needs classes**: you should be able to read a class, make an object from it, and ' +
+           'read a field off it with a dot. The knowledge section "The Python this level uses" covers exactly ' +
+           'that much and nothing more, and it is enough for the whole build.',
+    dataset: '{{RAW}}/data/fpa-history.csv',
     requirements: [
-      'One command that runs the whole close for a month given as an argument',
-      'Six stages, each named, each timed, each returning a verdict',
-      'A stage type that distinguishes "needs saying" from "stop the close"',
-      'The earlier levels imported rather than copied, with a clear error if they are missing',
-      'A database rebuilt from the files on every run, so nothing survives between runs',
-      'The pack from level 2, with its tie to the ledger reported inside the pipeline',
-      'The detail queries from level 1: revenue by segment, the largest merchants, receivables ageing',
-      'A reconciliation of billing against the ledger for every month, using an outer join',
-      'The reconciliation reported as a note rather than a failure, with the break named',
-      'The four scenarios from level 3, with a fatal verdict if any of them stops balancing',
-      'A markdown document written in reading order, with every cause left as TODO',
-      'A footer naming the command, the source files and the tie difference',
-      'A non zero exit code when any stage is fatal, and nothing written in that case',
-      'Tests covering the happy path, the stopping path, and the reconciliation being a note rather than a failure',
-      'A README with the command, a real pasted run, and an honest list of what it does not do'
+      'A drivers module where every assumption carries its source, and judgements are marked as such',
+      'The opening balance sheet read from the last closed month, with a refusal if it does not balance',
+      'Revenue forecast from volume, take rate, merchants and platform fee, not as a growth rate on a total',
+      'Costs modelled by behaviour: variable with volume, on their own trend, or fixed',
+      'Working capital as DSO and DPO days, with the cash effect being the change in the balance',
+      'A term loan that amortises and never goes negative',
+      'A revolver that draws to a minimum cash floor and repays when there is spare cash',
+      'The circular reference resolved by iteration, with the pass count reported and a cap that is an error if hit',
+      'Cash as the closing line of the cash flow statement, never typed in',
+      'Four scenarios built as multiples of one base case',
+      'A two way sensitivity table of FY2026 EBITDA against take rate and volume growth',
+      'Tests: the balance sheet balances every month in every scenario, retained earnings move by net income, fixed assets move by capex less depreciation, cash reconciles to the cash flow, and the circularity both iterates and converges'
     ],
     starter: {
       lang: 'python',
-      code: '"""FinQuest analyst level 4: the monthly close."""\nfrom dataclasses import dataclass, field\n\n\n@dataclass\nclass Stage:\n    name: str\n    ok: bool = True\n    fatal: bool = False\n    milliseconds: float = 0.0\n    lines: list = field(default_factory=list)\n    data: dict = field(default_factory=dict)\n\n    def say(self, text):\n        self.lines.append(text)\n\n    def fail(self, text, fatal=True):\n        self.ok = False\n        self.fatal = self.fatal or fatal\n        self.lines.append(text)\n\n\nPLAN = [\n    ("load the data", load_database),\n    ("check the data", quality_gates),\n    ("build the pack", variance_pack),\n    ("query the detail", revenue_detail),\n    ("reconcile billing to the ledger", reconcile),\n    ("reforecast", reforecast),\n]\n\n\ndef run(month="2025-09"):\n    """Run the plan in order. The first fatal stage stops the rest.\n\n    Returns (exit_code, stages). Writes nothing if anything was fatal.\n    """\n    # TODO\n'
+      code: '"""FinQuest analyst level 4: the three statement model."""\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Driver:\n    value: float\n    source: str\n    judgement: bool = False\n\n\n@dataclass(frozen=True)\nclass Assumptions:\n    name: str\n    volume_growth: Driver = Driver(0.0215, "median of the last six months")\n    take_rate: Driver = Driver(0.0058, "last twelve months of actuals", judgement=True)\n    # TODO: the rest, each with a source\n\n\ndef run(assumptions, opening, horizon=15):\n    """Fifteen months of three statements.\n\n    The order inside the loop is the model:\n        1. roll the drivers forward\n        2. revenue\n        3. costs\n        4. EBITDA, depreciation, EBIT\n        5. working capital balances\n        6. interest, tax, net income      <- iterate here for the revolver\n        7. cash flow\n        8. balance sheet, cash as the closing line\n    """\n    # TODO\n\n\ndef balances(month):\n    """assets - liabilities - equity, which must be zero to the cent."""\n    # TODO\n'
     },
     tests: [
-      'python -m close.run completes, exits 0, and writes both the document and the chart',
-      'Every stage reports a time greater than zero',
-      'The pack ties to the ledger inside the pipeline, and the document says so',
-      'The reconciliation finds exactly one month out, 2025-06 by -4,820, and does not stop the close',
-      'The document contains the September numbers and at least one TODO',
-      'All four forecast scenarios run and balance, and the stress case draws the facility in 2026-09',
-      'A forced failure in an early stage stops every later stage and writes no document',
-      'Asking for a month the plan does not cover exits non zero',
-      'The imported modules resolve to the level 2 and level 3 folders rather than to local copies'
+      'Every month of every scenario balances to within half a cent, with no plug',
+      'The opening balance sheet is read from the data and refuses to start if it does not balance',
+      'Retained earnings move by exactly net income each month',
+      'Fixed assets move by exactly capex less depreciation each month',
+      'Cash equals opening cash plus operations less capex plus financing, every month',
+      'The base, upside and downside cases never draw on the revolver, and the stress case does',
+      'The stress case takes more than one pass and fewer than the cap to resolve the circularity',
+      'Increasing DSO reduces closing cash',
+      'Every driver has a non empty source, and the judgement calls are marked',
+      'The sensitivity table runs twenty models and all of them balance'
     ],
     rubric: [
-      { pts: 25, t: 'It assembles', d: 'Four levels, one command, nothing copied, and a clear error when a piece is missing.' },
-      { pts: 25, t: 'It refuses', d: 'Fatal stops everything and writes nothing. Notes continue and are reported. The split is defensible and tested.' },
-      { pts: 20, t: 'It reconciles', d: 'Two systems compared both ways, every difference named, no tolerance hiding anything.' },
-      { pts: 15, t: 'It reads', d: 'A document in reading order, causes left to a person, provenance in the footer.' },
-      { pts: 15, t: 'It hands over', d: 'A fresh clone runs it. The README has the command, a real run, and what it cannot do.' }
+      { pts: 25, t: 'It ties', d: 'Sixty forecast months balancing to the cent, cash derived, no plug anywhere.' },
+      { pts: 20, t: 'It is driven', d: 'Revenue from volume and rate, costs by behaviour, working capital in days.' },
+      { pts: 20, t: 'It is honest', d: 'Every driver has a source and the judgements are marked. A reviewer can tell facts from opinions.' },
+      { pts: 20, t: 'It handles the circle', d: 'The revolver works, the iteration converges, the pass count is reported, and a case exists that exercises it.' },
+      { pts: 15, t: 'It decides something', d: 'A sensitivity table with a sentence saying which argument it settles.' }
     ],
     stretch: [
-      'Add the reverse reconciliation: ledger revenue with no invoice behind it',
-      'Age the breaks, so a difference first seen in June says so in September',
-      'Add a --compare flag that diffs this month\'s document against last month\'s',
-      'Run the close for every month in the history and chart how long each stage takes as the data grows',
-      'Put the whole thing behind a scheduled job that writes the document to a folder and emails nobody'
+      'Add a monthly covenant test: EBITDA to interest above 3x, and report the first month it breaks in each case',
+      'Rebuild the same model in a spreadsheet and check it against the Python output month by month',
+      'Add a working capital scenario where only DSO moves, and quantify the facility it would need',
+      'Forecast the next twelve months, then compare it against what the actuals would have been using the history generator'
     ],
     solutionPath: 'solutions/fpa-04'
   },
 
   faq: [
-    { q: 'This is a lot of code for a monthly report.',
-      a: 'It is about four hundred lines, most of which is the earlier levels being reused. The test of whether it ' +
-         'was worth it is month three: the checks run every time, the month is an argument, the reconciliation is ' +
-         'done before anybody asks, and the twenty minutes you spend are on the commentary rather than on the ' +
-         'arithmetic.' },
-    { q: 'What if my company uses a system that produces the pack already?',
-      a: 'Most do, and the pack it produces is usually the numbers without the checks. The valuable part of this ' +
-         'level is not the pipeline: it is knowing what a tie out is, what a break is, and which differences stop a ' +
-         'close. Those transfer to any system, including the expensive ones.' },
-    { q: 'Should the close run automatically?',
-      a: 'The numbers, yes. The document going out, no, at least while it still contains TODO. Run it on a schedule ' +
-         'so the exit code and the numbers are waiting first thing, and keep a person between the file and the ' +
-         'leadership team.' },
-    { q: 'How do I talk about this in an interview?',
-      a: 'Lead with the refusal: "it produces nothing rather than a pack it cannot defend, and here is the test that ' +
-         'proves it". Then the reconciliation: two systems, twenty one months, one break worth 4,820, found by the ' +
-         'pipeline rather than by the auditor. Those two sentences say more about how you work than any list of ' +
-         'tools.' },
-    { q: 'What comes after this track?',
-      a: 'Two directions, and they are both good. Deeper into the business: pricing, unit economics, the things the ' +
-         'take rate variance in level 2 is really about. Or deeper into the tools: the engineering track on this ' +
-         'site starts where level 2 left off and ends with a payments platform under load. Analysts who can do both ' +
-         'are rare and they know it.' }
+    { q: 'Should a model like this be in Excel?',
+      a: 'In a job, almost certainly, because that is what gets reviewed and shared. Build this one in Python anyway: the identities become tests, and an analyst who has asserted that the balance sheet balances sixty times is a different modeller from one who has eyeballed it once. The structure transfers directly.' },
+    { q: 'Fifteen months seems short.',
+      a: 'It is the rest of this year and all of next, which is what a board actually decides on. A five year model is a different exercise with different rules, and most of them are exercises in compounding an opinion. Get the first fifteen months right before extending.' },
+    { q: 'How do I pick the driver values?',
+      a: 'From history where you can, and from a person where you cannot. The important part is marking which is which, and writing where each one came from while you type it rather than afterwards.' },
+    { q: 'My balance sheet is out by a small amount.',
+      a: 'It is nearly always one of four things: a cash flow line that does not appear in the balance sheet, depreciation calculated on the closing balance, a working capital movement using the balance rather than the change, or net income not reaching retained earnings. Check them in that order, and check the first month first.' },
+    { q: 'Is the stress case realistic?',
+      a: 'Every individual piece of it is, which is the point. One large merchant leaving, pricing conceded to win the next one, a two week slip in collections, and hiring that carries on because it was approved. Stress cases built from one dramatic event get dismissed; stress cases built from four ordinary ones do not.' }
   ]
 });

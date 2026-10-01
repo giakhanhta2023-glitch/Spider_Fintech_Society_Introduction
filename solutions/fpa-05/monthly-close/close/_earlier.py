@@ -1,6 +1,6 @@
 """The earlier levels, imported rather than copied.
 
-Level 2 wrote the pack and level 3 wrote the model. Copying either into this
+Level 3 wrote the pack and level 4 wrote the model. Copying either into this
 folder would mean two versions of the same logic drifting apart from the first
 bug fix onwards, which is precisely the failure the whole track is about.
 
@@ -18,14 +18,14 @@ from pathlib import Path
 
 SOLUTIONS = Path(__file__).resolve().parents[3]
 EARLIER = [
-    SOLUTIONS / "fpa-02" / "close-pack",
-    SOLUTIONS / "fpa-03" / "three-statement",
+    SOLUTIONS / "fpa-03" / "close-pack",
+    SOLUTIONS / "fpa-04" / "three-statement",
 ]
 
 for folder in EARLIER:
     if not folder.exists():                      # a checkout with only this level
         raise ModuleNotFoundError(
-            f"{folder} is missing. The monthly close is the assembly of levels 2 and 3, "
+            f"{folder} is missing. The monthly close is the assembly of levels 3 and 4, "
             f"and it cannot run without them.")
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))

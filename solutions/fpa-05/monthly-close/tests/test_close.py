@@ -102,9 +102,9 @@ def test_a_month_the_plan_does_not_cover_is_refused(tmp_path, monkeypatch):
 
 
 def test_the_earlier_levels_are_imported_rather_than_copied():
-    """If levels 2 and 3 are missing, this level says so rather than drifting."""
+    """If levels 3 and 4 are missing, this level says so rather than drifting."""
     from close import _earlier
     assert all(folder.exists() for folder in _earlier.EARLIER)
     assert _earlier.closepack_pack.__file__.endswith("pack.py")
-    assert "fpa-02" in _earlier.closepack_pack.__file__
-    assert "fpa-03" in _earlier.model_forecast.__file__
+    assert "fpa-03" in _earlier.closepack_pack.__file__
+    assert "fpa-04" in _earlier.model_forecast.__file__

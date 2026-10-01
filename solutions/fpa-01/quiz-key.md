@@ -1,159 +1,159 @@
-# Level 01: SQL for the month end close: quiz answer key
+# Level 01: Mission zero: a lab that works: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
-| 1 | **D** |
-| 2 | **D** |
-| 3 | **B** |
-| 4 | **A** |
-| 5 | **C** |
+| 1 | **A** |
+| 2 | **C** |
+| 3 | **C** |
+| 4 | **B** |
+| 5 | **D** |
 | 6 | **B** |
-| 7 | **C** |
-| 8 | **C** |
-| 9 | **A** |
-| 10 | **A** |
-| 11 | **B** |
-| 12 | **D** |
-| 13 | **B** |
-| 14 | **A** |
-| 15 | **C** |
+| 7 | **A** |
+| 8 | **D** |
+| 9 | **B** |
+| 10 | **C** |
+| 11 | **D** |
+| 12 | **A** |
+| 13 | **A** |
+| 14 | **C** |
+| 15 | **B** |
 
 ---
 
-### 1. Why does WHERE not work on an aggregate like SUM(amount)?
+### 1. Where should you run the SQL and pandas levels, 2 and 3?
 
-- A. You must use a subquery for any aggregate
-- B. It works in PostgreSQL but not in SQLite
-- C. Aggregates are not allowed in filters at all
-- **D. WHERE runs before GROUP BY, so the aggregate does not exist yet. HAVING runs after** ✅
+- **A. In Google Colab, which needs no installation and is right for querying and exploring** ✅
+- B. In a terminal, writing files by hand
+- C. In a local Python installation, because notebooks are not professional
+- D. In Excel, using the Python integration
 
-**Why:** Execution order is FROM, WHERE, GROUP BY, HAVING, SELECT, ORDER BY. WHERE filters rows before there are any groups; HAVING filters the groups.
+**Why:** Colab removes the entire installation problem for the levels that are about asking questions. The later levels become folders of files, and that is when a local Python earns its evening.
 
-### 2. September revenue by month is 3,361,050 and by issued_date is 3,106,395. What is the second number?
+### 2. What is a library, in one sentence?
 
-- A. Revenue from merchants who paid on time
-- B. A rounding difference
-- C. Revenue excluding credit notes
-- **D. August revenue, because this company bills in arrears on the first of the following month** ✅
+- A. A paid add-in for Python
+- B. The place a notebook saves its history
+- **C. Somebody else's code that you import and use, like pandas for tables** ✅
+- D. A folder where Python keeps your files
 
-**Why:** The invoice for September usage is issued on 1 October, so invoices issued in September are August revenue. No error is raised and both numbers look reasonable.
+**Why:** pandas, sqlite3 and matplotlib are libraries. `import pandas as pd` is you borrowing years of somebody else's work in one line.
 
-### 3. The customers table has 235 rows and only 230 appear in invoices. What does a plain JOIN do?
+### 3. What does `pip install pandas` do?
 
-- A. Duplicates the seven across all months
-- **B. Silently drops the five, with no warning** ✅
-- C. Raises an error about unmatched keys
-- D. Returns all 221 with nulls for the missing seven
+- A. Updates Python itself
+- B. Creates a new notebook
+- **C. Downloads the pandas library onto your machine so you can import it** ✅
+- D. Runs pandas
 
-**Why:** An inner join keeps only matches. Use a LEFT JOIN and check for nulls when you need to know what did not match, which is most of the time in finance.
+**Why:** pip is the package manager: it fetches libraries. You need it on your own machine and not in Colab, which already has the common ones.
 
-### 4. What does a LEFT JOIN followed by WHERE right.status = 'paid' become?
+### 4. In Python, what is the first item of the list `["alice", "bob", "carol"]`?
 
-- **A. An inner join, because the WHERE throws away the unmatched rows the join kept** ✅
-- B. A syntax error
-- C. A cross join
-- D. A left join with an extra filter
+- A. rows.first()
+- **B. rows[0]** ✅
+- C. rows[1]
+- D. rows["alice"]
 
-**Why:** The unmatched rows have NULL on the right side, and NULL fails the comparison. Put the condition in the ON clause when you mean to keep unmatched rows.
+**Why:** Python counts from zero. Spreadsheets count from one. This catches everybody twice and then never again.
 
-### 5. The mean of the three segment averages is 19,924 and the true mean invoice is 15,706. Why?
+### 5. An error ends with `KeyError: 'amont'`. What does that mean?
 
-- A. The true mean excludes credit notes
-- B. The segment averages were rounded
-- **C. The three segments have different numbers of invoices, so averaging the averages weights them equally when they are not** ✅
-- D. One segment has outliers
+- A. Python ran out of memory
+- B. The network is down
+- C. The file is corrupt
+- **D. You asked for a name that does not exist, in this case a mistyped column** ✅
 
-**Why:** Forty enterprise invoices carry the same weight as eighty-eight small ones in an average of averages. Aggregate the underlying rows, or weight by count.
+**Why:** A KeyError is asking for a key that is not there. Read the last line of a traceback first: it names the problem, and the lines above it are only the path that reached it.
 
-### 6. COUNT(*) returns 3,778 and COUNT(paid_date) returns 3,363. What is the difference?
+### 6. Which of these is formatting rather than a number?
 
-- A. COUNT(*) includes duplicate ids
-- **B. COUNT(column) counts only rows where that column is not null, so the difference is the unpaid invoices** ✅
-- C. COUNT(*) is an estimate on large tables
-- D. The paid_date column has a different type
+- A. 3361050.34
+- **B. $3,361,050** ✅
+- C. 0.58
+- D. 318
 
-**Why:** COUNT(column) ignores nulls. That is useful when you mean it and a silent error when you do not.
+**Why:** Commas, currency symbols and percent signs are how a number is shown, not what it is. In Python the number is bare and the formatting happens at the moment you print it.
 
-### 7. Which finds the unpaid invoices?
+### 7. What does `f"revenue {total:,.0f}"` produce when total is 3361050.34?
 
-- A. WHERE paid_date = NULL
-- B. WHERE paid_date != ''
-- **C. WHERE paid_date IS NULL** ✅
-- D. WHERE NOT paid_date
+- **A. revenue 3,361,050** ✅
+- B. revenue {total}
+- C. revenue 3361050.34
+- D. revenue 3.36e6
 
-**Why:** NULL is not equal to anything, including NULL. Only IS NULL and IS NOT NULL test it.
+**Why:** The part after the colon is the format: a thousands comma and no decimals. It is the same idea as a cell format, written where the value is printed.
 
-### 8. What does SUM(SUM(amount)) OVER (ORDER BY month) produce?
+### 8. Why does the course insist that every dataset in it is synthetic?
 
-- A. The grand total repeated on every row
-- B. The monthly sum multiplied by the row number
-- **C. A running total of the monthly sums, month by month** ✅
-- D. An error: you cannot nest aggregates
+- A. To avoid paying for a data provider
+- B. Because synthetic data is easier to analyse
+- C. Real data is too large for a course
+- **D. So that nothing in a public repository could ever be somebody's real financial data** ✅
 
-**Why:** The inner SUM aggregates within each month, then the window runs across the grouped rows in month order. It is the standard year to date column.
+**Why:** Your repository is public and a hiring manager will open it. The habit of never putting employer or client data where strangers can read it is one somebody will check.
 
-### 9. Your query joins invoices to customers and revenue comes out at exactly double. What do you check first?
+### 9. What is git actually giving you?
 
-- **A. Whether customer_id is unique in customers, because a duplicate there doubles every matching invoice** ✅
-- B. Whether the database needs reindexing
-- C. Whether the date filter is inclusive
-- D. Whether the amounts are stored as text
+- A. A way to run Python in the cloud
+- **B. Every version of every file with a note on what changed, which is what budget_v4_FINAL_v2.xlsx is pretending to be** ✅
+- C. Somewhere to store large files
+- D. Automatic backups of your laptop
 
-**Why:** Exact doubling is the signature of a one-to-many join you thought was one-to-one. COUNT(*) against COUNT(DISTINCT key) on the lookup table finds it immediately.
+**Why:** History with reasons attached. The second reason is that a public repository is a link a hiring manager can open, which a line on a CV is not.
 
-### 10. 177 open invoices worth 2.68 million are over 60 days past due, on 30 day terms. What does that tell the pack?
+### 10. Which task belongs in a spreadsheet rather than in code?
 
-- **A. The revenue is recognised and a large part of the cash has not arrived, which is a collections problem rather than a revenue one** ✅
-- B. Revenue is overstated and should be reversed
-- C. Nothing: past due invoices are normal at any size
-- D. The invoices were never sent
+- A. Joining the billing system to the general ledger
+- B. The month end pack, produced identically every month
+- **C. A quick look at a number somebody is arguing about in a meeting** ✅
+- D. A forecast that must balance in four scenarios
 
-**Why:** Revenue and cash are different questions. An ageing table is how a pack shows that the profit and loss can look healthy while the bank account does not.
+**Why:** Spreadsheets are excellent for looking and arguing. They are poor at doing the same thing identically every month, which is the whole of the rest of this track.
 
-### 11. What is DSO measuring?
+### 11. What is a CSV file?
 
-- A. The average age of an invoice at the time it is issued
-- **B. Receivables expressed as days of revenue: how long the money takes to arrive** ✅
-- C. How many days the sales team takes to close a deal
-- D. Days between the order and the delivery
+- A. A database
+- B. A compressed spreadsheet
+- C. A file only Python can read
+- **D. Plain text, one row per line, values separated by commas: a sheet with the formatting removed** ✅
 
-**Why:** Receivables divided by revenue, times the number of days. 56.5 days here on 30 day terms, which says the terms are not what is happening.
+**Why:** No formulas, no colours, no merged cells. It is the lowest common denominator every finance system can export, which is why every file in this course is one.
 
-### 12. A monthly revenue query has always tied to the ledger and this month is 4,820 out. What do you do?
+### 12. What does `import pandas as pd` do?
 
-- A. Ignore a difference that small
-- B. Rebuild the database
-- C. Adjust the query to match the ledger
-- **D. Find the row: it is a credit note raised in billing and not posted to the ledger, and somebody has to decide which side is right** ✅
+- **A. Makes the pandas library available under the short name pd** ✅
+- B. Installs pandas
+- C. Reads a CSV file
+- D. Starts a notebook
 
-**Why:** A break is information. Finding the single row, naming it and sending it to the person who can post it is the entire job of a close.
+**Why:** Importing is borrowing: pip puts the library on the machine, import brings it into this file. The `as pd` is a convention everybody uses, so your code reads like everybody else's.
 
-### 13. Why group by customer_id rather than by name?
+### 13. Your notebook worked yesterday and today a variable is undefined. What happened?
 
-- A. Names cannot be used in GROUP BY
-- **B. Names are not guaranteed unique and can be edited, while the id is the identity** ✅
-- C. Ids sort faster
-- D. It changes the result only on PostgreSQL
+- **A. The notebook forgot everything when it closed. The cells need running again, in order** ✅
+- B. pandas was updated
+- C. The data URL changed
+- D. Colab lost your file
 
-**Why:** Two merchants can share a name and one merchant can be renamed mid year. Group by the key and carry the name along for the reader.
+**Why:** A notebook keeps its text but not its memory. That is also why anything that must run every month belongs in a file rather than in cells somebody has to run in the right order.
 
-### 14. Merchants signed in 2023 are 58% of September revenue. What does that single number carry?
+### 14. What is the right way to use the published solutions?
 
-- **A. Both a retention story and a concentration risk, in one row** ✅
-- B. Only that the company is old
-- C. That 2024 and 2025 sales underperformed
-- D. That churn is high
+- A. Read all of them before starting the level
+- B. Avoid them completely
+- **C. Attempt the build, get stuck, read the part you are stuck on, close it and retype the fix from memory** ✅
+- D. Copy the solution into your repository and move on
 
-**Why:** Two year old merchants still paying is retention. More than half of revenue resting on one cohort is concentration. A good pack says both.
+**Why:** Copying skips the only step that teaches anything, and an interviewer asking "why does this line exist" finds that out in ninety seconds.
 
-### 15. What belongs in a saved .sql file alongside each query?
+### 15. What does this level ask you to produce?
 
-- A. Nothing: the SQL speaks for itself
-- B. The database password
-- **C. The question it answers and the answer it gave last time it ran** ✅
-- D. A copy of the data
+- A. Nothing at all
+- **B. A working lab: Colab running, the course data loading, a GitHub repository, and Python installed for later** ✅
+- C. A SQL query
+- D. A variance pack
 
-**Why:** The recorded answer turns the query into a regression test. Run it next month, and if a closed month moved, something upstream changed and you want to know before the meeting.
+**Why:** There is no build this time on purpose. An evening spent on installers is the most common reason people stop before writing anything that works.

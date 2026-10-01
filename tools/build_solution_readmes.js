@@ -619,6 +619,26 @@ const NOTES = {
   }
 ,
   101: {
+    files: [['`check_setup.py`', 'five checks on the lab, with the fix printed next to anything missing']],
+    run: 'python check_setup.py',
+    design: [
+      'There is no build at level 1 on purpose. An evening lost to installers is the most common reason somebody stops before writing anything that works, and a finance reader who has never opened a terminal has more ways to lose that evening than a computer science one.',
+      'The checker reports rather than raises, and it keeps going after a failure. One run tells you everything that is wrong with the lab, which is the difference between one evening of setup and four.',
+      'Each library is listed with what it is for in the words the track uses, so a missing one explains itself: matplotlib is "the charts in levels 3 and 5" rather than a name. The fix is printed underneath it.',
+      'The data check reads the same URL every level reads, so it proves the thing that actually matters: not that pandas imports, but that this machine, on this network, can get the course data. A proxy that blocks raw.githubusercontent.com is a problem worth meeting now rather than in the middle of level 2.',
+      'An --offline flag skips the download and checks everything else, because a blocked network should not stop somebody confirming their Python works.',
+      'The exit code is 1 when anything failed, so the script is useful to a person and to anything that runs it for them.'
+    ],
+    mistakes: [
+      ['python is not found on Windows', 'The installer\'s "Add python.exe to PATH" box was not ticked. Re-run it, choose Modify, tick it.'],
+      ['python works but pip does not', 'On macOS and some Linux installs the commands are python3 and pip3.'],
+      ['The course data will not load', 'A corporate proxy blocking raw.githubusercontent.com. Download the file and drag it into Colab, or use a personal machine.'],
+      ['A variable that worked yesterday is undefined', 'A notebook keeps its text and not its memory. Run the cells again, in order.'],
+      ['The first list item is missing', 'Python counts from zero: it is rows[0], not rows[1].'],
+      ['An error wall of red stops everything', 'Read the last line first. It names the problem; the lines above it are only the path that reached it.']
+    ]
+  },
+  102: {
     files: [
       ['`query-pack/load.py`', 'six CSVs into one SQLite file, keys checked, amounts repaired at the boundary'],
       ['`query-pack/queries.sql`', 'ten named queries, each with its question and the answer it gave'],
@@ -643,7 +663,7 @@ const NOTES = {
       ['SUM returns a number that is far too low', 'A text value in a numeric column. SQLite treats it as zero rather than raising.']
     ]
   },
-  102: {
+  103: {
     files: [
       ['`close-pack/closepack/load.py`', 'the three repairs, reported rather than silent, and the sign rule once'],
       ['`close-pack/closepack/checks.py`', 'the gates, split into fatal and worth saying'],
@@ -671,7 +691,7 @@ const NOTES = {
       ['The generated memo says something untrue', 'A script that writes causes is guessing. Leave TODO and let the person fill it in.']
     ]
   },
-  103: {
+  104: {
     files: [
       ['`three-statement/model/drivers.py`', 'every assumption with its source, and the judgements marked'],
       ['`three-statement/model/forecast.py`', 'fifteen months, three statements, the revolver and its circular reference'],
@@ -697,12 +717,12 @@ const NOTES = {
       ['Every scenario looks the same', 'They were built by copying the file. Build them as multiples of one base so a corrected driver moves all of them.']
     ]
   },
-  104: {
+  105: {
     files: [
       ['`monthly-close/close/stages.py`', 'the six stages, each timed, each with a verdict'],
       ['`monthly-close/close/run.py`', 'the plan, the stopping, and the exit code'],
       ['`monthly-close/close/document.py`', 'the pack in reading order, with the causes left to a person'],
-      ['`monthly-close/close/_earlier.py`', 'levels 2 and 3 imported rather than copied, and honest about how'],
+      ['`monthly-close/close/_earlier.py`', 'levels 3 and 4 imported rather than copied, and honest about how'],
       ['`monthly-close/tests/test_close.py`', '9 tests, most of them about stopping rather than running']
     ],
     run: 'python -m close.run && pytest -q',

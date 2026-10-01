@@ -28,16 +28,16 @@ FQ.registerTrack({
   name: 'analyst',
   title: 'The analyst track',
   audience: 'finance students who want the tech half of the job',
-  blurb: 'Four levels: SQL for the month end close, pandas doing the part you ' +
-         'used to do by hand, a three statement model that ties, and a reporting ' +
-         'pack that rebuilds itself from raw data. It assumes you can already ' +
-         'use a spreadsheet, and teaches the half of the job that is not one.',
+  blurb: 'An evening of setup, then four builds: SQL for the month end close, ' +
+         'pandas doing the part you used to do by hand, a three statement model ' +
+         'that ties, and a reporting pack that rebuilds itself from raw data. It ' +
+         'assumes you can use a spreadsheet and assumes nothing else.',
   outcome: 'a corporate finance or planning analyst job, where automating your own ' +
            'reporting is the thing that gets noticed',
 
   /* One title per level cleared, so index 0 is where everybody starts. */
   ranks: [
-    'finance student', 'analyst intern', 'junior analyst',
+    'finance student', 'analyst intern', 'junior analyst', 'reporting analyst',
     'planning analyst', 'senior financial analyst'
   ],
   finalBadge: 'Senior financial analyst'

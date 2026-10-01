@@ -102,4 +102,4 @@ finance analyst can run this on the laptop they already have.
 
 ---
 
-Part of [FinQuest](../../../README.md), analyst track, level 01.
+Part of [FinQuest](../../../README.md), analyst track, level 02.

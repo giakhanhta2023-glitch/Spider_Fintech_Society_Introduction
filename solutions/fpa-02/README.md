@@ -1,6 +1,6 @@
-# Level 02: The part you used to do by hand
+# Level 02: SQL for the month end close
 
-> **close-pack: the pack, rebuilt as a program** · build project · difficulty 5/10
+> **The revenue query pack** · build project · difficulty 4/10
 
 ## Read this second
 
@@ -10,71 +10,68 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-It is the third working day. The ledger for September has landed, the plan has not moved since January, and the head of finance wants one page before Thursday. Produce it from the two files with one command. It has to refuse to print when something is wrong, say what it repaired, and leave the commentary to you.
+The head of finance wants the revenue story behind the September pack: who drove it, whether the growth is new merchants or old ones, and how much of it has actually been collected. She also wants to be able to ask for October without asking you again. Build a query pack she can run.
 
-**Scope:** Python and pandas, as a small package with tests. No notebook, no Excel output, no database: the files are the input and the terminal is the output.
+**Scope:** SQL against the four tables, in SQLite or PostgreSQL. Python only for loading the CSVs and running the queries. No pandas analysis: that is the next level.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `close-pack/closepack/load.py` | the three repairs, reported rather than silent, and the sign rule once |
-| `close-pack/closepack/checks.py` | the gates, split into fatal and worth saying |
-| `close-pack/closepack/pack.py` | the pack, the tie check, and the exit code |
-| `close-pack/closepack/bridge.py` | price and volume, with the rounding difference returned rather than hidden |
-| `close-pack/closepack/report.py` | the waterfall chart and the draft memo with its TODOs |
-| `close-pack/tests/test_pack.py` | 15 tests, including one that breaks the pack to prove the check works |
+| `query-pack/load.py` | six CSVs into one SQLite file, keys checked, amounts repaired at the boundary |
+| `query-pack/queries.sql` | ten named queries, each with its question and the answer it gave |
+| `query-pack/run_queries.py` | runs them all, and --verify checks eight recorded answers |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-python -m closepack.pack && python -m closepack.report && pytest -q
+python load.py --check && python run_queries.py --verify
 ```
 
 ## Why the solution is shaped this way
 
-- The argument for the script is not speed. The pack takes 39 ms here and about two seconds of the command is importing pandas, and once a month neither number matters. What matters is that the month is an argument, the checks run every time, and the thing can refuse: a spreadsheet cannot decline to show you a number.
-- Everything ugly about the export is dealt with in the loader and reported: 317 rows after removing one duplicate journal, two text amounts repaired, one label trimmed. Silently cleaning an export means your pack disagrees with the file the accountant is looking at and neither of you knows why.
-- The gates split into fatal and warning, and the split is a judgement about money. An unmapped account code means money in the ledger that appears nowhere in the pack, so the run stops. A cost centre budgeted with no actuals leaves the pack correct and needs a sentence. A gate that cries wolf is switched off within two months, and then the real one is off too.
-- The check cell became an exit code, which is the part a spreadsheet cannot do. A scheduler or a colleague can act on a non zero exit without reading the output, and `test_the_check_catches_a_dropped_pack_line` removes a line from the layout on purpose and asserts the check complains.
-- The generated memo leaves every cause as the word TODO. The script knows marketing is 210,000 over and cannot know that the campaign moved, and a tool that invents the reason is worse than no tool. What it does guarantee is that no material variance is ever missing from the list, which is what a person writing at 7pm gets wrong.
-- A test caught a number in the output that was wrong by a factor of 159: the loader reported 318 text amounts repaired out of 318 rows, because one text value makes the whole pandas column an object and the count was measuring the dtype rather than the data. The fix measures what a plain conversion would have thrown away, which is two.
-- The merge trap has its own test. A lookup table that gains one duplicate row raises revenue by a third with no error and no warning, and the habit that prevents it is one assertion or `validate="many_to_one"` on every merge against a lookup.
+- Every query carries the question it answers and the answer it gave at the September close, which turns the file into its own regression test. `--verify` checks eight of them mechanically and exits non zero if a closed month has moved, because a closed month moving is either a restatement nobody mentioned or a bug in the load.
+- The verifier earned its place on the first run by failing twice. The tie out was 700,200 wrong in April, because one credit in the export is written in accounting brackets, SQLite stored it as text, and SUM treated it as zero with no error anywhere. The fix is in the loader rather than in the query, because a repair inside one query leaves the other nine wrong.
+- The second failure was a rounding difference: four buckets each rounded to the dollar sum to a dollar more than the unrounded total. That one is a tolerance in the check with a comment saying so, and the tie out has no tolerance and never will, because a rounding allowance on a reconciliation is where the next real break hides.
+- Keys are checked at load rather than assumed in ten queries. A duplicate in a lookup table multiplies revenue through every join with no error at all, so `load.py` refuses to finish if invoice_id or customer_id is not unique.
+- Revenue is grouped on the revenue month rather than the invoice date. The company bills in arrears, so September usage is invoiced on 1 October, and grouping on issued_date returns 3,106,395 for September, which is August. Both queries are valid SQL and only one answers the question.
+- The merchants with no invoice are found with a left join and kept, because five merchants signed in October and have not been billed yet. The difference between 235 merchants and 230 billed is the kind of number that ends up in a board pack, and an inner join would have hidden it.
+- The database is SQLite because it needs nothing installed, which is what makes this runnable on the laptop a finance analyst already has. Every query is standard SQL apart from two date expressions, and the file carries the PostgreSQL form next to each.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| A sum silently skips rows | One text value makes the whole column an object dtype. Convert at the boundary and count what needed converting. |
-| Revenue is a third higher after a merge | A one to many join you thought was one to one. Use validate="many_to_one" and it raises instead. |
-| The pack is missing a line and still ties | The check compared the pack to itself. Build the two sides by different routes. |
-| The warnings scroll past unread | Too many things marked fatal, or too few. Decide the split on whether the pack would be wrong. |
-| An account code with a leading zero stops matching | pandas read it as an integer. Pass dtype={"account_code": str}. |
-| The generated memo says something untrue | A script that writes causes is guessing. Leave TODO and let the person fill it in. |
+| Revenue by month is a month behind the ledger | Grouped on the invoice date rather than the revenue month. Nothing raises, and the annual total is nearly right. |
+| Revenue is exactly double | A join to a lookup table whose key is not unique. Count rows against count distinct before trusting any join. |
+| A WHERE on the right hand table turns a left join into an inner one | The unmatched rows have NULL there and fail the comparison. Put the condition in the ON clause. |
+| The average of the segment averages is 27% above the true mean | Averaging averages weights forty enterprise invoices the same as eighty seven small ones. |
+| Unpaid invoices are missing from the result | WHERE paid_date != something drops NULLs. Only IS NULL tests them. |
+| SUM returns a number that is far too low | A text value in a numeric column. SQLite treats it as zero rather than raising. |
 
 ## Self-checks the solution satisfies
 
-- python -m closepack.pack prints the pack and exits 0
-- The loader reports 1 duplicate removed, 2 text amounts repaired and 1 label trimmed
-- September revenue is 3,361,050 and EBITDA is 265,989, matching the pack you built by hand
-- Running with --month 2025-08 produces August with no other edit
-- Removing a line from the layout makes the check cell non zero and the command exit 1
-- An unmapped account code stops the run and names the code
-- The CC600 warning appears and does not stop the run
-- The bridge sums to the transaction fee variance, with any rounding difference under a dollar and shown
-- The tests pass from a clean checkout with no manual setup
+- The loader runs twice in a row without error and leaves the same four tables
+- Revenue by month for September returns 3,361,050 and agrees with the ledger
+- The tie out query returns a non zero difference for exactly one month, 2025-06, of -4,820
+- The segment query for September returns enterprise 1,565,293 across 40 invoices
+- The ageing buckets sum to the total open balance of 6,329,912 across 415 invoices
+- The top ten query returns Pennant Logistics first at 609,752 year to date
+- The cohort query shows the 2023 cohort at 1,936,813 of September revenue
+- Every query in the file has a question and a recorded answer above it
+- Running the whole file end to end produces no errors on a fresh database
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | It ties | The pack agrees with the ledger, the check is printed every run and is the exit code. |
-| 20 | It refuses | Fatal checks stop the run and name the problem; warnings do not. The split is defensible. |
-| 20 | It is clean once | Repairs happen in the loader and are reported. Nothing downstream re-cleans anything. |
-| 20 | It is tested | Tests cover the loader, the totals, the merge trap, and a check that is proven to fail when it should. |
-| 15 | It is handed over | A README with the command, the numbers, and what the script deliberately does not do. |
+| 25 | Correct | The numbers match the ledger where they should and differ only where there is a real break, which is named. |
+| 20 | Safe | Keys checked, join types chosen deliberately, nulls handled, the right date column used and said out loud. |
+| 20 | Readable | Named queries, aliases that mean something, CTEs instead of nested subqueries, comments that say why rather than what. |
+| 20 | Useful | The pack answers the questions a CFO actually asks, including the one about cash rather than revenue. |
+| 15 | Repeatable | A parameter changes the month. Somebody else can run the file next month and get October. |
 
 ---
 
-Part of [FinQuest](../../README.md) · Analyst track, Level 02 of 4
+Part of [FinQuest](../../README.md) · Analyst track, Level 02 of 5

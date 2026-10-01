@@ -1,159 +1,159 @@
-# Level 04: The pack that rebuilds itself: quiz answer key
+# Level 04: A model that ties: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
-| 1 | **C** |
+| 1 | **B** |
 | 2 | **A** |
-| 3 | **D** |
-| 4 | **C** |
+| 3 | **A** |
+| 4 | **D** |
 | 5 | **B** |
-| 6 | **A** |
-| 7 | **B** |
-| 8 | **B** |
-| 9 | **D** |
-| 10 | **D** |
-| 11 | **A** |
+| 6 | **B** |
+| 7 | **C** |
+| 8 | **C** |
+| 9 | **A** |
+| 10 | **B** |
+| 11 | **D** |
 | 12 | **C** |
-| 13 | **C** |
-| 14 | **A** |
-| 15 | **B** |
+| 13 | **D** |
+| 14 | **C** |
+| 15 | **A** |
 
 ---
 
-### 1. The reconciliation finds one month out by 4,820. Should it stop the close?
+### 1. Why must cash be an output of the model rather than an input?
 
-- A. Yes, unless it is under a materiality threshold
-- B. Only if it is in the current month
-- **C. No: the pack is right, the break has an owner, and it belongs in the commentary** ✅
-- D. Yes: a difference means the numbers cannot be trusted
+- A. Because auditors require it
+- **B. Because it is the closing line of the cash flow statement, and typing it in means plugging the balance sheet** ✅
+- C. Because cash is hard to predict
+- D. Because the bank provides the forecast
 
-**Why:** A break is a thing somebody has to own, not a reason to publish nothing. Treating every difference as fatal is how a team ends up with a flag that skips the checks.
+**Why:** Cash falls out of net income, non cash charges, working capital movements, capex and financing. Forecast it directly and the balance sheet only balances by accident or by plug.
 
-### 2. What makes a stage fatal rather than a note?
+### 2. Revenue grows 2.15% a month, payroll 0.8%, and marketing and facilities are flat. What does the margin do?
 
-- **A. Whether the output would be wrong if the run continued** ✅
-- B. The size of the number involved
-- C. Whether it happened in the current month
-- D. Whether the person running it has time to fix it
+- **A. Rises, because most of the cost base does not grow with revenue. That is operating leverage** ✅
+- B. Stays flat, since costs are a percentage of revenue
+- C. Cannot be determined without the tax rate
+- D. Falls, because costs compound faster
 
-**Why:** An unmapped account means money that appears nowhere in the pack, so the pack would be wrong. A credit note not yet posted leaves the pack correct and needs a sentence.
+**Why:** From 7.9% to 19.3% here. A model that forecasts every cost as a percentage of revenue cannot show this, which is the main reason not to build one that way.
 
-### 3. Why does the pipeline delete and rebuild the database on every run?
+### 3. What does DSO moving from 38 days to 57 days cost, on revenue of 3.36 million a month?
 
-- A. To save disk space
-- B. To avoid locking
-- C. Because SQLite requires it
-- **D. So the close is reproducible from the files alone, and last month's bad row cannot survive** ✅
+- **A. About 2.1 million of cash, once, as receivables step up** ✅
+- B. 19 days of revenue every month
+- C. Nothing, it is a timing difference
+- D. It depends on the tax rate
 
-**Why:** State that accumulates between runs is state nobody can account for. A close has to be reproducible from the source files and nothing else.
+**Why:** 3.36m x 19 / 30.4. It is a one off cash cost because the balance steps to a new level and stays there. The recurring cost is the interest on financing it.
 
-### 4. Why import levels 2 and 3 rather than copying their code into the capstone?
+### 4. A profitable, growing company keeps running out of cash. What is the most likely cause?
 
-- A. Imports are faster
-- B. The files are too large
-- **C. Two copies of the same logic drift apart from the first bug fix onwards, and then two packs disagree** ✅
-- D. Copying would break the tests
+- A. The tax rate is wrong
+- B. Revenue is being recognised too early
+- C. Depreciation is too high
+- **D. Growth is consuming working capital: each month sells more and collects it 38 days later** ✅
 
-**Why:** It is the same lesson as the mapping table and the sign rule: one implementation, one place to fix it. The monthly pack and the quarterly pack disagreeing is how it shows up.
+**Why:** A growing business lends its growth to its customers. It is the normal reason profitable companies raise money, and it is visible only in a model that links the three statements.
 
-### 5. The reconciliation uses an outer join rather than an inner one. Why?
+### 5. Why is depreciation calculated on the opening fixed asset balance?
 
-- A. Outer joins are faster on small tables
-- **B. A month present in one system and missing from the other is a finding, and an inner join hides it** ✅
-- C. To keep the column order
-- D. Because pandas defaults to it
+- A. Because capex arrives at the end of the month
+- **B. Using the closing balance makes it circular for no reason, since closing assets depend on depreciation** ✅
+- C. Accounting standards require it
+- D. It produces a larger charge
 
-**Why:** In a reconciliation, the missing row is usually the interesting one. An inner join is a decision to only compare what both sides already agree exists.
+**Why:** Depreciation reduces the closing balance, so calculating it on the closing balance depends on itself. Opening balance, then add capex, then subtract the charge.
 
-### 6. Why does the generated document leave every cause as TODO?
+### 6. What creates the circular reference in this model?
 
-- **A. The pipeline knows what moved and cannot know why, and an invented cause is worse than a gap** ✅
-- B. The feature is unfinished
-- C. To keep the document short
-- D. Because the data is synthetic
+- A. Receivables, which depend on revenue
+- **B. The revolver: a draw costs interest, interest reduces cash, and less cash means a bigger draw** ✅
+- C. Depreciation and fixed assets
+- D. Tax, which depends on profit
 
-**Why:** The machine guarantees completeness, which is what a person writing at 7pm gets wrong. The person supplies causation, which is what they are accountable for.
+**Why:** Interest depends on the draw and the draw depends on interest. Excel needs iterative calculation turned on; a script loops until the draw stops moving.
 
-### 7. What is the strongest test of a pipeline that can stop?
+### 7. The stress case resolves the circularity in five passes and the base case in one. Why one?
 
-- A. That it retries
-- **B. That when a stage fails, nothing after it runs and nothing is written** ✅
-- C. That it runs successfully on good data
-- D. That it logs the failure
+- A. It converges faster with higher revenue
+- B. The base case is simpler arithmetic
+- **C. The base case never draws, so there is nothing to iterate. A case that never draws proves nothing about the mechanism** ✅
+- D. The loop is skipped for profitable scenarios
 
-**Why:** A pipeline that stops after writing half a pack has not stopped in any useful sense. Assert the absence of the output file, not just the exit code.
+**Why:** That is why a stress case severe enough to need the facility is worth building even if nobody expects it: it is the only thing that exercises the circular logic.
 
-### 8. Six stages take 258 ms and the whole command takes about 4.4 seconds. What is the rest?
+### 8. Why build scenarios as multiples of a base case rather than as separate files?
 
-- A. Writing the document
-- **B. Starting Python and importing pandas and matplotlib** ✅
-- C. The four forecast scenarios
-- D. The database rebuild
+- A. Because Excel cannot handle four files
+- B. It is faster to calculate
+- **C. Because separate copies drift, and then nobody can say whether a difference is the assumption or the drift** ✅
+- D. It uses less disk space
 
-**Why:** Import time dominates everything at this size. Knowing that stops anybody optimising the wrong thing, and the honest way to report it is both numbers.
+**Why:** Correct a measured driver once and all four cases move. The only difference between them stays the thing being varied, which is the entire point of having them.
 
-### 9. What belongs in the document's footer?
+### 9. The sensitivity table shows 16 basis points of take rate worth more than 3.5 points of monthly volume growth. What is that for?
 
-- A. The analyst's name and the date
-- B. A disclaimer about accuracy
-- C. The version of Python
-- **D. The command that produced it, the files it read, and whether the pack tied** ✅
+- **A. Deciding which argument is worth having: the company debates volume constantly and pricing almost never** ✅
+- B. Widening the forecast into a range
+- C. Proving the model is accurate
+- D. Setting the budget
 
-**Why:** Provenance is what stops a pack being re-litigated every month. A reader who doubts a number gets somewhere to start that is not your inbox.
+**Why:** A range nobody acts on is decoration. A table that says the meeting is about the wrong thing changes what happens next week.
 
-### 10. The document is written in a different order from the pipeline's computation. Why?
+### 10. What does it mean when a driver is marked as a judgement rather than measured?
 
-- A. To make the file shorter
-- B. To hide the implementation
-- C. Because the forecast depends on the pack
-- **D. Because a reader wants the five numbers first, and the pipeline has to load the data first** ✅
+- A. It is a placeholder to be filled in later
+- **B. It came from a person's decision rather than from the history, so a reviewer knows which inputs are opinions** ✅
+- C. It is less important
+- D. It cannot be changed in scenarios
 
-**Why:** Dependency order and reading order are different problems. Writing the document in computation order is the most common way a technically correct pack goes unread.
+**Why:** The take rate, the cash floor and the facility rate are decisions. Marking them is how a model stops being believed more than it deserves.
 
-### 11. A colleague asks to have the pack emailed automatically overnight. What is the right answer?
+### 11. Retained earnings in the opening balance sheet are negative 11.5 million. What is the one sentence answer?
 
-- **A. The numbers can run overnight; the document should not go out while it still contains TODO** ✅
-- B. Only if the reconciliation is clean
-- C. No, automation is unsafe
-- D. Yes, it is fully automated
+- A. The company has a going concern problem
+- B. Dividends exceeded profits
+- C. An error in the ledger
+- **D. Cumulative losses since founding, against twenty two million raised. Normal for a growing business** ✅
 
-**Why:** Automate the completeness and keep the accountability. Run it on a schedule so the numbers and the exit code are waiting, and have a person spend twenty minutes on the commentary.
+**Why:** Retained earnings are cumulative profit since day one. A company that has raised more than it has earned has a negative balance, and it says nothing on its own about whether the business works.
 
-### 12. The same 4,820 break appears for three months running. What changes?
+### 12. Retained earnings should move each month by exactly what?
 
-- A. Adjust the ledger to match billing
-- B. Remove the reconciliation stage
-- **C. The commentary: "first seen in June, still open". The break keeps being reported** ✅
-- D. Add a threshold so it stops being reported
+- A. Net income plus depreciation
+- B. EBITDA
+- **C. Net income** ✅
+- D. Cash flow from operations
 
-**Why:** A threshold is where the next real break will hide. Ageing the break in the document keeps the pressure on the fix rather than on the alarm.
+**Why:** Net income and nothing else, absent dividends or equity issues. It is one of the identities worth asserting in a test, because when it breaks the model is wrong whatever the assumptions were.
 
-### 13. Which reconciliation direction is more dangerous to leave out?
+### 13. Your model hits its 50 pass iteration cap. What has happened?
 
-- A. Neither, if the totals match
-- B. Billing against the ledger
-- **C. The ledger against billing, because it catches revenue booked with no invoice behind it** ✅
-- D. They are equivalent
+- A. Python ran out of memory
+- B. The forecast is too long
+- C. The revolver rate is too high
+- **D. The circular calculation is not converging, and any number it shows is meaningless** ✅
 
-**Why:** Comparing one way finds the things you know about. Revenue in the books with nothing billed is the break that costs the most to explain.
+**Why:** Hitting the cap is a failure, not a result. Excel in the same situation shows a stale number with no warning, which is worse.
 
-### 14. What is the real test of the handover documentation?
+### 14. Which cost is a decision rather than a consequence?
 
-- **A. That somebody else runs it next month from a clean checkout without asking you anything** ✅
-- B. That it covers every function
-- C. That it is under two pages
-- D. That it has a diagram
+- A. Scheme and interchange fees
+- B. Depreciation
+- **C. Marketing spend** ✅
+- D. Receivables
 
-**Why:** Half of what breaks at a handover breaks because of a file that existed only on the machine it was written on. A fresh clone is the only way to find that.
+**Why:** Scheme fees follow volume, depreciation follows the asset base, receivables follow revenue. Marketing is a number a person chooses, and modelling it as a percentage of revenue hides that.
 
-### 15. What single feature separates this pipeline from doing the same work in a spreadsheet?
+### 15. What is the strongest evidence that a three statement model is right?
 
-- A. It uses a database
-- **B. It can refuse: it stops, writes nothing, and returns a non zero exit code** ✅
-- C. It produces charts
-- D. It is faster
+- **A. The balance sheet balances in every month of every scenario, with no plug** ✅
+- B. The forecast looks reasonable
+- C. It matches last year
+- D. The CFO approved it
 
-**Why:** A spreadsheet cannot decline to show you a number. Everything else in this track is a convenience next to that.
+**Why:** Balancing is not proof that the assumptions are good, and it is proof that the mechanics are. Sixty forecast months balancing to the cent means every linkage is doing what it should.
