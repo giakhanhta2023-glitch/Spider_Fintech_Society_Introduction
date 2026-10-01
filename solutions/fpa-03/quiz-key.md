@@ -1,159 +1,159 @@
-# Level 03: The part you used to do by hand: quiz answer key
+# Level 03: A model that ties: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
-| 1 | **D** |
-| 2 | **C** |
-| 3 | **D** |
-| 4 | **A** |
+| 1 | **B** |
+| 2 | **A** |
+| 3 | **A** |
+| 4 | **D** |
 | 5 | **B** |
-| 6 | **A** |
-| 7 | **B** |
-| 8 | **A** |
-| 9 | **B** |
-| 10 | **D** |
-| 11 | **A** |
+| 6 | **B** |
+| 7 | **C** |
+| 8 | **C** |
+| 9 | **A** |
+| 10 | **B** |
+| 11 | **D** |
 | 12 | **C** |
-| 13 | **C** |
-| 14 | **B** |
-| 15 | **C** |
+| 13 | **D** |
+| 14 | **C** |
+| 15 | **A** |
 
 ---
 
-### 1. Why is `df["amount"].sum()` dangerous on a column that contains `(700,200.00)`?
+### 1. Why must cash be an output of the model rather than an input?
 
-- A. It treats the brackets as a positive number
-- B. It raises a TypeError that is easy to miss
-- C. It rounds to the nearest thousand
-- **D. One text value makes the whole column object dtype, so the sum silently skips or concatenates rather than adding** ✅
+- A. Because auditors require it
+- **B. Because it is the closing line of the cash flow statement, and typing it in means plugging the balance sheet** ✅
+- C. Because cash is hard to predict
+- D. Because the bank provides the forecast
 
-**Why:** Nothing raises. The column type changed, the sum returns a plausible number, and the only thing that catches it is a check that knows what the answer should be.
+**Why:** Cash falls out of net income, non cash charges, working capital movements, capex and financing. Forecast it directly and the balance sheet only balances by accident or by plug.
 
-### 2. The loader says "2 text amounts repaired" out of 318 rows. An earlier version said 318. What was it measuring?
+### 2. Revenue grows 2.15% a month, payroll 0.8%, and marketing and facilities are flat. What does the margin do?
 
-- A. A caching bug in pandas
-- B. The number of rows in the file
-- **C. The column dtype: with one text value present, every value in the column is a string, including the good ones** ✅
-- D. The number of rows with a comma anywhere
+- **A. Rises, because most of the cost base does not grow with revenue. That is operating leverage** ✅
+- B. Stays flat, since costs are a percentage of revenue
+- C. Cannot be determined without the tax rate
+- D. Falls, because costs compound faster
 
-**Why:** It counted values that were not int or float, which after the dtype changes is all of them. Counting what a plain conversion would throw away is the measure that means something.
+**Why:** From 7.9% to 19.3% here. A model that forecasts every cost as a percentage of revenue cannot show this, which is the main reason not to build one that way.
 
-### 3. Where should the sign rule that flips revenue live?
+### 3. What does DSO moving from 38 days to 57 days cost, on revenue of 3.36 million a month?
 
-- A. In the source file, corrected before loading
-- B. In the chart, so the raw numbers stay untouched
-- C. In every aggregation that touches revenue
-- **D. In one line in the loader, where the data arrives** ✅
+- **A. About 2.1 million of cash, once, as receivables step up** ✅
+- B. 19 days of revenue every month
+- C. Nothing, it is a timing difference
+- D. It depends on the tax rate
 
-**Why:** Once, at the boundary. Editing the source file loses the fix on the next export, and scattering the rule guarantees one place misses it.
+**Why:** 3.36m x 19 / 30.4. It is a one off cash cost because the balance steps to a new level and stays there. The recurring cost is the interest on financing it.
 
-### 4. A lookup table gains one duplicate row and revenue rises by a third. What happened?
+### 4. A profitable, growing company keeps running out of cash. What is the most likely cause?
 
-- **A. The merge matched each invoice to both copies of that customer, so those invoices appear twice** ✅
-- B. The amounts were stored as text
-- C. pandas summed the duplicate column twice
-- D. The index was reset incorrectly
+- A. The tax rate is wrong
+- B. Revenue is being recognised too early
+- C. Depreciation is too high
+- **D. Growth is consuming working capital: each month sells more and collects it 38 days later** ✅
 
-**Why:** A one to many join where you assumed one to one. No error, no warning, and a total that is wrong by exactly the duplicated rows. `validate="many_to_one"` turns it into an exception.
+**Why:** A growing business lends its growth to its customers. It is the normal reason profitable companies raise money, and it is visible only in a model that links the three statements.
 
-### 5. Which of these should be fatal rather than a warning?
+### 5. Why is depreciation calculated on the opening fixed asset balance?
 
-- A. A duplicate journal that was removed
-- **B. An account code in the ledger that the mapping has never seen** ✅
-- C. A cost centre with a budget and no actuals
-- D. A credit note in billing that is not in the ledger
+- A. Because capex arrives at the end of the month
+- **B. Using the closing balance makes it circular for no reason, since closing assets depend on depreciation** ✅
+- C. Accounting standards require it
+- D. It produces a larger charge
 
-**Why:** An unmapped code is money in the ledger that appears nowhere in the pack, so the pack would be wrong. The other three leave the pack correct and need saying in the commentary.
+**Why:** Depreciation reduces the closing balance, so calculating it on the closing balance depends on itself. Opening balance, then add capex, then subtract the charge.
 
-### 6. Why does the check cell build its two sides by different routes?
+### 6. What creates the circular reference in this model?
 
-- **A. So it can catch a line that is in the mapping and missing from the layout, which is how packs actually drift** ✅
-- B. Because pandas cannot sum the same frame twice
-- C. To handle rounding differences
-- D. For speed
+- A. Receivables, which depend on revenue
+- **B. The revolver: a draw costs interest, interest reduces cash, and less cash means a bigger draw** ✅
+- C. Depreciation and fixed assets
+- D. Tax, which depends on profit
 
-**Why:** Comparing a number to itself proves nothing. One side walks the layout, the other walks the data, and the difference between them is the class of error that silently drops a line.
+**Why:** Interest depends on the draw and the draw depends on interest. Excel needs iterative calculation turned on; a script loops until the draw stops moving.
 
-### 7. What does `test_the_check_catches_a_dropped_pack_line` prove?
+### 7. The stress case resolves the circularity in five passes and the base case in one. Why one?
 
-- A. That the ledger is clean
-- **B. That the check works, by breaking the pack on purpose and asserting the check complains** ✅
-- C. That the pack is correct
-- D. That pandas merges are safe
+- A. It converges faster with higher revenue
+- B. The base case is simpler arithmetic
+- **C. The base case never draws, so there is nothing to iterate. A case that never draws proves nothing about the mechanism** ✅
+- D. The loop is skipped for profitable scenarios
 
-**Why:** A check that has never failed might be checking nothing. Making it fail on demand is the only way to know which kind you have.
+**Why:** That is why a stress case severe enough to need the facility is worth building even if nobody expects it: it is the only thing that exercises the circular logic.
 
-### 8. Why does the generated memo write "TODO: why" instead of an explanation?
+### 8. Why build scenarios as multiples of a base case rather than as separate files?
 
-- **A. Because the script knows what moved and cannot know why, and an invented cause is worse than a blank one** ✅
-- B. Because the data is synthetic
-- C. Because the feature is unfinished
-- D. To keep the file short
+- A. Because Excel cannot handle four files
+- B. It is faster to calculate
+- **C. Because separate copies drift, and then nobody can say whether a difference is the assumption or the drift** ✅
+- D. It uses less disk space
 
-**Why:** The explanation is what you are accountable for. What the script can do is guarantee that no material variance is ever missing from the list, which is exactly what a person writing at 7pm gets wrong.
+**Why:** Correct a measured driver once and all four cases move. The only difference between them stays the thing being varied, which is the entire point of having them.
 
-### 9. The pack takes 39 ms and the command takes about three seconds. Where does the rest go?
+### 9. The sensitivity table shows 16 basis points of take rate worth more than 3.5 points of monthly volume growth. What is that for?
 
-- A. Writing the output
-- **B. Starting Python and importing pandas** ✅
-- C. The checks
-- D. Reading the CSV files
+- **A. Deciding which argument is worth having: the company debates volume constantly and pricing almost never** ✅
+- B. Widening the forecast into a range
+- C. Proving the model is accurate
+- D. Setting the budget
 
-**Why:** Import time dominates anything this small. It is worth knowing before optimising: for a monthly pack neither number matters, and speed was never the reason to automate it.
+**Why:** A range nobody acts on is decoration. A table that says the meeting is about the wrong thing changes what happens next week.
 
-### 10. Why `.get(line, 0.0)` rather than joining the actual and budget frames?
+### 10. What does it mean when a driver is marked as a judgement rather than measured?
 
-- A. pandas cannot join on strings
-- B. It avoids duplicating the index
-- C. Joins are slower
-- **D. A join drops the line that exists on only one side, and that line, CC600, is the interesting one** ✅
+- A. It is a placeholder to be filled in later
+- **B. It came from a person's decision rather than from the history, so a reviewer knows which inputs are opinions** ✅
+- C. It is less important
+- D. It cannot be changed in scenarios
 
-**Why:** An inner join is a decision to hide unmatched rows. In finance the unmatched row is usually the finding: a budget with no actuals is a team that was never hired.
+**Why:** The take rate, the cash floor and the facility rate are decisions. Marking them is how a model stops being believed more than it deserves.
 
-### 11. What does an exit code of 1 from the pack script mean?
+### 11. Retained earnings in the opening balance sheet are negative 11.5 million. What is the one sentence answer?
 
-- **A. The pack did not tie or a gate was fatal, so nobody should send it** ✅
-- B. The month was not found
-- C. One check failed
-- D. One row was dropped
+- A. The company has a going concern problem
+- B. Dividends exceeded profits
+- C. An error in the ledger
+- **D. Cumulative losses since founding, against twenty two million raised. Normal for a growing business** ✅
 
-**Why:** It is the automated form of the red check cell. A scheduler or a colleague can act on it without reading the output, which a spreadsheet cannot offer.
+**Why:** Retained earnings are cumulative profit since day one. A company that has raised more than it has earned has a negative balance, and it says nothing on its own about whether the business works.
 
-### 12. Why `dtype={"account_code": str}` when reading the CSV?
+### 12. Retained earnings should move each month by exactly what?
 
-- A. pandas cannot group by integers
-- B. It is faster than inferring the type
-- **C. Read as a number, a code with a leading zero loses it and stops matching the other file** ✅
-- D. Strings use less memory
+- A. Net income plus depreciation
+- B. EBITDA
+- **C. Net income** ✅
+- D. Cash flow from operations
 
-**Why:** The day somebody adds account 0450, an inferred integer column turns it into 450 and the join quietly finds nothing.
+**Why:** Net income and nothing else, absent dividends or equity issues. It is one of the identities worth asserting in a test, because when it breaks the model is wrong whatever the assumptions were.
 
-### 13. The repair line reads "0 duplicate journals removed" this month, and "1" for the last six months. What is that?
+### 13. Your model hits its 50 pass iteration cap. What has happened?
 
-- A. A bug in the loader
-- B. Proof that the accountant fixed the ledger
-- **C. Information: the export changed, and the change needs explaining before the numbers do** ✅
-- D. Good news, and nothing to do
+- A. Python ran out of memory
+- B. The forecast is too long
+- C. The revolver rate is too high
+- **D. The circular calculation is not converging, and any number it shows is meaningless** ✅
 
-**Why:** It might be the fix, and it might be a different export with a different problem. A repair line that changes is a question, and asking it takes a minute.
+**Why:** Hitting the cap is a failure, not a result. Excel in the same situation shows a stale number with no warning, which is worse.
 
-### 14. A material variance is defined here as 25,000 or more. Where should that number live?
+### 14. Which cost is a decision rather than a consequence?
 
-- A. In the CSV file
-- **B. In one named constant, so the threshold is visible and changing it is one edit** ✅
-- C. In each function that needs it
-- D. Nowhere: judge each one by eye
+- A. Scheme and interchange fees
+- B. Depreciation
+- **C. Marketing spend** ✅
+- D. Receivables
 
-**Why:** A threshold that lives in three places becomes three thresholds. Named once, it is also a thing you can argue about in a review, which is the point of writing it down.
+**Why:** Scheme fees follow volume, depreciation follows the asset base, receivables follow revenue. Marketing is a number a person chooses, and modelling it as a percentage of revenue hides that.
 
-### 15. What is the strongest argument for the script over the spreadsheet?
+### 15. What is the strongest evidence that a three statement model is right?
 
-- A. It produces nicer charts
-- B. Finance teams prefer Python
-- **C. It can refuse to produce a number, and it does the same thing every month whoever runs it** ✅
-- D. It is faster
+- **A. The balance sheet balances in every month of every scenario, with no plug** ✅
+- B. The forecast looks reasonable
+- C. It matches last year
+- D. The CFO approved it
 
-**Why:** Speed is the weakest of the reasons. Repeatability and the ability to fail loudly are what a monthly process actually needs.
+**Why:** Balancing is not proof that the assumptions are good, and it is proof that the mechanics are. Sixty forecast months balancing to the cent means every linkage is doing what it should.

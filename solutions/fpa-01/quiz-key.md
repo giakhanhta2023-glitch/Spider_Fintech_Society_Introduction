@@ -1,159 +1,159 @@
-# Level 01: The spreadsheet that does not lie: quiz answer key
+# Level 01: SQL for the month end close: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
 
 | # | Answer |
 |---|--------|
-| 1 | **A** |
-| 2 | **C** |
-| 3 | **C** |
-| 4 | **B** |
-| 5 | **D** |
+| 1 | **D** |
+| 2 | **D** |
+| 3 | **B** |
+| 4 | **A** |
+| 5 | **C** |
 | 6 | **B** |
-| 7 | **A** |
-| 8 | **D** |
-| 9 | **B** |
-| 10 | **C** |
-| 11 | **D** |
-| 12 | **A** |
-| 13 | **A** |
-| 14 | **C** |
-| 15 | **B** |
+| 7 | **C** |
+| 8 | **C** |
+| 9 | **A** |
+| 10 | **A** |
+| 11 | **B** |
+| 12 | **D** |
+| 13 | **B** |
+| 14 | **A** |
+| 15 | **C** |
 
 ---
 
-### 1. The ledger export shows transaction fees as -2,348,188. What does the minus sign mean?
+### 1. Why does WHERE not work on an aggregate like SUM(amount)?
 
-- **A. It is a credit, which is how every accounting export writes revenue** ✅
-- B. The export is corrupt and should be requested again
-- C. The company lost money on transaction fees that month
-- D. The amount is a refund of previously recognised revenue
+- A. You must use a subquery for any aggregate
+- B. It works in PostgreSQL but not in SQLite
+- C. Aggregates are not allowed in filters at all
+- **D. WHERE runs before GROUP BY, so the aggregate does not exist yet. HAVING runs after** ✅
 
-**Why:** Revenue is a credit and credits export as negatives. Normalise the sign once, where the data arrives, and every number downstream means what a reader assumes.
+**Why:** Execution order is FROM, WHERE, GROUP BY, HAVING, SELECT, ORDER BY. WHERE filters rows before there are any groups; HAVING filters the groups.
 
-### 2. Revenue is 4.4% above plan and gross profit is 1.4% below it. Which explanation fits?
+### 2. September revenue by month is 3,361,050 and by issued_date is 3,106,395. What is the second number?
 
-- A. Gross profit and revenue cannot move in opposite directions
-- B. Somebody has double counted revenue
-- **C. More was sold at a lower margin: volume up, take rate down, and costs that scale with volume** ✅
-- D. The budget was wrong, so no explanation is needed
+- A. Revenue from merchants who paid on time
+- B. A rounding difference
+- C. Revenue excluding credit notes
+- **D. August revenue, because this company bills in arrears on the first of the following month** ✅
 
-**Why:** Volume was 14.3% ahead at a take rate 6.5% behind. Scheme costs scale with volume at a fixed rate, so the margin is squeezed from both ends. This is the single most common shape in a payments business.
+**Why:** The invoice for September usage is issued on 1 October, so invoices issued in September are August revenue. No error is raised and both numbers look reasonable.
 
-### 3. Transaction fees beat plan by 151,993. The volume effect is +313,938. What is the rate effect?
+### 3. The customers table has 235 rows and only 230 appear in invoices. What does a plain JOIN do?
 
-- A. -465,882
-- B. It cannot be calculated from this
-- **C. -161,945** ✅
-- D. +161,945
+- A. Duplicates the seven across all months
+- **B. Silently drops the five, with no warning** ✅
+- C. Raises an error about unmatched keys
+- D. Returns all 221 with nulls for the missing seven
 
-**Why:** The two effects must add to the total variance, so 151,993 - 313,938 = -161,945. If your decomposition does not add back up, it is a story rather than an analysis.
+**Why:** An inner join keeps only matches. Use a LEFT JOIN and check for nulls when you need to know what did not match, which is most of the time in finance.
 
-### 4. Cost centre CC600 has a budget of 96,000 a month and has never had a single actual. How should the pack treat it?
+### 4. What does a LEFT JOIN followed by WHERE right.status = 'paid' become?
 
-- A. Exclude it silently, since there is nothing to compare
-- **B. Show it, and say in the commentary that the team was never created and the plan needs reforecasting** ✅
-- C. As a favourable variance, because the money was not spent
-- D. Reallocate its budget across the other cost centres
+- **A. An inner join, because the WHERE throws away the unmatched rows the join kept** ✅
+- B. A syntax error
+- C. A cross join
+- D. A left join with an extra filter
 
-**Why:** Nothing was saved, something never happened. Reporting it as a saving flatters the pack every month, and reallocating it hides the planning error. Show it and name it.
+**Why:** The unmatched rows have NULL on the right side, and NULL fails the comparison. Put the condition in the ON clause when you mean to keep unmatched rows.
 
-### 5. Why join the ledger to the budget on account_code rather than account_name?
+### 5. The mean of the three segment averages is 19,924 and the true mean invoice is 15,706. Why?
 
-- A. Excel cannot match on text
-- B. Account names are not unique within a month
-- C. Codes sort faster than names
-- **D. Names differ between systems: 5100 is Cloud hosting in the ledger and Hosting in the plan, so a name join drops the row** ✅
+- A. The true mean excludes credit notes
+- B. The segment averages were rounded
+- **C. The three segments have different numbers of invoices, so averaging the averages weights them equally when they are not** ✅
+- D. One segment has outliers
 
-**Why:** A join on a label fails silently. The row simply does not appear, the pack still totals something, and the difference shows up as an unexplained variance.
+**Why:** Forty enterprise invoices carry the same weight as eighty-eight small ones in an average of averages. Aggregate the underlying rows, or weight by count.
 
-### 6. Marketing is 210,000 over plan in September, and October and November are now 290,000 under. What is this?
+### 6. COUNT(*) returns 3,778 and COUNT(paid_date) returns 3,363. What is the difference?
 
-- A. An overspend that needs approval
-- **B. A timing difference: the campaign moved forward, and the full year is 80,000 favourable** ✅
-- C. A budgeting error in the original plan
-- D. A reclassification between cost centres
+- A. COUNT(*) includes duplicate ids
+- **B. COUNT(column) counts only rows where that column is not null, so the difference is the unpaid invoices** ✅
+- C. COUNT(*) is an estimate on large tables
+- D. The paid_date column has a different type
 
-**Why:** Spend that moves between periods rather than changing in total is a timing difference, and the commentary has to say so or somebody will try to cut a budget that is already under.
+**Why:** COUNT(column) ignores nulls. That is useful when you mean it and a silent error when you do not.
 
-### 7. Support salaries are 28,000 under plan because five budgeted hires were never made. How is this reported?
+### 7. Which finds the unpaid invoices?
 
-- **A. As a favourable variance, with the service consequence named** ✅
-- B. As an unfavourable variance, because hiring failed
-- C. As a favourable variance and nothing more
-- D. It is not a variance at all
+- A. WHERE paid_date = NULL
+- B. WHERE paid_date != ''
+- **C. WHERE paid_date IS NULL** ✅
+- D. WHERE NOT paid_date
 
-**Why:** Favourable is an arithmetic fact and it is not the same as good. The cost line improved because capacity did not arrive, and the person reading the pack needs both halves.
+**Why:** NULL is not equal to anything, including NULL. Only IS NULL and IS NOT NULL test it.
 
-### 8. What is the check cell for?
+### 8. What does SUM(SUM(amount)) OVER (ORDER BY month) produce?
 
-- A. To count the rows in the import
-- B. To check the budget was approved
-- C. To confirm the formulas have no circular references
-- **D. To prove the pack ties to the ledger, on the face of the output, every time it is refreshed** ✅
+- A. The grand total repeated on every row
+- B. The monthly sum multiplied by the row number
+- **C. A running total of the monthly sums, month by month** ✅
+- D. An error: you cannot nest aggregates
 
-**Why:** One cell, pack total minus ledger total, red when it is not zero. It catches a broken range or a missing mapping row in the second it happens rather than in the meeting.
+**Why:** The inner SUM aggregates within each month, then the window runs across the grouped rows in month order. It is the standard year to date column.
 
-### 9. A `SUM` over the amount column returns a number that is exactly 590,000 too high. What do you look for first?
+### 9. Your query joins invoices to customers and revenue comes out at exactly double. What do you check first?
 
-- A. A missing minus sign
-- **B. A duplicated export row** ✅
-- C. A floating point rounding error
-- D. A hidden row
+- **A. Whether customer_id is unique in customers, because a duplicate there doubles every matching invoice** ✅
+- B. Whether the database needs reindexing
+- C. Whether the date filter is inclusive
+- D. Whether the amounts are stored as text
 
-**Why:** A round, exact, single-line discrepancy is almost always a duplicate. Count rows against count distinct on the journal id. This dataset has one, in June.
+**Why:** Exact doubling is the signature of a one-to-many join you thought was one-to-one. COUNT(*) against COUNT(DISTINCT key) on the lookup table finds it immediately.
 
-### 10. One amount in the file reads `(700,200.00)` and another reads `180,000.00`. What happens if you ignore them?
+### 10. 177 open invoices worth 2.68 million are over 60 days past due, on 30 day terms. What does that tell the pack?
 
-- A. The import fails
-- B. Nothing, spreadsheets read brackets as negative
-- **C. The column becomes text in most tools, the SUM skips it, and the pack is understated with no error shown** ✅
-- D. It is rounded to zero
+- **A. The revenue is recognised and a large part of the cash has not arrived, which is a collections problem rather than a revenue one** ✅
+- B. Revenue is overstated and should be reversed
+- C. Nothing: past due invoices are normal at any size
+- D. The invoices were never sent
 
-**Why:** Brackets and thousands separators make the cell text. The dangerous part is that nothing breaks: the sum simply excludes them, and the check cell is what catches it. The brackets are also a minus sign, so reading it as 653,400 gets the sign wrong as well as the type.
+**Why:** Revenue and cash are different questions. An ageing table is how a pack shows that the profit and loss can look healthy while the bank account does not.
 
-### 11. Why use INDEX/MATCH or XLOOKUP rather than VLOOKUP with a column number?
+### 11. What is DSO measuring?
 
-- A. VLOOKUP cannot look up text
-- B. They are faster on large files
-- C. They handle duplicates automatically
-- **D. They name the column they return, so inserting a column in the source cannot silently change the answer** ✅
+- A. The average age of an invoice at the time it is issued
+- **B. Receivables expressed as days of revenue: how long the money takes to arrive** ✅
+- C. How many days the sales team takes to close a deal
+- D. Days between the order and the delivery
 
-**Why:** VLOOKUP counts columns. Somebody inserts one, every lookup shifts by one, and the numbers are still plausible. That is the worst kind of wrong.
+**Why:** Receivables divided by revenue, times the number of days. 56.5 days here on 30 day terms, which says the terms are not what is happening.
 
-### 12. Where should the sign-flipping rule live?
+### 12. A monthly revenue query has always tied to the ledger and this month is 4,820 out. What do you do?
 
-- **A. In one column on the calculations tab, applied once where the data arrives** ✅
-- B. In each formula that touches revenue
-- C. In the raw import, by typing over the negatives
-- D. In the commentary, as a note to the reader
+- A. Ignore a difference that small
+- B. Rebuild the database
+- C. Adjust the query to match the ledger
+- **D. Find the row: it is a credit note raised in billing and not posted to the ledger, and somebody has to decide which side is right** ✅
 
-**Why:** Once, at the boundary. Typing over raw data loses it on the next refresh, and scattering the rule through formulas guarantees one of them is missed.
+**Why:** A break is information. Finding the single row, naming it and sending it to the person who can post it is the entire job of a close.
 
-### 13. What is the difference between a budget and a forecast?
+### 13. Why group by customer_id rather than by name?
 
-- **A. The budget is fixed at the start of the year as the benchmark; the forecast is what you now expect and is updated monthly** ✅
-- B. The forecast is approved by the board and the budget is not
-- C. The budget covers costs and the forecast covers revenue
-- D. None, the words are interchangeable
+- A. Names cannot be used in GROUP BY
+- **B. Names are not guaranteed unique and can be edited, while the id is the identity** ✅
+- C. Ids sort faster
+- D. It changes the result only on PostgreSQL
 
-**Why:** A budget you keep editing stops being a benchmark and you can no longer tell whether you are behind. Both exist because they answer different questions.
+**Why:** Two merchants can share a name and one merchant can be renamed mid year. Group by the key and carry the name along for the reader.
 
-### 14. Which commentary is doing its job?
+### 14. Merchants signed in 2023 are 58% of September revenue. What does that single number carry?
 
-- A. "Opex 86k unfavourable, see attached."
-- B. "Opex overspend driven by elevated marketing investment to capture market opportunity."
-- **C. "Opex is 86k unfavourable: marketing 210k over on a campaign pulled into September that leaves the year 80k under, and salaries 124k under, of which 96k is a cost centre that was never created."** ✅
-- D. "Opex was materially above budget due to phasing and other factors."
+- **A. Both a retention story and a concentration risk, in one row** ✅
+- B. Only that the company is old
+- C. That 2024 and 2025 sales underperformed
+- D. That churn is high
 
-**Why:** The gross movements, their causes, and what the reader should do. The net number alone hides two unrelated stories, and the adjectives in the other options carry no information.
+**Why:** Two year old merchants still paying is retention. More than half of revenue resting on one cohort is concentration. A good pack says both.
 
-### 15. Your pack ties to the ledger, but the ledger itself includes a duplicated journal. What is the right answer?
+### 15. What belongs in a saved .sql file alongside each query?
 
-- A. Adjust the budget to match
-- **B. Exclude it, flag it to the accountant, and say in the commentary that the ledger is overstated by 590k until it is corrected** ✅
-- C. Remove the duplicate from your calculations tab and say nothing
-- D. Leave it: the pack ties, which is what matters
+- A. Nothing: the SQL speaks for itself
+- B. The database password
+- **C. The question it answers and the answer it gave last time it ran** ✅
+- D. A copy of the data
 
-**Why:** Tying to a wrong number is not accuracy. The analyst who finds the error, tells the person who can fix it, and states the effect is the one who gets trusted with the next thing.
+**Why:** The recorded answer turns the query into a regression test. Run it next month, and if a closed month moved, something upstream changed and you want to know before the meeting.

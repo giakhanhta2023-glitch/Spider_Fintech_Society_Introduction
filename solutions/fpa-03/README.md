@@ -1,6 +1,6 @@
-# Level 03: The part you used to do by hand
+# Level 03: A model that ties
 
-> **close-pack: the pack, rebuilt as a program** · build project · difficulty 5/10
+> **three-statement: the model, with its own tests** · build project · difficulty 6/10
 
 ## Read this second
 
@@ -10,71 +10,70 @@ your own project skips the only step that actually teaches you anything.
 
 ## The brief
 
-It is the third working day again. Produce the same pack you built by hand in level 1, from the same two files, with one command. It has to refuse to print when something is wrong, say what it repaired, and leave the commentary to you.
+The board wants a fifteen month forecast from the September close, with an upside, a downside, and the case that puts the company on its facility. They want to know which driver matters most, and when the money runs short in the bad case. Build it so that somebody can check it.
 
-**Scope:** Python and pandas, as a small package with tests. No notebook, no Excel output, no database: the files are the input and the terminal is the output.
+**Scope:** Python, from the closing balance sheet in fpa-history.csv. Revenue from drivers, costs by behaviour, working capital in days, a debt schedule, a revolver, and tests for the identities. **This is the first level that needs classes**: you should be able to read a class, make an object from it, and read a field off it with a dot. The knowledge section "The Python this level uses" covers exactly that much and nothing more, and it is enough for the whole build.
 
 ## Files here
 
 | File | What it is |
 |------|------------|
-| `close-pack/closepack/load.py` | the three repairs, reported rather than silent, and the sign rule once |
-| `close-pack/closepack/checks.py` | the gates, split into fatal and worth saying |
-| `close-pack/closepack/pack.py` | the pack, the tie check, and the exit code |
-| `close-pack/closepack/bridge.py` | price and volume, with the rounding difference returned rather than hidden |
-| `close-pack/closepack/report.py` | the waterfall chart and the draft memo with its TODOs |
-| `close-pack/tests/test_pack.py` | 15 tests, including one that breaks the pack to prove the check works |
+| `three-statement/model/drivers.py` | every assumption with its source, and the judgements marked |
+| `three-statement/model/forecast.py` | fifteen months, three statements, the revolver and its circular reference |
+| `three-statement/model/sensitivity.py` | twenty models as one table, and when each case draws on the facility |
+| `three-statement/tests/test_model.py` | 14 tests, mostly identities rather than values |
 | `quiz-key.md` | all 15 drill answers with explanations |
 
 ## Run it
 
 ```bash
-python -m closepack.pack && python -m closepack.report && pytest -q
+python -m model.forecast && python -m model.forecast --scenario stress && python -m model.sensitivity && pytest -q
 ```
 
 ## Why the solution is shaped this way
 
-- The argument for the script is not speed. The pack takes 39 ms here and about two seconds of the command is importing pandas, and once a month neither number matters. What matters is that the month is an argument, the checks run every time, and the thing can refuse: a spreadsheet cannot decline to show you a number.
-- Everything ugly about the export is dealt with in the loader and reported: 317 rows after removing one duplicate journal, two text amounts repaired, one label trimmed. Silently cleaning an export means your pack disagrees with the file the accountant is looking at and neither of you knows why.
-- The gates split into fatal and warning, and the split is a judgement about money. An unmapped account code means money in the ledger that appears nowhere in the pack, so the run stops. A cost centre budgeted with no actuals leaves the pack correct and needs a sentence. A gate that cries wolf is switched off within two months, and then the real one is off too.
-- The check cell became an exit code, which is the part a spreadsheet cannot do. A scheduler or a colleague can act on a non zero exit without reading the output, and `test_the_check_catches_a_dropped_pack_line` removes a line from the layout on purpose and asserts the check complains.
-- The generated memo leaves every cause as the word TODO. The script knows marketing is 210,000 over and cannot know that the campaign moved, and a tool that invents the reason is worse than no tool. What it does guarantee is that no material variance is ever missing from the list, which is what a person writing at 7pm gets wrong.
-- A test caught a number in the output that was wrong by a factor of 159: the loader reported 318 text amounts repaired out of 318 rows, because one text value makes the whole pandas column an object and the count was measuring the dtype rather than the data. The fix measures what a plain conversion would have thrown away, which is two.
-- The merge trap has its own test. A lookup table that gains one duplicate row raises revenue by a third with no error and no warning, and the habit that prevents it is one assertion or `validate="many_to_one"` on every merge against a lookup.
+- Cash is an output. It is the closing line of the cash flow statement, and a test asserts that in every month of every scenario, which is the difference between a model and a spreadsheet of hopes. Sixty forecast months balance to the cent with no plug anywhere.
+- Revenue is driven from volume, take rate, merchants and platform fee rather than grown as a percentage of a total. That decomposes, so a miss can be attributed to volume or to price, and it is arguable: a sales director can disagree with 2.15% monthly volume growth, which is a useful conversation, where disagreeing with "revenue grows 26% a year" is not.
+- Costs are modelled by behaviour rather than as percentages of revenue: scheme fees vary with volume, hosting follows its own trend, payroll steps with hiring, marketing is a decision. That is what lets the base case show EBITDA margin rising from 7.9% to 19.3%, which a percentage of revenue model cannot produce, and what lets the stress case take it to 1.2% without a single dramatic event.
+- Every driver carries the evidence it came from and three of them are marked as judgements rather than measurements. A test fails if any driver has a blank source. A model that cannot separate its facts from its opinions gets believed more than it deserves, and the first question in any review is where a number came from.
+- Scenarios are multiples of one base case rather than four saved copies. Correct a measured driver and all four move together, and the only difference between them stays the thing being varied. Four files drift apart in the second month and then nobody can say whether a difference is the assumption or the drift.
+- The revolver creates the circular reference every real model has: a draw costs interest, interest costs cash, less cash means a bigger draw. It is resolved by iteration with the pass count reported, five in the stress case, and two tests: that it converges rather than hitting the cap, and that it iterates at all, because a scenario that never draws proves nothing about the mechanism.
+- The sensitivity table exists to settle an argument rather than to widen a range. Sixteen basis points of take rate moves FY2026 EBITDA more than three and a half points of monthly volume growth, and the company argues about volume in every sales meeting and about pricing almost never.
 
 ## Where people get stuck
 
 | Symptom | Cause |
 |---------|-------|
-| A sum silently skips rows | One text value makes the whole column an object dtype. Convert at the boundary and count what needed converting. |
-| Revenue is a third higher after a merge | A one to many join you thought was one to one. Use validate="many_to_one" and it raises instead. |
-| The pack is missing a line and still ties | The check compared the pack to itself. Build the two sides by different routes. |
-| The warnings scroll past unread | Too many things marked fatal, or too few. Decide the split on whether the pack would be wrong. |
-| An account code with a leading zero stops matching | pandas read it as an integer. Pass dtype={"account_code": str}. |
-| The generated memo says something untrue | A script that writes causes is guessing. Leave TODO and let the person fill it in. |
+| The balance sheet is out by a small amount | In order: a cash flow line missing from the balance sheet, depreciation on the closing balance, a working capital movement using the balance rather than the change, net income not reaching retained earnings. |
+| Cash was forecast directly | Then the balance sheet only balances by plug. Cash is the closing line of the cash flow. |
+| Depreciation is 2% out every month | It was calculated on the closing fixed assets, which depend on depreciation. Use the opening balance. |
+| A profitable forecast runs out of cash | Growth consumes working capital. Receivables grow with revenue, and the faster you grow the more you lend your customers. |
+| The model hit its iteration cap | The circular calculation did not converge, and any number it shows is meaningless. Excel shows a stale one instead. |
+| Every scenario looks the same | They were built by copying the file. Build them as multiples of one base so a corrected driver moves all of them. |
 
 ## Self-checks the solution satisfies
 
-- python -m closepack.pack prints the pack and exits 0
-- The loader reports 1 duplicate removed, 2 text amounts repaired and 1 label trimmed
-- September revenue is 3,361,050 and EBITDA is 265,989, matching the pack you built by hand
-- Running with --month 2025-08 produces August with no other edit
-- Removing a line from the layout makes the check cell non zero and the command exit 1
-- An unmapped account code stops the run and names the code
-- The CC600 warning appears and does not stop the run
-- The bridge sums to the transaction fee variance, with any rounding difference under a dollar and shown
-- The tests pass from a clean checkout with no manual setup
+- Every month of every scenario balances to within half a cent, with no plug
+- The opening balance sheet is read from the data and refuses to start if it does not balance
+- Retained earnings move by exactly net income each month
+- Fixed assets move by exactly capex less depreciation each month
+- Cash equals opening cash plus operations less capex plus financing, every month
+- The base, upside and downside cases never draw on the revolver, and the stress case does
+- The stress case takes more than one pass and fewer than the cap to resolve the circularity
+- Increasing DSO reduces closing cash
+- Every driver has a non empty source, and the judgement calls are marked
+- The sensitivity table runs twenty models and all of them balance
 
 ## How it is marked
 
 | Points | Criterion | Meaning |
 |--------|-----------|---------|
-| 25 | It ties | The pack agrees with the ledger, the check is printed every run and is the exit code. |
-| 20 | It refuses | Fatal checks stop the run and name the problem; warnings do not. The split is defensible. |
-| 20 | It is clean once | Repairs happen in the loader and are reported. Nothing downstream re-cleans anything. |
-| 20 | It is tested | Tests cover the loader, the totals, the merge trap, and a check that is proven to fail when it should. |
-| 15 | It is handed over | A README with the command, the numbers, and what the script deliberately does not do. |
+| 25 | It ties | Sixty forecast months balancing to the cent, cash derived, no plug anywhere. |
+| 20 | It is driven | Revenue from volume and rate, costs by behaviour, working capital in days. |
+| 20 | It is honest | Every driver has a source and the judgements are marked. A reviewer can tell facts from opinions. |
+| 20 | It handles the circle | The revolver works, the iteration converges, the pass count is reported, and a case exists that exercises it. |
+| 15 | It decides something | A sensitivity table with a sentence saying which argument it settles. |
 
 ---
 
-Part of [FinQuest](../../README.md) · Analyst track, Level 03 of 5
+Part of [FinQuest](../../README.md) · Analyst track, Level 03 of 4

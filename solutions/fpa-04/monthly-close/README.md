@@ -63,16 +63,16 @@ asserts exactly that distinction.
 
 ## Assembly, which is the actual exercise
 
-Four levels become one command:
+Three earlier levels become one command:
 
 | Stage | Where it came from |
 |---|---|
-| load the data | Level 2: every file into one SQLite database |
-| check the data | Level 3: the loader's repairs and the fatal gates |
-| build the pack | Level 1's layout, level 3's implementation |
-| query the detail | Level 2: segments, top merchants, receivables ageing |
+| load the data | Level 1: every file into one SQLite database |
+| check the data | Level 2: the loader's repairs and the fatal gates |
+| build the pack | Level 2's implementation |
+| query the detail | Level 1: segments, top merchants, receivables ageing |
 | reconcile | New here, because it needs two systems that only now exist together |
-| reforecast | Level 4, run from the month that just closed |
+| reforecast | Level 3, run from the month that just closed |
 
 The earlier levels are **imported, not copied**. `close/_earlier.py` puts the two
 sibling solution folders on the path and says in its docstring why that is a
@@ -82,7 +82,7 @@ versions drifting apart from the first bug fix onwards, which is the exact
 failure the whole track is about.
 
 That import is itself tested. `test_the_earlier_levels_are_imported_rather_than_copied`
-asserts the loaded modules actually live in `fpa-03` and `fpa-04`.
+asserts the loaded modules actually live in `fpa-02` and `fpa-03`.
 
 ## What it writes
 
@@ -109,4 +109,4 @@ the file and that the pack ties to the ledger.
 
 ---
 
-Part of [FinQuest](../../../README.md), analyst track, level 05.
+Part of [FinQuest](../../../README.md), analyst track, level 04.
