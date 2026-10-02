@@ -961,7 +961,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   border-top: 1px solid var(--rule-mid);
 }
 .gate .notice { max-width: 24rem; text-align: left; }
-.gate .duo { justify-content: center; }
+.gate .companion { justify-content: center; }
 /* Flat behind the sign in: the ambient wash belongs to the course, not to the
    door. Set by AuthGate while the gate is on screen. */
 body.is-gate::before { display: none; }
@@ -1007,30 +1007,9 @@ body.is-gate::before { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .mou.is-bobbing { animation: none; } }
 
-/* The pair. Khanh is a whole animal and Mou is a head, so they share a ground
-   line rather than a centre line, and the heart rises between them. */
-.duo { display: flex; align-items: flex-end; gap: 6px; }
-.duo .mou.is-bobbing { animation-delay: .9s; }
-
-.duo-heart {
-  position: relative;
-  width: 0;
-  display: flex;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-}
-.duo-heart .pixel-heart { image-rendering: pixelated; }
-.duo-heart.is-showing { animation: heart-rise 2.6s ease-out; }
-@keyframes heart-rise {
-  0%   { opacity: 0; transform: translateY(2px) scale(0.7); }
-  18%  { opacity: 1; transform: translateY(-6px) scale(1); }
-  70%  { opacity: 1; transform: translateY(-16px) scale(1); }
-  100% { opacity: 0; transform: translateY(-26px) scale(0.9); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .duo-heart.is-showing { animation: none; opacity: 0; }
-}
+/* Mou is a head rather than a whole animal, so he sits on the ground line of
+   whatever he is placed next to rather than on its centre line. */
+.companion { display: flex; align-items: flex-end; }
 
 .mou-btn {
   display: inline-flex;
