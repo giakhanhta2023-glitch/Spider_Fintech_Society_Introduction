@@ -31,16 +31,16 @@ function IndexRow({ level }) {
     </span>
 
     <span class="index-meta">
-      ${unlocked ? null : html`<${Tag}>locked<//>`}
-      <${Tag}><${Gauge} value=${level.difficulty} /><//>
-      <${Tag}>${level.minutes} min<//>
-      <${Tag} variant=${state.quizPassed ? 'moss' : ''}>
+      <${Gauge} value=${level.difficulty} />
+      <span class="meta-cell meta-min">${level.minutes} min</span>
+      <span class=${`meta-cell meta-drill${state.quizPassed ? ' is-done' : ''}`}>
         drill ${state.quizBest}/${level.quiz.length}
-      <//>
-      <${Tag} variant=${state.projectDone ? 'moss' : ''}>
-        ${level.project ? (state.projectDone ? 'shipped' : 'build') : (state.projectDone ? 'ready' : 'setup')}
-      <//>
-      ${current ? html`<${Tag} variant="accent">you are here<//>` : null}
+      </span>
+      <span class=${`meta-cell meta-state${state.projectDone ? ' is-done' : ''}`}>
+        ${!unlocked ? 'locked'
+          : level.project ? (state.projectDone ? 'shipped' : 'build')
+          : (state.projectDone ? 'ready' : 'setup')}
+      </span>
     </span>`;
 
   return unlocked
@@ -58,12 +58,14 @@ function TrackSwitch({ active, onPick }) {
     <div class="trackswitch">
       ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t) => {
         const on = t.id === active;
+        const count = FQ.levelsIn(t.id).length;
         return html`
           <button key=${t.id} type="button"
             class=${`trackswitch-opt${on ? ' is-on' : ''}`}
             aria-pressed=${on ? 'true' : 'false'}
             onClick=${() => onPick(t.id)}>
-            <span class="kicker">${t.name} track</span>
+            <span class="trackswitch-name">${t.name} track</span>
+            <span class="trackswitch-count">${count} levels</span>
           </button>`;
       })}
     </div>`;
@@ -84,32 +86,17 @@ export function Home({ onAskTutor }) {
   return html`
     <div class="page">
 
-      <!-- Masthead: title occupies the left seven columns, the standfirst and
-           entry point sit in the right four. Deliberately off-centre. -->
+      <!-- Masthead: the title and the way in share the left seven columns, so
+           the eye goes name, promise, button without crossing the page. The
+           quote is an aside and sits in the right four where an aside belongs.
+           Deliberately off-centre, and deliberately not two half-empty halves. -->
       <section class="section grid">
         <div class="col-1-7">
           <span class="kicker">Spider Fintech Society</span>
           <h1 class="display display-xl">
             Learn fintech<br />by building it
           </h1>
-          <div style=${{ marginTop: '30px' }}>
-            <${Companions} size=${76} />
-            <!-- One line, picked by the date rather than at random, so the
-                 whole society sees the same one on the same day. -->
-            ${(() => {
-              const said = FQ.quoteOfTheDay();
-              return said ? html`
-                <figure class="daily">
-                  <span class="daily-label">today</span>
-                  <blockquote class="daily-quote">${said.q}</blockquote>
-                  <figcaption class="daily-who">${said.who}</figcaption>
-                </figure>` : null;
-            })()}
-          </div>
-        </div>
-
-        <div class="col-9-12">
-          <div class="btn-row">
+          <div class="btn-row" style=${{ marginTop: '32px' }}>
             <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
               ${cleared ? `continue level ${String(FQ.positionOf(FQ.level(current))).padStart(2, '0')}`
                         : `start ${meta.name} level ${first}`}
@@ -119,6 +106,21 @@ export function Home({ onAskTutor }) {
               <span>meet Mou, your tutor</span>
             </button>
           </div>
+        </div>
+
+        <div class="col-9-12 hero-aside">
+          <${Companions} size=${64} />
+          <!-- One line, picked by the date rather than at random, so the whole
+               society sees the same one on the same day. -->
+          ${(() => {
+            const said = FQ.quoteOfTheDay();
+            return said ? html`
+              <figure class="daily">
+                <span class="daily-label">today</span>
+                <blockquote class="daily-quote">${said.q}</blockquote>
+                <figcaption class="daily-who">${said.who}</figcaption>
+              </figure>` : null;
+          })()}
         </div>
       </section>
 

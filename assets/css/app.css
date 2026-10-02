@@ -114,7 +114,7 @@ main:focus { outline: none; }
   top: 0;
   z-index: 60;
   font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   color: var(--bone);
   background: var(--ink-raised);
@@ -133,6 +133,12 @@ body, p, li, td, th, h1, h2, h3, h4, dd, dt, figcaption, blockquote, span, a {
 
 /* ==========================================================================
    TYPE
+
+   One scale, in rem: 0.68, 0.76, 0.86, 1, 1.08, 1.32, 1.5, 2.9. Every fixed
+   font-size below is one of those eight, and headings that need to breathe use
+   clamp() instead. The file once held twenty-four different sizes, several of
+   them half a pixel apart, which the eye reads as a misprint rather than a
+   hierarchy. If you need a size that is not on the list, change the list.
    ========================================================================== */
 .display {
   font-family: var(--display);
@@ -170,7 +176,7 @@ p.lede {
 /* Every label, figure and tag is monospaced. It reads as data, not decoration. */
 .mono {
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   font-variant-numeric: tabular-nums;
   color: var(--ash);
@@ -186,7 +192,7 @@ p.lede {
 .daily-label {
   display: block;
   font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   color: var(--accent);
   margin-bottom: 6px;
@@ -194,7 +200,7 @@ p.lede {
 .daily-quote {
   margin: 0;
   font-family: var(--text);
-  font-size: 1.02rem;
+  font-size: 1rem;
   font-style: italic;
   line-height: 1.5;
   color: var(--ash);
@@ -202,7 +208,7 @@ p.lede {
 .daily-who {
   margin-top: 6px;
   font-family: var(--mono);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   color: var(--graphite);
 }
@@ -307,7 +313,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 }
 .wordmark-text {
   font-family: var(--display);
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   letter-spacing: var(--track-display);
   color: var(--bone);
   line-height: 1;
@@ -320,7 +326,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   align-items: center;
   padding: 0 clamp(12px, 1.6vw, 20px);
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   letter-spacing: 0;
   color: var(--ash);
   border-bottom: 2px solid transparent;
@@ -331,7 +337,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 
 .masthead-meta { margin-left: auto; display: flex; align-items: center; gap: clamp(12px, 2vw, 24px); }
 .xp-plate { display: flex; align-items: baseline; gap: 8px; }
-.xp-plate b { font-family: var(--mono); font-size: 0.95rem; color: var(--bone); font-weight: 500; }
+.xp-plate b { font-family: var(--mono); font-size: 1rem; color: var(--bone); font-weight: 500; }
 .xp-plate span { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 
 /* Small screens keep the nav: it drops to a second row under the wordmark
@@ -370,7 +376,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   background: transparent;
   color: var(--bone);
   font-family: var(--mono);
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   letter-spacing: 0;
   line-height: 1;
   cursor: pointer;
@@ -385,7 +391,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 .btn-quiet { border-color: var(--rule-mid); color: var(--ash); }
 .btn-quiet:hover { background: transparent; border-color: var(--bone); color: var(--bone); }
 
-.btn-s { padding: 9px 14px; font-size: 0.78rem; }
+.btn-s { padding: 9px 14px; font-size: 0.76rem; }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
 .btn:disabled:hover { background: transparent; color: var(--bone); }
 
@@ -431,48 +437,54 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   margin-top: 8px;
 }
 .trackswitch-opt {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
   text-align: left;
   background: none;
   border: 0;
-  border-top: 2px solid transparent;
+  border-top: 2px solid var(--rule-mid);
   margin-top: -1px;
-  padding: 16px 0 18px;
+  padding: 14px 0 16px;
   cursor: pointer;
-  color: var(--graphite);
   font: inherit;
+  transition: border-color .14s ease;
 }
-.trackswitch-opt:hover .kicker { color: var(--ash); }
+.trackswitch-name {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  color: var(--ash);
+  transition: color .14s ease;
+}
+.trackswitch-count { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
+.trackswitch-opt:hover .trackswitch-name { color: var(--bone); }
 .trackswitch-opt.is-on { border-top-color: var(--accent); }
-.trackswitch-opt.is-on .kicker { color: var(--accent); }
+.trackswitch-opt.is-on .trackswitch-name { color: var(--accent); }
 @media (max-width: 700px) {
   .trackswitch { grid-template-columns: minmax(0, 1fr); }
   .trackswitch-opt { border-top: 1px solid var(--rule); }
   .trackswitch-opt.is-on { border-top: 2px solid var(--accent); }
 }
 
+/* Four figures on one line, each sitting next to the words it belongs to, the
+   way a paper prints a market summary. Set as big stacked numerals they were
+   shouting four things nobody had asked about yet. */
 .datastrip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 6px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px clamp(26px, 3.6vw, 48px);
+  padding: 14px 0 16px;
+  border-bottom: 1px solid var(--rule);
 }
-/* No rules around or between the figures: at four columns of mono numerals
-   the alignment already does the dividing. */
-.datastrip > div { padding: 18px var(--col-gap) 18px 0; }
+.datastrip > div { display: flex; align-items: baseline; gap: 9px; }
 .datastrip .v {
-  display: block;
   font-family: var(--mono);
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-size: 1rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
   color: var(--bone);
-  line-height: 1.1;
 }
-.datastrip .k { display: block; margin-top: 6px; font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
-@media (max-width: 700px) {
-  .datastrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .datastrip > div { padding-right: 20px; }
-}
+.datastrip .k { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 
 /* ==========================================================================
    INDEX: the level list as a contents page
@@ -491,7 +503,7 @@ a.index-row:hover { background: #0B0B0A; }
 a.index-row:hover .index-title { color: var(--accent); }
 .index-row.is-locked .index-title { color: var(--graphite); }
 
-.index-num { font-family: var(--mono); font-size: 0.9rem; color: var(--graphite); font-variant-numeric: tabular-nums; }
+.index-num { font-family: var(--mono); font-size: 0.86rem; color: var(--graphite); font-variant-numeric: tabular-nums; }
 .index-row.is-current .index-num { color: var(--accent); }
 .index-row.is-done .index-num { color: var(--moss); }
 
@@ -503,18 +515,39 @@ a.index-row:hover .index-title { color: var(--accent); }
   color: var(--bone);
   transition: color .14s ease;
 }
-.index-sub { margin: 8px 0 0; font-size: 0.97rem; line-height: 1.55; color: var(--ash); max-width: 58ch; }
+.index-sub { margin: 8px 0 0; font-size: 1rem; line-height: 1.55; color: var(--ash); max-width: 58ch; }
+/* The metadata used to be six bordered chips that wrapped into a ragged block
+   on every row. Boxes around a number are not information. These are four
+   fixed-width mono columns instead, so they line up straight down the page and
+   the eye can read one of them without reading the other three. */
 .index-meta {
   display: flex;
-  gap: 10px;
+  gap: 20px;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  max-width: 22rem;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--graphite);
+  white-space: nowrap;
 }
+.meta-cell { text-align: right; font-variant-numeric: tabular-nums; }
+.meta-min { width: 7ch; }
+.meta-drill { width: 11ch; }
+.meta-state { width: 7ch; }
+.meta-cell.is-done { color: var(--moss); }
+.index-row.is-locked .meta-cell { color: var(--rule-mid); }
+.index-row.is-locked .gauge i.on { background: var(--rule-mid); }
+
+/* The row you are on is marked in the gutter, where a contents page marks it,
+   rather than by adding a seventh chip to the end of the line. */
+.index-row.is-current .index-num::before { content: '> '; }
+
+/* On a phone the four columns run the full width of the row rather than
+   starting after the number, and read left to right like the rest of the page. */
 @media (max-width: 760px) {
   .index-row { grid-template-columns: 3rem minmax(0, 1fr); row-gap: 14px; }
-  .index-meta { grid-column: 2; justify-content: flex-start; }
+  .index-meta { grid-column: 1 / -1; justify-content: flex-start; gap: 14px; }
+  .meta-cell { text-align: left; }
 }
 
 /* ==========================================================================
@@ -543,6 +576,13 @@ a.index-row:hover .index-title { color: var(--accent); }
   margin-bottom: 26px;
   border-bottom: 2px solid var(--rule-heavy);
 }
+/* Instrument Serif ships a single weight. Any heading left on the browser's
+   default bold gets a synthesised one: the renderer smears the outline, and at
+   33px it reads as a blurred heading rather than a strong one. Say 400 wherever
+   the display face is used. */
+.display, .section-head h2, .index-title, .prose h3,
+.wordmark-text, .score-figure, .gate-mark { font-weight: 400; }
+
 .section-head h2 {
   font-family: var(--display);
   font-size: clamp(1.5rem, 2.6vw, 2.05rem);
@@ -591,7 +631,7 @@ a.index-row:hover .index-title { color: var(--accent); }
 }
 .prose h4 {
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   letter-spacing: 0;
   color: var(--accent);
   margin: 1.8em 0 0;
@@ -613,7 +653,7 @@ a.index-row:hover .index-title { color: var(--accent); }
 }
 
 /* Asides are set as marginal notes with a heavy left rule. */
-.note { border-left: 2px solid var(--rule-mid); padding: 4px 0 4px 20px; color: var(--ash); font-size: 0.97rem; }
+.note { border-left: 2px solid var(--rule-mid); padding: 4px 0 4px 20px; color: var(--ash); font-size: 1rem; }
 .note-label {
   display: block;
   font-family: var(--mono);
@@ -633,7 +673,7 @@ a.index-row:hover .index-title { color: var(--accent); }
    TABLES
    ========================================================================== */
 .table-wrap { overflow-x: auto; }
-table.data { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+table.data { width: 100%; border-collapse: collapse; font-size: 1rem; }
 table.data th,
 table.data td { text-align: left; padding: 11px 16px 11px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
 table.data th {
@@ -687,13 +727,13 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   color: var(--accent);
   margin-bottom: 10px;
 }
-.check-q { margin: 0; color: var(--bone); font-size: 1.02rem; line-height: 1.6; }
+.check-q { margin: 0; color: var(--bone); font-size: 1rem; line-height: 1.6; }
 .check-a {
   margin: 16px 0 0;
   padding-top: 14px;
   border-top: 1px solid var(--rule);
   color: var(--ash);
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.65;
 }
 .check-btn {
@@ -738,7 +778,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   padding: 16px 18px;
   overflow-x: auto;
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   line-height: 1.7;
   color: #D3D9E6;
 }
@@ -769,7 +809,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   align-items: baseline;
 }
 .step-check .mono { color: var(--graphite); flex: 0 0 auto; }
-.step-check span:last-child { color: var(--ash); font-size: 0.95rem; }
+.step-check span:last-child { color: var(--ash); font-size: 1rem; }
 @media (max-width: 700px) { .step { grid-template-columns: 2.6rem minmax(0, 1fr); } }
 
 /* ==========================================================================
@@ -795,7 +835,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
 .q-option + .q-option { margin-top: -1px; }
 .q-option:hover:not(:disabled) { border-color: var(--bone); color: var(--bone); position: relative; z-index: 1; }
 .q-option:disabled { cursor: default; }
-.q-key { font-family: var(--mono); font-size: 0.82rem; color: var(--graphite); }
+.q-key { font-family: var(--mono); font-size: 0.86rem; color: var(--graphite); }
 
 .q-option.is-right { border-color: var(--moss); background: var(--moss-wash); color: var(--bone); position: relative; z-index: 2; }
 .q-option.is-right .q-key { color: var(--moss); }
@@ -809,7 +849,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
 .q-option.is-wrong .q-key::after {
   display: block;
   margin-top: 6px;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
 }
 .q-option.is-right .q-key::after { content: 'right'; }
@@ -834,7 +874,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   letter-spacing: var(--track-display);
   color: var(--bone);
 }
-.score-figure small { display: block; font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0; color: var(--graphite); margin-top: 14px; }
+.score-figure small { display: block; font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0; color: var(--graphite); margin-top: 14px; }
 .score.is-pass .score-figure { color: var(--moss); }
 .score.is-fail .score-figure { color: var(--accent); }
 @media (max-width: 800px) { .score { grid-template-columns: 1fr; row-gap: 22px; } }
@@ -857,7 +897,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   background: transparent;
   color: var(--ash);
   font-family: var(--text);
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.5;
   cursor: pointer;
 }
@@ -869,7 +909,7 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   display: grid;
   place-items: center;
   font-family: var(--mono);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   color: transparent;
   margin-top: 5px;
 }
@@ -889,8 +929,8 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   border-bottom: 1px solid var(--rule);
   align-items: baseline;
 }
-.defrow dt { font-family: var(--mono); font-size: 0.88rem; color: var(--bone); }
-.defrow dd { margin: 0; color: var(--ash); font-size: 0.97rem; }
+.defrow dt { font-family: var(--mono); font-size: 0.86rem; color: var(--bone); }
+.defrow dd { margin: 0; color: var(--ash); font-size: 1rem; }
 .defrow .lv { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 @media (max-width: 700px) { .defrow { grid-template-columns: 1fr; row-gap: 6px; } }
 
@@ -1011,6 +1051,13 @@ body.is-gate::before { display: none; }
    whatever he is placed next to rather than on its centre line. */
 .companion { display: flex; align-items: flex-end; }
 
+/* The hero aside: sprite and quote, sitting on the baseline of the title
+   block rather than at the top of an empty column. */
+.hero-aside { display: flex; flex-direction: column; justify-content: flex-end; gap: 18px; }
+@media (max-width: 860px) {
+  .hero-aside { justify-content: flex-start; margin-top: 8px; }
+}
+
 .mou-btn {
   display: inline-flex;
   align-items: center;
@@ -1020,7 +1067,7 @@ body.is-gate::before { display: none; }
   background: transparent;
   color: var(--bone);
   font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   cursor: pointer;
   transition: border-color .15s ease, background .15s ease;
@@ -1089,7 +1136,7 @@ body.is-gate::before { display: none; }
 .tutor-tools { display: flex; gap: 8px; flex: 0 0 auto; }
 .tutor-x {
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   color: var(--graphite);
   background: transparent;
@@ -1115,7 +1162,7 @@ body.is-gate::before { display: none; }
 .field-label {
   display: block;
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.76rem;
   letter-spacing: var(--track-mono);
   color: var(--graphite);
   margin-bottom: 4px;
@@ -1148,7 +1195,7 @@ body.is-gate::before { display: none; }
 .tutor-form { display: flex; align-items: flex-end; gap: 12px; }
 .tutor-form .tutor-input { flex: 1; min-width: 0; }
 
-.bubble { font-size: 0.97rem; line-height: 1.62; max-width: 100%; }
+.bubble { font-size: 1rem; line-height: 1.62; max-width: 100%; }
 .bubble.bot { color: var(--ash); border-left: 1px solid var(--rule-mid); padding-left: 16px; }
 .bubble.me {
   color: var(--bone);
@@ -1167,11 +1214,11 @@ body.is-gate::before { display: none; }
   padding: 12px;
   overflow-x: auto;
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   margin: .6em 0;
 }
 .bubble-body a { color: var(--accent); border-bottom: 1px solid var(--accent); }
-.bubble-source { display: block; margin-top: 10px; font-family: var(--mono); font-size: 0.7rem; color: var(--graphite); }
+.bubble-source { display: block; margin-top: 10px; font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }
 
 .tutor-input {
   width: 100%;
@@ -1181,7 +1228,7 @@ body.is-gate::before { display: none; }
   background: transparent;
   color: var(--bone);
   font-family: var(--mono);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
 }
 .tutor-input::placeholder { color: var(--graphite); }
 .tutor-input:focus { outline: none; border-bottom-color: var(--accent); }
@@ -1196,14 +1243,12 @@ body.is-gate::before { display: none; }
    NOTICES AND TOASTS
    ========================================================================== */
 .notice {
-  border: 1px solid var(--rule-mid);
-  border-left-width: 2px;
-  border-left-color: var(--accent);
+  border: 1px solid var(--accent);
   padding: 16px 20px;
   color: var(--ash);
-  font-size: 0.97rem;
+  font-size: 1rem;
 }
-.notice-moss { border-left-color: var(--moss); }
+.notice-moss { border-color: var(--moss); }
 
 .toasts {
   position: fixed;
@@ -1220,12 +1265,12 @@ body.is-gate::before { display: none; }
   background: var(--bone);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 0.8rem;
-  padding: 12px 16px;
-  border-left: 3px solid var(--accent);
+  font-size: 0.76rem;
+  padding: 11px 15px;
+  border: 2px solid var(--accent);
   animation: slide .28s cubic-bezier(.2, .9, .2, 1);
 }
-.toast.is-moss { border-left-color: var(--moss); }
+.toast.is-moss { border-color: var(--moss); }
 @keyframes slide { from { opacity: 0; transform: translateX(-12px); } }
 
 /* ==========================================================================
@@ -1246,7 +1291,7 @@ body.is-gate::before { display: none; }
 .rt-TabsList { box-shadow: none; border-bottom: 1px solid var(--rule-mid); gap: clamp(14px, 2.4vw, 32px); }
 .rt-TabsTrigger {
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   letter-spacing: 0;
   color: var(--graphite);
   padding: 0;

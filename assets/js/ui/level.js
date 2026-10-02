@@ -514,16 +514,17 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
               </tr>
               <tr>
                 <td class="mono" style=${{ color: 'var(--graphite)' }}>covers</td>
-                <td style=${{ textAlign: 'right' }}>
-                  <span class="tag-row" style=${{ justifyContent: 'flex-end' }}>
-                    ${level.tags.map((t, i) => html`<${Tag} key=${i}>${t}<//>`)}
-                  </span>
+                <!-- A list of three short words does not need three boxes
+                     drawn round it, and boxes right-justified against a narrow
+                     column wrap into an orphan. It is a list; set it as one. -->
+                <td class="figure" style=${{ textAlign: 'right', color: 'var(--bone)' }}>
+                  ${level.tags.join(', ')}
                 </td>
               </tr>
               ${store.isCleared(level.id) ? html`
                 <tr>
                   <td class="mono" style=${{ color: 'var(--graphite)' }}>status</td>
-                  <td style=${{ textAlign: 'right' }}><${Tag} variant="moss">cleared<//></td>
+                  <td class="figure" style=${{ textAlign: 'right', color: 'var(--moss)' }}>cleared</td>
                 </tr>` : null}
             </tbody>
           </table>
