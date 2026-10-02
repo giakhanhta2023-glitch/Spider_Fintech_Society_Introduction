@@ -30,8 +30,8 @@ Little's law. Arithmetic, not opinion. Every load below is a share of it.
 
 The work per request never changed. Only the arrival rate did. **Latency is not
 linear in load: it is flat and then it is a wall**, which is why capacity
-planning leaves headroom rather than chasing efficiency. A machine run at 94%
-is not thrifty, it is one spike from a queue nobody can drain.
+planning leaves headroom rather than chasing efficiency. A machine run at 94% is one
+spike away from a queue nobody can drain.
 
 There is a second lesson in that table. At 35% the p99 is 265.6 ms, which is
 almost exactly the handler's 250 ms slow path: **at low load the tail is your

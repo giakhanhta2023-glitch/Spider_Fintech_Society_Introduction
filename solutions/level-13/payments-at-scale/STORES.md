@@ -15,8 +15,8 @@ maintains, and level 6 enforces it with a deferred constraint trigger that
 refuses the write at commit.
 
 No wide column store can express it. DynamoDB has transactions across a limited
-number of items and conditional writes, so it is not incapable, but nothing in
-it can say "these rows must sum to zero", and I would be reimplementing
+number of items and conditional writes, so it can do some of this. What nothing
+in it can say is "these rows must sum to zero", and I would be reimplementing
 constraints in application code that the database already does correctly.
 
 The storage arithmetic settles the scale argument before it starts: 130 million
@@ -72,5 +72,5 @@ payment was captured wants your event.
 It is wrong on the mechanism, because nothing enforces that every transaction
 balances. It is wrong on the arithmetic, because a few terabytes a year does
 not need it. And it is wrong on the shape of the question, because a ledger is
-defined by its invariants and a store with no invariants is not a ledger, it is
-a list of numbers that usually agree.
+defined by its invariants, and a store with no invariants gives you a list of
+numbers that usually agree.

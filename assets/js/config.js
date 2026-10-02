@@ -14,7 +14,7 @@ window.FQ_CONFIG = {
   /* Quiz rules */
   quiz: {
     total: 15,
-    passMark: 12          // 12 / 15 = 80% to unlock the project
+    passMark: 12          // 12 / 15 = 80% to open the project
   },
 
   /* XP economy */

@@ -16,7 +16,9 @@ import os
 import re
 import sys
 
-ROOTS = ['content', 'assets/js', 'docs', 'tools']
+# The solutions are text a learner reads too, so they are scanned with
+# everything else rather than being a blind spot the size of the curriculum.
+ROOTS = ['content', 'assets/js', 'docs', 'tools', 'solutions']
 FILES = ['README.md', 'index.html']
 SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '.venv'}
 
@@ -29,14 +31,29 @@ ALLOWED_PHRASES = [
     'operating leverage',       # profit moving faster than revenue
     'financial leverage',       # the debt kind
     'leverage ratio',           # the regulatory one
+    'unlock rules',             # the name of the gating logic in storage.js
+    'unlock logic',             # likewise, in the architecture notes
+    'unlock|progress',          # inside the tutor's keyword regex: a learner
+                                # may well type "how do I unlock the next one"
 ]
 
+#
+# The second block is merged from the slop-gate vocabulary pack,
+# github.com/hwajongpark/slop-gate (rules/vocabulary.json), cross checked
+# against the Wikipedia field guide "Signs of AI writing". Only entries this
+# list did not already have were taken, and anything that is a term of art in
+# finance or engineering was left out on purpose: a curriculum about payments
+# has to be able to say what it means without a scanner arguing with it.
 BANNED = [
     'delve', 'foster', 'leverage', 'utilize', 'facilitate', 'empower',
     'streamline', 'robust', 'cutting-edge', 'paradigm shift', 'game changer',
     'this is huge', 'this changes everything', 'tapestry', 'realm', 'beacon',
     'multifaceted', 'meticulous', 'intricate', 'paramount', 'transformative',
-    'elevate', 'embark', 'supercharge', 'harness', 'ever-evolving'
+    'elevate', 'embark', 'supercharge', 'harness', 'ever-evolving',
+    # merged from slop-gate
+    'seamless', 'seamlessly', 'unlock', 'unlocks', 'unlocking',
+    'proactive', 'proactively', 'bustling', 'nestled', 'treasure trove',
+    'top-notch', 'moreover', 'furthermore', 'crucial', 'pivotal', 'vibrant'
 ]
 
 # Phrases that usually delay the point.
@@ -45,7 +62,13 @@ FILLER = [
     'it is important to note', 'at the end of the day', 'when it comes to',
     'at its core', "in today's world", 'in the age of', 'in the world of',
     'the reality is', 'the truth is', 'in terms of', 'with regard to',
-    'going forward', 'in this article', "let's dive in", 'dive into'
+    'going forward', 'in this article', "let's dive in", 'dive into',
+    # merged from slop-gate
+    'navigate the complexities', 'navigating the complexities',
+    'comprehensive guide', 'ultimate guide', 'definitive guide',
+    'feel free to', 'do not hesitate to', "don't hesitate to",
+    'a testament to', 'underscore the importance',
+    'underscores the importance', 'in conclusion'
 ]
 
 # Patterns. Each is (label, regex, note).
@@ -133,6 +156,14 @@ def scan():
 
 
 def main():
+    # A flagged line can contain any character the curriculum uses, and a
+    # Windows console defaults to cp1252, which cannot print a minus sign or a
+    # box drawing character. Printing a report should never be the thing that
+    # crashes: unprintable characters become question marks and the report
+    # still arrives.
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(errors='replace')
+
     hits = scan()
     if '--counts' in sys.argv:
         tally = {}

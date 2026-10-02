@@ -170,8 +170,8 @@ ticket rather than a page.
 lookup and the analytics copy, with the reason for each. The short version is
 that the ledger is relational because its invariant must be enforced, the rate
 limiter is Redis because its data is losable, and **the token lookup genuinely
-belongs in a wide column store**, which is the one most people get wrong in the
-other direction.
+belongs in a wide column store**, which is the call that usually goes the other
+way.
 
 ## What was verified where
 

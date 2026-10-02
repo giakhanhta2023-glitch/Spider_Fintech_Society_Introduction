@@ -5,7 +5,7 @@
 Two of them are worth reading even if you never run them:
 `test_the_check_catches_a_dropped_pack_line` proves the check cell actually
 checks something, by breaking the pack on purpose and asserting that it
-complains. A check that has never failed is not a check, it is decoration.
+complains. A check that has never failed might be checking nothing.
 And `test_a_duplicated_key_doubles_the_rows` is the pandas trap that costs
 analysts the most money: a merge against a table whose key is not unique.
 """

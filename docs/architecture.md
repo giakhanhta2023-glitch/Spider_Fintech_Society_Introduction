@@ -152,7 +152,7 @@ is not a map, scores zero for that member instead of failing the query for every
 Rules worth knowing:
 
 - a level is **cleared** when its drill is passed *and* its build is marked complete;
-- level *n* unlocks when level *n − 1* is cleared;
+- level *n* opens when level *n − 1* is cleared;
 - re-running a drill can only raise your best score, never lower it;
 - XP is awarded once per improvement, not per attempt.
 

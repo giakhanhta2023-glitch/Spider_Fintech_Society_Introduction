@@ -79,7 +79,7 @@ model backed tutor.
 | 19 | The screen that filters you out | Forty problems, four exercises, an honest log | Complexity, patterns, interviews |
 | 20 | The whiteboard, and the thing you hand over | The platform assembled, load tested, packaged | System design, capacity, capstone |
 
-A level is cleared when you pass its drill **and** mark its build complete; that unlocks the next
+A level is cleared when you pass its drill **and** mark its build complete; that opens the next
 one.
 
 Levels 1 to 10 take somebody from no Python to a deployed app, and they run in a browser tab.
@@ -95,7 +95,7 @@ somebody hiring. The plan for levels 11 to 20 is in
 2. **Tutorial**: steps you follow along with. Every tool the build needs is introduced here and
    nowhere else.
 3. **Drill**: 15 questions, instant explanations, and the full answer key at the end, pass or fail.
-   You need **12/15** to unlock the build.
+   You need **12/15** to open the build.
 4. **Build**: a project scoped to exactly what you know, with requirements, a starter file,
    check values, and a marking rubric.
 5. **Compare**: read the solution key in [`solutions/`](solutions/) *after* you have written yours.

@@ -156,9 +156,8 @@ class PartitionResult:
 def partitioning(path: Path, partitions: int = 4, seed: int = 11) -> list[PartitionResult]:
     """Does a capture ever arrive before its own authorisation?
 
-    A partitioned log promises order only WITHIN a partition. So the question
-    is not whether the log preserves order, it is whether you put the events
-    that must stay in order into the same partition. That is the partition key,
+    A partitioned log promises order only WITHIN a partition. So the question to ask
+    is whether you put the events that must stay in order into the same partition. That is the partition key,
     and it is the only decision that matters here.
     """
     rows = []

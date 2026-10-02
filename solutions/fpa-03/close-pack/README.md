@@ -112,8 +112,8 @@ text_amounts = int(pd.to_numeric(frame["amount"], errors="coerce").isna().sum())
 ```
 
 Two, which is the comma amount in March and the bracketed credit in April. The
-useful part is not the fix, it is that a number in the output was wrong by a
-factor of 159 and looked entirely plausible until something asserted what it
+fix matters less than what it says about the output: a number there was wrong by
+a factor of 159 and looked entirely plausible until something asserted what it
 should be.
 
 ## What is not here

@@ -198,7 +198,7 @@ export function offlineAnswer(question, ctx) {
     const cur = FQ.store.currentLevel();
     return {
       text: `Start at ${levelLink(cur, 'brief', 'level ' + cur)}. Work the tabs in order: **learn**, ` +
-            `**tutorial**, **drill**, **build**. The drill needs ${CFG.quiz.passMark}/15 to unlock the build, ` +
+            `**tutorial**, **drill**, **build**. The drill needs ${CFG.quiz.passMark}/15 to open the build, ` +
             'and the build needs nothing beyond what that level taught you.\n\nNothing to install for levels 1 to 8. ' +
             'It all runs in Google Colab in a browser tab.',
       chips: ['Do I need to install Python?', 'What is Colab?', 'How does XP work?']

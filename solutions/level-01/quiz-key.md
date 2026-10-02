@@ -149,11 +149,11 @@
 
 **Why:** APR is a borrowing-cost disclosure that folds fees into a single yearly percentage so different loans can be compared. Level 6 builds it properly.
 
-### 15. What unlocks a FinQuest project?
+### 15. What opens a FinQuest project?
 
 - A. Reading the knowledge page
 - **B. Scoring at least 12 of 15 on the level drill** ✅
 - C. Completing the previous project
 - D. Paying for a subscription
 
-**Why:** Each drill needs 12/15 (80%) to unlock its project, and the project must be marked complete before the next level opens.
+**Why:** Each drill needs 12/15 (80%) to open its project, and the project must be marked complete before the next level opens.

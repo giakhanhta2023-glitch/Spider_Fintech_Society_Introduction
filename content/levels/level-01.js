@@ -99,7 +99,7 @@ FQ.registerLevel({
     { tip: 'The gap between *authorization* and *settlement* is where a huge amount of fintech engineering lives: ' +
            'pending transactions, refunds, chargebacks, reconciliation, and "why does my balance look wrong?" support tickets.' },
 
-    { h: 'Rails, ledgers, and the vocabulary that unlocks the rest' },
+    { h: 'Rails, ledgers, and the vocabulary the rest of the course assumes' },
     { p: 'A **rail** is a pipe money travels along: card networks, bank transfers (ACH in the US, SEPA in Europe, ' +
          'Faster Payments in the UK, PromptPay and VietQR style instant schemes in Asia), and newer blockchain rails. ' +
          'Rails differ in speed, cost, reversibility, and limits, and choosing between them is a real product decision.' },
@@ -190,7 +190,7 @@ FQ.registerLevel({
     { ol: [
       '**Learn**: the knowledge page you are reading now.',
       '**Tutorial**: steps you follow along with in Colab, with every tool you will need for the project.',
-      '**Drill**: 15 questions. You need 12 correct to unlock the project. Every answer has an explanation.',
+      '**Drill**: 15 questions. You need 12 correct to open the project. Every answer has an explanation.',
       '**Build**: a project you can complete using *only* this level and the ones before it. Nothing new is required.',
       '**Compare**: a full solution key waits in the GitHub repo. Write yours first, then read theirs.'
     ]},
@@ -484,7 +484,7 @@ FQ.registerLevel({
       answer: 2,
       why: "APR is a borrowing-cost disclosure that folds fees into a single yearly percentage so different loans can be compared. Level 6 builds it properly." },
 
-    { q: "What unlocks a FinQuest project?",
+    { q: "What opens a FinQuest project?",
       options: [
         "Reading the knowledge page",
         "Scoring at least 12 of 15 on the level drill",
@@ -492,7 +492,7 @@ FQ.registerLevel({
         "Paying for a subscription"
       ],
       answer: 1,
-      why: "Each drill needs 12/15 (80%) to unlock its project, and the project must be marked complete before the next level opens." }
+      why: "Each drill needs 12/15 (80%) to open its project, and the project must be marked complete before the next level opens." }
   ],
 
   /* ==================== SETUP CHECKLIST (instead of a project) ==================== */
