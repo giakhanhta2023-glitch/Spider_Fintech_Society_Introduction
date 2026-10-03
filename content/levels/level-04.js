@@ -350,11 +350,11 @@ FQ.registerLevel({
         t: 'Build the ledger core',
         blocks: [
           { p: 'The ledger owns its entries. Nothing outside the class may touch the list. That is what makes the invariant enforceable.' },
-          { code: 'from datetime import datetime\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}          # id -> Account\n        self.entries = []           # append-only list of dicts\n        self._keys = {}             # idempotency key -> txn_id, for step 6\n        self._next_id = 1\n\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        if account_id in self.accounts:\n            raise LedgerError(f"account {account_id} already exists")\n        self.accounts[account_id] = Account(account_id, kind, allow_negative)\n        return self.accounts[account_id]\n\n    def balance(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return sum(e["amount"] for e in self.entries if e["account"] == account_id)\n\n    def _post(self, legs, memo):\n        """Write a balanced set of legs: [(account_id, signed_cents),...]"""\n        if sum(amount for _, amount in legs) != 0:\n            raise LedgerError("transaction does not balance")\n        txn_id = f"TXN{self._next_id:05d}"\n        self._next_id += 1\n        stamp = datetime.now().isoformat(timespec="seconds")\n        for account_id, amount in legs:\n            self.entries.append({\n                "txn_id": txn_id, "account": account_id, "amount": amount,\n                "memo": memo, "at": stamp,\n            })\n        return txn_id', lang: 'python' },
+          { code: 'from datetime import datetime\n\nclass Ledger:\n    def __init__(self):\n        self.accounts = {}          # id -> Account\n        self.entries = []           # append-only list of dicts\n        self._keys = {}             # idempotency key -> txn_id, for step 6\n        self._next_id = 1\n        # Two accounts exist before anybody opens one, because a deposit\n        # and a fee each need somewhere for their other leg to land.\n        self.open_account("world", kind="contra", allow_negative=True)\n        self.open_account("fee_income", kind="revenue", allow_negative=True)\n\n    def open_account(self, account_id, kind="customer", allow_negative=False):\n        if account_id in self.accounts:\n            raise LedgerError(f"account {account_id} already exists")\n        self.accounts[account_id] = Account(account_id, kind, allow_negative)\n        return self.accounts[account_id]\n\n    def balance(self, account_id):\n        if account_id not in self.accounts:\n            raise UnknownAccount(account_id)\n        return sum(e["amount"] for e in self.entries if e["account"] == account_id)\n\n    def _post(self, legs, memo):\n        """Write a balanced set of legs: [(account_id, signed_cents),...]"""\n        if sum(amount for _, amount in legs) != 0:\n            raise LedgerError("transaction does not balance")\n        txn_id = f"TXN{self._next_id:05d}"\n        self._next_id += 1\n        stamp = datetime.now().isoformat(timespec="seconds")\n        for account_id, amount in legs:\n            self.entries.append({\n                "txn_id": txn_id, "account": account_id, "amount": amount,\n                "memo": memo, "at": stamp,\n            })\n        return txn_id', lang: 'python' },
           { p: 'The leading underscore in `_post` is a convention meaning *internal*: callers should use `transfer`, ' +
                'which validates first. Python will not stop them, but every Python programmer reads it as "do not touch".' }
         ],
-        check: 'You can open accounts and call balance() on an empty ledger to get 0.'
+        check: 'A fresh Ledger() already holds world and fee_income, and balance() returns 0 for every account you open.'
       },
       {
         t: 'A validated, idempotent transfer',
@@ -393,6 +393,24 @@ FQ.registerLevel({
         check: 'Your statement prints entries in order with a running balance that ends at the current balance.'
       },
       {
+        t: 'Split a payment without losing a cent',
+        blocks: [
+          { p: 'Three people split a bill of $1.00. A third of 100 cents is 33.333, and whatever you round ' +
+               'that to, three of them is not 100. Somebody has to get the extra cent, and the only question ' +
+               'worth arguing about is whether your code decides that the same way every time.' },
+          { code: 'class Ledger(Ledger):\n\n    def split_payment(self, src, recipients, amount, memo="split"):\n        """Divide an amount between recipients without losing or inventing a cent."""\n        if amount <= 0:\n            raise InvalidAmount("amount must be positive")\n        if not recipients:\n            raise LedgerError("no recipients")\n        for acct in (src, *recipients):\n            if acct not in self.accounts:\n                raise UnknownAccount(acct)\n        if not self.accounts[src].allow_negative and self.balance(src) < amount:\n            raise InsufficientFunds(f"{src} holds {money(self.balance(src))}")\n\n        share, leftover = divmod(amount, len(recipients))\n        shares = [share + (1 if i < leftover else 0) for i in range(len(recipients))]\n        legs = [(src, -amount)] + list(zip(recipients, shares))\n        return self._post(legs, memo)\n\n\nled = Ledger()\nfor who in ("payer", "a", "b", "c"):\n    led.open_account(who)\nled.deposit("payer", 10_000)\nled.split_payment("payer", ["a", "b", "c"], 100)\n\nprint([led.balance(x) for x in ("a", "b", "c")])   # [34, 33, 33]\nprint(led.balance("payer"))                        # 9900\nprint(led.check_invariant())                       # True', lang: 'python' },
+          { p: '`divmod(100, 3)` gives `(33, 1)`: the share each, and the cents left over. Handing the ' +
+               'leftover to the first recipients in order makes the answer **deterministic**, so the same ' +
+               'split run twice produces the same three numbers, and the legs still sum to zero. Compare that ' +
+               'with `amount / len(recipients)`, which gives you 33.33 three times and a cent that has quietly ' +
+               'stopped existing.' },
+          { warn: 'Rounding each share on its own is how real money goes missing. Round the shares and your ' +
+                  'legs no longer balance, so `_post` refuses the transaction, which is the invariant doing ' +
+                  'its job. Integer division plus a remainder is the fix, not a tolerance on the check.' }
+        ],
+        check: 'Splitting 100 cents three ways posts 34, 33 and 33, and check_invariant() still returns True.'
+      },
+      {
         t: 'Replay a day through it',
         blocks: [
           { p: 'Everything so far has been transactions you typed yourself, which is the one kind of traffic that ' +
@@ -403,12 +421,38 @@ FQ.registerLevel({
                'ledger already knows how to say no to all four. What the replay adds is what a batch job has to do ' +
                'next: **count the refusal and carry on**. A batch that dies on the first bad row is a batch somebody ' +
                'has to babysit at six in the morning.' },
-          { code: 'for row in instructions:\n    try:\n        ...                       # deposit, transfer, split or reverse\n    except InsufficientFunds:\n        refused["overdraft"] += 1\n    except UnknownAccount:\n        refused["unknown account"] += 1\n    except InvalidAmount:\n        refused["invalid amount"] += 1\n\n    ledger.check_invariant()      # after every single one, refused ones included', lang: 'python' },
-          { warn: 'The reversal names the payment it cancels by its **idempotency key**, not by a transaction id. A ' +
-                  'file written the night before cannot know the id your ledger will hand out tomorrow, which is ' +
-                  'exactly why the key exists. Keep a `key -> txn_id` dictionary as you go.' },
+          { p: 'Two files, so two reads. `csv.DictReader` hands you each row as a dictionary keyed by the ' +
+               'header line, and **every value arrives as a string**: that is why the flag is compared ' +
+               'against `"1"` rather than used as a boolean, and why every amount goes through `to_cents`.' },
+          { code: 'import csv\nfrom pathlib import Path\n\nDATA = Path("data")           # wherever you saved the two files\n\nledger = Ledger()\nwith (DATA / "level-04-accounts.csv").open() as fh:\n    for row in csv.DictReader(fh):\n        ledger.open_account(row["account_id"], kind=row["kind"],\n                            allow_negative=row["allow_negative"] == "1")\n\nwith (DATA / "level-04-instructions.csv").open() as fh:\n    instructions = list(csv.DictReader(fh))\n\nprint(len(ledger.accounts), "accounts,", len(instructions), "instructions")\n# 14 accounts, 77 instructions', lang: 'python' },
+          { p: 'Now the loop. The `kind` column decides which of your methods to call, and that is the whole ' +
+               'of it: four kinds, four branches. Only a transfer carries an idempotency key. The reversal row ' +
+               'puts the **key of the payment it cancels** in the `src` column, so you keep `seen` as you go ' +
+               'and look the real transaction id up when you reach it.' },
+          { code: 'seen = {}                                  # idempotency key -> txn id\nposted = {"deposit": 0, "transfer": 0, "split": 0, "reverse": 0}\nrefused = {"overdraft": 0, "unknown account": 0, "invalid amount": 0}\nretries = 0\n\nfor row in instructions:\n    kind, key = row["kind"], row["key"]\n    try:\n        if kind == "deposit":\n            ledger.deposit(row["src"], to_cents(row["amount"]), row["memo"])\n\n        elif kind == "transfer":\n            if key and key in seen:\n                retries += 1               # the phone sent it twice\n                continue\n            txn = ledger.transfer(row["src"], row["dst"], to_cents(row["amount"]),\n                                  memo=row["memo"],\n                                  fee=to_cents(row["fee"] or "0"),\n                                  key=key or None)\n            if key:\n                seen[key] = txn\n\n        elif kind == "split":\n            ledger.split_payment(row["src"], row["dst"].split(";"),\n                                 to_cents(row["amount"]), memo=row["memo"])\n\n        elif kind == "reverse":\n            ledger.reverse(seen[row["src"]], memo=row["memo"])   # src holds a key\n\n        posted[kind] += 1\n\n    except InsufficientFunds:\n        refused["overdraft"] += 1\n    except UnknownAccount:\n        refused["unknown account"] += 1\n    except InvalidAmount:\n        refused["invalid amount"] += 1\n\n    ledger.check_invariant()               # after every row, refused ones included', lang: 'python' },
+          { p: '`posted[kind] += 1` sits after the branches rather than inside each one, so an instruction ' +
+               'that raises is never counted as posted. The `continue` on a repeated key is the other half of ' +
+               'idempotency: your `transfer` would already return the original id and write nothing, and this ' +
+               'skips the call entirely so the day\'s report can say how many retries arrived.' },
+          { p: 'The `or` in `row["fee"] or "0"` and `key or None` is there because one file holds four ' +
+               'shapes of row: deposits, splits and reversals all leave `fee` and `key` empty, and ' +
+               '`to_cents("")` raises ValueError because `float("")` does. Every transfer in this ' +
+               'particular file fills both, so neither guard fires today. Write them anyway. A column that ' +
+               'some rows leave blank is one you read defensively or not at all.' },
+          { warn: 'One line in that loop can still stop the batch, and it is worth finding before it does. ' +
+                  '`seen[row["src"]]` raises `KeyError` if a reversal names a key your run never posted, and ' +
+                  '`KeyError` is not one of the three exceptions caught below. Here `pay_0040` posted ' +
+                  'successfully, so the day runs clean. On a day when that payment had been refused, the ' +
+                  'reversal of it would take the whole job down at instruction 77. Catch it and count it as ' +
+                  'a refusal like any other: a reversal of something that never happened is a refusal, not ' +
+                  'a crash.' },
           { tip: 'Check the invariant after the refused instructions too. A refusal that wrote one leg and then ' +
-                 'raised is the worst thing that can happen in this level, and that one line is what would catch it.' }
+                 'raised is the worst thing that can happen in this level, and that one line is what would catch it.' },
+          { p: 'Finally, print what the day did. These are the numbers to match, and every one of them is a ' +
+               'test you can keep:' },
+          { code: 'print(posted)     # {\'deposit\': 9, \'transfer\': 62, \'split\': 1, \'reverse\': 1}\nprint(refused)    # {\'overdraft\': 1, \'unknown account\': 1, \'invalid amount\': 1}\nprint(retries)    # 1\nprint(len(ledger.entries), sum(e["amount"] for e in ledger.entries))   # 169 0\nprint(money(ledger.balance("alice")), money(ledger.balance("fee_income")))\n# $42.26 $8.75', lang: 'python' },
+          { p: 'A ledger that ends on 169 entries summing to zero, with three refusals and one ignored retry, ' +
+               'has handled a full day without anybody watching it. That is the whole point of the level.' }
         ],
         check: '62 transfers, 9 deposits, one split and one reversal posted; 3 refused and 1 retry ignored; 169 entries summing to zero.'
       }
