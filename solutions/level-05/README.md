@@ -12,7 +12,7 @@ your own project skips the only step that actually teaches you anything.
 
 Write the money library that levels 6 to 20 will actually use. It has to be exact, it has to refuse to mix currencies, it has to split amounts without losing a cent, and somebody who has never spoken to you has to be able to install it from GitHub and use it. This is the first repository on your CV that a backend reviewer will open.
 
-**Scope:** Uses levels 1 to 4 plus this level. The package itself depends on the standard library only: pytest, Hypothesis, mypy and ruff are development dependencies. No database, no network.
+**Scope:** Uses levels 1 to 4 plus this level. The package itself depends on the standard library only: pytest, Hypothesis, mypy and ruff are development dependencies. No database, no network. **This level is the first time the course uses decorators, dataclasses, `@classmethod`, `assert` and type hints**: the `@` symbol does not appear once in levels 1 to 4. You do not need to be able to write a decorator, only to read three of them. The knowledge section The Python this level needs covers exactly that much, before the tutorial starts.
 
 ## Files here
 

@@ -17,7 +17,7 @@ globalThis.FQ = { registerLevel: (lv) => levels.push(lv) };
 
 /* Every level file in the folder, so a new level needs no edit here. */
 const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
-  .filter((f) => /^(?:level|fpa)-\d+\.js$/.test(f))
+  .filter((f) => /^(?:level|fpa)-\d+(?:-\d+)?\.js$/.test(f))
   .sort();
 for (const name of levelFiles) {
   const file = path.join(root, 'content', 'levels', name);

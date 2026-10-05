@@ -58,7 +58,7 @@ function TrackSwitch({ active, onPick }) {
     <div class="trackswitch">
       ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t) => {
         const on = t.id === active;
-        const count = FQ.levelsIn(t.id).length;
+        const count = FQ.spineIn(t.id).length;
         return html`
           <button key=${t.id} type="button"
             class=${`trackswitch-opt${on ? ' is-on' : ''}`}
@@ -77,6 +77,9 @@ export function Home({ onAskTutor }) {
 
   const meta = FQ.track(track);
   const levels = FQ.levelsIn(track);
+  /* The ladder, asides left out. "14 of 21" would be counting a side level as a
+     rung, and the rank titles are one per rung. */
+  const rungs = FQ.spineIn(track).length;
   const cleared = store.clearedCount();
   const current = store.currentLevel();
   const questions = levels.reduce((n, l) => n + l.quiz.length, 0);
@@ -129,7 +132,7 @@ export function Home({ onAskTutor }) {
 
       <!-- The numbers, set as a ruled table rather than four glowing cards. -->
       <div class="datastrip">
-        <div><span class="v">${cleared}/${levels.length}</span><span class="k">levels cleared</span></div>
+        <div><span class="v">${cleared}/${rungs}</span><span class="k">levels cleared</span></div>
         <div><span class="v">${questions}</span><span class="k">drill questions</span></div>
         <div><span class="v">${projects}</span><span class="k">things to build</span></div>
         <div><span class="v">${store.xp().toLocaleString()}</span><span class="k">experience</span></div>
@@ -351,7 +354,7 @@ export function Ranking() {
      query counts: level keys of one or two digits. The analyst track's levels
      are numbered above a hundred and are deliberately not mixed in, since five
      cleared out of five is not comparable with five out of twenty. */
-  const engLevels = FQ.levelsIn('eng').length;
+  const engLevels = FQ.spineIn('eng').length;   /* the ladder, asides excluded */
   const rankOf = (cleared) => CFG.ranks[Math.min(cleared, CFG.ranks.length - 1)];
 
   const notice = {

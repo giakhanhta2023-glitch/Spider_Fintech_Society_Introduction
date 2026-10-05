@@ -15,7 +15,7 @@ const root = path.resolve(here, '..');
 const levels = [];
 /* Every level file in the folder, so a new level needs no edit here. */
 const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
-  .filter((f) => /^(?:level|fpa)-\d+\.js$/.test(f))
+  .filter((f) => /^(?:level|fpa)-\d+(?:-\d+)?\.js$/.test(f))
   .sort();
 for (const name of levelFiles) {
   const file = path.join(root, 'content', 'levels', name);
@@ -25,6 +25,29 @@ levels.sort((a, b) => a.id - b.id);
 
 /* ------------------------------------------------------------------ notes */
 const NOTES = {
+  '10.1': {
+    files: [
+      ['`checkout-client/src/money.ts`', 'a branded Cents a plain number cannot pass for'],
+      ['`checkout-client/src/api.ts`', 'zod schemas, parsed at the boundary, and the level 7 request id'],
+      ['`checkout-client/src/idempotency.ts`', 'one key per attempt, surviving a reload'],
+      ['`checkout-client/src/checkout.ts`', 'five states, an exhaustiveness check, and the backoff poller'],
+      ['`checkout-client/tests/checkout.test.ts`', '20 tests, two of which are compile errors']
+    ],
+    run: 'cd checkout-client && npm install && npm run typecheck && npm test',
+    design: [
+      'The branded `Cents` costs nothing at run time. It compiles to a plain number, and the object in the type is never created. All it buys is the compiler refusing when an unchecked number tries to pass as money, which is the one mistake that is otherwise invisible until somebody is charged 1299 dollars instead of 12.99.',
+      'The response body is taken as `unknown` rather than left as the `any` that `res.json()` returns, so the compiler forces a parse before anything touches it. `const p: Payment = await res.json()` compiles and promises nothing, which is the most common way a TypeScript codebase is typed and wrong at the same time.',
+      'The `catch` in `pay()` returns `submitting`, not `failed`. A request that never came back does not mean the payment did not happen: it means you do not know, which is the level 9 timeout seen from the browser. Calling it failed invites a second charge, and keeping the key is what makes that second attempt harmless.',
+      '`waitForOutcome` takes its clock as a parameter with a default. That is the cheapest way to make a timing dependent function testable: the test for all seven backoff steps runs in 53ms instead of 31 seconds, and the normal caller passes nothing.',
+      "Two guarantees in this solution have no run time existence, so they were proven by breaking them rather than asserted. Changing `format(amount: Cents)` to `format(amount: number)` gives `tests/checkout.test.ts(55,5): error TS2578: Unused '@ts-expect-error' directive.` Adding a sixth member to the `Checkout` union without handling it gives `src/checkout.ts(45,13): error TS2322: Type '{ kind: \"disputed\"; disputeId: string; }' is not assignable to type 'never'.` Both of those are real output from running `tsc` on this code."
+    ],
+    mistakes: [
+      ['`npm install` exits non-zero but the packages are there', 'A blocked postinstall script, usually esbuild. `tsc` does not need it and vitest usually still runs. Check with `npx vitest run` before assuming the install failed.'],
+      ['The idempotency test passes alone and fails in the suite', '`sessionStorage` is shared between tests in one file. Clear the slot in `beforeEach`, which is what this suite does.'],
+      ['`format(1299)` compiles in your copy', 'The brand was lost somewhere, usually by annotating a parameter `number` for convenience. The `@ts-expect-error` test is there to fail the build when that happens.'],
+      ['Yen renders as 12.99', 'You divided by 100 regardless of currency. `decimalsFor` reads the real number of places from Intl: 0 for yen, 3 for dinars.']
+    ]
+  },
   1: {
     files: [['`check_setup.py`', 'paste into Colab to verify your lab in one cell']],
     run: 'Open Colab, paste `check_setup.py` into a cell, press Shift + Enter.',
@@ -758,8 +781,11 @@ function solutionDir(lv) {
 /* The number and the track a reader sees, rather than the global id. */
 function levelLabel(lv, all) {
   const inTrack = all.filter((l) => (l.track || 'eng') === (lv.track || 'eng'));
-  const position = lv.position || inTrack.indexOf(lv) + 1;
-  return { position, count: inTrack.length, track: lv.track || 'eng' };
+  /* An aside is numbered 10.1 and is not one of the twenty, so it must not
+     make every other footer say "of 21". */
+  const spine = inTrack.filter((l) => !l.aside);
+  const position = lv.position || spine.indexOf(lv) + 1;
+  return { position, count: spine.length, track: lv.track || 'eng', aside: !!lv.aside };
 }
 
 /* ------------------------------------------------------------------ build */
@@ -844,7 +870,9 @@ for (const lv of levels) {
   L.push('');
   L.push('---');
   L.push('');
-  L.push(`Part of [FinQuest](../../README.md) · ${at.track === 'eng' ? '' : 'Analyst track, '}Level ${shown} of ${at.count}`);
+  L.push(at.aside
+    ? `Part of [FinQuest](../../README.md) · Level ${shown}, an aside rather than one of the ${at.count}`
+    : `Part of [FinQuest](../../README.md) · ${at.track === 'eng' ? '' : 'Analyst track, '}Level ${shown} of ${at.count}`);
   L.push('');
 
   fs.writeFileSync(path.join(dir, 'README.md'), L.join('\n'), 'utf8');

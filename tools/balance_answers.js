@@ -73,7 +73,7 @@ const summary = [];
 /* Every level file there is, rather than a fixed ten: the advanced track adds
    more, and a tool that quietly skipped them would be worse than useless. */
 const levelFiles = fs.readdirSync(path.join(root, 'content', 'levels'))
-  .filter((f) => /^(?:level|fpa)-\d+\.js$/.test(f))
+  .filter((f) => /^(?:level|fpa)-\d+(?:-\d+)?\.js$/.test(f))
   .sort();
 
 for (const name of levelFiles) {
