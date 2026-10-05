@@ -140,6 +140,55 @@ FQ.registerLevel({
          'of generated cases, is the subject of the next section.'
     }},
 
+    { h: 'The Python this level needs' },
+    { p: 'Level 4 asked for your first class, and said so in its brief before you opened it. This level asks ' +
+         'for four more pieces of Python, and all four turn up in the first twenty lines you write. None of ' +
+         'them has appeared anywhere in levels 1 to 4. If you already know them, skim this and move on.' },
+    { p: '**A line starting with `@` above a `def` or a `class` is a decorator.** It hands the thing written ' +
+         'underneath it to a function that gives back a changed version. You will almost never write one. You ' +
+         'use the ones other people wrote, and this level uses exactly three.' },
+    { table: {
+      head: ['The line', 'What it does to the thing below it', 'Where you meet it'],
+      rows: [
+        ['`@dataclass(frozen=True)`', 'Writes `__init__`, `__eq__` and `__repr__` for you from the fields you listed, then refuses to let any field be changed afterwards', 'The currency table and the Money type'],
+        ['`@classmethod`', 'Hands the method the class instead of an object, so you can call it before any object exists', '`Money.parse("19.99", "USD")`'],
+        ['`@given(...)`', 'Hypothesis: run this test hundreds of times on values it invents, rather than the one example you thought of', 'The property tests']
+      ]
+    }},
+    { p: '`@dataclass` is the one that changes how the code looks. You list the fields with their types and it ' +
+         'writes the three methods you would otherwise type by hand, which is why the classes in this level ' +
+         'have no `__init__` in them and level 4\'s `Account` did:' },
+    { code: 'from dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass Currency:\n    code: str\n    exponent: int\n\nusd = Currency("USD", 2)\n\nprint(usd)                          # Currency(code=\'USD\', exponent=2)\nprint(usd == Currency("USD", 2))    # True\n\nusd.code = "VND"\n# FrozenInstanceError: cannot assign to field \'code\'', lang: 'python' },
+    { p: '`frozen=True` is the half that matters for money. An amount that can be changed after it is made is ' +
+         'an amount two parts of your program can disagree about. Freezing it means every operation returns a ' +
+         'new value rather than editing one, so there is nothing to disagree about.' },
+    { p: '**`@classmethod` is to the class what `self` is to the object.** A normal method starts with `self`, ' +
+         'the one object it is working on. A classmethod starts with `cls`, the class itself, so it can build ' +
+         'and return a new one. That is the only way `Money.parse("19.99", "USD")` can work: there is no ' +
+         'Money yet when you call it.' },
+    { code: '@dataclass(frozen=True)\nclass Money:\n    minor_units: int\n    currency: Currency\n\n    @classmethod\n    def parse(cls, text, code):                     # simplified: the real one\n        amount = int(round(float(text) * 100))      # reads the currency table\n        return cls(amount, Currency(code, 2))\n\nm = Money.parse("19.99", "USD")     # no Money existed before this line\nprint(m.minor_units)                # 1999', lang: 'python' },
+    { p: '**`assert` is the whole of testing, and this is the first level that leans on it.** `assert` followed ' +
+         'by something true does nothing at all: no output, no return value, the program simply carries on. ' +
+         'Followed by something false it raises `AssertionError` and stops. That is the entire mechanism. A ' +
+         'test is a function whose name starts with `test_` and whose body is asserts; pytest finds them, runs ' +
+         'them, and reports the ones that raised.' },
+    { code: 'assert 2 + 2 == 4                   # prints nothing, which is the point\n\nassert 2 + 2 == 5, "arithmetic broke"\n# AssertionError: arithmetic broke\n\ndef test_parsing_dollars():         # a test is a function full of asserts\n    assert Money.parse("19.99", "USD").minor_units == 1999', lang: 'python' },
+    { p: 'The fourth piece is the `: int` and `-> list[int]` written into the function signatures. Those are ' +
+         '**type hints**, they are the subject of their own section further down, and the short version is that ' +
+         'Python ignores them completely and a separate tool called mypy reads them and complains.' },
+    { tip: 'You do not need to be able to write a decorator to finish this level. You need to read `@dataclass` ' +
+           'and know it wrote three methods for you, read `@classmethod` and know `cls` is the class, and know ' +
+           'that a true `assert` is silent. Everything else in the level is Python you already have.' },
+    { check: {
+      q: 'A teammate deletes `frozen=True` from the `Money` dataclass because it was making a test awkward. ' +
+         'Nothing breaks and every test still passes. What have they actually changed?',
+      a: 'Money is now editable in place. Any code holding a Money can write to `minor_units`, and every other ' +
+         'piece of code holding that same Money sees the new figure without having asked for it. Nothing breaks ' +
+         'today because nothing does it yet. It breaks on the afternoon somebody writes a function that adjusts ' +
+         'an amount for tax by editing the one it was handed, and a total somewhere else quietly changes to ' +
+         'match. Frozen is what lets you hand a Money to anything without wondering what it will do to it.'
+    }},
+
     { h: 'Testing money code: examples are not enough' },
     { p: 'What you have written so far are **example tests**: with this input, expect that output. They are necessary, and ' +
          'they share one weakness that the allocation bug shows: you only test the cases you thought of, and bugs live in the ' +
@@ -521,7 +570,11 @@ FQ.registerLevel({
            'able to install it from GitHub and use it. This is the first repository on your CV that a backend reviewer will ' +
            'open.',
     scope: 'Uses levels 1 to 4 plus this level. The package itself depends on the standard library only: pytest, Hypothesis, ' +
-           'mypy and ruff are development dependencies. No database, no network.',
+           'mypy and ruff are development dependencies. No database, no network. **This level is the first ' +
+           'time the course uses decorators, dataclasses, `@classmethod`, `assert` and type hints**: the `@` ' +
+           'symbol does not appear once in levels 1 to 4. You do not need to be able to write a decorator, only ' +
+           'to read three of them. The knowledge section The Python this level needs covers exactly that much, ' +
+           'before the tutorial starts.',
     dataset: '{{RAW}}/data/level-05-fx-snapshot.json',
     requirements: [
       'A `src/moneykit` package installable with `pip install -e ".[dev]"` and importable from any directory',
