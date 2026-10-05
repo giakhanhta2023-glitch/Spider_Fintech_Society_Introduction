@@ -53,10 +53,12 @@ injected failures. For computer science students and anybody who wants to build 
 | 18 | Java, for somebody who already writes Python | port the payments API to Spring Boot, and one component in Go |
 | 19 | The screen that filters you out | forty problems, four exercises, an honest log |
 | 20 | The whiteboard, and the thing you hand over | the platform assembled, load tested, packaged |
+| 20.1 | Ruby, and the rules that change every week | a refund policy a risk lead can read, as a small language of its own |
 
-**Level 10.1 is an aside rather than a rung.** It is the only JavaScript and TypeScript in the
-course, it is there because the postings this track aims at ask for it, and level 11 opens on level
-10 whether you do it or not.
+**The decimal levels are asides rather than rungs.** 10.1 is the only JavaScript and TypeScript in
+the course and 20.1 is the only Ruby. Both are there because the postings this track aims at ask
+for those languages: Stripe's own listing says they work mostly in Java, Ruby, JavaScript, Scala
+and Go. Neither blocks anything, so level 11 opens on level 10 and the track still ends at 20.
 
 ### The analyst track
 
