@@ -61,9 +61,25 @@
       return !!(level && level.aside);
     },
 
-    /* The numbered ladder of a track, asides left out: what "20 levels" means. */
+    /* The chain that gates: everything an aside is not in front of. Level 19
+       opens on level 17 because 18 is an aside, so 18 is not in here. */
     spineIn: function (trackId) {
       return FQ.levelsIn(trackId).filter(function (l) { return !FQ.isAside(l); });
+    },
+
+    /* The numbered ladder: what "20 levels" means, and what the rank titles
+       count. A level is on it when its number is a whole one, so 18 belongs and
+       10.1, 10.2 and 20.1 do not. Being optional and being off the ladder are
+       different things, and level 18 is the first level to be one without the
+       other. */
+    onLadder: function (level) {
+      if (!level) return false;
+      var n = Number(FQ.positionOf(level));
+      return !isNaN(n) && n === Math.floor(n);
+    },
+
+    ladderIn: function (trackId) {
+      return FQ.levelsIn(trackId).filter(FQ.onLadder);
     },
 
     trackOfLevel: function (id) {

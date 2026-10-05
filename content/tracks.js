@@ -12,10 +12,10 @@ FQ.registerTrack({
   name: 'engineering',
   title: 'The engineering track',
   audience: 'computer science and anybody who wants to build the systems',
-  blurb: 'Nineteen levels, from a first ledger to a payments platform that takes an ' +
+  blurb: 'Twenty levels, from a first ledger to a payments platform that takes an ' +
          'hour of load and survives four injected failures. You finish with ' +
-         'repositories that measure themselves. Four more sit beside the ladder, marked optional, ' +
-         'for the languages the jobs ask about.',
+         'repositories that measure themselves. Four of them are the language levels, marked ' +
+         'optional: take the ones whose jobs you want and nothing later waits for them.',
   outcome: 'backend or platform engineering in fintech',
 
   /* The existing ladder, left in config.js so that file keeps its documented

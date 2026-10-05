@@ -833,11 +833,20 @@ function levelLabel(lv, all) {
      make every other footer say "of 21". */
   const spine = inTrack.filter((l) => !l.aside);
   const position = lv.position || spine.indexOf(lv) + 1;
-  /* The highest number on the ladder rather than how many rungs are left on it.
-     Level 18 is an aside, so the spine holds 19 levels and the last one is still
-     called 20: "level 20 of 19" would be nonsense. */
-  const highest = spine.reduce((n, l) => Math.max(n, Number(l.position || 0) || 0), spine.length);
-  return { position, count: highest, track: lv.track || 'eng', aside: !!lv.aside };
+  /* The numbered ladder: a whole number position. Level 18 is on it and
+     optional at the same time, so it is counted here and still described as an
+     aside below. */
+  const onLadder = (l) => {
+    const n = Number(l.position ?? 0);
+    return !Number.isNaN(n) && Number.isInteger(n);
+  };
+  const count = inTrack.filter((l) => l.position === undefined || onLadder(l)).length;
+  return {
+    position, count,
+    track: lv.track || 'eng',
+    aside: !!lv.aside,
+    onLadder: lv.position === undefined || onLadder(lv),
+  };
 }
 
 /* ------------------------------------------------------------------ build */
@@ -922,9 +931,17 @@ for (const lv of levels) {
   L.push('');
   L.push('---');
   L.push('');
-  L.push(at.aside
-    ? `Part of [FinQuest](../../README.md) · Level ${shown}, an aside rather than one of the ${at.count}`
-    : `Part of [FinQuest](../../README.md) · ${at.track === 'eng' ? '' : 'Analyst track, '}Level ${shown} of ${at.count}`);
+  /* Three endings, because there are three kinds of level: a rung, a rung that
+     is optional (18), and a level that is not on the ladder at all (the
+     decimals). */
+  const where = at.track === 'eng' ? '' : 'Analyst track, ';
+  L.push(
+    at.aside && at.onLadder
+      ? `Part of [FinQuest](../../README.md) · ${where}Level ${shown} of ${at.count}, optional: nothing later waits for it`
+      : at.aside
+        ? `Part of [FinQuest](../../README.md) · ${where}Level ${shown}, an aside rather than one of the ${at.count}`
+        : `Part of [FinQuest](../../README.md) · ${where}Level ${shown} of ${at.count}`,
+  );
   L.push('');
 
   fs.writeFileSync(path.join(dir, 'README.md'), L.join('\n'), 'utf8');

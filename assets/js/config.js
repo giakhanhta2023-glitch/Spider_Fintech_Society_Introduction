@@ -34,7 +34,7 @@ window.FQ_CONFIG = {
     'concurrency engineer', 'payments engineer', 'settlement engineer',
     'streaming engineer', 'distributed systems engineer',
     'senior backend engineer', 'performance engineer', 'security engineer',
-    'reliability engineer', 'platform engineer',
+    'reliability engineer', 'platform engineer', 'polyglot engineer',
     'staff engineer', 'principal engineer'
   ],
 

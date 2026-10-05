@@ -62,7 +62,7 @@ function TrackSwitch({ active, onPick }) {
     <div class="trackswitch">
       ${FQ.tracks.filter((t) => FQ.levelsIn(t.id).length).map((t) => {
         const on = t.id === active;
-        const count = FQ.spineIn(t.id).length;
+        const count = FQ.ladderIn(t.id).length;
         return html`
           <button key=${t.id} type="button"
             class=${`trackswitch-opt${on ? ' is-on' : ''}`}
@@ -81,9 +81,9 @@ export function Home({ onAskTutor }) {
 
   const meta = FQ.track(track);
   const levels = FQ.levelsIn(track);
-  /* The ladder, asides left out. "14 of 21" would be counting a side level as a
-     rung, and the rank titles are one per rung. */
-  const rungs = FQ.spineIn(track).length;
+  /* The numbered ladder. Level 18 is on it and optional at the same time; the
+     decimal levels are neither. "14 of 23" would be counting a side level. */
+  const rungs = FQ.ladderIn(track).length;
   const cleared = store.clearedCount();
   const current = store.currentLevel();
   const questions = levels.reduce((n, l) => n + l.quiz.length, 0);
@@ -358,7 +358,7 @@ export function Ranking() {
      query counts: level keys of one or two digits. The analyst track's levels
      are numbered above a hundred and are deliberately not mixed in, since five
      cleared out of five is not comparable with five out of twenty. */
-  const engLevels = FQ.spineIn('eng').length;   /* the ladder, asides excluded */
+  const engLevels = FQ.ladderIn('eng').length;   /* the numbered ladder */
   const rankOf = (cleared) => CFG.ranks[Math.min(cleared, CFG.ranks.length - 1)];
 
   const notice = {

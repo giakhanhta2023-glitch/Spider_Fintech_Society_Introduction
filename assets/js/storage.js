@@ -55,11 +55,26 @@
     return levels.filter(function (l) { return !w.FQ.isAside(l); });
   }
 
-  function total() {
-    return spine().length;
+  /* The numbered ladder: twenty for engineering, five for the analyst track.
+     Level 18 is on it and optional at the same time, which is the distinction
+     this function exists to keep. */
+  function ladder(trackId) {
+    var levels = trackLevels(trackId);
+    if (!(w.FQ && w.FQ.onLadder)) return levels;
+    return levels.filter(w.FQ.onLadder);
   }
 
+  function total() {
+    return ladder().length;
+  }
+
+  /* Everything that is counted: the ladder. Not the same list as the one that
+     decides what opens next, which is spineIds below. */
   function ids() {
+    return ladder().map(function (l) { return l.id; });
+  }
+
+  function spineIds() {
     return spine().map(function (l) { return l.id; });
   }
 
@@ -262,16 +277,16 @@
 
     /* first level that is unlocked but not cleared */
     currentLevel: function () {
-      var open = ids().filter(function (i) { return store.isUnlocked(i) && !cleared(i); });
-      return open.length ? open[0] : (ids()[ids().length - 1] || 1);
+      var order = spineIds();
+      var open = order.filter(function (i) { return store.isUnlocked(i) && !cleared(i); });
+      return open.length ? open[0] : (order[order.length - 1] || 1);
     },
 
     /* Asides of the active track, for anything that wants to count them
        separately from the twenty. */
     asideIds: function () {
-      var all = allIds();
-      var onSpine = ids();
-      return all.filter(function (i) { return onSpine.indexOf(i) === -1; });
+      var onSpine = spineIds();
+      return allIds().filter(function (i) { return onSpine.indexOf(i) === -1; });
     },
 
     total: total,
