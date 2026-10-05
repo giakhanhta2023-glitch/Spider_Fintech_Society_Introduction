@@ -78,4 +78,4 @@ cd recon-scala && scala-cli test . --server=false --jvm 21
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 10.2, an aside rather than one of the 20
+Part of [FinQuest](../../README.md) · Level 10.2

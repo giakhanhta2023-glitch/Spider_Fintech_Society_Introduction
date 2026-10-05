@@ -79,4 +79,4 @@ cd refund-policy && ruby -Ilib -Itest test/test_refunds.rb && ruby -Ilib demo.rb
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 20.1, an aside rather than one of the 20
+Part of [FinQuest](../../README.md) · Level 20.1

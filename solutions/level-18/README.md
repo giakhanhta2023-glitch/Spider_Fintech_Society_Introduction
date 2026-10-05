@@ -97,4 +97,4 @@ javac -d target/classes $(find src/main/java -name "*.java") && java -cp target/
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 18 of 20, optional: nothing later waits for it
+Part of [FinQuest](../../README.md) · Level 18 of 20

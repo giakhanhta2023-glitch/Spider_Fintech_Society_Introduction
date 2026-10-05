@@ -931,17 +931,10 @@ for (const lv of levels) {
   L.push('');
   L.push('---');
   L.push('');
-  /* Three endings, because there are three kinds of level: a rung, a rung that
-     is optional (18), and a level that is not on the ladder at all (the
-     decimals). */
   const where = at.track === 'eng' ? '' : 'Analyst track, ';
-  L.push(
-    at.aside && at.onLadder
-      ? `Part of [FinQuest](../../README.md) · ${where}Level ${shown} of ${at.count}, optional: nothing later waits for it`
-      : at.aside
-        ? `Part of [FinQuest](../../README.md) · ${where}Level ${shown}, an aside rather than one of the ${at.count}`
-        : `Part of [FinQuest](../../README.md) · ${where}Level ${shown} of ${at.count}`,
-  );
+  L.push(at.onLadder
+    ? `Part of [FinQuest](../../README.md) · ${where}Level ${shown} of ${at.count}`
+    : `Part of [FinQuest](../../README.md) · ${where}Level ${shown}`);
   L.push('');
 
   fs.writeFileSync(path.join(dir, 'README.md'), L.join('\n'), 'utf8');

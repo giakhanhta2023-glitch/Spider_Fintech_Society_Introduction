@@ -74,4 +74,4 @@ cd checkout-client && npm install && npm run typecheck && npm test
 
 ---
 
-Part of [FinQuest](../../README.md) · Level 10.1, an aside rather than one of the 20
+Part of [FinQuest](../../README.md) · Level 10.1

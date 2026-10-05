@@ -56,17 +56,11 @@ injected failures. For computer science students and anybody who wants to build 
 | 20 | The whiteboard, and the thing you hand over | the platform assembled, load tested, packaged |
 | 20.1 | Ruby, and the rules that change every week | a refund policy a risk lead can read, as a small language of its own |
 
-**Four levels are asides rather than rungs,** and the course marks them *optional*: **10.1**
-TypeScript, **10.2** Scala, **18** Java and Go, **20.1** Ruby. They are the language levels, and
-they exist because the postings this track aims at ask for those languages: Stripe's own listing
-says they work mostly in Java, Ruby, JavaScript, Scala and Go.
+**Four levels are optional:** **10.1** TypeScript, **10.2** Scala, **18** Java and Go, **20.1**
+Ruby. None of them blocks the next level, so skip any you do not want.
 
-None of them blocks anything: level 11 opens on level 10 and level 19 opens on level 17, so you can
-walk straight past all four and still finish the track. Do the ones whose jobs you want.
-
-Level 18 is the odd one. It is one of the twenty and it counts toward your total, it simply does
-not stand in front of level 19. The three decimal levels are extra on top of the twenty and count
-toward nothing.
+They are there because the jobs ask for those languages. Stripe's listing says they work mostly in
+Java, Ruby, JavaScript, Scala and Go.
 
 ### The analyst track
 

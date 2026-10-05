@@ -30,7 +30,7 @@ function IndexRow({ level }) {
 
     <span>
       <span class="index-title">${level.title}</span>
-      ${aside ? html`<span class="index-aside" title="an aside: nothing later waits for it">optional</span>` : null}
+      ${aside ? html`<span class="index-aside" title="you can skip this one">optional</span>` : null}
       <p class="index-sub">${md(level.tagline)}</p>
     </span>
 
