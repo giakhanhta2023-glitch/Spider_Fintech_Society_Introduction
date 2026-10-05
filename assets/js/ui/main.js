@@ -19,7 +19,7 @@ function parseHash() {
   const parts = raw.split('/').filter(Boolean);
   if (!parts.length) return { name: 'home' };
   if (parts[0] === 'level') {
-    return { name: 'level', id: parseInt(parts[1], 10), tab: parts[2] || 'brief' };
+    return { name: 'level', id: parseFloat(parts[1]), tab: parts[2] || 'brief' };
   }
   if (parts[0] === 'glossary') return { name: 'glossary' };
   if (parts[0] === 'progress') return { name: 'progress' };

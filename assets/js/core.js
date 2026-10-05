@@ -53,6 +53,19 @@
       return LEVELS.filter(function (l) { return FQ.trackIdOf(l) === trackId; });
     },
 
+    /* An aside is a level off to the side of the ladder: level 10.1 rather than
+       level 11. It hangs off the level before it, it does not stand between two
+       levels of the spine, and the ranks do not count it. Everything else, the
+       index row, the drill, the build, the badge, works exactly the same. */
+    isAside: function (level) {
+      return !!(level && level.aside);
+    },
+
+    /* The numbered ladder of a track, asides left out: what "20 levels" means. */
+    spineIn: function (trackId) {
+      return FQ.levelsIn(trackId).filter(function (l) { return !FQ.isAside(l); });
+    },
+
     trackOfLevel: function (id) {
       var L = FQ.level(id);
       return L ? FQ.trackIdOf(L) : DEFAULT_TRACK;
@@ -64,6 +77,12 @@
     positionOf: function (level) {
       if (!level) return 0;
       if (level.position) return level.position;
+      /* Counted along the spine, not along every level, so inserting an aside
+         at 10.1 leaves level 11 called level 11. An aside without a position of
+         its own falls back to the whole list, which at least keeps it unique. */
+      var spine = FQ.spineIn(FQ.trackIdOf(level));
+      var at = spine.indexOf(level);
+      if (at !== -1) return at + 1;
       return FQ.levelsIn(FQ.trackIdOf(level)).indexOf(level) + 1;
     },
 
@@ -96,8 +115,10 @@
       return QUOTES[((day % QUOTES.length) + QUOTES.length) % QUOTES.length];
     },
 
+    /* Decimal, not integer: a level inserted between 10 and 11 is 10.1, which
+       keeps every number after it and every sentence that cites one. */
     level: function (id) {
-      id = parseInt(id, 10);
+      id = parseFloat(id);
       for (var i = 0; i < LEVELS.length; i++) {
         if (LEVELS[i].id === id) return LEVELS[i];
       }

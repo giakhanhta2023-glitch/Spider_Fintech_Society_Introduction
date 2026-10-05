@@ -46,13 +46,26 @@
   }
 
   /* How many levels there are is a question for the curriculum, not for this
-     file: register a sixth analyst level and every count here follows it. */
+     file: register a sixth analyst level and every count here follows it.
+     Asides are left out, because the rank ladder has one title per rung and an
+     optional side level is not a rung. */
+  function spine(trackId) {
+    var levels = trackLevels(trackId);
+    if (!(w.FQ && w.FQ.isAside)) return levels;
+    return levels.filter(function (l) { return !w.FQ.isAside(l); });
+  }
+
   function total() {
-    return trackLevels().length;
+    return spine().length;
   }
 
   function ids() {
-    return trackLevels().map(function (l) { return l.id; });
+    return spine().map(function (l) { return l.id; });
+  }
+
+  /* Every level of the track including the asides, in order. */
+  function allIds(trackId) {
+    return trackLevels(trackId).map(function (l) { return l.id; });
   }
 
   /* A badge is earned inside a track, so finishing five analyst levels does not
@@ -101,6 +114,18 @@
   function hasProject(id) {
     var L = w.FQ && w.FQ.level ? w.FQ.level(id) : null;
     return !!(L && (L.project || L.setup));
+  }
+
+  /* What a level waits for. An aside waits for the level it hangs off, which is
+     simply the one before it, asides included. A level of the spine waits for
+     the previous level of the spine, so inserting 10.1 never puts a side level
+     in front of level 11. */
+  function lookback(id) {
+    var trackId = (w.FQ && w.FQ.trackOfLevel) ? w.FQ.trackOfLevel(id) : null;
+    var level = (w.FQ && w.FQ.level) ? w.FQ.level(id) : null;
+    var aside = !!(w.FQ && w.FQ.isAside && w.FQ.isAside(level));
+    return aside ? allIds(trackId)
+                 : spine(trackId).map(function (l) { return l.id; });
   }
 
   function cleared(id, s) {
@@ -218,10 +243,8 @@
     /* The previous level in the same track, not the previous id: the analyst
        track starts open rather than behind twenty engineering levels. */
     isUnlocked: function (id) {
-      id = parseInt(id, 10);
-      var order = ids();
-      if (w.FQ && w.FQ.trackOfLevel) order = trackLevels(w.FQ.trackOfLevel(id))
-        .map(function (l) { return l.id; });
+      id = parseFloat(id);
+      var order = lookback(id);
       var at = order.indexOf(id);
       if (at <= 0) return true;                /* first in its track, or unknown */
       return cleared(order[at - 1]);
@@ -229,10 +252,10 @@
 
     /* What to tell somebody standing in front of a locked row. */
     previousIn: function (id) {
-      id = parseInt(id, 10);
-      var levels = trackLevels(store.trackOf(id));
-      var at = levels.map(function (l) { return l.id; }).indexOf(id);
-      return at > 0 ? levels[at - 1] : null;
+      id = parseFloat(id);
+      var order = lookback(id);
+      var at = order.indexOf(id);
+      return at > 0 ? (w.FQ && w.FQ.level ? w.FQ.level(order[at - 1]) : null) : null;
     },
     isCleared: function (id) { return cleared(id); },
     clearedCount: function () { return clearedCount(state); },
@@ -241,6 +264,14 @@
     currentLevel: function () {
       var open = ids().filter(function (i) { return store.isUnlocked(i) && !cleared(i); });
       return open.length ? open[0] : (ids()[ids().length - 1] || 1);
+    },
+
+    /* Asides of the active track, for anything that wants to count them
+       separately from the twenty. */
+    asideIds: function () {
+      var all = allIds();
+      var onSpine = ids();
+      return all.filter(function (i) { return onSpine.indexOf(i) === -1; });
     },
 
     total: total,
