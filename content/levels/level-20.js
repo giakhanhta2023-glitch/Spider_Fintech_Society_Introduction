@@ -3,6 +3,8 @@
    ========================================================================= */
 FQ.registerLevel({
   id: 20,
+  /* the same: the capstone is level 20 and stays level 20. */
+  position: '20',
   codename: 'shipped',
   title: 'The whiteboard, and the thing you hand over',
   tagline: 'The final round asks you to design a payments system in forty five minutes. You have built most of one. This level turns fifteen repositories into an answer, a platform, and a package somebody can hire from.',

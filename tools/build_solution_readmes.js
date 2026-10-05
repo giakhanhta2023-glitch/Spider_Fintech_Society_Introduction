@@ -833,7 +833,11 @@ function levelLabel(lv, all) {
      make every other footer say "of 21". */
   const spine = inTrack.filter((l) => !l.aside);
   const position = lv.position || spine.indexOf(lv) + 1;
-  return { position, count: spine.length, track: lv.track || 'eng', aside: !!lv.aside };
+  /* The highest number on the ladder rather than how many rungs are left on it.
+     Level 18 is an aside, so the spine holds 19 levels and the last one is still
+     called 20: "level 20 of 19" would be nonsense. */
+  const highest = spine.reduce((n, l) => Math.max(n, Number(l.position || 0) || 0), spine.length);
+  return { position, count: highest, track: lv.track || 'eng', aside: !!lv.aside };
 }
 
 /* ------------------------------------------------------------------ build */

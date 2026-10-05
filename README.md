@@ -27,7 +27,7 @@ can switch between them on the front page at any time.
 
 ### The engineering track
 
-Twenty levels, from a first ledger to a payments platform that survives an hour of load and four
+Nineteen required levels, from a first ledger to a payments platform that survives an hour of load and four
 injected failures. For computer science students and anybody who wants to build the systems.
 
 | # | Level | You build |
@@ -56,11 +56,14 @@ injected failures. For computer science students and anybody who wants to build 
 | 20 | The whiteboard, and the thing you hand over | the platform assembled, load tested, packaged |
 | 20.1 | Ruby, and the rules that change every week | a refund policy a risk lead can read, as a small language of its own |
 
-**The decimal levels are asides rather than rungs,** and they are marked *optional* in the course
-itself. 10.1 is the only TypeScript, 10.2 the only Scala, 20.1 the only Ruby. They exist because
-the postings this track aims at ask for those languages: Stripe's own listing says they work
-mostly in Java, Ruby, JavaScript, Scala and Go. None of them blocks anything, so level 11 opens
-on level 10 and the track still ends at 20.
+**Four levels are asides rather than rungs,** and the course marks them *optional*: **10.1**
+TypeScript, **10.2** Scala, **18** Java and Go, **20.1** Ruby. They are the language levels, and
+they exist because the postings this track aims at ask for those languages: Stripe's own listing
+says they work mostly in Java, Ruby, JavaScript, Scala and Go.
+
+None of them blocks anything. Level 11 opens on level 10, level 19 opens on level 17, and you can
+clear the whole ladder and reach the final rank without writing a line of any of the four. Do the
+ones whose jobs you want.
 
 ### The analyst track
 

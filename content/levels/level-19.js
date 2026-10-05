@@ -3,6 +3,8 @@
    ========================================================================= */
 FQ.registerLevel({
   id: 19,
+  /* 18 is an aside, so a position counted along the spine would say 18 here. */
+  position: '19',
   codename: 'gauntlet',
   title: 'The screen that filters you out',
   tagline: 'Fourteen repositories will not help you if you cannot pass the sixty minute screen in front of them. This level is the filter itself: complexity you can feel, the eight patterns that keep appearing, and the practical exercises payments companies actually set.',

@@ -3,6 +3,12 @@
    ========================================================================= */
 FQ.registerLevel({
   id: 18,
+  /* An aside rather than a rung. Nothing after this level needs it: level 19
+     mentions Java only as advice about which language to interview in, and a
+     480 minute port should not stand between somebody and interview prep.
+     It keeps the number 18 so that no later level has to be renumbered. */
+  position: '18',
+  aside: true,
   codename: 'jvm',
   title: 'Java, for somebody who already writes Python',
   tagline: 'Capital One, Adyen, Goldman and most of the payments teams inside banks run on the JVM. You do not need to prefer it. You need to be able to be interviewed in it, and to port your own service to prove you can.',

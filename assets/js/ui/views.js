@@ -378,7 +378,7 @@ export function Ranking() {
         </div>
         <div class="col-9-12">
           <p class="lede">
-            Twenty engineering levels, one row per member. The analyst track is not on
+            The engineering ladder, one row per member. The analyst track is not on
             this board: five cleared out of five and five out of twenty are different
             things, and one column cannot say both.
           </p>
