@@ -208,16 +208,25 @@ FQ.registerLevel({
          'weight, a billion, weights of wildly different sizes. When it finds a failure it does something better than ' +
          'reporting it: it **shrinks** the case, cutting it down to the smallest input that still fails, so you get ' +
          '`total=1, weights=[1, 1]` instead of a wall of digits.' },
+    { p: 'Here are five properties worth having for a money library. The letters are the inputs Hypothesis ' +
+         'invents: `t` is a total in whole cents, `w` a list of weights, and `a`, `b` and `m` are Money ' +
+         'amounts in the same currency. Each line becomes one test function, written exactly like the one ' +
+         'above, and the build asks for **at least five**. The third column is the point of the exercise: a ' +
+         'property is only worth writing if you can say what it would catch.' },
     { table: {
-      head: ['Property', 'What it says'],
+      head: ['Property', 'What it says', 'The bug it catches'],
       rows: [
-        ['`sum(allocate(t, w)) == t`', 'Splitting conserves money'],
-        ['`(a + b) - b == a`', 'Adding and subtracting undo each other'],
-        ['`Money.parse(str(m)) == m`', 'Formatting and parsing round trip'],
-        ['`m * 2 == m + m`', 'Multiplication agrees with repeated addition'],
-        ['`a + b == b + a`', 'Order does not change a total']
+        ['`sum(allocate(t, w)) == t`', 'Splitting conserves money', 'A share rounded on its own, so the parts stop adding back to the whole. This is the bug in the check question above'],
+        ['`(a + b) - b == a`', 'Adding and subtracting undo each other', 'An `__add__` and `__sub__` that are not mirrors: a subtraction that clamps at zero, say, so a large `b` quietly destroys money'],
+        ['`Money.parse(str(m)) == m`', 'Formatting and parsing round trip', 'A `__str__` that drops a trailing zero or the currency, so `$19.90` comes back as something that is not $19.90'],
+        ['`m * 2 == m + m`', 'Multiplication agrees with repeated addition', 'A multiply that rounds at a different moment than addition does, so two routes to the same figure differ by a cent'],
+        ['`a + b == b + a`', 'Order does not change a total', 'A currency check or an `__eq__` that depends on which side a value sits on, which stays hidden until somebody writes the operands the other way round']
       ]
     }},
+    { p: 'The first two are written out as real test functions in **step 6 of the tutorial**, along with a ' +
+         'third that is not in this table: that `allocate` is deterministic, the same inputs giving the same ' +
+         'answer twice. So you have three to copy the shape from and three to write. The round trip is one ' +
+         'of the two the build names explicitly, so it is not optional.' },
     { tip: 'Keep both kinds. Example tests document intent, and a reviewer reads them to learn what the code is for. Property ' +
            'tests hunt for bugs nobody imagined. Interviewers notice the second kind, because most candidates have never ' +
            'written one.' },
