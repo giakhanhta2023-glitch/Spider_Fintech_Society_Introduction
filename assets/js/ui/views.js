@@ -15,9 +15,12 @@ function IndexRow({ level }) {
   const current = store.currentLevel() === level.id && !cleared;
   const state = store.level(level.id);
 
+  const aside = FQ.isAside(level);
+
   const cls = ['index-row',
     cleared && 'is-done',
     current && 'is-current',
+    aside && 'is-aside',
     !unlocked && 'is-locked'].filter(Boolean).join(' ');
 
   const previous = store.previousIn(level.id);
@@ -27,6 +30,7 @@ function IndexRow({ level }) {
 
     <span>
       <span class="index-title">${level.title}</span>
+      ${aside ? html`<span class="index-aside" title="an aside: nothing later waits for it">optional</span>` : null}
       <p class="index-sub">${md(level.tagline)}</p>
     </span>
 

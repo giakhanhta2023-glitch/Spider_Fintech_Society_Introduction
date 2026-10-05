@@ -43,6 +43,7 @@ injected failures. For computer science students and anybody who wants to build 
 | 9 | The life of a card payment | a card lifecycle service and network simulator |
 | 10 | The processor says one thing, your ledger says another | a reconciliation engine |
 | 10.1 | The half of the payment the customer can see | a typed checkout that cannot be talked into charging the wrong amount |
+| 10.2 | Scala, and the job that runs at four in the morning | the same reconciliation as level 10, agreeing with it to the cent |
 | 11 | The event you thought you published | an outbox, idempotent consumers, partitioning |
 | 12 | The payout that half happened | a saga with compensation and a sweeper |
 | 13 | The table that outgrew the machine | partition it, migrate it, backfill it live |
@@ -55,10 +56,11 @@ injected failures. For computer science students and anybody who wants to build 
 | 20 | The whiteboard, and the thing you hand over | the platform assembled, load tested, packaged |
 | 20.1 | Ruby, and the rules that change every week | a refund policy a risk lead can read, as a small language of its own |
 
-**The decimal levels are asides rather than rungs.** 10.1 is the only JavaScript and TypeScript in
-the course and 20.1 is the only Ruby. Both are there because the postings this track aims at ask
-for those languages: Stripe's own listing says they work mostly in Java, Ruby, JavaScript, Scala
-and Go. Neither blocks anything, so level 11 opens on level 10 and the track still ends at 20.
+**The decimal levels are asides rather than rungs,** and they are marked *optional* in the course
+itself. 10.1 is the only TypeScript, 10.2 the only Scala, 20.1 the only Ruby. They exist because
+the postings this track aims at ask for those languages: Stripe's own listing says they work
+mostly in Java, Ruby, JavaScript, Scala and Go. None of them blocks anything, so level 11 opens
+on level 10 and the track still ends at 20.
 
 ### The analyst track
 

@@ -515,6 +515,21 @@ a.index-row:hover .index-title { color: var(--accent); }
   color: var(--bone);
   transition: color .14s ease;
 }
+/* A decimal level is an aside: nothing after it waits for it. Said once, next
+   to the title, because a reader deciding what to skip should not have to work
+   it out from the number. */
+.index-aside {
+  margin-left: 10px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--graphite);
+  border: 1px solid var(--rule);
+  padding: 2px 7px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+a.index-row:hover .index-aside { border-color: var(--rule-mid); }
+
 .index-sub { margin: 8px 0 0; font-size: 1rem; line-height: 1.55; color: var(--ash); max-width: 58ch; }
 /* The metadata used to be six bordered chips that wrapped into a ragged block
    on every row. Boxes around a number are not information. These are four

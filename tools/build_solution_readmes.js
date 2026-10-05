@@ -25,6 +25,30 @@ levels.sort((a, b) => a.id - b.id);
 
 /* ------------------------------------------------------------------ notes */
 const NOTES = {
+  '10.2': {
+    files: [
+      ['`recon-scala/src/Money.scala`', 'an opaque type: compile time safety, no run time object'],
+      ['`recon-scala/src/Model.scala`', 'Movement, Kind, and Break as a closed set'],
+      ['`recon-scala/src/Load.scala`', 'bad rows as values, a changed header as an exception'],
+      ['`recon-scala/src/Reconcile.scala`', 'the passes, the window, and the totals'],
+      ['`recon-scala/test/ReconcileTest.scala`', '19 tests, six of them level 10\'s published figures']
+    ],
+    run: 'cd recon-scala && scala-cli test . --server=false --jvm 21',
+    design: [
+      'The verification is the point of this solution. It is not checked by reading it or by its own tests: it is checked by agreeing with level 10\'s Python engine on the real 16,639 line file. Both report 16,613 ledger movements, 16,639 settlement lines, 16,408 exact matches, 163 converted, 30 differing, and then amount_mismatch 30 at $14.19, currency_rounding 163 at $1,166.77, duplicate_settlement 1 at $104.12, missing_in_ledger 37 at $3,116.61 and unsettled_capture 12 at $1,690.07. Tests written by the same mind that wrote the bug agree with the bug; two independent implementations do not.',
+      'Break is an enum rather than a string, and owner, value and label are three separate exhaustive matches over it. Adding a seventh kind of disagreement breaks all three at compile time, which is three reminders instead of one, and the one you would have forgotten is the routing.',
+      'PendingSettlement is its own case because a capture that has not settled yet is not a break. Counting it as one is how a reconciliation report trains the people reading it to ignore the number at the bottom.',
+      'Loaders return (Vector[Movement], Vector[BadRow]) so one unreadable row does not cost you the other 16,638, but a missing column raises. That is the line between the two kinds of failure: a bad row is expected and collected, a file whose columns moved is a different file and reading column 4 as column 5 silently is much worse than stopping.',
+      'The two engines disagreed exactly once while this was written, and neither was obviously wrong. Python totalled break values as magnitudes and this one netted them, so a line $5.09 over and one $9.10 under came to $4.01 here and $14.19 there. Netting is the bug: it understates the work and lets two errors that happen to cancel look like one small one. There is a test with those two amounts in it now.',
+      'The boundary test was also wrong before it was right. The window is three days and the check is `when.isAfter(cutoff)`, so a capture exactly three days old is already a break, in both engines. Off by one there raises a break a day early on every unsettled capture, every morning.'
+    ],
+    mistakes: [
+      ['The compile server fails with an exit code and no message', 'scala-cli picked up an old Java from PATH. `--jvm 21 --server=false` makes it fetch its own and skip bloop. Slower per run, immune to whatever is installed.'],
+      ['Thousands of missing settlements', 'Authorisations are in your ledger side. A hold settles nothing. Only capture, refund and chargeback move money.'],
+      ['`"".toLong` throws two thirds of the way through the file', 'The settlement file leaves the fee column empty on some rows. Money.parse handles it in one line.'],
+      ['A bare Long compiles as an amount', 'The opaque type only protects outside the file that declares it. Inside Money.scala, Cents and Long are the same type, which is the point and also the gap.']
+    ]
+  },
   '20.1': {
     files: [
       ['`refund-policy/lib/refunds/money.rb`', 'frozen, currency aware, and raising rather than guessing'],
