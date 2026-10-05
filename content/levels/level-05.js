@@ -123,6 +123,11 @@ FQ.registerLevel({
     { p: 'The standard answer is the **largest remainder method**: give everybody their whole part, then hand out the leftover ' +
          'units one at a time, starting with whoever was cut by the most:' },
     { code: 'allocate(10000, [1, 1, 1])   ->  [3334, 3333, 3333]      sums to 10000\nallocate(5,     [3, 7])      ->  [2, 3]                  sums to 5\nallocate(1999,  [1, 2, 3])   ->  [333, 666, 1000]        sums to 1999', lang: 'text', label: 'allocation, in cents' },
+    { p: '`allocate` is yours. It is not in the standard library and there is nothing to install: you write ' +
+         'it in **step 5 of the tutorial**, and those three lines are its entire specification. It takes an ' +
+         'amount in whole cents and a list of weights, and gives back one share per weight. From here on the ' +
+         'level keeps calling it: the property tests two sections below, `Money.allocate` which returns Money ' +
+         'objects instead of integers, and four of the project tests.' },
     { p: 'Read the middle line. Five cents split three to seven cannot be exact, so somebody gets two and somebody gets three, ' +
          'and the rule decides who, the same way every time. Those are the two properties that matter: the shares always add ' +
          'back to the original amount, and the same inputs always give the same answer.' },
@@ -193,6 +198,9 @@ FQ.registerLevel({
     { p: 'What you have written so far are **example tests**: with this input, expect that output. They are necessary, and ' +
          'they share one weakness that the allocation bug shows: you only test the cases you thought of, and bugs live in the ' +
          'cases you did not.' },
+    { p: 'The `allocate` in the test below is that same function of yours, still unwritten at this point in ' +
+         'the level. Writing the test first is the normal order for a function like this: the rule it has to ' +
+         'obey is easier to state than the code that obeys it.' },
     { p: '**Property-based testing** turns that around. You state a rule that must hold for every input, and a library ' +
          'generates hundreds of inputs trying to break it. In Python that library is **Hypothesis**:' },
     { code: 'from hypothesis import given, strategies as st\n\n@given(total=st.integers(min_value=0, max_value=10**9),\n       weights=st.lists(st.integers(min_value=1, max_value=1000), min_size=1, max_size=10))\ndef test_allocation_conserves_money(total, weights):\n    shares = allocate(total, weights)\n    assert sum(shares) == total          # nothing lost, nothing invented\n    assert len(shares) == len(weights)\n    assert all(s >= 0 for s in shares)', lang: 'python' },
@@ -217,7 +225,7 @@ FQ.registerLevel({
     { h: 'Type hints, and the checker that reads them' },
     { p: 'Python does not make you say what type a value is, which is pleasant until a function receives a string where it ' +
          'expected an amount. **Type hints** are annotations that say what you meant:' },
-    { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    ...', lang: 'python' },
+    { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    ...        # the body is in the tutorial; the line above is the point', lang: 'python' },
     { p: 'Python itself ignores them while running. A separate tool called **mypy** reads them and checks your whole codebase ' +
          'for contradictions before you run anything:' },
     { code: '$ mypy src/moneykit\nsrc/moneykit/allocation.py:14: error: Argument 1 to "allocate" has incompatible type "str"; expected "int"\nFound 1 error in 1 file (checked 6 source files)', lang: 'text' },
