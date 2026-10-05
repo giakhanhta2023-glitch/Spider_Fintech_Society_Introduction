@@ -5,304 +5,153 @@
 
 # FinQuest
 
-A twenty level fintech course built around projects that runs in a browser tab. Each level teaches the
-knowledge, walks you through the tools step by step, drills you with 15 questions, then hands you a
-build you can finish using **only what that level taught you**: with a complete, verified solution
-key waiting in this repository.
+Learn fintech by building it. Every level teaches the ideas, walks you through the tools step by
+step, drills you with 15 questions, then hands you something to build using **only what that level
+taught you**. A complete, working solution waits in this repository for after you have written
+yours.
 
 ### **[Open the course →](https://finquest-rank-nullity.vercel.app)**
 
 Built for the Spider Fintech Society. Sign in with Google and your progress follows you to any
-device. The address above is the only one to share: Vercel also keeps a private URL per deployment,
-and those are snapshots of older builds rather than the live site.
+device.
 
-> **Level 1 installs nothing.** No VS Code, no PATH variables, no `pip`. You will be running Python
-> in a browser tab about ten minutes after you start. A local editor only appears in level 9, when
-> you have something worth deploying and the setup finally pays for itself.
+> **Nothing to install to start.** No VS Code, no PATH variables, no `pip`. You will be running
+> Python in a browser tab about ten minutes in.
 
 ---
 
-## Where it lives
+## Two tracks
 
-| | Address | For |
-|---|---|---|
-| **The site** | [finquest-rank-nullity.vercel.app](https://finquest-rank-nullity.vercel.app) | your members. Share this one |
-| Per deployment | `finquest-<hash>-rank-nullity.vercel.app` | a snapshot of one build, kept private |
-| Your machine | `http://localhost:8000` | editing the course, after `python serve.py` |
+Pick the one that matches the job you want. They are separate ladders with separate ranks, and you
+can switch between them on the front page at any time.
 
-## Run it locally
+### The engineering track
 
-```bash
-python serve.py
-```
+Twenty levels, from a first ledger to a payments platform that survives an hour of load and four
+injected failures. For computer science students and anybody who wants to build the systems.
 
-There is no build step and no `npm install` for the site itself: the interface is React loaded from a
-CDN import map, styled by one hand written stylesheet, and the curriculum is plain JavaScript data
-files.
+| # | Level | You build |
+|---|-------|-----------|
+| 1 | Fintech orientation | a working lab, and the vocabulary |
+| 2 | The time value of money | a compound growth engine |
+| 3 | Reading the money | a personal spending analyser |
+| 4 | Payments and the double-entry ledger | a mini ledger and payment engine |
+| 5 | The money library everything else imports | an exact Money library, tested and packaged |
+| 6 | The ledger in Postgres | a schema, measured with `EXPLAIN` |
+| 7 | The payments API other systems depend on | an HTTP API over the ledger |
+| 8 | Eight requests, one balance, minus $540 | a race reproduced, then fixed three ways |
+| 9 | The life of a card payment | a card lifecycle service and network simulator |
+| 10 | The processor says one thing, your ledger says another | a reconciliation engine |
+| 10.1 | The half of the payment the customer can see | a typed checkout that cannot be talked into charging the wrong amount |
+| 11 | The event you thought you published | an outbox, idempotent consumers, partitioning |
+| 12 | The payout that half happened | a saga with compensation and a sweeper |
+| 13 | The table that outgrew the machine | partition it, migrate it, backfill it live |
+| 14 | The p99 you promised | measure the tail, then cache, limit and shed |
+| 15 | The keys to the money | a card vault with envelope encryption |
+| 16 | The pager, and what it is allowed to wake you for | instrument it, then break it on purpose |
+| 17 | The deploy you can undo | container, pipeline, infrastructure, blue green |
+| 18 | Java, for somebody who already writes Python | port the payments API to Spring Boot, and one component in Go |
+| 19 | The screen that filters you out | forty problems, four exercises, an honest log |
+| 20 | The whiteboard, and the thing you hand over | the platform assembled, load tested, packaged |
 
-`serve.py` is `http.server` with caching switched off. Use it while you are editing: browsers hold
-ES modules in memory, so with a normal static server your changes can appear to do nothing until you
-force a reload with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.
+**Level 10.1 is an aside rather than a rung.** It is the only JavaScript and TypeScript in the
+course, it is there because the postings this track aims at ask for it, and level 11 opens on level
+10 whether you do it or not.
 
-Locally there is no backend, so the course skips the sign in and keeps progress in `localStorage`, as
-it did before accounts existed. Nothing syncs, because there is nowhere to sync to.
+### The analyst track
 
-**Deploying it** needs Vercel, because accounts and the tutor run as `api/*.js` functions. Import the
-repo, then set the environment variables listed under [Accounts](docs/accounts-setup.md). A purely
-static host such as GitHub Pages will serve the course but cannot run sign in, saved progress, or the
-model backed tutor.
+Five levels for finance students who want the tech half of the job. It assumes you can use a
+spreadsheet and assumes nothing else.
+
+| # | Level | You build |
+|---|-------|-----------|
+| 1 | Mission zero: a lab that works | somewhere to run code, and an account to keep it in |
+| 2 | SQL for the month end close | the queries finance asks every month, written once |
+| 3 | The part you used to do by hand | the same pack, from the same files, in milliseconds |
+| 4 | A model that ties | a three statement model that balances, with the circularity resolved |
+| 5 | The pack that rebuilds itself | a reporting pack that regenerates from raw data |
+
+Ends at a corporate finance or planning analyst job, where automating your own reporting is the
+thing that gets noticed.
 
 ---
-
-## The levels
-
-| # | Level | You build | New tools |
-|---|-------|-----------|-----------|
-| 1 | Fintech orientation | *(setup mission)* a working lab | Colab, GitHub |
-| 2 | The time value of money | Compound growth engine | functions, loops, f-strings |
-| 3 | Reading the money | Personal spending analyzer | pandas, matplotlib |
-| 4 | Payments and the double-entry ledger | Mini ledger and payment engine | classes, exceptions |
-| 5 | The money library everything else imports | An exact Money library, tested and packaged | Decimal, Hypothesis, mypy, CI |
-| 6 | The ledger in Postgres | A ledger schema, measured with EXPLAIN | SQL, constraints, indexes, migrations |
-| 7 | The payments API other systems depend on | An HTTP API over the ledger | FastAPI, idempotency, pagination |
-| 8 | Eight requests, one balance, minus $540 | A race reproduced, then fixed three ways | locking, isolation, pools |
-| 9 | The life of a card payment | A card lifecycle service and network simulator | authorise, capture, chargebacks |
-| 10 | The processor says one thing, your ledger says another | A reconciliation engine | matching, breaks, fees, payouts |
-| 11 | The event you thought you published | An outbox, idempotent consumers, partitioning | Kafka, at-least-once, replay |
-| 12 | The payout that half happened | A saga with compensation and a sweeper | Distributed transactions, recovery |
-| 13 | The table that outgrew the machine | Partition it, migrate it, backfill it live | Partitioning, migrations, replicas |
-| 14 | The p99 you promised | Measure the tail, then cache, limit and shed | Latency, Redis, load shedding |
-| 15 | The keys to the money | A card vault with envelope encryption | Tokenisation, OAuth2, mTLS, PCI scope |
-| 16 | The pager, and what it is allowed to wake you for | Instrument it, then break it on purpose | SLOs, burn rate alerts, postmortems |
-| 17 | The deploy you can undo | Container, pipeline, infrastructure, blue green | Docker, CI/CD, Terraform, cost |
-| 18 | Java, for somebody who already writes Python | Port the payments API to Spring Boot | JVM, types, Testcontainers |
-| 19 | The screen that filters you out | Forty problems, four exercises, an honest log | Complexity, patterns, interviews |
-| 20 | The whiteboard, and the thing you hand over | The platform assembled, load tested, packaged | System design, capacity, capstone |
-
-A level is cleared when you pass its drill **and** mark its build complete; that opens the next
-one.
-
-Levels 1 to 10 take somebody from no Python to a deployed app, and they run in a browser tab.
-Level 11 starts the advanced track: harder builds, on a real machine, chosen for what they prove to
-somebody hiring. The plan for levels 11 to 20 is in
-[docs/advanced-track.md](docs/advanced-track.md).
 
 ## How a level works
 
-1. **Learn**: the concepts, with worked numbers and the reasoning behind them. Sections end with a
-   **your turn** question you answer in your head before the answer is revealed, so you find out
-   whether you followed before the drill tells you.
-2. **Tutorial**: steps you follow along with. Every tool the build needs is introduced here and
+1. **Brief**: what you are about to build, what it assumes, and what is new.
+2. **Learn**: the ideas, with real numbers worked through and the reasoning behind them. Sections
+   end with a **your turn** question you answer in your head before the answer appears, so you find
+   out whether you followed before the drill tells you. There are 91 of them across the course.
+3. **Tutorial**: steps you follow along with. Every tool the build needs is introduced here and
    nowhere else.
-3. **Drill**: 15 questions, instant explanations, and the full answer key at the end, pass or fail.
-   You need **12/15** to open the build.
-4. **Build**: a project scoped to exactly what you know, with requirements, a starter file,
-   check values, and a marking rubric.
-5. **Compare**: read the solution key in [`solutions/`](solutions/) *after* you have written yours.
+4. **Drill**: 15 questions with instant explanations. **12 out of 15** opens the build.
+5. **Build**: a project scoped to exactly what you know, with requirements, a starter file, check
+   values you can test against, and a marking rubric.
 
-What a knowledge section has to do, and the five moves it makes, is written down in
-[docs/teaching-guide.md](docs/teaching-guide.md). All ten levels are written to it: 76 **your turn**
-questions across the course, each one worked on the same figures the level teaches.
+A level is cleared when you pass its drill **and** mark its build complete. That opens the next one.
 
-## Mou and Khanh
+### What you need
 
-Mou is the tutor: a 24 by 24 pixel rabbit who sits behind the **mou** button, or
-<kbd>Ctrl</kbd>+<kbd>K</kbd>, and knows which level you are on. Khanh is the black bear sitting
-beside her on the front page, 24 pixels wide and 26 tall, painted in dark blues because a black bear
-in true black is a hole in a dark page. Both are drawn as text, one character per pixel, in
-[`assets/js/ui/mou.js`](assets/js/ui/mou.js) and [`bear.js`](assets/js/ui/bear.js), so a mood can be
-edited by eye:
+Levels 1 to 4 of the engineering track, and the whole analyst track, run in a browser tab. There is
+nothing to install and nothing to configure.
 
-```
-'.....owppwo..owppwo.....'
-'....owwwwwwwwwwwwwwo....'
-```
-
-They blink on their own timers and Khanh grins at Mou every few seconds, all of which stops if the
-reader has asked for reduced motion. Under the two of them the front page carries one line from
-[`content/quotes.js`](content/quotes.js): engineers who built the tools, investors who explain their
-reasoning, athletes who are honest about the work, each one named. The date picks it rather than a
-random number, so everybody in the society reads the same line on the same day and it changes at
-local midnight. Add your own, keep them short, and only add what you can source.
-
-| Tutor mode | Setup | What you get |
-|------|-------|--------------|
-| **Course knowledge base** | none. This is the default | Retrieval over every level: concepts, glossary, tutorial steps, error diagnosis, and hints tied to your next unticked requirement |
-| **Hosted endpoint** | deploy with `ANTHROPIC_API_KEY` set | Claude, with the current level's material in its system prompt |
-| **Your own key** | paste it in the tutor's settings | Same, straight from your browser. Never do this on a shared computer |
-
-The tutor is built to **nudge, not to hand over answers**: ask it for a hint and it will give you the
-next step and point at the tutorial section that covers it. Ask it for the whole solution and it will
-tell you where the key lives and why reading it first is a bad trade.
-
-If a model is configured but unreachable, the tutor falls back to the built in knowledge base, so it
-never leaves a learner stuck.
+From **level 5** onward you work on your own machine, because the subject becomes packaging, a real
+database, containers and deployment, and those cannot be faked in a notebook. Level 5 walks you
+through that setup from scratch.
 
 ---
 
-## Accounts and saved progress
+## Mou
 
-The course sits behind a Google sign in. Google says who the person is, a Neon Postgres database
-holds the account and their progress, and a signed cookie keeps them in for thirty days. No password
-is ever sent to the site, so none can leak from it.
+Mou is the tutor: a pixel rabbit behind the **mou** button, or <kbd>Ctrl</kbd>+<kbd>K</kbd>, who
+knows which level you are on and which requirement you have not ticked yet.
 
-Progress syncs both ways: what you earn on one device follows you to the next, and signing in after
-playing signed out merges the two, keeping the better of each. The full setup, about ten minutes and
-free, is in [docs/accounts-setup.md](docs/accounts-setup.md).
+She is built to **nudge rather than hand over answers**. Ask for a hint and you get the next step
+and a pointer at the tutorial section that covers it. Ask for the whole solution and she will tell
+you where the key lives and why reading it first is a bad trade.
 
-```
-GET  /api/health          is this deployment wired up
-POST /api/auth/google     verify a Google token, create the account, set the cookie
-GET  /api/auth/me         who is signed in
-POST /api/auth/logout     clear the cookie
-GET  /api/progress        the signed in learner's saved state
-PUT  /api/progress        replace it
-GET  /api/leaderboard     the ranking: a name and two numbers per member
-POST /api/chat            the tutor
-```
-
-`/api/health` is the first thing to check when something is wrong: it reports which environment
-variables are present and whether the database answers, without returning a single value.
+If no model is configured or reachable, she falls back to a search over the course material, so she
+never leaves you stuck.
 
 ---
 
-## What is in this repository
+## The solutions
 
-```
-index.html              the app shell
-privacy.html            the two pages Google requires before publishing a sign in
-terms.html
-assets/css/app.css      every visual decision, built on tokens declared at the top
-assets/img/             the ribbon monogram and the link preview card, both generated in tools/
-assets/js/
-  config.js             repo, XP economy, pass mark, Google client id: edit this first
-  core.js               curriculum registry, markdown subset, syntax highlighting
-  storage.js            progress, XP, badges, and the merge that runs on sign in
-  ui/
-    auth.js             the gate, the Google button, progress syncing
-    main.js             masthead, routing, toasts
-    level.js            one level: brief, learn, tutorial, drill, build
-    quiz.js             the drill and the answer key
-    blocks.js           curriculum blocks, including the your turn check
-    tutor.js            Mou's panel
-    tutor-engine.js     retrieval, prompting, API calls: no UI in this file
-    mou.js  bear.js  companions.js     the two sprites and the life in them
-content/levels/         the curriculum: ten plain data files, no build step
-api/                    serverless functions: auth, progress, ranking, tutor, health
-  _lib/                 database, session cookies, log redaction
-sql/schema.sql          the two tables, users and progress
-data/                   synthetic datasets and the generator that makes them
-solutions/              verified solution keys and quiz answer keys, one per level
-tools/                  generators for quiz keys, solution readmes, the logo, the link card, and a slop scan
-docs/                   architecture, teaching guide, accounts setup
-.claude/skills/         the no-ai-slop editing rules, vendored with their licence
-```
+Every solution in [`solutions/`](solutions/) was executed and produces exactly the figures its level
+brief quotes. They are not sketches, and they are not aspirational: if a solution ever disagrees
+with a brief, the brief is wrong, so please open an issue.
 
-### Editing the course
+Each one has a README explaining the design decisions, the mistakes people actually make, and how to
+run it.
 
-The curriculum is data. To change a lesson, edit the matching file in `content/levels/`: each level
-is one object with `knowledge`, `tutorial`, `glossary`, `quiz`, `project` and `faq`. Blocks like
-`{ p: '...' }`, `{ code: '...', lang: 'python' }`, `{ warn: '...' }`, `{ table: { head, rows } }` and
-`{ check: { q, a } }` render themselves.
-
-After editing, regenerate the derived files so nothing drifts:
-
-```bash
-node tools/build_quiz_keys.js         # solutions/level-XX/quiz-key.md
-node tools/build_solution_readmes.js  # solutions/level-XX/README.md
-node tools/balance_answers.js --check # answer position distribution per level
-python tools/slop_scan.py             # banned words and tired patterns in every word a learner reads
-python tools/build_brand.py          # og-card.png and the icons, cut from assets/img/brand/fq-logo-source.png
-```
-
-`tools/balance_answers.js` (without `--check`) rewrites each quiz so the correct answer is spread
-evenly across A to D, otherwise a learner can pass by pattern instead of knowledge.
-`tools/slop_scan.py` does the mechanical half of the editing rules vendored in
-`.claude/skills/no-ai-slop`; the judgement calls stay with a person.
-
-### Pointing it at your own repo
-
-Open `assets/js/config.js` and change:
-
-```js
-repo: { owner: 'your-github-username', name: 'your-repo-name', branch: 'main' }
-```
-
-Every dataset URL, solution link and `{{RAW}}` reference in the curriculum follows it automatically.
-The Google client id lives beside it, in `auth.googleClientId`.
+**Read yours into existence first.** The solution is for comparing against, and the comparison is
+where most of the learning is: you will find three things you did differently and one of them will
+be better than the key. Opening it before you have written anything turns a build into a reading
+exercise, and you will feel like you understood it right up until the next level.
 
 ---
 
-## The data is synthetic: all of it
+## Progress, and the ranking
 
-Every CSV and JSON file in `data/` is generated by `data/generate_datasets.py`. No real customer,
-account, or market data appears anywhere in this course, and the tickers (`TECHX`, `BANKCO`,
-`GOLDF`, `CRYPTOZ`) are fictional. Regenerate them at any time:
+Signing in stores four things Google returns (name, email, avatar, account id) plus your course
+progress. No password is ever sent to the site, so none can leak from it. One cookie, which exists
+to keep you signed in. No analytics, no advertising, no trackers.
 
-```bash
-python data/generate_datasets.py
-```
+Progress syncs both ways, so what you earn on one device follows you to the next, and signing in
+after playing signed out merges the two and keeps the better of each.
 
-The generator is seeded, so the numbers quoted in the level briefs stay stable.
+The ranking page lists society members by levels cleared. It covers the engineering track only.
 
-## The solutions are verified, not aspirational
-
-Every solution was executed against these datasets and produces exactly the figures its level brief
-quotes. Levels 9 and 10 ship test suites:
-
-```bash
-cd solutions/level-09 && pytest -q    # 22 passed
-cd solutions/level-10 && pytest -q    # 38 passed
-```
-
-If a solution ever disagrees with a brief, the brief is wrong: please open an issue.
+What you type to Mou goes to Anthropic to be answered and is not stored. The full statement is at
+[privacy.html](privacy.html).
 
 ---
 
-## Deploying
+## The data is synthetic, all of it
 
-1. Import this repo into Vercel and connect it in **Settings → Git**, so every push redeploys.
-2. Set the environment variables:
-
-| Variable | Needed for | Notes |
-|---|---|---|
-| `DATABASE_URL` | accounts | the Neon connection string |
-| `GOOGLE_CLIENT_ID` | accounts | the same id as in `config.js` |
-| `SESSION_SECRET` | accounts | 32 or more random characters |
-| `ANTHROPIC_API_KEY` | the tutor | optional: without it the tutor answers offline |
-| `ANTHROPIC_WORKSPACE_ID` | the tutor | only if that key is an organization key |
-| `FINQUEST_MODEL` | the tutor | default `claude-opus-5` |
-| `FINQUEST_EFFORT` | the tutor | default `low` |
-| `FINQUEST_MAX_TOKENS` | the tutor | default `2000` |
-
-3. **Settings → Deployment Protection**: Standard Protection keeps the production domain public while
-   old, hashed deployment URLs stay private. Turning protection off entirely leaves every past build
-   open to anyone holding the link.
-4. Redeploy. Environment variables are baked into a build, so a deployment made before you added them
-   will not see them.
-
-`api/chat.js` keeps the key server side, chooses the model itself (callers cannot), caps message size
-and history, throttles per IP, and returns a readable error rather than a stack trace. It is a
-teaching grade proxy: put it behind real authentication before pointing a large public audience at it.
-
-Nothing logged by any function carries a credential: every caught error goes through
-`api/_lib/redact.js`, which masks connection strings, API keys, bearer tokens and passwords.
-
-## Built with
-
-- [Radix Themes](https://www.radix-ui.com/themes): used for behaviour only, so tabs, dialogs and
-  focus handling are accessible by default. Every visual decision lives in `assets/css/app.css`
-- React 19 and [htm](https://github.com/developit/htm), loaded from a CDN import map so there is no
-  build step for the site
-- [Neon](https://neon.tech) Postgres for accounts and progress, Google Identity Services for sign in
-- pandas, numpy, scikit-learn, matplotlib and Streamlit in the curriculum itself
-
-## Privacy
-
-Signing in stores four things Google returns (name, email, avatar URL, account id) plus your course
-progress. No password, no analytics, no advertising, no trackers, and one cookie, which exists to
-keep you signed in. What you type to the tutor goes to Anthropic to be answered and is not stored.
-The full statement is at [privacy.html](privacy.html), served at `/privacy`.
+Every dataset in the course is generated. No real customer, account or market data appears anywhere,
+and the companies and tickers are invented. You can regenerate the lot at any time, and the
+generator is seeded, so the numbers in the briefs stay the same as the numbers on your screen.
 
 ## A note on scope
 
@@ -313,3 +162,8 @@ examples rather than production systems. The levels say so where it matters.
 ## Licence
 
 MIT: see [LICENSE](LICENSE). Use it, fork it, teach with it.
+
+---
+
+*Running the site or editing the course? Everything for that is in
+[docs/maintaining.md](docs/maintaining.md).*
