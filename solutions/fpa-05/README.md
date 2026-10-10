@@ -56,7 +56,7 @@ python -m close.run && pytest -q
 
 - python -m close.run completes, exits 0, and writes both the document and the chart
 - Every stage reports a time greater than zero
-- The pack ties to the ledger inside the pipeline, and the document says so
+- The pack ties to the ledger inside the run, and the document says so
 - The reconciliation finds exactly one month out, 2025-06 by -4,820, and does not stop the close
 - The document contains the September numbers and at least one TODO
 - All four forecast scenarios run and balance, and the stress case draws the facility in 2026-09

@@ -36,7 +36,7 @@ FQ.registerLevel({
          'is the only correct way to forecast it.' },
     { money: 'The rule that makes a model a model: **cash is an output**. If you type a cash forecast in and plug ' +
              'the balance sheet to match, you have built a spreadsheet of hopes. Every month in this level is ' +
-             'asserted to balance to the cent, and the assertion is what turns the identity into a test.' },
+             'checked to balance to the cent, and that check is what turns the identity into a test.' },
 
     { h: 'Start from a balance sheet, not from zero' },
     { p: 'A forecast begins at the last closed month. September is the last month closed, so the model starts from ' +
@@ -266,7 +266,8 @@ FQ.registerLevel({
         t: 'Cash as an output',
         blocks: [
           { code: 'operations = (net_income + depreciation\n              - (receivables - opening_receivables)\n              + (payables - opening_payables))\ncash = opening_cash + operations - capex + financing', lang: 'python' },
-          { p: 'Then assert it. This is the line that separates a model from a spreadsheet, and it costs one test:' },
+          { p: 'Then prove it, in a line the computer runs every time. This is what separates a model from a ' +
+               'spreadsheet, and it costs one test:' },
           { code: 'assert month.cash == pytest.approx(\n    previous + month.cash_from_operations - month.capex + month.financing, abs=0.005)', lang: 'python' },
           { p: '`assert` says "this must be true, and stop everything if it is not". `pytest.approx(x, abs=0.005)` ' +
                'means "equal to x, within half a cent", which is how you compare two numbers that have each been ' +
@@ -277,7 +278,7 @@ FQ.registerLevel({
       {
         t: 'The revolver, and the loop that resolves it',
         blocks: [
-          { p: 'Draw when cash would fall below the floor, repay when there is spare above it, and iterate until the ' +
+          { p: 'Draw when cash would fall below the floor, repay when there is spare above it, and go round again until the ' +
                'draw stops moving.' },
           { code: 'draw = 0.0\nfor attempt in range(1, MAX_PASSES + 1):\n    interest = term_loan_interest + (revolver + draw / 2) * revolver_rate / 12\n    ...\n    new_draw = max(0.0, minimum_cash - cash_before_financing)\n    passes = attempt\n    if abs(new_draw - draw) < 0.005:\n        break\n    draw = new_draw', lang: 'python' },
           { p: 'Record the pass count. It is the only evidence you have that the thing converged rather than ran out ' +

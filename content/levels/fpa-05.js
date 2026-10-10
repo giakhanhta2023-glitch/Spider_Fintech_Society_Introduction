@@ -10,13 +10,13 @@ FQ.registerLevel({
   tagline: 'Six stages, 258 milliseconds, one document, and a run that stops rather than publishing a number it cannot defend.',
   difficulty: 7,
   minutes: 360,
-  tags: ['pipeline', 'reconciliation', 'reporting', 'capstone'],
+  tags: ['the close', 'reconciliation', 'reporting', 'capstone'],
   summary: 'The capstone. The spreadsheet, the queries, the script and the model become one command that goes from ' +
            'raw files to a pack somebody can read, with a reconciliation between two systems in the middle and a ' +
            'refusal to publish when anything is wrong.',
 
   objectives: [
-    'Assemble four levels of work into one pipeline without copying any of it',
+    'Join four levels of work into one run without copying any of it',
     'Reconcile two systems that were built separately, and find the row where they disagree',
     'Tell the difference between a stage that must stop the close and one that only needs a sentence',
     'Produce a document in the order a reader needs rather than the order you computed it',
@@ -33,8 +33,8 @@ FQ.registerLevel({
          'the ledger will not load. The reconciliation needs both the ledger and the billing detail. The reforecast ' +
          'needs the month that just closed. **A dependency between two things that used to be separate is the whole ' +
          'exercise**, and it is the same lesson the engineering track learns in its own capstone.' },
-    { money: 'The number this level ends on: six stages, **258 milliseconds**, one document, and an exit code. The ' +
-             'exit code is the part that matters. A close that can say "do not send this" is a different thing from ' +
+    { money: 'The number this level ends on: six stages, **258 milliseconds**, one document, and a pass or fail. ' +
+             'The pass or fail is the part that matters. A close that can say "do not send this" is a different thing from ' +
              'a spreadsheet that can only be wrong quietly.' },
 
     { h: 'The six stages' },
@@ -61,7 +61,7 @@ FQ.registerLevel({
         ['`STOP`', 'The output would be wrong', '**Nothing after it runs, and nothing is written**']
       ]
     }},
-    { p: 'The middle one is the state people leave out, and leaving it out breaks the pipeline in one of two ways. ' +
+    { p: 'The middle one is the state people leave out, and leaving it out breaks the run in one of two ways. ' +
          'Treat every difference as fatal and the close never finishes, so somebody adds a flag to skip the checks ' +
          'and within two months the flag is always on. Treat none of them as fatal and a wrong pack goes out with a ' +
          'warning nobody read.' },
@@ -71,10 +71,10 @@ FQ.registerLevel({
          'it to whoever posts corrections.' },
     { code: '   [note] reconcile billing to the ledger         17 ms\n           21 months compared\n           2025-06: billing 3,012,917.75 against ledger 3,017,737.75,\n                    difference -4,820.00\n           1 month(s) do not agree, which goes in the commentary', lang: 'text' },
     { check: {
-      q: 'Your pipeline finds the same 4,820 difference every month from now on, because nobody posts the ' +
-         'correction. What should the pipeline do about it?',
+      q: 'Your run finds the same 4,820 difference every month from now on, because nobody posts the ' +
+         'correction. What should it do about it?',
       a: 'Keep reporting it, and keep not stopping. What should change is the commentary: a break that is three ' +
-         'months old is a different sentence from a new one, and if the pipeline can say "first seen in the June ' +
+         'months old is a different sentence from a new one, and if the run can say "first seen in the June ' +
          'close, still open" then the document carries its own ageing. What it must not do is start ignoring ' +
          'differences below some threshold, because the threshold is where the next real break will hide. The ' +
          'pressure to silence a persistent warning is exactly the pressure that makes checks useless, and the answer ' +
@@ -105,7 +105,8 @@ FQ.registerLevel({
          'say which is right.' },
 
     { h: 'The document, in reading order' },
-    { p: 'The pipeline computes in dependency order and the document is written in reading order, and they are not ' +
+    { p: 'The work has to happen in the order each piece needs the one before it, and the document has to be ' +
+         'written in the order a reader needs. Those are not ' +
          'the same. A reader wants:' },
     { code: '1. The five numbers            revenue, gross profit, margin, opex, EBITDA\n2. What moved                 the material variances, largest first\n3. The split                  volume against price\n4. Where the revenue came from  segments\n5. What has not been collected  receivables ageing, and the DSO\n6. Does billing agree           the reconciliation, with the break named\n7. What it means for next year  the four scenarios\n8. Worth knowing                the warnings\n9. How this was produced        the command, the source, the tie', lang: 'text' },
     { p: 'Nine sections, and the last one is the one that stops the pack being questioned every month. It names the ' +
@@ -115,10 +116,10 @@ FQ.registerLevel({
            'last month, and committed. An email body exists once and then only in somebody\'s memory of it.' },
 
     { h: 'What a script must not write' },
-    { p: 'Every cause in the generated document is the word TODO. The pipeline knows marketing is 210,000 over; it ' +
+    { p: 'Every cause in the written document is the word TODO. The run knows marketing is 210,000 over; it ' +
          'does not know that the campaign moved, and a tool that guesses is worse than one that leaves a gap.' },
     { code: '**Marketing programmes, -210,000 unfavourable.** TODO: why. TODO: what happens next.\n**Scheme and interchange, -167,096 unfavourable.** TODO: why. TODO: what happens next.\n**Transaction fees, +151,993 favourable.** TODO: why. TODO: what happens next.', lang: 'text' },
-    { p: 'What the pipeline **can** guarantee is that no material variance is ever missing from the list, which is ' +
+    { p: 'What the run **can** guarantee is that no material variance is ever missing from the list, which is ' +
          'exactly what a person writing at 7pm gets wrong. That division of labour is the point: the machine does the ' +
          'completeness, the person does the causation, and the document will not go out with TODO in it because a ' +
          'human has to read it first.' },
@@ -127,7 +128,7 @@ FQ.registerLevel({
          'automatically. What do you say?',
       a: 'The numbers can. The document cannot go out unread while it still contains TODO, because the causes are ' +
          'the part that carries the judgement and the part somebody will be asked about in the meeting. A sensible ' +
-         'middle is to run the pipeline on a schedule so the numbers and the exit code are waiting first thing, with ' +
+         'middle is to set it to run overnight so the numbers and the pass or fail are waiting first thing, with ' +
          'the document in a folder rather than in an inbox, and a person spending twenty minutes on the commentary ' +
          'before it goes anywhere. Automate the completeness, keep the accountability.'
     }},
@@ -159,8 +160,8 @@ FQ.registerLevel({
         t: 'A stage type, before any stages',
         blocks: [
           { code: '@dataclass\nclass Stage:\n    name: str\n    ok: bool = True\n    fatal: bool = False\n    milliseconds: float = 0.0\n    lines: list[str] = field(default_factory=list)\n    data: dict = field(default_factory=dict)\n\n    def fail(self, text, fatal=True):\n        self.ok = False\n        self.fatal = self.fatal or fatal\n        self.lines.append(text)', lang: 'python' },
-          { p: 'Two booleans rather than one. `ok` is whether there is anything to say, `fatal` is whether the close ' +
-               'can continue, and the whole design of the pipeline is in the gap between them.' },
+          { p: 'Two true or false answers rather than one. `ok` is whether there is anything to say, `fatal` is whether ' +
+               'the close can continue, and the whole design of this level is in the gap between them.' },
           { p: 'If the `@dataclass` line is unfamiliar, level 4 has a page on it: a class is a shape for a thing and ' +
                '`@dataclass` is the instruction that makes Python write the repetitive parts. `field(default_factory=list)` ' +
                'gives each stage its own empty list rather than one list shared by all of them.' }
@@ -171,7 +172,7 @@ FQ.registerLevel({
         t: 'Import the earlier levels',
         blocks: [
           { code: 'for folder in [SOLUTIONS / "fpa-03" / "close-pack",\n               SOLUTIONS / "fpa-04" / "three-statement"]:\n    if not folder.exists():\n        raise ModuleNotFoundError(\n            f"{folder} is missing. The close is the assembly of levels 3 and 4.")\n    sys.path.insert(0, str(folder))', lang: 'python' },
-          { warn: 'Resist copying the files in. It will work today and it will be two implementations by the end of ' +
+          { warn: 'Resist copying the files in. It will work today and it will be two versions of the same thing by the end of ' +
                   'the quarter.' }
         ],
         check: 'The close imports the pack and the model, and says something useful if either folder is missing.'
@@ -189,7 +190,7 @@ FQ.registerLevel({
         t: 'Stages two and three: the gates, then the pack',
         blocks: [
           { p: 'Both come from level 3 with no changes. The only new thing is that their findings become the ' +
-               'pipeline\'s verdict.' },
+               'run\'s verdict.' },
           { code: 'findings = closepack_checks.run(frame, budget, month, report.duplicates_removed)\nif closepack_checks.fatal(findings):\n    stage.fail(f"{len(...)} fatal finding(s): the close stops here")', lang: 'python' }
         ],
         check: 'Asking for a month the plan does not cover stops the run at stage two, and writes nothing.'
@@ -206,7 +207,7 @@ FQ.registerLevel({
       {
         t: 'Stage six, then the document',
         blocks: [
-          { p: 'Run the four scenarios from level 4, assert they all balance, then write the document in reading ' +
+          { p: 'Run the four scenarios from level 4, check they all balance, then write the document in reading ' +
                'order with every cause left as TODO.' },
           { code: 'for assumptions in model_drivers.scenarios():\n    forecast = model_forecast.run(assumptions)\n    if not forecast.balances:\n        stage.fail(f"the {assumptions.name} case does not balance")', lang: 'python' },
           { tip: 'A forecast that does not balance is fatal here even though nothing else depends on it, because a ' +
@@ -218,7 +219,7 @@ FQ.registerLevel({
         t: 'Test the stopping, not just the running',
         blocks: [
           { code: 'def test_a_fatal_stage_stops_everything_after_it(monkeypatch, tmp_path):\n    monkeypatch.setattr(stages, "quality_gates", broken)\n    monkeypatch.setattr(close_run, "OUT", tmp_path)\n    code, done = close_run.run("2025-09", quiet=True)\n\n    assert code == 1\n    assert all(not s.ok for s in done[2:])\n    assert not list(tmp_path.glob("close-*.md"))   # and nothing was written', lang: 'python' },
-          { p: 'The last assertion is the one that matters. A pipeline that stops but has already written half a ' +
+          { p: 'The last check is the one that matters. A run that stops but has already written half a ' +
                'pack has not stopped in any useful sense.' }
         ],
         check: 'Nine tests, and the ones about stopping outnumber the ones about running.'
@@ -226,7 +227,7 @@ FQ.registerLevel({
       {
         t: 'Run it somewhere else',
         blocks: [
-          { p: 'Clone your own repository into a new folder and run the command. No editing, no environment ' +
+          { p: 'Download your own copy from GitHub into a new folder and run the command. No editing, no settings ' +
                'variables you forgot you set, no file sitting in your downloads.' },
           { tip: 'If it fails, that failure is the most valuable thing this level will give you, and fixing it is ' +
                  'what "handed over" means.' }
@@ -247,7 +248,7 @@ FQ.registerLevel({
     { t: 'Exit code', d: 'Zero if the run was clean. The thing that lets something other than a person act on the result.' },
     { t: 'Provenance', d: 'Which command produced this, from what, and when. The footer that stops a pack being re-litigated monthly.' },
     { t: 'Idempotent', d: 'Running it twice gives the same result. Why the database is deleted and rebuilt each run.' },
-    { t: 'Reading order', d: 'The order a reader needs, which is rarely the order the pipeline computed.' },
+    { t: 'Reading order', d: 'The order a reader needs, which is rarely the order the work was done in.' },
     { t: 'Handover', d: 'Somebody else runs it next month without asking you anything. The only real test of documentation.' },
     { t: 'Clean checkout', d: 'A fresh clone with nothing left over from development. Where handovers actually break.' }
   ],
@@ -273,7 +274,7 @@ FQ.registerLevel({
       answer: 0,
       why: "An unmapped account means money that appears nowhere in the pack, so the pack would be wrong. A credit note not yet posted leaves the pack correct and needs a sentence." },
 
-    { q: "Why does the pipeline delete and rebuild the database on every run?",
+    { q: "Why does the run delete and rebuild the database every time?",
       options: [
         "To save disk space",
         "To avoid locking",
@@ -291,7 +292,7 @@ FQ.registerLevel({
         "Copying would break the tests"
       ],
       answer: 2,
-      why: "It is the same lesson as the mapping table and the sign rule: one implementation, one place to fix it. The monthly pack and the quarterly pack disagreeing is how it shows up." },
+      why: "It is the same lesson as the mapping table and the sign rule: one version, one place to fix it. The monthly pack and the quarterly pack disagreeing is how it shows up." },
 
     { q: "The reconciliation uses an outer join rather than an inner one. Why?",
       options: [
@@ -305,7 +306,7 @@ FQ.registerLevel({
 
     { q: "Why does the generated document leave every cause as TODO?",
       options: [
-        "The pipeline knows what moved and cannot know why, and an invented cause is worse than a gap",
+        "The run knows what moved and cannot know why, and an invented cause is worse than a gap",
         "The feature is unfinished",
         "To keep the document short",
         "Because the data is synthetic"
@@ -313,7 +314,7 @@ FQ.registerLevel({
       answer: 0,
       why: "The machine guarantees completeness, which is what a person writing at 7pm gets wrong. The person supplies causation, which is what they are accountable for." },
 
-    { q: "What is the strongest test of a pipeline that can stop?",
+    { q: "What is the strongest test of a run that can stop?",
       options: [
         "That it retries",
         "That when a stage fails, nothing after it runs and nothing is written",
@@ -321,7 +322,7 @@ FQ.registerLevel({
         "That it logs the failure"
       ],
       answer: 1,
-      why: "A pipeline that stops after writing half a pack has not stopped in any useful sense. Assert the absence of the output file, not just the exit code." },
+      why: "A run that stops after writing half a pack has not stopped in any useful sense. Check that the file is not there, not just that it reported a failure." },
 
     { q: "Six stages take 258 ms and the whole command takes about 4.4 seconds. What is the rest?",
       options: [
@@ -343,12 +344,12 @@ FQ.registerLevel({
       answer: 3,
       why: "Provenance is what stops a pack being re-litigated every month. A reader who doubts a number gets somewhere to start that is not your inbox." },
 
-    { q: "The document is written in a different order from the pipeline's computation. Why?",
+    { q: "The document is written in a different order from the order the work happens in. Why?",
       options: [
         "To make the file shorter",
-        "To hide the implementation",
+        "To hide how it was built",
         "Because the forecast depends on the pack",
-        "Because a reader wants the five numbers first, and the pipeline has to load the data first"
+        "Because a reader wants the five numbers first, and the run has to load the data first"
       ],
       answer: 3,
       why: "Dependency order and reading order are different problems. Writing the document in computation order is the most common way a technically correct pack goes unread." },
@@ -361,7 +362,7 @@ FQ.registerLevel({
         "Yes, it is fully automated"
       ],
       answer: 0,
-      why: "Automate the completeness and keep the accountability. Run it on a schedule so the numbers and the exit code are waiting, and have a person spend twenty minutes on the commentary." },
+      why: "Automate the completeness and keep the accountability. Set it to run overnight so the numbers and the pass or fail are waiting, and have a person spend twenty minutes on the commentary." },
 
     { q: "The same 4,820 break appears for three months running. What changes?",
       options: [
@@ -393,10 +394,10 @@ FQ.registerLevel({
       answer: 0,
       why: "Half of what breaks at a handover breaks because of a file that existed only on the machine it was written on. A fresh clone is the only way to find that." },
 
-    { q: "What single feature separates this pipeline from doing the same work in a spreadsheet?",
+    { q: "What single thing separates this from doing the same work in a spreadsheet?",
       options: [
         "It uses a database",
-        "It can refuse: it stops, writes nothing, and returns a non zero exit code",
+        "It can refuse: it stops, writes nothing, and reports a failure",
         "It produces charts",
         "It is faster"
       ],
@@ -418,14 +419,14 @@ FQ.registerLevel({
       'A stage type that distinguishes "needs saying" from "stop the close"',
       'The earlier levels imported rather than copied, with a clear error if they are missing',
       'A database rebuilt from the files on every run, so nothing survives between runs',
-      'The pack from level 3, with its tie to the ledger reported inside the pipeline',
+      'The pack from level 3, with its tie to the ledger reported inside the run',
       'The detail queries from level 2: revenue by segment, the largest merchants, receivables ageing',
       'A reconciliation of billing against the ledger for every month, using an outer join',
       'The reconciliation reported as a note rather than a failure, with the break named',
       'The four scenarios from level 4, with a fatal verdict if any of them stops balancing',
       'A markdown document written in reading order, with every cause left as TODO',
       'A footer naming the command, the source files and the tie difference',
-      'A non zero exit code when any stage is fatal, and nothing written in that case',
+      'A failure reported when any stage is fatal, and nothing written in that case',
       'Tests covering the happy path, the stopping path, and the reconciliation being a note rather than a failure',
       'A README with the command, a real pasted run, and an honest list of what it does not do'
     ],
@@ -436,7 +437,7 @@ FQ.registerLevel({
     tests: [
       'python -m close.run completes, exits 0, and writes both the document and the chart',
       'Every stage reports a time greater than zero',
-      'The pack ties to the ledger inside the pipeline, and the document says so',
+      'The pack ties to the ledger inside the run, and the document says so',
       'The reconciliation finds exactly one month out, 2025-06 by -4,820, and does not stop the close',
       'The document contains the September numbers and at least one TODO',
       'All four forecast scenarios run and balance, and the stress case draws the facility in 2026-09',
@@ -469,16 +470,16 @@ FQ.registerLevel({
          'arithmetic.' },
     { q: 'What if my company uses a system that produces the pack already?',
       a: 'Most do, and the pack it produces is usually the numbers without the checks. The valuable part of this ' +
-         'level is not the pipeline: it is knowing what a tie out is, what a break is, and which differences stop a ' +
+         'level is not the code: it is knowing what a tie out is, what a break is, and which differences stop a ' +
          'close. Those transfer to any system, including the expensive ones.' },
     { q: 'Should the close run automatically?',
-      a: 'The numbers, yes. The document going out, no, at least while it still contains TODO. Run it on a schedule ' +
-         'so the exit code and the numbers are waiting first thing, and keep a person between the file and the ' +
+      a: 'The numbers, yes. The document going out, no, at least while it still contains TODO. Set it to run ' +
+         'overnight so the pass or fail and the numbers are waiting first thing, and keep a person between the file and the ' +
          'leadership team.' },
     { q: 'How do I talk about this in an interview?',
       a: 'Lead with the refusal: "it produces nothing rather than a pack it cannot defend, and here is the test that ' +
-         'proves it". Then the reconciliation: two systems, twenty one months, one break worth 4,820, found by the ' +
-         'pipeline rather than by the auditor. Those two sentences say more about how you work than any list of ' +
+         'proves it". Then the reconciliation: two systems, twenty one months, one break worth 4,820, found by your ' +
+         'own close rather than by the auditor. Those two sentences say more about how you work than any list of ' +
          'tools.' },
     { q: 'What comes after this track?',
       a: 'Two directions, and they are both good. Deeper into the business: pricing, unit economics, the things the ' +

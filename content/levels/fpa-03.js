@@ -154,7 +154,8 @@ FQ.registerLevel({
     }},
 
     { h: 'The merge that doubles your revenue' },
-    { p: 'The single most expensive pandas mistake in finance work, and it never raises an error:' },
+    { p: 'The single most expensive pandas mistake in finance work, and nothing goes wrong on screen when you ' +
+         'make it. No error, no warning, just a number:' },
     { code: 'invoices  = pd.DataFrame({"customer_id": ["A", "B"], "amount": [100.0, 200.0]})\ncustomers = pd.DataFrame({"customer_id": ["A", "B"], "segment": ["mid", "mid"]})\n\ninvoices.merge(customers, on="customer_id")["amount"].sum()      # 300.0, correct\n\n# now customers has A twice, because somebody re-ran an export\nduplicated = pd.concat([customers, customers.head(1)])\ninvoices.merge(duplicated, on="customer_id")["amount"].sum()     # 400.0\n#                                              ^ no error, no warning', lang: 'python' },
     { p: 'The lookup table gained one duplicate row and the revenue went up by a third. At 3,778 invoices you would ' +
          'not notice. The habit that prevents it is one line before every merge:' },
@@ -207,7 +208,7 @@ FQ.registerLevel({
       a: 'That the check cell is zero and the gates are clean, which the script prints. After that, the repair line: ' +
          'if it says something different from last month, the export changed and the difference needs explaining ' +
          'before the numbers do. Then read the TODO list and fill it in, because a memo sent with TODO in it is ' +
-         'worse than a memo that was late, and it is the one thing in this pipeline a person cannot skip.'
+         'worse than a memo that was late, and it is the one thing in this chain a person cannot skip.'
     }}
   ],
 
@@ -256,11 +257,14 @@ FQ.registerLevel({
         check: 'September is clean, and asking for 2024-05 is fatal because the plan starts in 2025.'
       },
       {
-        t: 'The check cell as an exit code',
+        t: 'The check cell, as a pass or fail',
         blocks: [
           { code: 'difference = round(pack_total - ledger_total, 2)\nprint(f"   check: pack against ledger {difference:+,.2f}")\nreturn 0 if abs(difference) < 0.005 else 1', lang: 'python' },
-          { p: 'Now the script can be run by something other than you: a scheduler, a colleague, a build. Exit code 1 ' +
-               'means nobody sends this pack.' }
+          { p: 'Every program hands back a number when it finishes. Zero means it worked and anything else means it ' +
+'did not, which is the one thing a machine can read without understanding a word of the pack. That ' +
+               'number is called the **exit code**, and returning 1 here means nobody sends this pack.' },
+          { p: 'It is the check cell you already keep at the bottom of the workbook, in the one form something ' +
+               'other than you can act on: a scheduler, a colleague, the thing that emails the pack.' }
         ],
         check: 'check: pack against ledger +0.00, and the command exits 0.'
       },
@@ -481,7 +485,7 @@ FQ.registerLevel({
       'The month as a command line argument, defaulting to 2025-09',
       'Fatal checks for an unmapped account, a missing month and an unreadable amount, which stop the run',
       'Warnings for a budgeted cost centre with no actuals and for anything the loader repaired',
-      'A check that the pack ties to the ledger, printed every run, returned as the exit code',
+      'A check that the pack ties to the ledger, printed every run, and handed back as the exit code',
       'A price and volume bridge that sums to the reported variance, with the rounding difference shown rather than hidden',
       'A waterfall chart from budget EBITDA to actual EBITDA, one bar per material variance',
       'A draft memo with the numbers filled in and the causes left as TODO',
