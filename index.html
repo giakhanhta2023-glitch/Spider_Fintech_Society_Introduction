@@ -34,6 +34,25 @@
 <!-- Radix Themes: used for behaviour only (tabs, dialog, tooltip, focus).
      Every visual decision lives in app.css. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/themes@3.2.1/styles.css">
+  <!-- Before the first paint, deliberately. Otherwise a reader on a light
+       machine watches the page render black and then turn to paper.
+
+       It resolves rather than just reading: the attribute always holds a
+       concrete light or dark, so the stylesheet needs one light palette
+       instead of two. What is stored is only whether the reader pinned a
+       choice; an empty store means follow the machine. -->
+  <script>
+    (function () {
+      var pinned = null;
+      try { pinned = localStorage.getItem('fq.theme'); } catch (err) { /* private window */ }
+
+      var theme = (pinned === 'light' || pinned === 'dark') ? pinned
+        : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light' : 'dark');
+
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
 <link rel="stylesheet" href="assets/css/app.css">
 
 <script type="importmap">

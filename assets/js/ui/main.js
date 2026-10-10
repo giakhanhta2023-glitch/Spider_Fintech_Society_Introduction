@@ -12,6 +12,7 @@ import { createRoot } from 'react-dom/client';
 import { Home, Glossary, Dossier, Ranking } from './views.js';
 import { LevelPage } from './level.js';
 import { Tutor } from './tutor.js';
+import { Toggle } from './theme.js';
 
 /* ------------------------------------------------------------------ route */
 function parseHash() {
@@ -64,6 +65,7 @@ function Masthead({ route, onOpenTutor, user }) {
               <b>${store.xp().toLocaleString()}</b><span>XP</span>
             </span>
           <//>
+          <${Toggle} />
           <button class="mou-btn" type="button" onClick=${onOpenTutor}
             title="Ask Mou, or press Ctrl and K">
             <${Mou} mood="rest" size=${24} title="Mou" />

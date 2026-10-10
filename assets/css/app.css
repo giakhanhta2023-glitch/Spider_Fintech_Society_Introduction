@@ -9,6 +9,11 @@
      4. Structure comes from rules and column spans, never from shadows,
         glows or rounded panels. Radius is zero everywhere.
      5. No micro-text: nothing below 12px, nothing under 4.5:1 contrast.
+     6. Two themes, one identity. Every colour is a token, and a token is a
+        role rather than a shade: --ink is the page and --bone is the text on
+        it, in both themes. Light is not a different design, it is the same
+        design on paper. `python tools/check_contrast.py` proves rule 5 holds
+        in both; it found code comments at 3.42:1 the day it was written.
 
    Radix Themes stays for behaviour (tabs, dialog, tooltip, focus). Its
    visual layer is deliberately overridden at the end of this file.
@@ -36,6 +41,13 @@
   --accent-wash:  rgba(91, 140, 255, 0.10);
   --accent-glow:  rgba(37, 99, 235, 0.22);
 
+  /* ---- code, which has to stay legible in a dark well ------------------ */
+  --code-ink:       #D3D9E6;   /* body text in a code well, a shade under bone */
+  --code-inline:    #141412;   /* the tint behind `code` inside a sentence  */
+  --row-hover:      #0B0B0A;   /* the index row under the cursor            */
+  --syntax-comment: #737D94;   /* was #5A6376 and failed at 3.42:1          */
+  --syntax-number:  #9CC4FF;
+
   /* ---- semantics: only for right and wrong ----------------------------- */
   --moss:         #6E9C70;
   --moss-wash:    rgba(110, 156, 112, 0.10);
@@ -57,6 +69,71 @@
   --col-gap:   clamp(20px, 3vw, 44px);
   --page:      1320px;
 
+  /* The page follows the reader's own setting until they say otherwise, and
+     colour-scheme makes the browser's own furniture follow too: scrollbars,
+     form controls, and the flash of white before the stylesheet lands. */
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   THE LIGHT THEME
+
+   Keyed on one attribute, which always holds a concrete answer. A reader who
+   has not chosen is resolved to light or dark by the inline script in
+   index.html before the first paint, so there is no second copy of this
+   palette inside a prefers-color-scheme query waiting to drift out of step
+   with this one.
+
+   The same system on paper. Three things are deliberate:
+
+   The paper keeps the blue cast. A warm cream would be a different identity
+   and a more common one; this palette's character is a neutral that leans
+   blue rather than grey or beige, and that survives the inversion.
+
+   A panel separates by being whiter than the page rather than darker, which is
+   the light-theme equivalent of --ink-raised sitting above --ink.
+
+   The accent darkens. #5B8CFF is 6.4:1 on the dark page and 2.6:1 on paper,
+   so the light theme uses the deeper blue that already existed for filled
+   surfaces. One accent, two weights, as before.
+   ========================================================================== */
+:root[data-theme="light"],
+:root[data-theme="light"] .radix-themes {
+  --ink:          #F2F5FC;
+  --ink-raised:   #FFFFFF;
+  --ink-deep:     #E7ECF8;
+  --bone:         #0C101A;   /* primary text            17.4:1 on paper     */
+  --ash:          #495369;   /* secondary text           7.1:1              */
+  --graphite:     #5A6480;   /* tertiary, still legible  5.4:1              */
+
+  --rule:         #DEE4F1;
+  --rule-mid:     #BFC9DE;
+  --rule-heavy:   var(--bone);
+
+  --accent:       #1D4ED8;   /* blue as text             6.1:1 on paper     */
+  --accent-solid: #2563EB;   /* filled surface, white on it at 5.2:1        */
+  --accent-deep:  #1B49C4;
+  --accent-wash:  rgba(29, 78, 216, 0.08);
+  --accent-glow:  rgba(37, 99, 235, 0.16);
+
+  --code-ink:       #1B2233;
+  --code-inline:    #EDF1FA;
+  --row-hover:      #E9EEF9;
+  --syntax-comment: #5A6475;
+  --syntax-number:  #1B4FA8;
+
+  --moss:         #3F6B45;
+  --moss-wash:    rgba(63, 107, 69, 0.09);
+  --crimson:      #A63F3F;
+  --crimson-wash: rgba(166, 63, 63, 0.09);
+
+  color-scheme: light;
+}
+
+/* Radix reads these off whichever element carries .radix-themes, so they are
+   declared on both, exactly as the palette above was before the themes split. */
+:root,
+.radix-themes {
   /* Radix tokens repointed at the system above */
   --default-font-family: var(--text);
   --heading-font-family: var(--display);
@@ -499,7 +576,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   border-bottom: 1px solid var(--rule);
   transition: background .14s ease;
 }
-a.index-row:hover { background: #0B0B0A; }
+a.index-row:hover { background: var(--row-hover); }
 a.index-row:hover .index-title { color: var(--accent); }
 .index-row.is-locked .index-title { color: var(--graphite); }
 
@@ -550,8 +627,14 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
 .meta-drill { width: 11ch; }
 .meta-state { width: 7ch; }
 .meta-cell.is-done { color: var(--moss); }
-.index-row.is-locked .meta-cell { color: var(--rule-mid); }
-.index-row.is-locked .gauge i.on { background: var(--rule-mid); }
+
+/* A locked row used to paint its metadata in --rule-mid, which is a hairline
+   colour: 1.6:1 in the dark theme and 1.5:1 on paper, so the minutes and the
+   drill score were not dim, they were gone. The row already says it is locked
+   three times over, in the greyed title, the word in the last column and the
+   fact that it is not a link, so the fourth signal can be the one that is
+   legible. */
+.index-row.is-locked .meta-cell { color: var(--graphite); }
 
 /* The row you are on is marked in the gutter, where a contents page marks it,
    rather than by adding a seventh chip to the end of the line. */
@@ -662,9 +745,21 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
   font-family: var(--mono);
   font-size: 0.86em;
   color: var(--bone);
-  background: #141412;
+  background: var(--code-inline);
   border: 1px solid var(--rule);
   padding: 0.05em 0.34em;
+}
+
+/* A <code> inside a code block is the block, not a word in a sentence. Without
+   this it picks up the inline treatment above and the well ends up with two
+   backgrounds stacked, which also lifts the floor every syntax colour is
+   measured against: comments were landing at 4.47:1 instead of 5.0:1. */
+.codeblock code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
 }
 
 /* Asides are set as marginal notes with a heavy left rule. */
@@ -795,12 +890,12 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   font-family: var(--mono);
   font-size: 0.86rem;
   line-height: 1.7;
-  color: #D3D9E6;
+  color: var(--code-ink);
 }
-.codeblock-body .c { color: #5A6376; font-style: italic; }
+.codeblock-body .c { color: var(--syntax-comment); font-style: italic; }
 .codeblock-body .s { color: var(--moss); }
 .codeblock-body .k { color: var(--accent); }
-.codeblock-body .n { color: #9CC4FF; }
+.codeblock-body .n { color: var(--syntax-number); }
 .codeblock-body .f { color: var(--bone); }
 
 /* ==========================================================================
@@ -1028,6 +1123,45 @@ body.is-gate::before { display: none; }
   display: flex;
   justify-content: flex-start;
   color-scheme: light;
+}
+
+/* Sits with the other mono controls in the masthead and reads as one of them,
+   which is the point: changing the theme is a preference, not an event. */
+.themetoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 1px solid var(--rule-mid);
+  padding: 5px 10px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--graphite);
+  cursor: pointer;
+  transition: color .14s ease, border-color .14s ease;
+}
+.themetoggle:hover { color: var(--bone); border-color: var(--bone); }
+.themetoggle svg { display: block; }
+
+@media (max-width: 700px) {
+  /* The word goes, the glyph stays. It is the only control here whose meaning
+     survives without its label. */
+  .themetoggle span { display: none; }
+  .themetoggle { padding: 5px 8px; position: relative; }
+
+  /* Without this the button is 30 by 24, the smallest target on the page and
+     well under the 44px a thumb needs. The border stays where it is and the
+     tap area grows around it, so the masthead does not get chunky to fix a
+     problem you cannot see. */
+  .themetoggle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .signout {
