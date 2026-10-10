@@ -348,6 +348,67 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
   padding-right: 14px;
   margin-right: -14px;
 }
+/* A rail carries labels, not headings. "Terms" set as an h2 sat level with the
+   lesson's own section headings, 33px beside 30px, and the reader had to work
+   out which column was the point. This is the same mono label the rest of the
+   interface uses, with the count pushed to the far edge. */
+.rail-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule-mid);
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--graphite);
+}
+.rail-label span:last-child { font-variant-numeric: tabular-nums; }
+
+/* What is in this lesson. The numbers are the sequence a reader is actually
+   in, so they carry information rather than decorating the list. */
+.contents { margin-bottom: 34px; }
+.contents ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: section;
+}
+.contents li { counter-increment: section; }
+.contents button {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 4px;
+  width: 100%;
+  padding: 7px 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--ash);
+  cursor: pointer;
+  transition: color .14s ease;
+}
+.contents button::before {
+  content: counter(section, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--graphite);
+  font-variant-numeric: tabular-nums;
+}
+.contents button:hover { color: var(--bone); }
+.contents li.is-here button { color: var(--bone); }
+.contents li.is-here button::before { color: var(--accent); }
+
+@media (max-width: 900px) {
+  /* Stacked under the lesson, a contents list you have already scrolled past
+     is worse than none, so it goes. The terms stay: those are reference. */
+  .contents { display: none; }
+}
+
 .rail::-webkit-scrollbar { width: 8px; }
 .rail::-webkit-scrollbar-track { background: transparent; }
 .rail::-webkit-scrollbar-thumb { background: var(--rule-mid); }

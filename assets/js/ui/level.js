@@ -97,7 +97,11 @@ function Learn({ level, onAskTutor }) {
 
       <aside class="col-9-12">
         <div class="rail">
-          <${SectionHead} title="Terms" note=${`${level.glossary.length}`} />
+          <${Contents} level=${level} />
+
+          <p class="rail-label">
+            <span>Terms</span><span>${level.glossary.length}</span>
+          </p>
           <dl class="deflist" style=${{ borderTop: 0 }}>
             ${level.glossary.map((g, i) => html`
               <div key=${i} style=${{ padding: '12px 0', borderBottom: '1px solid var(--rule)' }}>
@@ -110,6 +114,74 @@ function Learn({ level, onAskTutor }) {
         </div>
       </aside>
     </div>`;
+}
+
+/* What is in this lesson, and where you are in it.
+ *
+ * The knowledge blocks already carry their own headings, so the list is the
+ * data rather than a second copy of it that can fall out of step. The marker
+ * follows the heading nearest the top of the screen, which is what a reader
+ * means by "where am I" on a page this long.
+ */
+function Contents({ level }) {
+  const headings = (level.knowledge || [])
+    .filter((b) => b.h)
+    .map((b, i) => ({ h: b.h, id: `s${i}` }));
+
+  const [here, setHere] = useState(headings.length ? headings[0].id : null);
+
+  useEffect(() => {
+    if (!headings.length) return undefined;
+
+    /* Give every heading in the prose the id the list points at. The blocks
+       render themselves, so this is the one place that knows both. */
+    const nodes = [...document.querySelectorAll('.prose h3')];
+    nodes.forEach((node, i) => { if (headings[i]) node.id = headings[i].id; });
+
+    /* Position rather than crossings. An IntersectionObserver only fires when
+       something passes through its band, so jumping down the page with a link
+       or the keyboard can skip the band entirely and leave the marker behind.
+       Asking where the headings are now is both simpler and always right. */
+    let queued = false;
+    const read = () => {
+      queued = false;
+      const above = nodes.filter((n) => n.getBoundingClientRect().top <= 160);
+      setHere(above.length ? above[above.length - 1].id : nodes[0].id);
+    };
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(read);
+    };
+
+    read();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [level.id]);
+
+  if (headings.length < 3) return null;   /* a list of two is not a contents */
+
+  return html`
+    <nav class="contents" aria-label="Sections in this lesson">
+      <p class="rail-label"><span>In this level</span><span>${headings.length}</span></p>
+      <ol>
+        ${headings.map(({ h, id }) => html`
+          <li key=${id} class=${id === here ? 'is-here' : ''}>
+            <!-- A button rather than an anchor. The whole app is hash routed,
+                 so href="#s6" would set the route to something the router does
+                 not recognise and drop the reader on the home page the one
+                 time the click handler did not run. -->
+            <button type="button" onClick=${() => {
+              const node = document.getElementById(id);
+              if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}>${h}</button>
+          </li>`)}
+      </ol>
+    </nav>`;
 }
 
 /* --------------------------------------------------------------- tutorial */
