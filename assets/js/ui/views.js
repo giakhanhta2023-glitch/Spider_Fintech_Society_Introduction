@@ -7,6 +7,7 @@ import {
 } from './lib.js';
 import { Mou } from './mou.js';
 import { Companions } from './companions.js';
+import { Session } from './session.js';
 
 /* =============================== HOME =============================== */
 function IndexRow({ level }) {
@@ -113,21 +114,27 @@ export function Home({ onAskTutor }) {
               <span>meet Mou, your tutor</span>
             </button>
           </div>
+
+          <!-- One line, picked by the date rather than at random, so the whole
+               society sees the same one on the same day. Under the title now:
+               the session has the right hand column, and a quote is a sign off
+               rather than something to put beside the main claim. -->
+          <div class="hero-sign">
+            <${Companions} size=${52} />
+            ${(() => {
+              const said = FQ.quoteOfTheDay();
+              return said ? html`
+                <figure class="daily">
+                  <span class="daily-label">today</span>
+                  <blockquote class="daily-quote">${said.q}</blockquote>
+                  <figcaption class="daily-who">${said.who}</figcaption>
+                </figure>` : null;
+            })()}
+          </div>
         </div>
 
-        <div class="col-9-12 hero-aside">
-          <${Companions} size=${64} />
-          <!-- One line, picked by the date rather than at random, so the whole
-               society sees the same one on the same day. -->
-          ${(() => {
-            const said = FQ.quoteOfTheDay();
-            return said ? html`
-              <figure class="daily">
-                <span class="daily-label">today</span>
-                <blockquote class="daily-quote">${said.q}</blockquote>
-                <figcaption class="daily-who">${said.who}</figcaption>
-              </figure>` : null;
-          })()}
+        <div class="col-8-12 hero-aside">
+          <${Session} />
         </div>
       </section>
 
