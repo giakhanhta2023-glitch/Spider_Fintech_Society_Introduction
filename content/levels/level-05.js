@@ -25,6 +25,21 @@ FQ.registerLevel({
   ],
 
   knowledge: [
+    { h: 'Watch these first' },
+    { p: 'The Python in this level goes past anything levels 1 to 4 needed. Each video below covers one piece of ' +
+         'it, in the order this level uses them. Skip any you already know.' },
+    { ol: [
+      '**Type hints.** The `: int` and `-> list[int]` written into every function here. ' +
+        '[Python Type Hints - What Is It and Why Use It?](https://www.youtube.com/watch?v=79zeCq9raY0)',
+      '**Data classes.** The `@dataclass` line that writes a small value type for you. ' +
+        '[You\'ll love Python data classes!](https://www.youtube.com/watch?v=Gsfsq2epdr8)',
+      '**Class methods.** How `Money.parse("19.99", "USD")` builds a Money when no Money exists yet. ' +
+        '[Learn Python CLASS METHODS in 6 minutes!](https://www.youtube.com/watch?v=g-qRKZD3FgE)',
+      '**The `__add__` method.** What makes `a + b` work on a type you wrote yourself. ' +
+        '[__add__ Method Tutorial | Python Tutorial](https://www.youtube.com/watch?v=LlZ-BcrCBZY)',
+      '**The `__str__` method.** What `print(money)` reads to decide what to show. ' +
+        '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)'
+    ] },
     { h: 'Why money needs its own type' },
     { p: 'In level 4 you stored money as a whole number of cents. That fixed one problem. It leaves three ' +
          'more, and all three have cost real companies real money.' },
@@ -354,6 +369,8 @@ FQ.registerLevel({
         t: 'Declare the package',
         blocks: [
           { code: 'moneykit/\n  pyproject.toml\n  README.md\n  src/moneykit/__init__.py\n  src/moneykit/currency.py\n  src/moneykit/money.py\n  src/moneykit/allocation.py\n  src/moneykit/errors.py\n  tests/test_money.py\n  tests/test_allocation.py\n  tests/test_properties.py', lang: 'text', label: 'the shape to build' },
+          { p: '`src/moneykit/__init__.py` is the file that turns the folder into a package, and it stays empty. ' +
+               'Every import below names the module it wants, so nothing has to be listed there.' },
           { p: 'Write the `pyproject.toml` from the knowledge section, then install the package into your environment in ' +
                'editable mode:' },
           { code: 'pip install -e ".[dev]"\npython -c "import moneykit; print(moneykit.__file__)"', lang: 'bash' },
@@ -367,7 +384,7 @@ FQ.registerLevel({
         blocks: [
           { p: 'Currencies differ in how many decimal places they have, so that belongs in data, not in `/ 100` scattered ' +
                'through your code.' },
-          { code: 'from dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass Currency:\n    code: str           # "USD"\n    exponent: int       # 2\n    symbol: str = ""\n\nCURRENCIES = {\n    "USD": Currency("USD", 2, "$"),\n    "EUR": Currency("EUR", 2, "\\u20ac"),\n    "GBP": Currency("GBP", 2, "\\u00a3"),\n    "JPY": Currency("JPY", 0, "\\u00a5"),\n    "VND": Currency("VND", 0, "\\u20ab"),\n    "BHD": Currency("BHD", 3, ""),\n}', lang: 'python' },
+          { code: 'from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Currency:\n    code: str           # "USD"\n    exponent: int       # 2\n    symbol: str = ""\n\nCURRENCIES = {\n    "USD": Currency("USD", 2, "$"),\n    "EUR": Currency("EUR", 2, "\\u20ac"),\n    "GBP": Currency("GBP", 2, "\\u00a3"),\n    "JPY": Currency("JPY", 0, "\\u00a5"),\n    "VND": Currency("VND", 0, "\\u20ab"),\n    "BHD": Currency("BHD", 3, ""),\n}', lang: 'python', label: 'src/moneykit/currency.py' },
           { p: '`@dataclass(frozen=True)` writes the boilerplate for a small value type and makes it **immutable**: once ' +
                'created it cannot be changed. That matters for money, because a value that can change underneath you is a ' +
                'value two parts of your program can disagree about.' }
@@ -377,10 +394,18 @@ FQ.registerLevel({
       {
         t: 'The Money type',
         blocks: [
-          { code: 'from decimal import Decimal, ROUND_HALF_UP\n\n@dataclass(frozen=True)\nclass Money:\n    minor_units: int          # 1999 means $19.99\n    currency: Currency\n\n    @classmethod\n    def parse(cls, text: str, code: str) -> "Money":\n        """Money.parse("19.99", "USD") -> Money(1999, USD)."""\n        cur = CURRENCIES[code]\n        scaled = Decimal(text) * (10 ** cur.exponent)\n        if scaled != scaled.to_integral_value():\n            raise InvalidAmount(f"{text} has more places than {cur.code} allows")\n        return cls(int(scaled), cur)\n\n    def __add__(self, other: "Money") -> "Money":\n        self._same_currency(other)\n        return Money(self.minor_units + other.minor_units, self.currency)\n\n    def _same_currency(self, other: "Money") -> None:\n        if self.currency != other.currency:\n            raise CurrencyMismatch(f"{self.currency.code} and {other.currency.code}")\n\n    def __str__(self) -> str:\n        units = Decimal(self.minor_units) / (10 ** self.currency.exponent)\n        return f"{self.currency.symbol}{units:,.{self.currency.exponent}f}"', lang: 'python' },
+          { p: 'Two files here. The errors go in their own module so that every part of the library raises the ' +
+               'same two, and a caller can catch them by name. `class InvalidAmount(Exception)` reads as: a new ' +
+               'kind of error that behaves like every other Python error. The name in brackets is the one it is ' +
+               'built on.' },
+          { code: 'class InvalidAmount(Exception):\n    """The text does not describe an amount this currency can hold."""\n\n\nclass CurrencyMismatch(Exception):\n    """Two amounts in different currencies were combined."""', lang: 'python', label: 'src/moneykit/errors.py' },
+          { p: 'Now the type itself. Those four import lines are the whole point of the `src/` layout: this file ' +
+               'asks for `Currency` and the two errors by name, and gets them from the installed package rather ' +
+               'than from whatever file happens to sit next to it.' },
+          { code: 'from dataclasses import dataclass\nfrom decimal import Decimal\n\nfrom moneykit.currency import CURRENCIES, Currency\nfrom moneykit.errors import CurrencyMismatch, InvalidAmount\n\n\n@dataclass(frozen=True)\nclass Money:\n    minor_units: int          # 1999 means $19.99\n    currency: Currency\n\n    @classmethod\n    def parse(cls, text: str, code: str) -> "Money":\n        """Money.parse("19.99", "USD") -> Money(1999, USD)."""\n        cur = CURRENCIES[code]\n        scaled = Decimal(text) * (10 ** cur.exponent)\n        if scaled != scaled.to_integral_value():\n            raise InvalidAmount(f"{text} has more places than {cur.code} allows")\n        return cls(int(scaled), cur)\n\n    def __add__(self, other: "Money") -> "Money":\n        self._same_currency(other)\n        return Money(self.minor_units + other.minor_units, self.currency)\n\n    def __sub__(self, other: "Money") -> "Money":\n        self._same_currency(other)\n        return Money(self.minor_units - other.minor_units, self.currency)\n\n    def _same_currency(self, other: "Money") -> None:\n        if self.currency != other.currency:\n            raise CurrencyMismatch(f"{self.currency.code} and {other.currency.code}")\n\n    def __str__(self) -> str:\n        units = Decimal(self.minor_units) / (10 ** self.currency.exponent)\n        return f"{self.currency.symbol}{units:,.{self.currency.exponent}f}"', lang: 'python', label: 'src/moneykit/money.py' },
           { p: 'Writing `__add__` is what makes `a + b` work on your own type. Calling `_same_currency` inside it is what ' +
-               'makes the multi-currency bug impossible rather than unlikely. Add `__sub__`, `__mul__` by an integer, ' +
-               '`__neg__` and the comparisons the same way.' },
+               'makes the multi-currency bug impossible rather than unlikely. `__sub__` is the same three lines ' +
+               'with a minus. Add `__mul__` by an integer, `__neg__` and the comparisons the same way.' },
           { warn: 'Do not add a `__float__` method, however convenient it looks. The moment somebody can turn your Money into ' +
                   'a float, every guarantee in this library becomes optional.' }
         ],
@@ -389,7 +414,9 @@ FQ.registerLevel({
       {
         t: 'Allocation, the function interviewers ask for',
         blocks: [
-          { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    """Split total into len(weights) parts, in proportion, losing nothing."""\n    if not weights:\n        raise ValueError("need at least one weight")\n    if any(w < 0 for w in weights):\n        raise ValueError("weights cannot be negative")\n\n    weight_sum = sum(weights)\n    shares = [total * w // weight_sum for w in weights]        # the whole parts\n    remainder = total - sum(shares)                            # what is left over\n\n    # hand the leftover units to whoever was cut by the most\n    order = sorted(range(len(weights)),\n                   key=lambda i: (-((total * weights[i]) % weight_sum), i))\n    for i in order[:remainder]:\n        shares[i] += 1\n    return shares', lang: 'python' },
+          { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    """Split total into len(weights) parts, in proportion, losing nothing."""\n    if not weights:\n        raise ValueError("need at least one weight")\n    if any(w < 0 for w in weights):\n        raise ValueError("weights cannot be negative")\n\n    weight_sum = sum(weights)\n    shares = [total * w // weight_sum for w in weights]        # the whole parts\n    remainder = total - sum(shares)                            # what is left over\n\n    # hand the leftover units to whoever was cut by the most\n    order = sorted(range(len(weights)),\n                   key=lambda i: (-((total * weights[i]) % weight_sum), i))\n    for i in order[:remainder]:\n        shares[i] += 1\n    return shares', lang: 'python', label: 'src/moneykit/allocation.py' },
+          { p: 'That file imports nothing at all. Whole numbers in, whole numbers out, which is why it is the ' +
+               'easiest part of the library to test.' },
           { code: '>>> allocate(10000, [1, 1, 1])\n[3334, 3333, 3333]\n>>> allocate(5, [3, 7])\n[2, 3]\n>>> allocate(1999, [1, 2, 3])\n[333, 666, 1000]', lang: 'python' },
           { p: 'Then wrap it on `Money`, so callers work in money rather than integers: `price.allocate([1, 1, 1])` returning ' +
                'a list of `Money`.' }
@@ -399,7 +426,9 @@ FQ.registerLevel({
       {
         t: 'Property tests that hunt',
         blocks: [
-          { code: 'from hypothesis import given, strategies as st\n\namounts = st.integers(min_value=0, max_value=10**12)\nweight_lists = st.lists(st.integers(min_value=1, max_value=10**6), min_size=1, max_size=12)\n\n@given(total=amounts, weights=weight_lists)\ndef test_allocation_conserves(total, weights):\n    assert sum(allocate(total, weights)) == total\n\n@given(total=amounts, weights=weight_lists)\ndef test_allocation_is_deterministic(total, weights):\n    assert allocate(total, weights) == allocate(total, weights)\n\n@given(a=amounts, b=amounts)\ndef test_add_then_subtract_returns_original(a, b):\n    usd = CURRENCIES["USD"]\n    assert (Money(a, usd) + Money(b, usd)) - Money(b, usd) == Money(a, usd)', lang: 'python' },
+          { p: 'A test file sits outside the package, so it imports the package by name, the same way somebody ' +
+               'who installed your library would. The five import lines are what the three tests are testing.' },
+          { code: 'from hypothesis import given\nfrom hypothesis import strategies as st\n\nfrom moneykit.allocation import allocate\nfrom moneykit.currency import CURRENCIES\nfrom moneykit.money import Money\n\namounts = st.integers(min_value=0, max_value=10**12)\nweight_lists = st.lists(st.integers(min_value=1, max_value=10**6), min_size=1, max_size=12)\n\n@given(total=amounts, weights=weight_lists)\ndef test_allocation_conserves(total, weights):\n    assert sum(allocate(total, weights)) == total\n\n@given(total=amounts, weights=weight_lists)\ndef test_allocation_is_deterministic(total, weights):\n    assert allocate(total, weights) == allocate(total, weights)\n\n@given(a=amounts, b=amounts)\ndef test_add_then_subtract_returns_original(a, b):\n    usd = CURRENCIES["USD"]\n    assert (Money(a, usd) + Money(b, usd)) - Money(b, usd) == Money(a, usd)', lang: 'python', label: 'tests/test_properties.py' },
           { p: 'Run `pytest`. If a property fails, read the shrunk example Hypothesis prints: it is the smallest input that ' +
                'still breaks, and it usually tells you the bug without further thought.' },
           { tip: 'Run it once with `--hypothesis-show-statistics` to see how many cases ran and how many were thrown away. If ' +
