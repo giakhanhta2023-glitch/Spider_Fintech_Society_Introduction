@@ -11,7 +11,9 @@
   "type": "module",
   "scripts": {
     "start": "python serve.py",
-    "data": "python data/generate_datasets.py"
+    "data": "python data/generate_datasets.py",
+    "stamp": "node tools/stamp_cache.mjs",
+    "stamp:check": "node tools/stamp_cache.mjs --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
