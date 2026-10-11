@@ -26,19 +26,25 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'Why money needs its own type' },
-    { p: 'Level 4 stored amounts as a whole number of cents, and that solved one problem. Here are three more that a bare ' +
-         'integer does not solve. All three have caused real incidents at real companies.' },
+    { p: 'In level 4 you stored money as a whole number of cents. That fixed one problem. It leaves three ' +
+         'more, and all three have cost real companies real money.' },
     { p: '**Problem one: a decimal amount arrives from outside.** Prices, tax rates and interest rates are written with ' +
          'decimal points, and the obvious way to handle them loses money:' },
     { code: '>>> 0.1 + 0.2\n0.30000000000000004\n\n>>> total = 0.0\n>>> for _ in range(1_000_000):\n...     total += 0.01\n>>> total\n10000.000000171856          # should be exactly 10000.00', lang: 'python' },
-    { p: 'A **float** is how a computer stores a number with a decimal point: as a fraction in binary. Most decimal amounts ' +
-         'have no exact binary form, in the same way one third has no exact decimal form, so each one is stored as a very ' +
-         'close approximation. A million small additions turned into an error of 0.00000017. Tiny, and exactly the kind of ' +
-         'number that makes a daily reconciliation fail.' },
+    { p: 'A **float** is how a computer stores a number that has a decimal point. It keeps it as a fraction ' +
+         'in binary rather than in base ten.' },
+    { p: 'Most decimal amounts have no exact binary form. One third has no exact decimal form either: you ' +
+         'write 0.333 and stop somewhere. The computer does the same thing in binary and keeps a very close ' +
+         'approximation instead of the real number.' },
+    { p: 'Look at what that cost above. A million small additions drifted by 0.00000017. That is a tiny ' +
+         'number, and it is exactly the size of number that makes a daily reconciliation fail, because the ' +
+         'two sides have to agree to the cent.' },
     { p: '**Problem two: currencies get mixed.** An integer knows nothing about what it counts:' },
     { code: 'usd_balance = 1000        # $10.00\nvnd_balance = 1000        # 1,000 dong, about four cents\n\ntotal = usd_balance + vnd_balance     # 2000 of... what?', lang: 'python' },
-    { p: 'Nothing raises an error. The number 2000 travels through your system and is printed as $20.00 on a statement. This ' +
-         'is the most common money bug in companies that operate in more than one country.' },
+    { p: 'Nothing goes wrong on screen. No error, no warning. The number 2000 travels through your system ' +
+         'and gets printed as $20.00 on somebody\'s statement.' },
+    { p: 'This is the most common money bug in companies that work in more than one country, and it is hard ' +
+         'to find precisely because nothing complains.' },
     { p: '**Problem three: not every currency has two decimal places.** The number of digits after the point is called the ' +
          'currency\'s **exponent**, and it is set by an international standard, ISO 4217:' },
     { table: {
@@ -49,9 +55,10 @@ FQ.registerLevel({
         ['BHD, KWD, TND', '3', 'a thousandth of a dinar', '1.000 dinar']
       ]
     }},
-    { p: 'Code that assumes "divide by 100 to display" shows 10.00 yen where it should show 1,000 yen. The fix for all three ' +
-         'problems is the same: stop passing bare numbers around, and build a **type** that carries the amount, the currency ' +
-         'and the rules together.' },
+    { p: 'Code that always divides by 100 to display an amount shows 10.00 yen where it should show 1,000 ' +
+         'yen. It is wrong by a factor of a hundred and it looks perfectly normal.' },
+    { p: 'One fix covers all three problems. Stop passing bare numbers around. Build a **type** that carries ' +
+         'three things together: the amount, the currency, and that currency\'s rules.' },
     { check: {
       q: 'A colleague says the float problem is theoretical, because their amounts are small and the error is in the ' +
          'fourteenth decimal place. Give them a concrete reason to care.',
@@ -75,17 +82,20 @@ FQ.registerLevel({
         ['Bad at', 'Anything with a fractional cent in the middle', 'Being fast in a hot loop']
       ]
     }},
-    { p: '**`Decimal`** is a number type in Python\'s standard library that stores digits in base ten, the way you write them ' +
-         'on paper, so `Decimal("0.1") + Decimal("0.2")` is exactly `Decimal("0.3")`. It is the right tool the moment a ' +
-         'calculation has a fractional cent in the middle of it, such as 8.25% tax on $19.99.' },
-    { warn: 'Never build a `Decimal` from a float. `Decimal(2.675)` is `2.674999999999999822...` because the float was already ' +
-            'wrong before `Decimal` saw it. Always build from a string or an integer: `Decimal("2.675")`.' },
+    { p: '**`Decimal`** is a number type that comes with Python. It stores digits in base ten, the way you ' +
+         'write them on paper, so `Decimal("0.1") + Decimal("0.2")` is exactly `Decimal("0.3")`.' },
+    { p: 'Reach for it the moment a calculation has a fraction of a cent in the middle of it. Working out ' +
+         '8.25% tax on $19.99 is exactly that case.' },
+    { warn: 'Never build a `Decimal` from a float. `Decimal(2.675)` gives you `2.674999999999999822...` ' +
+            'because the float was already wrong before `Decimal` ever saw it, and `Decimal` cannot undo ' +
+            'that. Build from text or from a whole number instead: `Decimal("2.675")`.' },
     { p: 'The rule this course uses, and that most payments companies use: **store and move integers, calculate in `Decimal`, ' +
          'and come back to integers before anything is saved.**' },
 
     { h: 'Rounding is a decision, not a detail' },
-    { p: 'Any calculation with a percentage in it produces fractions of a cent, and you have to decide what happens to them. ' +
-         'Python\'s built-in `round` is not that decision, and it will surprise you:' },
+    { p: 'Any calculation with a percentage in it produces fractions of a cent, and you have to decide what ' +
+         'happens to them.' },
+    { p: 'Python\'s built-in `round` does not make that decision for you, and it will surprise you:' },
     { code: '>>> round(2.675, 2)\n2.67                # not 2.68: the float was really 2.674999999999999822', lang: 'python' },
     { p: '`Decimal` makes the decision explicit with `quantize`, which means "give me this number with exactly this many ' +
          'decimal places, rounded this way":' },
@@ -98,14 +108,16 @@ FQ.registerLevel({
         ['`ROUND_DOWN`', 'Cuts the extra digits off', 'Interest some products pay. Read the contract']
       ]
     }},
-    { p: 'Why does banking prefer half-even? Because always rounding halves upward adds a tiny bias in one direction, and ' +
-         'across millions of rows that bias is real money moving to one side. Half-even sends half the ties up and half down, ' +
-         'so it cancels.' },
+    { p: 'Why does banking prefer half-even? Rounding every half upward pushes in the same direction every ' +
+         'time. Across millions of rows that becomes real money moving to one side.' },
+    { p: 'Half-even sends roughly half the ties up and half down, so the pushes cancel. The right rule for ' +
+         'you is still whatever your contract, your tax authority or your accounting standard says it is.' },
     { p: 'Now the part that decides real invoices. Seven lines of $1.99, with 8.25% tax. Round each line, or round the ' +
          'invoice once?' },
     { code: 'per line:     7 x round(1.99 x 0.0825) = 7 x 0.16 = $1.12\nper invoice:  round(7 x 1.99 x 0.0825) = round(1.149225) = $1.15\n\nthree cents apart, on one small order', lang: 'text' },
-    { p: 'Neither is wrong as arithmetic. One of them is wrong for your business, because tax authorities, card networks and ' +
-         'accounting standards each say which they expect. What is always wrong is not knowing which one your code does.' },
+    { p: 'Three cents apart, on one small order. Neither answer is wrong as arithmetic.' },
+    { p: 'One of them is wrong for your business. Tax authorities, card networks and accounting standards ' +
+         'each say which they expect. What is always wrong is not knowing which one your code does.' },
     { check: {
       q: 'Your invoice shows three line totals that add up to $59.98, and an order total of $59.97. Both were computed with ' +
          'the same rounding rule. Explain how that happens, and what you do about it.',
@@ -117,9 +129,10 @@ FQ.registerLevel({
     }},
 
     { h: 'Splitting money without losing a cent' },
-    { p: 'Three people share a $100.00 bill. In cents, 10000 divided by 3 is 3333 with 1 left over. If you round each share ' +
-         'you get 3333 three times, which is $99.99, and a cent has vanished. Money that vanishes breaks the level 4 rule ' +
-         'that a transaction sums to zero.' },
+    { p: 'Three people share a $100.00 bill. In cents that is 10000 divided by 3, which is 3333 each with 1 ' +
+         'left over.' },
+    { p: 'Give everybody 3333 and the shares come to $99.99. A cent has disappeared. That breaks the rule ' +
+         'from level 4: the parts of a transaction have to add back to the whole.' },
     { p: 'The standard answer is the **largest remainder method**: give everybody their whole part, then hand out the leftover ' +
          'units one at a time, starting with whoever was cut by the most:' },
     { code: 'allocate(10000, [1, 1, 1])   ->  [3334, 3333, 3333]      sums to 10000\nallocate(5,     [3, 7])      ->  [2, 3]                  sums to 5\nallocate(1999,  [1, 2, 3])   ->  [333, 666, 1000]        sums to 1999', lang: 'text', label: 'allocation, in cents' },
@@ -128,13 +141,15 @@ FQ.registerLevel({
          'amount in whole cents and a list of weights, and gives back one share per weight. From here on the ' +
          'level keeps calling it: the property tests two sections below, `Money.allocate` which returns Money ' +
          'objects instead of integers, and four of the project tests.' },
-    { p: 'Read the middle line. Five cents split three to seven cannot be exact, so somebody gets two and somebody gets three, ' +
-         'and the rule decides who, the same way every time. Those are the two properties that matter: the shares always add ' +
-         'back to the original amount, and the same inputs always give the same answer.' },
-    { money: 'This exact function is in the public interface of every payments library worth using, because splitting a ' +
-             'payment between a merchant, a platform and a tax authority is the daily business of a payments company. ' +
-             'Interviewers ask for it because it is small enough for forty minutes and shows immediately whether a candidate ' +
-             'thinks about the leftover.' },
+    { p: 'Read the middle line. Five cents split three to seven cannot come out even. Somebody gets two and ' +
+         'somebody gets three, and the rule decides who.' },
+    { p: 'Two things have to be true, and they are the only two that matter. The shares always add back to ' +
+         'the amount you started with, and the same inputs always give the same answer.' },
+    { money: 'This exact function is in the public interface of every payments library worth using. ' +
+             'Splitting a payment between a merchant, a platform and a tax authority is the daily business ' +
+             'of a payments company.' },
+    { money: 'Interviewers ask for it because it is small enough for forty minutes and shows straight away ' +
+             'whether a candidate thinks about the leftover.' },
     { check: {
       q: 'A teammate implements the split as `[round(total * w / sum(weights)) for w in weights]`, and the tests pass. What ' +
          'did the tests miss, and what would you add?',
@@ -146,12 +161,14 @@ FQ.registerLevel({
     }},
 
     { h: 'The Python this level needs' },
-    { p: 'Level 4 asked for your first class, and said so in its brief before you opened it. This level asks ' +
-         'for four more pieces of Python, and all four turn up in the first twenty lines you write. None of ' +
-         'them has appeared anywhere in levels 1 to 4. If you already know them, skim this and move on.' },
+    { p: 'Level 4 asked for your first class and warned you in its brief. This level asks for four more ' +
+         'pieces of Python.' },
+    { p: 'All four turn up in the first twenty lines you write, and none of them has appeared anywhere in ' +
+         'levels 1 to 4. If you already know them, skim this and move on.' },
     { p: '**A line starting with `@` above a `def` or a `class` is a decorator.** It hands the thing written ' +
-         'underneath it to a function that gives back a changed version. You will almost never write one. You ' +
-         'use the ones other people wrote, and this level uses exactly three.' },
+         'underneath it to a function, which gives back a changed version of it.' },
+    { p: 'You will almost never write one yourself. You use the ones other people wrote, and this level uses ' +
+         'exactly three:' },
     { table: {
       head: ['The line', 'What it does to the thing below it', 'Where you meet it'],
       rows: [
@@ -160,27 +177,33 @@ FQ.registerLevel({
         ['`@given(...)`', 'Hypothesis: run this test hundreds of times on values it invents, rather than the one example you thought of', 'The property tests']
       ]
     }},
-    { p: '`@dataclass` is the one that changes how the code looks. You list the fields with their types and it ' +
-         'writes the three methods you would otherwise type by hand, which is why the classes in this level ' +
-         'have no `__init__` in them and level 4\'s `Account` did:' },
+    { p: '`@dataclass` is the one that changes how the code looks. You list the fields with their types, and ' +
+         'it writes the three methods you would otherwise type by hand.' },
+    { p: 'That is why the classes in this level have no `__init__` in them, and level 4\'s `Account` did:' },
     { code: 'from dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass Currency:\n    code: str\n    exponent: int\n\nusd = Currency("USD", 2)\n\nprint(usd)                          # Currency(code=\'USD\', exponent=2)\nprint(usd == Currency("USD", 2))    # True\n\nusd.code = "VND"\n# FrozenInstanceError: cannot assign to field \'code\'', lang: 'python' },
-    { p: '`frozen=True` is the half that matters for money. An amount that can be changed after it is made is ' +
-         'an amount two parts of your program can disagree about. Freezing it means every operation returns a ' +
-         'new value rather than editing one, so there is nothing to disagree about.' },
-    { p: '**`@classmethod` is to the class what `self` is to the object.** A normal method starts with `self`, ' +
-         'the one object it is working on. A classmethod starts with `cls`, the class itself, so it can build ' +
-         'and return a new one. That is the only way `Money.parse("19.99", "USD")` can work: there is no ' +
-         'Money yet when you call it.' },
+    { p: '`frozen=True` is the half that matters for money. It means the fields cannot be changed after the ' +
+         'object is made.' },
+    { p: 'Think about why that helps. If one part of your program can edit an amount while another part is ' +
+         'still holding it, the two can disagree about what it is. Freeze it and every operation has to ' +
+         'return a new value instead of editing the old one, so there is nothing to disagree about.' },
+    { p: '**`@classmethod` is to the class what `self` is to the object.** A normal method starts with ' +
+         '`self`, which is the one object it is working on. A classmethod starts with `cls`, which is the ' +
+         'class itself.' },
+    { p: 'That lets it build a new object and hand it back. It is the only way `Money.parse("19.99", "USD")` ' +
+         'can work, because there is no Money yet at the moment you call it.' },
     { code: '@dataclass(frozen=True)\nclass Money:\n    minor_units: int\n    currency: Currency\n\n    @classmethod\n    def parse(cls, text, code):                     # simplified: the real one\n        amount = int(round(float(text) * 100))      # reads the currency table\n        return cls(amount, Currency(code, 2))\n\nm = Money.parse("19.99", "USD")     # no Money existed before this line\nprint(m.minor_units)                # 1999', lang: 'python' },
-    { p: '**`assert` is the whole of testing, and this is the first level that leans on it.** `assert` followed ' +
-         'by something true does nothing at all: no output, no return value, the program simply carries on. ' +
-         'Followed by something false it raises `AssertionError` and stops. That is the entire mechanism. A ' +
-         'test is a function whose name starts with `test_` and whose body is asserts; pytest finds them, runs ' +
-         'them, and reports the ones that raised.' },
+    { p: '**`assert` is the whole of testing, and this is the first level that leans on it.** `assert` ' +
+         'followed by something true does nothing at all. No output, no return value. The program carries ' +
+         'straight on.' },
+    { p: 'Followed by something false, it stops the program with an `AssertionError`. That is the entire ' +
+         'mechanism and there is nothing more to it.' },
+    { p: 'A test is a function whose name starts with `test_` and whose body is a few asserts. A tool called ' +
+         'pytest finds those functions, runs them, and tells you which ones stopped.' },
     { code: 'assert 2 + 2 == 4                   # prints nothing, which is the point\n\nassert 2 + 2 == 5, "arithmetic broke"\n# AssertionError: arithmetic broke\n\ndef test_parsing_dollars():         # a test is a function full of asserts\n    assert Money.parse("19.99", "USD").minor_units == 1999', lang: 'python' },
-    { p: 'The fourth piece is the `: int` and `-> list[int]` written into the function signatures. Those are ' +
-         '**type hints**, they are the subject of their own section further down, and the short version is that ' +
-         'Python ignores them completely and a separate tool called mypy reads them and complains.' },
+    { p: 'The fourth piece is the `: int` and `-> list[int]` you will see written into the function ' +
+         'definitions. Those are **type hints**: notes saying what goes in and what comes back out.' },
+    { p: 'They have a section of their own further down. The short version is that Python ignores them while ' +
+         'it runs, and a separate tool called mypy reads them and tells you when they contradict the code.' },
     { tip: 'You do not need to be able to write a decorator to finish this level. You need to read `@dataclass` ' +
            'and know it wrote three methods for you, read `@classmethod` and know `cls` is the class, and know ' +
            'that a true `assert` is silent. Everything else in the level is Python you already have.' },
@@ -195,19 +218,19 @@ FQ.registerLevel({
     }},
 
     { h: 'Testing money code: examples are not enough' },
-    { p: 'What you have written so far are **example tests**: with this input, expect that output. They are necessary, and ' +
-         'they share one weakness that the allocation bug shows: you only test the cases you thought of, and bugs live in the ' +
-         'cases you did not.' },
+    { p: 'What you have written so far are **example tests**: give it this input, expect that output. They ' +
+         'are necessary and you should keep writing them.' },
+    { p: 'They have one weakness, and the allocation bug shows it. You only ever test the cases you thought ' +
+         'of, and bugs live in the cases you did not.' },
     { p: 'The `allocate` in the test below is that same function of yours, still unwritten at this point in ' +
          'the level. Writing the test first is the normal order for a function like this: the rule it has to ' +
          'obey is easier to state than the code that obeys it.' },
     { p: '**Property-based testing** turns that around. You state a rule that must hold for every input, and a library ' +
          'generates hundreds of inputs trying to break it. In Python that library is **Hypothesis**:' },
     { code: 'from hypothesis import given, strategies as st\n\n@given(total=st.integers(min_value=0, max_value=10**9),\n       weights=st.lists(st.integers(min_value=1, max_value=1000), min_size=1, max_size=10))\ndef test_allocation_conserves_money(total, weights):\n    shares = allocate(total, weights)\n    assert sum(shares) == total          # nothing lost, nothing invented\n    assert len(shares) == len(weights)\n    assert all(s >= 0 for s in shares)', lang: 'python' },
-    { p: 'Run that and Hypothesis tries hundreds of combinations, including the ones you avoid by instinct: zero, a single ' +
-         'weight, a billion, weights of wildly different sizes. When it finds a failure it does something better than ' +
-         'reporting it: it **shrinks** the case, cutting it down to the smallest input that still fails, so you get ' +
-         '`total=1, weights=[1, 1]` instead of a wall of digits.' },
+    { p: 'When it finds a failure it does something better than just reporting it. It **shrinks** the case, ' +
+         'cutting the input down to the smallest one that still breaks. So you get `total=1, weights=[1, 1]` ' +
+         'rather than a wall of digits.' },
     { p: 'Here are five properties worth having for a money library. The letters are the inputs Hypothesis ' +
          'invents: `t` is a total in whole cents, `w` a list of weights, and `a`, `b` and `m` are Money ' +
          'amounts in the same currency. Each line becomes one test function, written exactly like the one ' +
@@ -224,9 +247,10 @@ FQ.registerLevel({
       ]
     }},
     { p: 'The first two are written out as real test functions in **step 6 of the tutorial**, along with a ' +
-         'third that is not in this table: that `allocate` is deterministic, the same inputs giving the same ' +
-         'answer twice. So you have three to copy the shape from and three to write. The round trip is one ' +
-         'of the two the build names explicitly, so it is not optional.' },
+         'third that is not in this table: that `allocate` is deterministic, meaning the same inputs give ' +
+         'the same answer twice.' },
+    { p: 'So you have three to copy the shape from and three to write. The round trip is one of the two the ' +
+         'build names explicitly, so it is not optional.' },
     { tip: 'Keep both kinds. Example tests document intent, and a reviewer reads them to learn what the code is for. Property ' +
            'tests hunt for bugs nobody imagined. Interviewers notice the second kind, because most candidates have never ' +
            'written one.' },
@@ -238,9 +262,11 @@ FQ.registerLevel({
     { p: 'Python itself ignores them while running. A separate tool called **mypy** reads them and checks your whole codebase ' +
          'for contradictions before you run anything:' },
     { code: '$ mypy src/moneykit\nsrc/moneykit/allocation.py:14: error: Argument 1 to "allocate" has incompatible type "str"; expected "int"\nFound 1 error in 1 file (checked 6 source files)', lang: 'text' },
-    { p: 'For a library other people import this matters more than for a script: their editor reads your hints and offers the ' +
-         'right arguments, and their own checks catch their mistakes at the boundary with your code. Job descriptions that ' +
-         'say "strong Python" almost always mean typed Python with tests, not clever Python.' },
+    { p: 'This matters more for a library other people import than for a script you run yourself. Their ' +
+         'editor reads your hints and offers the right arguments, and their own checks catch mistakes at the ' +
+         'boundary with your code.' },
+    { p: 'Job descriptions that say "strong Python" almost always mean typed Python with tests, not clever ' +
+         'Python.' },
 
     { h: 'A library, not a folder of files' },
     { p: 'So far your code has been files you open. A **library** is code packaged so that other projects can install it and ' +
