@@ -22,6 +22,15 @@ FQ.registerLevel({
   ],
 
   knowledge: [
+    /* Before anything else, because this is the first level that needs classes
+       and a reader who has never seen one will struggle with the tutorial
+       rather than with the ledger. */
+    { tip: '**New to classes and objects?** This is the first level in the course that needs them. Watch ' +
+           '[Python Object Oriented Programming Full Course](https://www.youtube.com/watch?v=IbMDCwVm63M) ' +
+           'first if `class` is a word you have read but never written. You do not need to finish it to start: ' +
+           'the section below called **The Python this level needs** covers exactly the parts this build uses, ' +
+           'and nothing more.' },
+
     { h: 'Where does the money go?' },
     { p: 'You send a friend $25 in a banking app. Your balance goes down by $25 and theirs goes up by $25. Two numbers ' +
          'changed, by the same amount, in opposite directions. Hold on to that picture, because this whole level is about ' +
