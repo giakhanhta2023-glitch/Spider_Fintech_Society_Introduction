@@ -26,19 +26,13 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'Watch these first' },
-    { p: 'The Python in this level goes past anything levels 1 to 4 needed. Each video below covers one piece of ' +
-         'it, in the order this level uses them. Skip any you already know.' },
+    { p: 'The Python in this level goes past anything levels 1 to 4 needed. Skip any you already know.' },
     { ol: [
-      '**Type hints.** The `: int` and `-> list[int]` written into every function here. ' +
-        '[Python Type Hints - What Is It and Why Use It?](https://www.youtube.com/watch?v=79zeCq9raY0)',
-      '**Data classes.** The `@dataclass` line that writes a small value type for you. ' +
-        '[You\'ll love Python data classes!](https://www.youtube.com/watch?v=Gsfsq2epdr8)',
-      '**Class methods.** How `Money.parse("19.99", "USD")` builds a Money when no Money exists yet. ' +
-        '[Learn Python CLASS METHODS in 6 minutes!](https://www.youtube.com/watch?v=g-qRKZD3FgE)',
-      '**The `__add__` method.** What makes `a + b` work on a type you wrote yourself. ' +
-        '[__add__ Method Tutorial | Python Tutorial](https://www.youtube.com/watch?v=LlZ-BcrCBZY)',
-      '**The `__str__` method.** What `print(money)` reads to decide what to show. ' +
-        '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)'
+      '[Python Type Hints - What Is It and Why Use It?](https://www.youtube.com/watch?v=79zeCq9raY0)',
+      '[You\'ll love Python data classes!](https://www.youtube.com/watch?v=Gsfsq2epdr8)',
+      '[Learn Python CLASS METHODS in 6 minutes!](https://www.youtube.com/watch?v=g-qRKZD3FgE)',
+      '[__add__ Method Tutorial | Python Tutorial](https://www.youtube.com/watch?v=LlZ-BcrCBZY)',
+      '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)'
     ] },
     { h: 'Why money needs its own type' },
     { p: 'In level 4 you stored money as a whole number of cents. That fixed one problem. It leaves three ' +
