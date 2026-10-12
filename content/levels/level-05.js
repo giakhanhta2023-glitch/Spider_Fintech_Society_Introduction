@@ -32,9 +32,7 @@ FQ.registerLevel({
       '[You\'ll love Python data classes!](https://www.youtube.com/watch?v=Gsfsq2epdr8)',
       '[Learn Python CLASS METHODS in 6 minutes!](https://www.youtube.com/watch?v=g-qRKZD3FgE)',
       '[__add__ Method Tutorial | Python Tutorial](https://www.youtube.com/watch?v=LlZ-BcrCBZY)',
-      '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)',
-      '[Learn Python LAMBDA in 6 minutes!](https://www.youtube.com/watch?v=IljPHDyBRog)',
-      '[Sort a List | Lambda Function | Python Program](https://www.youtube.com/watch?v=cffX2gv0I0c)'
+      '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)'
     ] },
     { h: 'Why money needs its own type' },
     { p: 'In level 4 you stored money as a whole number of cents. That fixed one problem. It leaves three ' +
@@ -410,6 +408,12 @@ FQ.registerLevel({
       {
         t: 'Allocation, the function interviewers ask for',
         blocks: [
+          { p: 'The sort near the end of this function is the first lambda in the course. Skip these two if that is ' +
+               'already familiar:' },
+          { ol: [
+            '[Learn Python LAMBDA in 6 minutes!](https://www.youtube.com/watch?v=IljPHDyBRog)',
+            '[Sort a List | Lambda Function | Python Program](https://www.youtube.com/watch?v=cffX2gv0I0c)'
+          ] },
           { code: 'def allocate(total: int, weights: list[int]) -> list[int]:\n    """Split total into len(weights) parts, in proportion, losing nothing."""\n    if not weights:\n        raise ValueError("need at least one weight")\n    if any(w < 0 for w in weights):\n        raise ValueError("weights cannot be negative")\n\n    weight_sum = sum(weights)\n    shares = [total * w // weight_sum for w in weights]        # the whole parts\n    remainder = total - sum(shares)                            # what is left over\n\n    # hand the leftover units to whoever was cut by the most\n    order = sorted(range(len(weights)),\n                   key=lambda i: (-((total * weights[i]) % weight_sum), i))\n    for i in order[:remainder]:\n        shares[i] += 1\n    return shares', lang: 'python', label: 'src/moneykit/allocation.py' },
           { p: 'That file imports nothing at all. Whole numbers in, whole numbers out, which is why it is the ' +
                'easiest part of the library to test.' },
