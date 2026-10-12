@@ -40,14 +40,16 @@ FQ.registerLevel({
     { p: '**Problem one: a decimal amount arrives from outside.** Prices, tax rates and interest rates are written with ' +
          'decimal points, and the obvious way to handle them loses money:' },
     { code: '>>> 0.1 + 0.2\n0.30000000000000004\n\n>>> total = 0.0\n>>> for _ in range(1_000_000):\n...     total += 0.01\n>>> total\n10000.000000171856          # should be exactly 10000.00', lang: 'python' },
-    { p: 'A **float** is how a computer stores a number that has a decimal point. It keeps it as a fraction ' +
-         'in binary rather than in base ten.' },
-    { p: 'Most decimal amounts have no exact binary form. One third has no exact decimal form either: you ' +
-         'write 0.333 and stop somewhere. The computer does the same thing in binary and keeps a very close ' +
-         'approximation instead of the real number.' },
-    { p: 'Look at what that cost above. A million small additions drifted by 0.00000017. That is a tiny ' +
-         'number, and it is exactly the size of number that makes a daily reconciliation fail, because the ' +
-         'two sides have to agree to the cent.' },
+    { ul: [
+      '**A float holds a decimal as a binary fraction.** It stores the number in base two rather than in ' +
+        'base ten, and that single fact is where the whole problem starts.',
+      '**Most decimal amounts have no exact binary form.** One third has no exact decimal form either: you ' +
+        'write 0.333 and stop somewhere. The computer does the same thing in binary and keeps a very close ' +
+        'approximation instead of the real number.',
+      '**The error is tiny, which is what makes it dangerous.** A million small additions drifted by ' +
+        '0.00000017 above. That is exactly the size of number that makes a daily reconciliation fail, ' +
+        'because the two sides have to agree to the cent.'
+    ] },
     { p: '**Problem two: currencies get mixed.** An integer knows nothing about what it counts:' },
     { code: 'usd_balance = 1000        # $10.00\nvnd_balance = 1000        # 1,000 dong, about four cents\n\ntotal = usd_balance + vnd_balance     # 2000 of... what?', lang: 'python' },
     { p: 'Nothing goes wrong on screen. No error, no warning. The number 2000 travels through your system ' +

@@ -2100,3 +2100,72 @@ body.is-gate::before { display: none; }
   .mainnav a { padding: 14px 12px 14px 0; }
   .masthead-inner { flex-wrap: wrap; }
 }
+
+/* ==========================================================================
+   THE READING COLUMN
+
+   A learn section is an essay, and the only thing that matters in an essay is
+   whether somebody finishes it. 66ch was measured in characters, which drifts
+   with the face and the size; this is 650px flat, which is roughly 68 to 72
+   characters of Newsreader at this size and lands inside the 65 to 75 every
+   typography reference agrees on.
+
+   Line height goes to 1.78. That is high for an interface and correct for a
+   serif at 17px: the ascenders and descenders of a text face need the room,
+   and the course asks people to read several thousand words a level.
+   ========================================================================== */
+.prose { max-width: 650px; }
+.prose p,
+.prose li {
+  font-family: var(--text);
+  font-size: 1.04rem;
+  line-height: 1.78;
+  color: var(--ash);
+}
+
+/* A key term is the one thing a reader scanning for the answer is looking
+   for, so it takes the full strength of the text colour rather than a heavier
+   weight of the same grey. Newsreader at 600 against 400 is a clear step on
+   its own; the colour is what makes it findable at a glance. */
+.prose strong,
+.prose b {
+  color: var(--bone);
+  font-weight: 600;
+}
+
+/* Paragraph spacing grows with the line height: at 1.78 a 1.1em gap reads as
+   a line break rather than a new paragraph. */
+.prose > * + * { margin-top: 1.5em; }
+.prose > * + h3 { margin-top: 2.4em; }
+.prose > * + h4 { margin-top: 2em; }
+
+/* Lists are for scanning, so they get more air between items than inside
+   them, and the marker sits in the margin rather than indenting the text
+   away from the column edge. */
+.prose ul,
+.prose ol {
+  margin: 0;
+  padding-left: 1.3em;
+  color: var(--ash);
+}
+.prose li { margin-bottom: 1.05em; }
+.prose li:last-child { margin-bottom: 0; }
+.prose li::marker { color: var(--graphite); font-family: var(--mono); font-size: 0.8em; }
+
+/* The lede keeps the same column so a level opens and continues on one
+   measure instead of stepping in when the prose starts. */
+.lede { max-width: 650px; line-height: 1.66; }
+
+/* The rhythm rule has to out-specify `.prose p { margin: 0 }`, which it did
+   not: `.prose > * + *` is one class, `.prose p` is a class and an element,
+   so every paragraph gap resolved to zero and the spacing above was dead on
+   arrival. These carry the same specificity and come later, so they win. */
+.prose > * + p,
+.prose > * + ul,
+.prose > * + ol,
+.prose > * + pre,
+.prose > * + div,
+.prose > * + aside,
+.prose > * + table { margin-top: 1.5em; }
+.prose > * + h3 { margin-top: 2.4em; }
+.prose > * + h4 { margin-top: 2em; }
