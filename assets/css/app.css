@@ -59,7 +59,7 @@
   --text:    'Newsreader', Georgia, 'Times New Roman', serif;
   --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --track-display: -0.03em;
+  --track-display: -0.04em;
   --track-title:   -0.02em;
   --track-mono:    0;
 
@@ -249,8 +249,8 @@ body, p, li, td, th, h1, h2, h3, h4, dd, dt, figcaption, blockquote, span, a {
   margin: 0;
   color: var(--bone);
 }
-.display-xl { font-size: clamp(2.9rem, 7.2vw, 5.4rem); }
-.display-l  { font-size: clamp(2.2rem, 4.6vw, 3.4rem); }
+.display-xl { font-size: clamp(3.2rem, 9vw, 6rem); text-wrap: balance; }
+.display-l  { font-size: clamp(2.3rem, 5.2vw, 3.8rem); text-wrap: balance; }
 .display-m  { font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: var(--track-title); }
 .display-s  { font-size: clamp(1.45rem, 2.2vw, 1.75rem); letter-spacing: var(--track-title); }
 
@@ -358,7 +358,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 
 .rule       { border: 0; border-top: 1px solid var(--rule); margin: 0; }
 .rule-mid   { border: 0; border-top: 1px solid var(--rule-mid); margin: 0; }
-.rule-heavy { border: 0; border-top: 2px solid var(--rule-heavy); margin: 0; }
+.rule-heavy { border: 0; border-top: 3px solid var(--rule-heavy); margin: 0; }
 
 /* Swiss grid. Spans are declared per element, never centred by default. */
 .grid {
@@ -752,10 +752,16 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 /* ==========================================================================
    INDEX: the level list as a contents page
    ========================================================================== */
-.index { border-top: 1px solid var(--rule-mid); }
+/* The index is the product: twenty numbered levels, in order. That makes it
+   a real sequence rather than decorative 01/02/03 scaffolding, and a real
+   sequence earns a real numeral. The number is set in the display face, so a
+   reader scanning the page reads the ladder before any title, and it opens on
+   the heavy rule rather than a hairline because this is the one list on the
+   site that deserves announcing. */
+.index { border-top: 3px solid var(--rule-heavy); }
 .index-row {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  grid-template-columns: clamp(3.2rem, 6vw, 5.2rem) minmax(0, 1fr) auto;
   column-gap: var(--col-gap);
   align-items: baseline;
   padding: clamp(20px, 2.6vw, 30px) 0;
@@ -766,13 +772,20 @@ a.index-row:hover { background: var(--row-hover); }
 a.index-row:hover .index-title { color: var(--accent); }
 .index-row.is-locked .index-title { color: var(--graphite); }
 
-.index-num { font-family: var(--mono); font-size: 0.86rem; color: var(--graphite); font-variant-numeric: tabular-nums; }
+.index-num {
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+  line-height: 0.9;
+  letter-spacing: var(--track-display);
+  color: var(--graphite);
+  font-variant-numeric: tabular-nums;
+}
 .index-row.is-current .index-num { color: var(--accent); }
 .index-row.is-done .index-num { color: var(--moss); }
 
 .index-title {
   font-family: var(--display);
-  font-size: clamp(1.35rem, 2.3vw, 1.85rem);
+  font-size: clamp(1.45rem, 2.6vw, 2.1rem);
   letter-spacing: var(--track-title);
   line-height: 1.12;
   color: var(--bone);
@@ -887,6 +900,44 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
    PANELS: bordered blocks, never floating cards
    ========================================================================== */
 .panel { border: 1px solid var(--rule); background: var(--ink-raised); padding: clamp(20px, 2.4vw, 32px); }
+/* One block per level page turns over: the thing you are actually here to
+   build, set on paper inside the dark page. Nothing is invented for it. It
+   takes its token values from the other half of the pair this file already
+   ships, so every ratio inside it is one the contrast script already checks,
+   and it flips the other way round under the light theme rather than becoming
+   a second, paler panel. Inversion is already the system's own device: that
+   is what .tag-solid has always been, at the size of a word.
+
+   These eight values are copied from the two theme blocks above rather than
+   referenced, because a custom property cannot read its own other definition.
+   tools/check_palettes.py fails the build when any copy drifts, which is why
+   this is a note rather than a hazard. */
+.panel-invert {
+  --ink:        #F2F5FC;
+  --ink-raised: #FFFFFF;
+  --bone:       #0C101A;
+  --ash:        #495369;
+  --graphite:   #5A6480;
+  --rule:       #DEE4F1;
+  --rule-mid:   #BFC9DE;
+  --accent:     #1D4ED8;
+  background: var(--ink);
+  border-color: var(--rule-mid);
+  color: var(--bone);
+  color-scheme: light;
+}
+:root[data-theme="light"] .panel-invert {
+  --ink:        #05070D;
+  --ink-raised: #0A0E18;
+  --bone:       #E9ECF4;
+  --ash:        #9BA4B8;
+  --graphite:   #78819A;
+  --rule:       #171C29;
+  --rule-mid:   #2A3245;
+  --accent:     #5B8CFF;
+  color-scheme: dark;
+}
+
 .panel-flat { border: 0; border-top: 1px solid var(--rule); background: transparent; padding: var(--s-4) 0 0; }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
 
