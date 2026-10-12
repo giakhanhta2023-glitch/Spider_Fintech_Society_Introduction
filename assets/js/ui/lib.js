@@ -60,3 +60,21 @@ export function SectionHead({ title, note }) {
       ${note ? html`<span class="mono">${note}</span>` : null}
     </div>`;
 }
+
+/* How a view announces itself: what this page is in mono, its name in the
+   display face across the left seven columns, and one sentence in the right
+   four saying what the reader can do with it. Three views were writing those
+   nine lines out by hand, and the third had quietly lost its sentence, which
+   is the failure mode a repeated block always has. The lesson view and the
+   front page keep their own openings: one carries a table of facts and the
+   other is a hero, and neither is this. */
+export function ViewHead({ kicker, title, lede }) {
+  return html`
+    <section class="section grid">
+      <div class="col-1-7">
+        ${kicker ? html`<span class="kicker">${kicker}</span>` : null}
+        <h1 class="display display-l">${title}</h1>
+      </div>
+      ${lede ? html`<div class="col-9-12"><p class="lede">${lede}</p></div>` : null}
+    </section>`;
+}

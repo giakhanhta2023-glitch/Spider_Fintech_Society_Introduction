@@ -1757,3 +1757,26 @@ body.is-gate::before { display: none; }
   font-size: 0.76rem;
 }
 .rt-TooltipArrow { fill: var(--bone); }
+
+/* ==========================================================================
+   TOUCH
+
+   A mouse can hit a 28px button. A thumb on a moving train cannot, and the
+   masthead controls are the smallest things on the page: the theme toggle is
+   78x28 and the tutor button 75x36. WCAG 2.2 asks for 24x24 at AA, which
+   these already clear, so this is the stricter 44px that every touch
+   guideline agrees on, applied only where there is no pointer to be precise
+   with. Nothing moves on a desktop.
+   ========================================================================== */
+@media (pointer: coarse) {
+  .themetoggle,
+  .mou-btn,
+  .mainnav a,
+  .trackswitch-opt,
+  .mono > .link,
+  .mono-s > .link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}

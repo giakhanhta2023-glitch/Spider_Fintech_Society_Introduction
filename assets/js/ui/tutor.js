@@ -207,7 +207,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
 
             <label class="field">
               <span class="field-label">chat endpoint, recommended</span>
-              <input class="tutor-input" type="text" placeholder="/api/chat" value=${endpointValue}
+              <input class="tutor-input" type="text" aria-label="Tutor endpoint" placeholder="/api/chat" value=${endpointValue}
                 onInput=${(e) => setEndpointValue(e.target.value)} autoComplete="off" />
             </label>
             <p class="mono-s" style=${{ lineHeight: 1.7 }}>
@@ -218,7 +218,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
               <summary class="mono-s">advanced: use my own key in this browser</summary>
               <label class="field">
                 <span class="field-label">api key</span>
-                <input class="tutor-input" type="password" placeholder="sk-ant-..." value=${keyValue}
+                <input class="tutor-input" type="password" aria-label="API key, kept in this browser only" placeholder="sk-ant-..." value=${keyValue}
                   onInput=${(e) => setKeyValue(e.target.value)} autoComplete="off" />
               </label>
               <aside class="note note-warn" style=${{ marginTop: 'var(--s-2)' }}>
@@ -248,7 +248,7 @@ export function Tutor({ open, onOpenChange, levelId }) {
             </div>` : null}
 
           <form onSubmit=${(e) => { e.preventDefault(); ask(input); }} class="tutor-form">
-            <input class="tutor-input" type="text" value=${input} autoComplete="off"
+            <input class="tutor-input" type="text" aria-label="Ask the tutor a question" value=${input} autoComplete="off"
               placeholder="ask anything, try: explain APR against APY"
               onInput=${(e) => setInput(e.target.value)}
               onKeyDown=${(e) => {

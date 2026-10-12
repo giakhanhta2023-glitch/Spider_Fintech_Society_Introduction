@@ -3,7 +3,7 @@
    ========================================================================= */
 import {
   html, useState, useEffect, useMemo, FQ, CFG, store, md, navigate,
-  Gauge, Btn, Tag, SectionHead
+  Gauge, Btn, Tag, SectionHead, ViewHead
 } from './lib.js';
 import { Mou } from './mou.js';
 import { Companions } from './companions.js';
@@ -206,20 +206,14 @@ export function Glossary() {
 
   return html`
     <div class="page">
-      <section class="section grid">
-        <div class="col-1-7">
-          <span class="kicker">${total} words <b>/</b> in the order you meet them</span>
-          <h1 class="display display-l">Every word we use</h1>
-        </div>
-        <div class="col-9-12">
-          <p class="lede">
-            Every term the course explains, grouped by the level that teaches it. If a word ever
-            throws you mid-level, this is the page to come back to.
-          </p>
-        </div>
-      </section>
+      <${ViewHead}
+        kicker=${html`${total} words <b>/</b> in the order you meet them`}
+        title="Every word we use"
+        lede="Every term the course explains, grouped by the level that teaches it. If a word ever
+              throws you mid-level, this is the page to come back to." />
 
       <input class="search" type="search" value=${query} autoComplete="off"
+        aria-label="Search every word the course explains"
         placeholder="type a word, try idempotency or drawdown"
         onInput=${(e) => setQuery(e.target.value)} />
 
@@ -270,12 +264,11 @@ export function Dossier() {
 
   return html`
     <div class="page">
-      <section class="section grid">
-        <div class="col-1-7">
-          <span class="kicker">${track.name} track</span>
-          <h1 class="display display-l">How you are doing</h1>
-        </div>
-      </section>
+      <${ViewHead}
+        kicker=${`${track.name} track`}
+        title="How you are doing"
+        lede="Everything this track has recorded about you: what you scored, what you shipped,
+              and what is still open. Nothing here is visible to anybody else." />
 
       <div class="datastrip">
         <div><span class="v">${all.xp.toLocaleString()}</span><span class="k">experience</span></div>
@@ -378,19 +371,12 @@ export function Ranking() {
 
   return html`
     <div class="page">
-      <section class="section grid">
-        <div class="col-1-7">
-          <span class="kicker">the engineering ladder</span>
-          <h1 class="display display-l">The ranking</h1>
-        </div>
-        <div class="col-9-12">
-          <p class="lede">
-            The engineering ladder, one row per member. The analyst track is not on
-            this board: five cleared out of five and five out of twenty are different
-            things, and one column cannot say both.
-          </p>
-        </div>
-      </section>
+      <${ViewHead}
+        kicker="the engineering ladder"
+        title="The ranking"
+        lede="The engineering ladder, one row per member. The analyst track is not on
+              this board: five cleared out of five and five out of twenty are different
+              things, and one column cannot say both." />
 
       ${notice ? html`<p class="notice" style=${{ maxWidth: '58ch' }}>${notice}</p>` : null}
 
