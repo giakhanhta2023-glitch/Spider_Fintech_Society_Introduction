@@ -12,7 +12,7 @@ import { createRoot } from 'react-dom/client';
 import { Home, Glossary, Dossier, Ranking } from './views.js';
 import { LevelPage } from './level.js';
 import { Tutor } from './tutor.js';
-import { Toggle } from './theme.js';
+import { Toggle, resolved } from './theme.js';
 
 /* ------------------------------------------------------------------ route */
 function parseHash() {
@@ -39,6 +39,26 @@ function Toasts({ items }) {
 }
 
 /* --------------------------------------------------------------- masthead */
+/* Radix was mounted with appearance="dark" permanently, so on a light page
+   every element our own stylesheet did not explicitly colour fell through to
+   a Radix dark grey: near-white list text on paper at 1.06:1, invisible. The
+   appearance follows the resolved theme now. It needs an observer rather than
+   state alone because the toggle writes the attribute from outside React, and
+   it has to be a shared hook because the gate mounts its own Theme too. */
+function useAppearance() {
+  const [appearance, setAppearance] = useState(resolved);
+  useEffect(() => {
+    const sync = () => setAppearance(resolved());
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', sync);
+    return () => { mo.disconnect(); mq.removeEventListener('change', sync); };
+  }, []);
+  return appearance;
+}
+
 function Masthead({ route, onOpenTutor, user }) {
   const progress = store.xpProgress();
 
@@ -103,11 +123,47 @@ function App({ user }) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  const appearance = useAppearance();
+
   useEffect(() => {
     document.title = route.name === 'level' && FQ.level(route.id)
       ? `${FQ.level(route.id).title} · FinQuest`
       : 'FinQuest, a fintech training arcade';
   }, [route]);
+
+  /* Sections arrive rather than appearing. The js class is what arms it, and
+     it is set here rather than in the stylesheet so that a page whose script
+     never runs renders every section normally instead of shipping a column
+     of invisible blocks.
+
+     An IntersectionObserver, never a scroll listener: a listener on scroll
+     fires on every frame of every wheel tick and reflows the document each
+     time, which is exactly the jank this costs nothing to avoid. The whole
+     set is rebuilt per route because the router replaces the page under us,
+     and anything already on screen when a view opens is marked in rather
+     than animated, so arriving mid-page never leaves content hidden. */
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('js');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const targets = Array.from(document.querySelectorAll('main section, main .index-row'));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-in');
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.05 });
+
+    targets.forEach((el, i) => {
+      el.classList.add('reveal');
+      el.style.transitionDelay = `${Math.min(i, 5) * 55}ms`;
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+      else io.observe(el);
+    });
+    return () => io.disconnect();
+  }, [route.name, route.id, route.tab]);
 
   /* Opening a level from a link, a bookmark or the tutor moves you to its
      track, so every count on every other page is counting the ladder you are
@@ -143,7 +199,7 @@ function App({ user }) {
   }
 
   return html`
-    <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="none"
+    <${Theme} appearance=${appearance} accentColor="blue" grayColor="slate" radius="none"
       scaling="100%" hasBackground=${false}>
       <button class="skip" type="button" onClick=${() => {
         /* Not an anchor: the router lives in the hash, so an href of
@@ -191,9 +247,13 @@ if (!FQ || !FQ.levels || !FQ.levels.length) {
     'directly from disk, serve the folder instead:</p><pre>python serve.py</pre></div>';
 } else {
   /* Nothing of the course mounts until the gate has a signed in learner. */
-  createRoot(mount).render(html`
-    <${Theme} appearance="dark" accentColor="blue" grayColor="slate" radius="none"
-      scaling="100%" hasBackground=${false}>
-      <${AuthGate}>${(user) => html`<${App} user=${user} />`}<//>
-    <//>`);
+  function Root() {
+    const appearance = useAppearance();
+    return html`
+      <${Theme} appearance=${appearance} accentColor="blue" grayColor="slate" radius="none"
+        scaling="100%" hasBackground=${false}>
+        <${AuthGate}>${(user) => html`<${App} user=${user} />`}<//>
+      <//>`;
+  }
+  createRoot(mount).render(html`<${Root} />`);
 }

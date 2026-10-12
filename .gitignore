@@ -27,3 +27,10 @@ dev-stub.html
 
 .vercel
 .env*
+
+# Skills and agents installed into the project by the Claude desktop app.
+# They are tooling for whoever is editing the course, not part of the course,
+# and committing them would publish a few megabytes of somebody else's
+# prompts into a repository a reviewer is meant to read in two minutes.
+.claude/skills/
+.agents/

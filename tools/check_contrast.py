@@ -41,7 +41,7 @@ def ratio(fg, bg):
 
 DARK = {
     "ink": "#05070D", "ink-raised": "#0A0E18", "ink-deep": "#020306",
-    "bone": "#E9ECF4", "ash": "#9BA4B8", "graphite": "#78819A",
+    "bone": "#E9ECF4", "ash": "#9BA4B8", "graphite": "#8A93AC",
     "rule": "#171C29", "rule-mid": "#2A3245",
     "accent": "#5B8CFF", "accent-solid": "#2563EB",
     "moss": "#6E9C70", "crimson": "#C25E5E",

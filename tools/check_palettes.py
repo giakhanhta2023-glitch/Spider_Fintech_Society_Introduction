@@ -1,17 +1,15 @@
-"""The same colour, written in four places, actually being the same colour.
+"""The same colour, written in two files, actually being the same colour.
 
     python tools/check_palettes.py
 
 app.css holds the dark palette in :root and the light one under
 [data-theme="light"]. check_contrast.py keeps its own copies so it can do the
 arithmetic, and says so in its docstring: "if you change a colour there, change
-it here". .panel-invert now holds a fourth copy, because it wears the opposite
-theme inside one block and a custom property cannot read its own other
-definition.
+it here".
 
-Four copies of a palette, kept in step by remembering, will drift. This reads
-all four out of the files and fails when any of them has, which turns a silent
-wrong colour into a failed check.
+Copies of a palette, kept in step by remembering, will drift. This reads them
+out of both files and fails when either has, which turns a silent wrong colour
+into a failed check.
 
 It compares roles, not every declaration: a palette is allowed to define
 something the others do not, and only the overlap has to agree.
@@ -47,14 +45,8 @@ def py_dict(name):
 
 css_dark = block(r"^:root,\n\.radix-themes")
 css_light = block(r'^:root\[data-theme="light"\],')
-inv_on_dark = block(r"^\.panel-invert")
-inv_on_light = block(r'^:root\[data-theme="light"\] \.panel-invert')
-
 CHECKS = [
-    # the panel wears the other theme, so each one must equal its opposite
-    ("the inverted panel against the light palette", inv_on_dark, css_light),
-    ("the inverted panel in light mode against the dark palette", inv_on_light, css_dark),
-    # and the contrast tool must be measuring the colours that actually ship
+    # the contrast tool must be measuring the colours that actually ship
     ("check_contrast.py DARK against app.css", py_dict("DARK"), css_dark),
     ("check_contrast.py LIGHT against app.css", py_dict("LIGHT"), css_light),
 ]

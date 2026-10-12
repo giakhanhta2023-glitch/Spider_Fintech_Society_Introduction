@@ -29,7 +29,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <!-- Radix Themes: used for behaviour only (tabs, dialog, tooltip, focus).
      Every visual decision lives in app.css. -->
@@ -53,7 +53,7 @@
       document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
-<link rel="stylesheet" href="assets/css/app.css?v=ec990597">
+<link rel="stylesheet" href="assets/css/app.css?v=3deaf766">
 
 <script type="importmap">
 {
@@ -67,9 +67,9 @@
     "/assets/js/ui/auth.js": "/assets/js/ui/auth.js?v=4957b46f",
     "/assets/js/ui/blocks.js": "/assets/js/ui/blocks.js?v=36fdf4f6",
     "/assets/js/ui/companions.js": "/assets/js/ui/companions.js?v=18762dc5",
-    "/assets/js/ui/level.js": "/assets/js/ui/level.js?v=e8178136",
+    "/assets/js/ui/level.js": "/assets/js/ui/level.js?v=6b25d7fb",
     "/assets/js/ui/lib.js": "/assets/js/ui/lib.js?v=228d531a",
-    "/assets/js/ui/main.js": "/assets/js/ui/main.js?v=7c623a4d",
+    "/assets/js/ui/main.js": "/assets/js/ui/main.js?v=7e406a01",
     "/assets/js/ui/mou.js": "/assets/js/ui/mou.js?v=98f5da5c",
     "/assets/js/ui/quiz.js": "/assets/js/ui/quiz.js?v=16611625",
     "/assets/js/ui/session.js": "/assets/js/ui/session.js?v=aced4699",
@@ -83,6 +83,13 @@
 </head>
 
 <body>
+  <!-- Two blue orbs and a film grain, both fixed and both inert. They are
+       fixed rather than in the flow so no blur filter ever sits on a
+       scrolling container, which is what makes backdrop-blur cheap here and
+       expensive everywhere else. -->
+  <div class="orbfield" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
   <div id="root">
     <noscript>FinQuest needs JavaScript. The curriculum is also readable as Markdown in the repository.</noscript>
   </div>
@@ -127,6 +134,6 @@
   <script src="content/levels/fpa-05.js?v=ebc05acb"></script>
 
   <!-- ============ interface: React + Radix Themes ============ -->
-  <script type="module" src="assets/js/ui/main.js?v=7c623a4d"></script>
+  <script type="module" src="assets/js/ui/main.js?v=7e406a01"></script>
 </body>
 </html>

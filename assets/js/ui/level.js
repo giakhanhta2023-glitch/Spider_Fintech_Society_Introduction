@@ -44,7 +44,7 @@ function Brief({ level, state }) {
       </div>
 
       <div class="col-9-12 stack stack-5">
-        <div class="panel panel-invert">
+        <div class="panel">
           <span class="kicker">${level.project ? 'you will build' : 'your mission'}</span>
           <h3 class="display display-m" style=${{ marginBottom: 'var(--s-2)' }}>${brief.title}</h3>
           <p class="index-sub">${md(brief.story)}</p>

@@ -27,7 +27,11 @@
   --ink-deep:     #020306;   /* code wells and anything set into the page  */
   --bone:         #E9ECF4;   /* primary text            17.0:1 on ink      */
   --ash:          #9BA4B8;   /* secondary text           8.1:1 on ink      */
-  --graphite:     #78819A;   /* tertiary, still legible  5.2:1 on ink      */
+  --graphite:     #8A93AC;   /* tertiary. 6.6:1 on ink, and it has to be
+                                that high because glass stacks: a plate
+                                inside the masthead pill sits under two
+                                translucent layers, and the old #78819A
+                                measured 4.11:1 once both were composited. */
 
   /* ---- rules ---------------------------------------------------------- */
   --rule:         #171C29;   /* hairline between rows                      */
@@ -55,13 +59,44 @@
   --crimson-wash: rgba(194, 94, 94, 0.10);
 
   /* ---- type ------------------------------------------------------------ */
-  --display: 'Instrument Serif', 'Libre Caslon Display', Georgia, serif;
+  /* Space Grotesk carries the interface: the wide geometric grotesk this
+     direction is built on. Newsreader stays for long-form lesson prose only,
+     because a level's learn section runs to fifteen thousand pixels of
+     reading and a grotesk at that length is a worse experience, whatever it
+     looks like in a screenshot. JetBrains Mono keeps every label and every
+     line of code. */
+  --display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --ui:      'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   --text:    'Newsreader', Georgia, 'Times New Roman', serif;
   --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --track-display: -0.04em;
+  --track-display: -0.045em;
   --track-title:   -0.02em;
   --track-mono:    0;
+
+  /* ---- glass, radius and the orb field ---------------------------------
+     The direction asks for machined hardware rather than flat panels: an
+     outer shell holding an inner core, each with its own radius, the inner
+     one calculated so the curves stay concentric. --r-outer and --r-inner
+     are that pair, and --pad-bezel is the gap between them.
+
+     The orbs are blue because this interface has exactly one accent and
+     always has. Two weights of the same blue, not a purple and an emerald,
+     which would be a second and third colour arriving through the back door
+     of a background effect. */
+  --r-outer:    2rem;
+  --pad-bezel:  6px;
+  --r-inner:    calc(2rem - 6px);
+  --r-pill:     999px;
+
+  --glass:      rgba(255, 255, 255, 0.045);
+  --glass-2:    rgba(255, 255, 255, 0.065);
+  --hairline:   rgba(255, 255, 255, 0.10);
+  --inset-lit:  inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  --blur:       blur(22px);
+
+  --orb-1:      rgba(91, 140, 255, 0.28);
+  --orb-2:      rgba(37, 99, 235, 0.20);
 
   /* ---- measure and rhythm --------------------------------------------- */
   --measure:   66ch;
@@ -150,6 +185,18 @@
   --moss-wash:    rgba(63, 107, 69, 0.09);
   --crimson:      #A63F3F;
   --crimson-wash: rgba(166, 63, 63, 0.09);
+
+
+  /* Glass on paper is a tint of the ink rather than of white: white on white
+     is invisible, and a grey tint would put a second neutral into a palette
+     that has exactly one. The orbs keep the same blue at lower weight,
+     because paper carries far less of it before it reads as a stain. */
+  --glass:      rgba(12, 16, 26, 0.035);
+  --glass-2:    rgba(255, 255, 255, 0.70);
+  --hairline:   rgba(12, 16, 26, 0.10);
+  --inset-lit:  inset 0 1px 1px rgba(255, 255, 255, 0.90);
+  --orb-1:      rgba(37, 99, 235, 0.14);
+  --orb-2:      rgba(91, 140, 255, 0.10);
 
   color-scheme: light;
 }
@@ -900,44 +947,6 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
    PANELS: bordered blocks, never floating cards
    ========================================================================== */
 .panel { border: 1px solid var(--rule); background: var(--ink-raised); padding: clamp(20px, 2.4vw, 32px); }
-/* One block per level page turns over: the thing you are actually here to
-   build, set on paper inside the dark page. Nothing is invented for it. It
-   takes its token values from the other half of the pair this file already
-   ships, so every ratio inside it is one the contrast script already checks,
-   and it flips the other way round under the light theme rather than becoming
-   a second, paler panel. Inversion is already the system's own device: that
-   is what .tag-solid has always been, at the size of a word.
-
-   These eight values are copied from the two theme blocks above rather than
-   referenced, because a custom property cannot read its own other definition.
-   tools/check_palettes.py fails the build when any copy drifts, which is why
-   this is a note rather than a hazard. */
-.panel-invert {
-  --ink:        #F2F5FC;
-  --ink-raised: #FFFFFF;
-  --bone:       #0C101A;
-  --ash:        #495369;
-  --graphite:   #5A6480;
-  --rule:       #DEE4F1;
-  --rule-mid:   #BFC9DE;
-  --accent:     #1D4ED8;
-  background: var(--ink);
-  border-color: var(--rule-mid);
-  color: var(--bone);
-  color-scheme: light;
-}
-:root[data-theme="light"] .panel-invert {
-  --ink:        #05070D;
-  --ink-raised: #0A0E18;
-  --bone:       #E9ECF4;
-  --ash:        #9BA4B8;
-  --graphite:   #78819A;
-  --rule:       #171C29;
-  --rule-mid:   #2A3245;
-  --accent:     #5B8CFF;
-  color-scheme: dark;
-}
-
 .panel-flat { border: 0; border-top: 1px solid var(--rule); background: transparent; padding: var(--s-4) 0 0; }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
 
@@ -1831,3 +1840,228 @@ body.is-gate::before { display: none; }
     align-items: center;
   }
 }
+
+/* ==========================================================================
+   THE GLASS LAYER
+
+   Everything below this point reshapes the surfaces the rest of the file
+   already defined, rather than replacing them. The class names, the grid and
+   the spacing scale are untouched: a .panel is still a .panel, it is simply
+   machined now rather than drawn.
+
+   Rule 4 of the header is deliberately overturned here, and it is worth
+   saying so in the file rather than letting a reader find the contradiction:
+   this direction is built from radius, glass and depth, which the editorial
+   direction above refused on purpose. One of the two comments is now
+   historical. This one is the live one.
+   ========================================================================== */
+
+/* ---------------------------------------------------------- the orb field */
+.orbfield,
+.grain { position: fixed; inset: 0; pointer-events: none; }
+.orbfield { z-index: 0; overflow: hidden; }
+.orbfield::before,
+.orbfield::after {
+  content: '';
+  position: absolute;
+  width: 62vw; height: 62vw;
+  border-radius: 50%;
+  filter: blur(130px);
+}
+.orbfield::before { background: var(--orb-1); top: -20vw; left: -12vw; }
+.orbfield::after  { background: var(--orb-2); bottom: -26vw; right: -14vw; }
+
+/* Grain sits above the orbs and below everything readable. Fixed, so it never
+   forces a repaint on a scrolling container. */
+.grain {
+  z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+#root { position: relative; z-index: 2; }
+
+/* ------------------------------------------------- the floating pill nav */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: none;
+  border-bottom: 0;
+  padding: 18px 0 10px;
+}
+.masthead-inner {
+  width: max-content;
+  max-width: calc(100% - 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 9px 9px 9px 20px;
+  gap: clamp(14px, 2.4vw, 30px);
+  align-items: center;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--glass-2);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--inset-lit);
+}
+.wordmark-text { font-family: var(--ui); font-weight: 600; font-size: 1.1rem; letter-spacing: -0.03em; }
+.wordmark-text i { font-style: normal; color: var(--accent); }
+.mainnav { font-family: var(--ui); font-size: 0.88rem; }
+.mainnav a { border-bottom: 0; padding: 6px 2px; }
+
+.xp-plate,
+.themetoggle,
+.mou-btn,
+.btn,
+.tag,
+.chip,
+.trackswitch-opt,
+.search,
+.q-option,
+.check-btn,
+.tutor-input,
+.codeblock-copy { border-radius: var(--r-pill); }
+
+.xp-plate, .themetoggle {
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  padding: 8px 14px;
+}
+
+/* ------------------------------------------------------ pill buttons */
+.btn {
+  font-family: var(--ui);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 13px 26px;
+  border: 1px solid var(--hairline);
+  background: var(--glass);
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.btn:active { transform: scale(0.98); }
+.btn-accent {
+  background: var(--accent-solid);
+  border-color: transparent;
+  color: #fff;
+  padding-right: 9px;
+}
+/* The trailing arrow never sits naked beside the label: it gets its own
+   circle, flush with the button's inner padding, and moves on hover. */
+.btn-accent .arrow,
+.btn .arrow {
+  width: 32px; height: 32px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.16);
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 4px;
+  transition: transform var(--dur) var(--ease);
+}
+.btn:hover .arrow { transform: translate(3px, -1px) scale(1.05); }
+
+/* ---------------------------------------- the double bezel on every panel */
+.panel,
+.req-box,
+.tutor-panel,
+.session,
+.companion,
+.daily,
+.medal,
+.hero-aside,
+.note {
+  border-radius: var(--r-outer);
+  border: 1px solid var(--hairline);
+  background: var(--glass);
+  padding: var(--pad-bezel);
+}
+/* The inner core: its own surface, its own highlight, a concentric radius. */
+.panel > *,
+.req-box > *,
+.note > * { position: relative; }
+.panel,
+.req-box,
+.note,
+.session,
+.medal,
+.daily {
+  background-image: linear-gradient(var(--glass-2), var(--glass-2));
+  background-clip: content-box;
+  box-shadow: var(--inset-lit);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+}
+.panel { padding: calc(var(--pad-bezel) + clamp(18px, 2.2vw, 28px)); }
+.note  { padding: calc(var(--pad-bezel) + 16px); }
+.medal { padding: calc(var(--pad-bezel) + 16px); }
+
+/* Code keeps a hard surface. Glass behind a hundred lines of Python is a
+   blur filter over a scrolling container, which is the one thing the
+   performance rules of this direction forbid outright. */
+.codeblock {
+  border-radius: var(--r-outer);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.codeblock-body { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* ------------------------------------------------------ the eyebrow badge */
+.kicker {
+  /* The badge is 11px sitting on a translucent pill, which is the smallest
+     text in the interface on the least certain background. Tertiary grey
+     measured 3.64:1 there, so it takes the secondary tone instead. */
+  color: var(--ash);
+  display: inline-block;
+  padding: 6px 13px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--glass);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------- display type */
+.display, .section-head h2, .index-title, .prose h3, .title {
+  font-family: var(--ui);
+  font-weight: 600;
+  letter-spacing: var(--track-display);
+}
+.index-num { font-family: var(--mono); font-size: 0.84rem; letter-spacing: 0; }
+.index-row { border-radius: var(--r-outer); padding-inline: clamp(14px, 1.8vw, 24px); }
+.index-row:hover { background: var(--glass); }
+.index { border-top: 0; }
+
+/* Long-form lesson prose stays on the serif, for the reason in the token
+   block: these sections are essays, not interface. */
+.prose p, .prose li, .lede, .index-sub { font-family: var(--text); }
+
+/* ------------------------------------------------------- entry animation */
+/* An enhancement, never a gate: without the js class every section renders
+   normally, so a script failure cannot ship a page of invisible blocks. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(42px);
+  filter: blur(8px);
+  transition: opacity 700ms var(--ease), transform 700ms var(--ease), filter 700ms var(--ease);
+}
+.js .reveal.is-in { opacity: 1; transform: none; filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+}
+@media (max-width: 760px) {
+  .masthead-inner { width: auto; max-width: none; border-radius: var(--r-outer); }
+}
+
+/* --------------------------------------------- display sizes, re-tuned
+   Instrument Serif is condensed; Space Grotesk is wide. Carrying the old
+   sizes across put the front page headline on four lines inside seven
+   columns. These are the same scale steps, measured for the new face. */
+.display-xl { font-size: clamp(2.6rem, 5.6vw, 4.6rem); line-height: 1.02; }
+.display-l  { font-size: clamp(2.1rem, 3.8vw, 3.1rem); line-height: 1.06; }
+.display-m  { font-size: clamp(1.6rem, 2.4vw, 2.1rem); line-height: 1.12; }
+.display-s  { font-size: clamp(1.35rem, 1.9vw, 1.6rem); line-height: 1.18; }
+.display, .section-head h2, .index-title, .prose h3, .title { text-wrap: balance; }
+.index-title { font-size: clamp(1.2rem, 1.9vw, 1.5rem); }
+.section-head h2 { font-size: clamp(1.6rem, 2.8vw, 2.4rem); }
