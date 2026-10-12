@@ -59,7 +59,7 @@ FQ.registerLevel({
     { p: 'An **account** is somewhere money sits. A **transaction** is one money event. An **entry** is one line of that ' +
          'event: an account and a signed amount. Alice paying Bob $25.00 is one row in `transactions` and two rows in ' +
          '`entries`: -2500 and +2500.' },
-    { code: 'create table accounts (\n  id             bigserial primary key,\n  name           text        not null unique,\n  kind           text        not null check (kind in (\'customer\', \'revenue\', \'world\')),\n  allow_negative boolean     not null default false,\n  created_at     timestamptz not null default now()\n);\n\ncreate table transactions (\n  id              bigserial primary key,\n  memo            text        not null,\n  idempotency_key text        unique,\n  created_at      timestamptz not null default now()\n);\n\ncreate table entries (\n  id             bigserial primary key,\n  transaction_id bigint      not null references transactions(id),\n  account_id     bigint      not null references accounts(id),\n  amount_minor   bigint      not null check (amount_minor <> 0),\n  created_at     timestamptz not null default now()\n);', lang: 'sql', label: 'the whole ledger' },
+    { code: 'create table accounts (\n  id             bigserial primary key,\n  name           text        not null unique,\n  kind           text        not null check (kind in (\'customer\', \'revenue\', \'world\')),\n  allow_negative boolean     not null default false,\n  created_at     timestamptz not null default now()\n);\n\ncreate table transactions (\n  id              bigserial primary key,\n  memo            text        not null,\n  idempotency_key text        unique,\n  created_at      timestamptz not null default now()\n);\n\ncreate table entries (\n  id             bigserial primary key,\n  transaction_id bigint      not null references transactions(id),\n  account_id     bigint      not null references accounts(id),\n  amount_minor   bigint      not null check (amount_minor <> 0),\n  created_at     timestamptz not null default now()\n);', lang: 'sql', label: 'migrations/0001_initial_schema.sql' },
     { table: {
       head: ['Piece of the schema', 'What it does'],
       rows: [
@@ -115,7 +115,7 @@ FQ.registerLevel({
     { p: 'The rule that matters is that **the entries of one transaction sum to zero**. A `check` constraint cannot express ' +
          'it, because a check only ever sees one row and this is a statement about a group of rows. A **trigger** can: a ' +
          'small function the database runs automatically when a row changes.' },
-    { code: 'create or replace function entries_balance() returns trigger language plpgsql as $$\nbegin\n  if (select sum(amount_minor) from entries where transaction_id = new.transaction_id) <> 0 then\n    raise exception \'transaction % does not balance\', new.transaction_id;\n  end if;\n  return null;\nend $$;\n\ncreate constraint trigger entries_must_balance\n  after insert on entries\n  deferrable initially deferred        -- check at commit, not after each row\n  for each row execute function entries_balance();', lang: 'sql' },
+    { code: 'create or replace function entries_balance() returns trigger language plpgsql as $$\nbegin\n  if (select sum(amount_minor) from entries where transaction_id = new.transaction_id) <> 0 then\n    raise exception \'transaction % does not balance\', new.transaction_id;\n  end if;\n  return null;\nend $$;\n\ncreate constraint trigger entries_must_balance\n  after insert on entries\n  deferrable initially deferred        -- check at commit, not after each row\n  for each row execute function entries_balance();', lang: 'sql', label: 'migrations/0002_balance_trigger.sql' },
     { p: 'The `deferrable initially deferred` line is what makes it work. Think about the moment after the first entry is ' +
          'inserted: -2500 is there and +2500 is not yet, so the transaction is unbalanced on purpose, briefly. Checked then, ' +
          'every transfer would fail. **Deferred** means "wait until commit, when every entry is in".' },
@@ -194,7 +194,8 @@ FQ.registerLevel({
     { code: 'Parallel Seq Scan on entries\n  Filter: (transaction_id = 200003)\n  Rows Removed by Filter: 133666\nExecution Time: 41.697 ms', lang: 'text', label: 'once per inserted row' },
     { p: 'Twenty thousand rows times 41.697 ms is about **fourteen minutes** of trigger work for one insert. The fix is one ' +
          'line, and the same query then costs:' },
-    { code: 'create index entries_txn_idx on entries (transaction_id);\n\nIndex Scan using entries_txn_idx on entries (actual rows=4.00 loops=1)\n  Index Cond: (transaction_id = 200003)\nExecution Time: 0.112 ms', lang: 'text', label: 'after the index: 372 times faster' },
+    { code: 'create index entries_txn_idx on entries (transaction_id);', lang: 'sql', label: 'migrations/0003_index_entries_transaction_id.sql' },
+    { code: 'Index Scan using entries_txn_idx on entries (actual rows=4.00 loops=1)\n  Index Cond: (transaction_id = 200003)\nExecution Time: 0.112 ms', lang: 'text', label: 'after the index: 372 times faster' },
     { warn: 'Index the referencing side of every foreign key you look up or cascade through. Postgres does not do it for you, ' +
             'and the symptom is not an error. It is a system that gets slower as it fills up, which is the hardest kind of ' +
             'problem to notice and the easiest to prevent.' },
@@ -211,7 +212,7 @@ FQ.registerLevel({
     { h: 'The balance you show, and the balance that is true' },
     { p: 'Summing entries is correct, and gets slower as an account grows. At some size you keep a copy of the balance on ' +
          'the account row. From that moment there are two numbers that must agree, and something has to check:' },
-    { code: 'alter table accounts add column balance_minor bigint not null default 0;\n\n-- keep it current inside the same transaction as the entry\ncreate or replace function apply_entry() returns trigger language plpgsql as $$\nbegin\n  update accounts set balance_minor = balance_minor + new.amount_minor\n   where id = new.account_id;\n  return new;\nend $$;\n\ncreate trigger entries_apply after insert on entries\n  for each row execute function apply_entry();', lang: 'sql' },
+    { code: 'alter table accounts add column balance_minor bigint not null default 0;\n\n-- keep it current inside the same transaction as the entry\ncreate or replace function apply_entry() returns trigger language plpgsql as $$\nbegin\n  update accounts set balance_minor = balance_minor + new.amount_minor\n   where id = new.account_id;\n  return new;\nend $$;\n\ncreate trigger entries_apply after insert on entries\n  for each row execute function apply_entry();', lang: 'sql', label: 'migrations/0004_cached_balance.sql' },
     { p: 'Because the trigger runs inside the same database transaction as the entry, the two are saved together or not at ' +
          'all. That removes most ways for them to drift, and not all, so a job runs every morning and should print nothing:' },
     { code: 'select a.id, a.name, a.balance_minor, coalesce(sum(e.amount_minor), 0) as from_entries\n  from accounts a\n  left join entries e on e.account_id = a.id\n group by a.id\nhaving a.balance_minor <> coalesce(sum(e.amount_minor), 0);', lang: 'sql', label: 'the query that should return no rows' },
@@ -222,7 +223,7 @@ FQ.registerLevel({
     { p: 'This schema will change: a new column, a new index, a new table. In a running system you cannot simply edit it, ' +
          'because other people\'s code is using it right now. So every change is written as a **migration**: a small, ' +
          'numbered, forward-only file, applied once and never edited afterwards.' },
-    { code: 'migrations/\n  0001_initial_schema.sql\n  0002_balance_trigger.sql\n  0003_index_entries_transaction_id.sql', lang: 'text' },
+    { code: 'migrations/\n  0001_initial_schema.sql\n  0002_balance_trigger.sql\n  0003_index_entries_transaction_id.sql\n  0004_cached_balance.sql', lang: 'text' },
     { ol: [
       '**Never edit a migration that has run anywhere.** Somebody else\'s database already applied the old version and will never see your edit. Write another migration.',
       '**Make it safe to run twice**, with `create index if not exists` and `add column if not exists`. Deploys get retried.',

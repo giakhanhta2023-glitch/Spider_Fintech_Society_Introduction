@@ -219,7 +219,7 @@ FQ.registerLevel({
       {
         t: 'Make it a package, not a notebook',
         blocks: [
-          { code: 'close-pack/\n  closepack/\n    __init__.py\n    load.py        the files, and the three repairs\n    checks.py      the gates\n    bridge.py      price and volume\n    pack.py        the pack, and the check cell\n    report.py      the chart and the draft memo\n  tests/\n    test_pack.py\n  README.md', lang: 'text' },
+          { code: 'close-pack/\n  closepack/\n    __init__.py\n    load.py        the files, and the three repairs\n    checks.py      the gates\n    bridge.py      price and volume\n    pack.py        the pack, and the check cell\n    report.py      the chart and the draft memo\n  tests/\n    test_pack.py\n  README.md', lang: 'text', label: 'the shape to build' },
           { p: 'A notebook is the right tool for looking at data and the wrong one for a thing that runs every month: ' +
                'cells run out of order, state survives edits, and nothing can be imported into a test.' }
         ],
@@ -228,7 +228,7 @@ FQ.registerLevel({
       {
         t: 'Load and repair, with a report',
         blocks: [
-          { code: 'frame = pd.read_csv(DATA / "fpa-actuals.csv", dtype={"account_code": str})\n\ntext_amounts = int(pd.to_numeric(frame["amount"], errors="coerce").isna().sum())\nframe["amount"] = frame["amount"].map(to_number)\n\ntrimmed = int((frame["account_name"] != frame["account_name"].str.strip()).sum())\nfor column in ["account_name", "cost_centre", "line_type"]:\n    frame[column] = frame[column].str.strip()\n\nbefore = len(frame)\nframe = frame.drop_duplicates(subset="journal_id").reset_index(drop=True)\nduplicates = before - len(frame)', lang: 'python' },
+          { code: 'frame = pd.read_csv(DATA / "fpa-actuals.csv", dtype={"account_code": str})\n\ntext_amounts = int(pd.to_numeric(frame["amount"], errors="coerce").isna().sum())\nframe["amount"] = frame["amount"].map(to_number)\n\ntrimmed = int((frame["account_name"] != frame["account_name"].str.strip()).sum())\nfor column in ["account_name", "cost_centre", "line_type"]:\n    frame[column] = frame[column].str.strip()\n\nbefore = len(frame)\nframe = frame.drop_duplicates(subset="journal_id").reset_index(drop=True)\nduplicates = before - len(frame)', lang: 'python', label: 'closepack/load.py' },
           { warn: '`dtype={"account_code": str}` matters. Left alone, pandas reads 4000 as an integer, and the day an ' +
                   'account code starts with a zero the leading zero disappears and the join stops matching.' }
         ],
@@ -239,7 +239,7 @@ FQ.registerLevel({
         blocks: [
           { p: 'One dictionary from account code to pack line and group. It is the only place the shape of the pack is ' +
                'written down, so adding an account next month is a one line change.' },
-          { code: 'MAPPING = {\n    "4000": ("Transaction fees", "revenue"),\n    "4100": ("Subscription fees", "revenue"),\n    ...\n    "6100": ("Marketing programmes", "opex"),\n}\n\nframe["pack_line"] = frame["account_code"].map(lambda c: MAPPING[c][0])\nframe["group"]     = frame["account_code"].map(lambda c: MAPPING[c][1])', lang: 'python' },
+          { code: 'MAPPING = {\n    "4000": ("Transaction fees", "revenue"),\n    "4100": ("Subscription fees", "revenue"),\n    ...\n    "6100": ("Marketing programmes", "opex"),\n}\n\nframe["pack_line"] = frame["account_code"].map(lambda c: MAPPING[c][0])\nframe["group"]     = frame["account_code"].map(lambda c: MAPPING[c][1])', lang: 'python', label: 'closepack/load.py' },
           { p: 'A `KeyError` here is a feature: an account code the mapping has never seen should stop the run rather ' +
                'than land in a line called NaN.' }
         ],
@@ -250,7 +250,7 @@ FQ.registerLevel({
         blocks: [
           { p: 'Five checks, each returning findings rather than raising, so the run can report all of them at once ' +
                'rather than one per attempt.' },
-          { code: 'unmapped = set(actuals["account_code"]) - set(MAPPING)\nmissing_month = month not in set(budget["month"])\nghost_centres = (set(budget_month["cost_centre"])\n                 - set(actual_month["cost_centre"]))', lang: 'python' },
+          { code: 'unmapped = set(actuals["account_code"]) - set(MAPPING)\nmissing_month = month not in set(budget["month"])\nghost_centres = (set(budget_month["cost_centre"])\n                 - set(actual_month["cost_centre"]))', lang: 'python', label: 'closepack/checks.py' },
           { tip: 'Fixing five problems in one pass beats five runs. It reads as a small thing and it changes whether ' +
                  'anybody keeps using your tool.' }
         ],
@@ -259,7 +259,7 @@ FQ.registerLevel({
       {
         t: 'The check cell, as a pass or fail',
         blocks: [
-          { code: 'difference = round(pack_total - ledger_total, 2)\nprint(f"   check: pack against ledger {difference:+,.2f}")\nreturn 0 if abs(difference) < 0.005 else 1', lang: 'python' },
+          { code: 'difference = round(pack_total - ledger_total, 2)\nprint(f"   check: pack against ledger {difference:+,.2f}")\nreturn 0 if abs(difference) < 0.005 else 1', lang: 'python', label: 'closepack/pack.py' },
           { p: 'Every program hands back a number when it finishes. Zero means it worked and anything else means it ' +
 'did not, which is the one thing a machine can read without understanding a word of the pack. That ' +
                'number is called the **exit code**, and returning 1 here means nobody sends this pack.' },
@@ -273,7 +273,7 @@ FQ.registerLevel({
         blocks: [
           { p: 'Delete a line from PACK_ORDER, run again, and watch the check cell go non zero. Then write that as a ' +
                'test so it is checked every time rather than the once.' },
-          { code: 'def test_the_check_catches_a_dropped_pack_line(monkeypatch):\n    monkeypatch.setattr(load, "PACK_ORDER",\n                        [l for l in load.PACK_ORDER if l != "FX markup"])\n    broken = pack.build("2025-09")\n    assert not broken.ties\n    assert round(broken.tie_difference) == -255_062', lang: 'python' }
+          { code: 'def test_the_check_catches_a_dropped_pack_line(monkeypatch):\n    monkeypatch.setattr(load, "PACK_ORDER",\n                        [l for l in load.PACK_ORDER if l != "FX markup"])\n    broken = pack.build("2025-09")\n    assert not broken.ties\n    assert round(broken.tie_difference) == -255_062', lang: 'python', label: 'tests/test_pack.py' }
         ],
         check: 'The test passes, which means the check works, which is a different claim from the check being present.'
       },
@@ -282,7 +282,7 @@ FQ.registerLevel({
         blocks: [
           { p: 'A waterfall from budget EBITDA to actual EBITDA, one bar per material variance, and a markdown memo ' +
                'with the numbers filled in and the causes left blank.' },
-          { code: 'moves = [(row["line"], row["variance"]) for _, row in lines.iterrows()\n         if abs(row["variance"]) >= MATERIALITY]\nmoves.sort(key=lambda pair: -abs(pair[1]))', lang: 'python' },
+          { code: 'moves = [(row["line"], row["variance"]) for _, row in lines.iterrows()\n         if abs(row["variance"]) >= MATERIALITY]\nmoves.sort(key=lambda pair: -abs(pair[1]))', lang: 'python', label: 'closepack/report.py' },
           { p: 'Sorting by absolute size is the whole design of the chart: the reader sees the three bars that matter ' +
                'before reading a single label.' }
         ],
