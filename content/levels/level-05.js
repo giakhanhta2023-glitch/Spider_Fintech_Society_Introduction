@@ -32,7 +32,8 @@ FQ.registerLevel({
       '[You\'ll love Python data classes!](https://www.youtube.com/watch?v=Gsfsq2epdr8)',
       '[Learn Python CLASS METHODS in 6 minutes!](https://www.youtube.com/watch?v=g-qRKZD3FgE)',
       '[__add__ Method Tutorial | Python Tutorial](https://www.youtube.com/watch?v=LlZ-BcrCBZY)',
-      '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)'
+      '[__str__ Method | Python Tutorial](https://www.youtube.com/watch?v=GKFwko0byM0)',
+      '[Learn Python LAMBDA in 6 minutes!](https://www.youtube.com/watch?v=IljPHDyBRog)'
     ] },
     { h: 'Why money needs its own type' },
     { p: 'In level 4 you stored money as a whole number of cents. That fixed one problem. It leaves three ' +
