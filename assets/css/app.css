@@ -65,8 +65,8 @@
      reading and a grotesk at that length is a worse experience, whatever it
      looks like in a screenshot. JetBrains Mono keeps every label and every
      line of code. */
-  --display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --ui:      'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --display: 'Instrument Serif', 'Libre Caslon Display', Georgia, serif;
+  --ui:      'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text:    'Newsreader', Georgia, 'Times New Roman', serif;
   --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -84,19 +84,19 @@
      always has. Two weights of the same blue, not a purple and an emerald,
      which would be a second and third colour arriving through the back door
      of a background effect. */
-  --r-outer:    2rem;
-  --pad-bezel:  6px;
-  --r-inner:    calc(2rem - 6px);
-  --r-pill:     999px;
+  /* Radius is zero again, everywhere. A panel is a bordered rectangle: the
+     separation comes from the rule around it, never from a corner, a blur or
+     a lit edge. --surface is a flat fill, not a translucent one, so nothing
+     composites and every contrast ratio is the one the palette states. */
+  --r-outer:    0;
+  --pad-bezel:  0px;
+  --r-inner:    0;
+  --r-pill:     0;
 
-  --glass:      rgba(255, 255, 255, 0.045);
-  --glass-2:    rgba(255, 255, 255, 0.065);
-  --hairline:   rgba(255, 255, 255, 0.10);
-  --inset-lit:  inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  --blur:       blur(22px);
-
-  --orb-1:      rgba(91, 140, 255, 0.28);
-  --orb-2:      rgba(37, 99, 235, 0.20);
+  --surface:    var(--ink-raised);
+  --hairline:   var(--rule);
+  --hairline-strong: var(--rule-mid);
+  --pad-card:   clamp(18px, 2.2vw, 28px);
 
   /* ---- measure and rhythm --------------------------------------------- */
   --measure:   66ch;
@@ -187,16 +187,9 @@
   --crimson-wash: rgba(166, 63, 63, 0.09);
 
 
-  /* Glass on paper is a tint of the ink rather than of white: white on white
-     is invisible, and a grey tint would put a second neutral into a palette
-     that has exactly one. The orbs keep the same blue at lower weight,
-     because paper carries far less of it before it reads as a stain. */
-  --glass:      rgba(12, 16, 26, 0.035);
-  --glass-2:    rgba(255, 255, 255, 0.70);
-  --hairline:   rgba(12, 16, 26, 0.10);
-  --inset-lit:  inset 0 1px 1px rgba(255, 255, 255, 0.90);
-  --orb-1:      rgba(37, 99, 235, 0.14);
-  --orb-2:      rgba(91, 140, 255, 0.10);
+  --surface:    var(--ink-raised);
+  --hairline:   var(--rule);
+  --hairline-strong: var(--rule-mid);
 
   color-scheme: light;
 }
@@ -1841,227 +1834,269 @@ body.is-gate::before { display: none; }
   }
 }
 
+
 /* ==========================================================================
-   THE GLASS LAYER
+   THE CRISP LAYER
 
-   Everything below this point reshapes the surfaces the rest of the file
-   already defined, rather than replacing them. The class names, the grid and
-   the spacing scale are untouched: a .panel is still a .panel, it is simply
-   machined now rather than drawn.
+   What this replaces, and why. The previous pass put a translucent card
+   inside a translucent card inside a code well: three stacked surfaces, each
+   with its own radius and blur, and a caption stranded in the gap between the
+   inner card edge and the outer one. That nesting was the layout bug, not a
+   spacing mistake.
 
-   Rule 4 of the header is deliberately overturned here, and it is worth
-   saying so in the file rather than letting a reader find the contradiction:
-   this direction is built from radius, glass and depth, which the editorial
-   direction above refused on purpose. One of the two comments is now
-   historical. This one is the live one.
+   The rules here are the ones the top of this file always stated and the
+   glass pass overturned. Separation comes from a rule, never from a corner, a
+   shadow or a blur. A panel is a bordered rectangle. Nothing is translucent,
+   so every contrast ratio is the one the palette states rather than one that
+   depends on whatever happens to sit behind it.
    ========================================================================== */
 
-/* ---------------------------------------------------------- the orb field */
-.orbfield,
-.grain { position: fixed; inset: 0; pointer-events: none; }
-.orbfield { z-index: 0; overflow: hidden; }
-.orbfield::before,
-.orbfield::after {
-  content: '';
-  position: absolute;
-  width: 62vw; height: 62vw;
-  border-radius: 50%;
-  filter: blur(130px);
-}
-.orbfield::before { background: var(--orb-1); top: -20vw; left: -12vw; }
-.orbfield::after  { background: var(--orb-2); bottom: -26vw; right: -14vw; }
-
-/* Grain sits above the orbs and below everything readable. Fixed, so it never
-   forces a repaint on a scrolling container. */
-.grain {
-  z-index: 1;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
-}
-#root { position: relative; z-index: 2; }
-
-/* ------------------------------------------------- the floating pill nav */
+/* ------------------------------------------------- the masthead, strict */
+/* Full width, flush to the top, closed by a single rule. Not a floating pill:
+   a pill is a shape with no structural job, and it squeezed the navigation
+   into a cramped row where four words ran together with nothing between. */
 .masthead {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: none;
-  border-bottom: 0;
-  padding: 18px 0 10px;
+  background: var(--ink);
+  border-bottom: 1px solid var(--rule-mid);
+  padding: 0;
 }
 .masthead-inner {
-  width: max-content;
-  max-width: calc(100% - 2 * var(--gutter));
+  width: auto;
+  max-width: var(--page);
   margin: 0 auto;
-  padding: 9px 9px 9px 20px;
-  gap: clamp(14px, 2.4vw, 30px);
-  align-items: center;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-pill);
-  background: var(--glass-2);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  box-shadow: var(--inset-lit);
+  padding: 0 var(--gutter);
+  gap: clamp(18px, 3vw, 44px);
+  align-items: stretch;
+  border: 0;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
-.wordmark-text { font-family: var(--ui); font-weight: 600; font-size: 1.1rem; letter-spacing: -0.03em; }
-.wordmark-text i { font-style: normal; color: var(--accent); }
-.mainnav { font-family: var(--ui); font-size: 0.88rem; }
-.mainnav a { border-bottom: 0; padding: 6px 2px; }
+.wordmark-text {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.5rem;
+  letter-spacing: var(--track-display);
+  text-transform: none;
+}
+.wordmark-text i { font-style: italic; color: var(--accent); }
+
+/* Every piece of interface copy is mono, uppercase and tracked. It is the one
+   register that says "this is a control, not prose", which matters on a page
+   whose prose is a serif. */
+.mainnav a,
+.themetoggle,
+.xp-plate span,
+.signout,
+.meta-cell,
+.tag,
+.chip,
+.kicker,
+.section-head .mono,
+.codeblock-label,
+.rail-label,
+.daily-label,
+.session-bar {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.mainnav a {
+  font-size: 0.72rem;
+  padding: 22px clamp(10px, 1.4vw, 16px);
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+.mainnav a[aria-current='page'] { border-bottom-color: var(--accent); color: var(--bone); }
 
 .xp-plate,
 .themetoggle,
 .mou-btn,
-.btn,
-.tag,
-.chip,
-.trackswitch-opt,
-.search,
-.q-option,
-.check-btn,
-.tutor-input,
-.codeblock-copy { border-radius: var(--r-pill); }
-
-.xp-plate, .themetoggle {
-  background: var(--glass);
-  border: 1px solid var(--hairline);
+.signout {
+  border-radius: 0;
+  background: none;
+  border: 1px solid var(--rule-mid);
   padding: 8px 14px;
 }
+.xp-plate b { font-family: var(--mono); letter-spacing: 0; }
 
-/* ------------------------------------------------------ pill buttons */
+/* ------------------------------------------------------------- buttons */
 .btn {
-  font-family: var(--ui);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.76rem;
   font-weight: 500;
-  letter-spacing: -0.01em;
-  padding: 13px 26px;
-  border: 1px solid var(--hairline);
-  background: var(--glass);
-  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+  border-radius: 0;
+  border: 1px solid var(--bone);
+  background: none;
+  color: var(--bone);
+  padding: 15px 24px;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.btn:active { transform: scale(0.98); }
-.btn-accent {
-  background: var(--accent-solid);
-  border-color: transparent;
-  color: #fff;
-  padding-right: 9px;
-}
-/* The trailing arrow never sits naked beside the label: it gets its own
-   circle, flush with the button's inner padding, and moves on hover. */
-.btn-accent .arrow,
+.btn:hover { background: var(--bone); color: var(--ink); }
+.btn-accent { background: var(--accent-solid); border-color: var(--accent-solid); color: #fff; }
+.btn-accent:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+/* The arrow is a mark on the line, not a disc stuck to the end of a pill. */
 .btn .arrow {
-  width: 32px; height: 32px;
-  border-radius: var(--r-pill);
-  background: rgba(0, 0, 0, 0.16);
-  display: inline-flex; align-items: center; justify-content: center;
-  margin-left: 4px;
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
+  margin-left: 10px;
   transition: transform var(--dur) var(--ease);
 }
-.btn:hover .arrow { transform: translate(3px, -1px) scale(1.05); }
+.btn:hover .arrow { transform: translateX(4px); }
 
-/* ---------------------------------------- the double bezel on every panel */
+/* ---------------------------------------------- one surface, one border */
+/* Every one of these was carrying an outer shell and an inner core. They get
+   a single border and a single padding, and .hero-aside gets neither, since
+   its only job is to hold the session panel: a box around a box is exactly
+   the bug in the screenshot. */
 .panel,
 .req-box,
 .tutor-panel,
 .session,
-.companion,
 .daily,
 .medal,
-.hero-aside,
-.note {
-  border-radius: var(--r-outer);
-  border: 1px solid var(--hairline);
-  background: var(--glass);
-  padding: var(--pad-bezel);
-}
-/* The inner core: its own surface, its own highlight, a concentric radius. */
-.panel > *,
-.req-box > *,
-.note > * { position: relative; }
-.panel,
-.req-box,
 .note,
-.session,
-.medal,
-.daily {
-  background-image: linear-gradient(var(--glass-2), var(--glass-2));
-  background-clip: content-box;
-  box-shadow: var(--inset-lit);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-}
-.panel { padding: calc(var(--pad-bezel) + clamp(18px, 2.2vw, 28px)); }
-.note  { padding: calc(var(--pad-bezel) + 16px); }
-.medal { padding: calc(var(--pad-bezel) + 16px); }
-
-/* Code keeps a hard surface. Glass behind a hundred lines of Python is a
-   blur filter over a scrolling container, which is the one thing the
-   performance rules of this direction forbid outright. */
 .codeblock {
-  border-radius: var(--r-outer);
-  border: 1px solid var(--hairline);
-  overflow: hidden;
+  border-radius: 0;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  background-image: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: var(--pad-card);
+}
+.hero-aside,
+.companion {
+  border: 0;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
-.codeblock-body { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
-/* ------------------------------------------------------ the eyebrow badge */
-.kicker {
-  /* The badge is 11px sitting on a translucent pill, which is the smallest
-     text in the interface on the least certain background. Tertiary grey
-     measured 3.64:1 there, so it takes the secondary tone instead. */
-  color: var(--ash);
-  display: inline-block;
-  padding: 6px 13px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--hairline);
-  background: var(--glass);
+/* The session panel: a bar, a well, a note. Three bands in one rectangle,
+   divided by rules rather than by three nested boxes each with its own
+   corner. The well is the only band with a different background, because it
+   is the only one that is a terminal. */
+.session { padding: 0; overflow: hidden; }
+.session-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
   font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-weight: 500;
+  color: var(--graphite);
+  padding: 12px var(--pad-card);
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  border-radius: 0;
+}
+.session-body {
+  margin: 0;
+  padding: var(--pad-card);
+  background: var(--ink-deep);
+  border-radius: 0;
+  border: 0;
+  overflow-x: auto;
+}
+.session-note {
+  margin: 0;
+  padding: 14px var(--pad-card) 16px;
+  border-top: 1px solid var(--rule);
+  font-size: 0.92rem;
+  color: var(--ash);
+  background: none;
 }
 
-/* --------------------------------------------------------- display type */
-.display, .section-head h2, .index-title, .prose h3, .title {
-  font-family: var(--ui);
-  font-weight: 600;
+/* The code block gets the same three-band treatment. */
+.codeblock { padding: 0; overflow: hidden; }
+.codeblock-bar {
+  padding: 10px var(--pad-card);
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+}
+.codeblock-body { padding: var(--pad-card); background: var(--ink-deep); border-radius: 0; }
+
+/* The daily line: a rule above it rather than a rounded bubble, and the
+   avatar sits on the same top edge instead of floating beside a corner. */
+.hero-sign { display: flex; align-items: flex-start; gap: clamp(14px, 2vw, 22px); }
+.daily {
+  flex: 1;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: none;
+  padding: 14px 0 0;
+  border-radius: 0;
+}
+.daily-label { display: block; font-size: 0.68rem; color: var(--graphite); margin-bottom: 8px; }
+.daily-quote {
+  font-family: var(--text);
+  font-style: italic;
+  font-size: 1.04rem;
+  margin: 0 0 8px;
+  color: var(--bone);
+}
+.daily-who { font-family: var(--mono); font-size: 0.72rem; color: var(--graphite); }
+
+/* -------------------------------------------------------- the eyebrow */
+.kicker {
+  display: inline-block;
+  border: 0;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 0.7rem;
+  color: var(--ash);
+  margin-bottom: var(--s-3);
+}
+
+/* ------------------------------------------------------------- display */
+.display,
+.section-head h2,
+.index-title,
+.prose h3 {
+  font-family: var(--display);
+  font-weight: 400;
   letter-spacing: var(--track-display);
+  text-wrap: balance;
 }
-.index-num { font-family: var(--mono); font-size: 0.84rem; letter-spacing: 0; }
-.index-row { border-radius: var(--r-outer); padding-inline: clamp(14px, 1.8vw, 24px); }
-.index-row:hover { background: var(--glass); }
-.index { border-top: 0; }
+.title { font-family: var(--text); font-weight: 600; letter-spacing: var(--track-title); }
+.display-xl { font-size: clamp(3rem, 7.4vw, 5.6rem); line-height: 0.98; }
+.display-l  { font-size: clamp(2.2rem, 4.6vw, 3.4rem); line-height: 1.02; }
+.display-m  { font-size: clamp(1.7rem, 3vw, 2.3rem); line-height: 1.08; }
+.display-s  { font-size: clamp(1.45rem, 2.2vw, 1.75rem); line-height: 1.14; }
+.index-title { font-size: clamp(1.35rem, 2.3vw, 1.85rem); }
+.section-head h2 { font-size: clamp(1.5rem, 2.6vw, 2.05rem); }
 
-/* Long-form lesson prose stays on the serif, for the reason in the token
-   block: these sections are essays, not interface. */
+.index { border-top: 1px solid var(--rule-mid); }
+.index-row { border-radius: 0; padding-inline: 0; }
+.index-row:hover { background: var(--row-hover); }
+.index-num { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--graphite); }
+
 .prose p, .prose li, .lede, .index-sub { font-family: var(--text); }
 
 /* ------------------------------------------------------- entry animation */
-/* An enhancement, never a gate: without the js class every section renders
-   normally, so a script failure cannot ship a page of invisible blocks. */
-.js .reveal {
-  opacity: 0;
-  transform: translateY(42px);
-  filter: blur(8px);
-  transition: opacity 700ms var(--ease), transform 700ms var(--ease), filter 700ms var(--ease);
-}
-.js .reveal.is-in { opacity: 1; transform: none; filter: none; }
-
+/* Kept, but reduced to opacity alone. A 42px rise with a blur on every
+   section is what made the page feel like it was assembling itself rather
+   than being read. */
+.js .reveal { opacity: 0; transition: opacity 420ms var(--ease); }
+.js .reveal.is-in { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
-  .js .reveal { opacity: 1; transform: none; filter: none; transition: none; }
-}
-@media (max-width: 760px) {
-  .masthead-inner { width: auto; max-width: none; border-radius: var(--r-outer); }
+  .js .reveal { opacity: 1; transition: none; }
 }
 
-/* --------------------------------------------- display sizes, re-tuned
-   Instrument Serif is condensed; Space Grotesk is wide. Carrying the old
-   sizes across put the front page headline on four lines inside seven
-   columns. These are the same scale steps, measured for the new face. */
-.display-xl { font-size: clamp(2.6rem, 5.6vw, 4.6rem); line-height: 1.02; }
-.display-l  { font-size: clamp(2.1rem, 3.8vw, 3.1rem); line-height: 1.06; }
-.display-m  { font-size: clamp(1.6rem, 2.4vw, 2.1rem); line-height: 1.12; }
-.display-s  { font-size: clamp(1.35rem, 1.9vw, 1.6rem); line-height: 1.18; }
-.display, .section-head h2, .index-title, .prose h3, .title { text-wrap: balance; }
-.index-title { font-size: clamp(1.2rem, 1.9vw, 1.5rem); }
-.section-head h2 { font-size: clamp(1.6rem, 2.8vw, 2.4rem); }
+@media (max-width: 760px) {
+  .mainnav a { padding: 14px 12px 14px 0; }
+  .masthead-inner { flex-wrap: wrap; }
+}
