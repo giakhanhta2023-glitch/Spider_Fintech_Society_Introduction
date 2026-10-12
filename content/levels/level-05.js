@@ -401,9 +401,13 @@ FQ.registerLevel({
                'makes the multi-currency bug impossible rather than unlikely. `__sub__` is the same three lines ' +
                'with a minus. Add `__mul__` by an integer, `__neg__` and the comparisons the same way.' },
           { warn: 'Do not add a `__float__` method, however convenient it looks. The moment somebody can turn your Money into ' +
-                  'a float, every guarantee in this library becomes optional.' }
+                  'a float, every guarantee in this library becomes optional.' },
+          { p: 'Test it now, not at the end. `with pytest.raises(InvalidAmount):` is the one new piece: it says ' +
+               'the lines under it have to raise that error, and the test fails if they raise nothing or raise ' +
+               'something else.' },
+          { code: 'import pytest\n\nfrom moneykit.errors import CurrencyMismatch, InvalidAmount\nfrom moneykit.money import Money\n\n\ndef test_parse_reads_dollars_as_cents():\n    assert Money.parse("19.99", "USD").minor_units == 1999\n\n\ndef test_parse_reads_yen_with_no_decimal_places():\n    assert Money.parse("1000", "JPY").minor_units == 1000\n\n\ndef test_adding_adds_the_minor_units():\n    total = Money.parse("19.99", "USD") + Money.parse("0.01", "USD")\n    assert total.minor_units == 2000\n\n\ndef test_the_exponent_decides_how_it_prints():\n    assert str(Money.parse("19.99", "USD")) == "$19.99"\n    assert str(Money.parse("1000", "JPY")) == "\\u00a51,000"\n\n\ndef test_adding_two_currencies_raises():\n    with pytest.raises(CurrencyMismatch):\n        Money.parse("19.99", "USD") + Money.parse("1000", "VND")\n\n\ndef test_more_places_than_the_currency_allows_raises():\n    with pytest.raises(InvalidAmount):\n        Money.parse("19.999", "USD")', lang: 'python', label: 'tests/test_money.py' }
         ],
-        check: 'Money.parse("19.99", "USD") + Money.parse("0.01", "USD") prints $20.00, adding USD to VND raises, and parse("19.999", "USD") raises.'
+        check: 'pytest tests/test_money.py passes all six: $19.99 prints with two places, 1,000 yen with none, and both refusals raise.'
       },
       {
         t: 'Allocation, the function interviewers ask for',
@@ -419,9 +423,11 @@ FQ.registerLevel({
                'easiest part of the library to test.' },
           { code: '>>> allocate(10000, [1, 1, 1])\n[3334, 3333, 3333]\n>>> allocate(5, [3, 7])\n[2, 3]\n>>> allocate(1999, [1, 2, 3])\n[333, 666, 1000]', lang: 'python' },
           { p: 'Then wrap it on `Money`, so callers work in money rather than integers: `price.allocate([1, 1, 1])` returning ' +
-               'a list of `Money`.' }
+               'a list of `Money`.' },
+          { p: 'Pin down the three cases above, and the two ways the function refuses.' },
+          { code: 'import pytest\n\nfrom moneykit.allocation import allocate\n\n\ndef test_a_bill_split_three_ways_keeps_every_cent():\n    assert allocate(10000, [1, 1, 1]) == [3334, 3333, 3333]\n\n\ndef test_a_tie_goes_to_the_earlier_share():\n    assert allocate(5, [3, 7]) == [2, 3]\n\n\ndef test_shares_follow_the_weights():\n    assert allocate(1999, [1, 2, 3]) == [333, 666, 1000]\n\n\ndef test_no_weights_at_all_raises():\n    with pytest.raises(ValueError):\n        allocate(100, [])\n\n\ndef test_a_negative_weight_raises():\n    with pytest.raises(ValueError):\n        allocate(100, [1, -1])', lang: 'python', label: 'tests/test_allocation.py' }
         ],
-        check: 'All three examples match, and the shares always add back to the input.'
+        check: 'pytest tests/test_allocation.py passes all five: the three splits, plus the empty and the negative weight list.'
       },
       {
         t: 'Property tests that hunt',
