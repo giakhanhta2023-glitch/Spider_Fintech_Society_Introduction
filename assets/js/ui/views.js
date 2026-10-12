@@ -104,7 +104,7 @@ export function Home({ onAskTutor }) {
           <h1 class="display display-xl">
             Learn fintech<br />by building it
           </h1>
-          <div class="btn-row" style=${{ marginTop: '32px' }}>
+          <div class="btn-row" style=${{ marginTop: 'var(--s-4)' }}>
             <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
               ${cleared ? `continue level ${String(FQ.positionOf(FQ.level(current))).padStart(2, '0')}`
                         : `start ${meta.name} level ${first}`}
@@ -152,7 +152,7 @@ export function Home({ onAskTutor }) {
       <!-- Contents page, for the chosen ladder. -->
       <section class="section">
         <${SectionHead} title=${meta.title} />
-        <p class="index-sub" style=${{ maxWidth: '58ch', marginBottom: '18px' }}>
+        <p class="index-sub" style=${{ maxWidth: '58ch', marginBottom: 'var(--s-3)' }}>
           ${md(meta.blurb)} <b>Ends at:</b> ${meta.outcome}.
         </p>
         <div class="index">
@@ -163,14 +163,14 @@ export function Home({ onAskTutor }) {
       <!-- How a level works, as four numbered columns under one rule. -->
       <section class="section-tight">
         <${SectionHead} title="How a level works" />
-        <div class="grid" style=${{ rowGap: '28px' }}>
+        <div class="grid grid-rows-m">
           ${[
             ['01', 'Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],
             ['02', 'Tutorial', 'Follow along step by step. Everything the build needs is introduced right here.'],
             ['03', 'Drill', `15 questions with instant explanations. ${CFG.quiz.passMark} of 15 opens the build.`],
             ['04', 'Build', 'Something to make using only what you know, with a full solution if you get stuck.']
           ].map(([n, title, body], i) => html`
-            <div key=${i} style=${{ gridColumn: 'span 3' }} class="how-col">
+            <div key=${i} class="how-col span-3">
               <span class="kicker"><b>${n}</b></span>
               <h3 class="title title-m">${title}</h3>
               <p class="index-sub">${body}</p>
@@ -224,7 +224,7 @@ export function Glossary() {
         onInput=${(e) => setQuery(e.target.value)} />
 
       ${q ? html`
-        <p class="mono" style=${{ marginTop: '14px' }}>
+        <p class="mono" style=${{ marginTop: 'var(--s-2)' }}>
           ${found} ${found === 1 ? 'word' : 'words'} match that
         </p>` : null}
 
@@ -232,12 +232,12 @@ export function Glossary() {
         ${shown.length === 0
           ? html`<p class="notice">Nothing matches that one. Try a shorter word, or just ask the tutor.</p>`
           : shown.map((g) => html`
-            <div key=${g.id} style=${{ marginBottom: '44px' }}>
+            <div key=${g.id} style=${{ marginBottom: 'var(--s-5)' }}>
               <${SectionHead} title=${`Level ${g.num}, ${g.title}`}
                 note=${html`
                   ${g.terms.length} ${g.terms.length === 1 ? 'word' : 'words'}
                   ${' '}<a class="link" href=${`#/level/${g.id}`}>open the level →</a>`} />
-              <dl class="deflist" style=${{ borderTop: 0 }}>
+              <dl class="deflist deflist-open">
                 ${g.terms.map((t, i) => html`
                   <div class="defrow" key=${i}>
                     <dt>${t.t}</dt>
@@ -287,12 +287,12 @@ export function Dossier() {
       <section class="section-tight">
         <${SectionHead} title="Badges"
           note=${`${store.badgesEarned()} of ${badges.length} on this track`} />
-        <div class="grid" style=${{ rowGap: '16px' }}>
+        <div class="grid grid-rows-s">
           ${badges.map((b) => {
             const got = store.badgeEarned(b.id);
             return html`
-              <div key=${b.id} style=${{ gridColumn: 'span 3' }}
-                class=${'medal ' + (got ? 'is-earned' : 'is-locked')}>
+              <div key=${b.id}
+                class=${'medal span-3 ' + (got ? 'is-earned' : 'is-locked')}>
                 <span class="ico">${b.ico}</span>
                 <b>${b.name}</b>
                 <span>${got ? 'earned' : b.hint}</span>

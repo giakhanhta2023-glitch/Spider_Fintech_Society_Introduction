@@ -26,11 +26,11 @@ export function AnswerKey({ level, answers }) {
               <b>${String(i + 1).padStart(2, '0')}</b>
               ${answers ? (wrong ? ' / missed' : ' / correct') : ''}
             </span>
-            <p class="title title-s" style=${{ margin: '0 0 10px' }}>${md(q.q)}</p>
-            <p class="index-sub" style=${{ margin: '0 0 6px', color: 'var(--moss)' }}>
+            <p class="title title-s" style=${{ margin: '0 0 var(--s-2)' }}>${md(q.q)}</p>
+            <p class="index-sub" style=${{ margin: '0 0 var(--s-1)', color: 'var(--moss)' }}>
               ${LETTERS[q.answer]}. ${md(q.options[q.answer])}
             </p>
-            <p class="index-sub" style=${{ margin: 0 }}>${md(q.why)}</p>
+            <p class="index-sub flush">${md(q.why)}</p>
           </div>`;
       })}
     </div>`;
@@ -139,8 +139,8 @@ export function Drill({ level, onFinish }) {
   return html`
     <div class="stack stack-5">
       <div>
-        <div class="section-head" style=${{ marginBottom: '14px' }}>
-          <h2 class="mono" style=${{ fontSize: '0.82rem', color: 'var(--ash)' }}>
+        <div class="section-head section-head-tight">
+          <h2 class="mono-s quiet">
             question ${String(idx + 1).padStart(2, '0')} of ${total}
           </h2>
           <span class="mono">${correct} correct · pass at ${CFG.quiz.passMark}</span>
@@ -150,7 +150,7 @@ export function Drill({ level, onFinish }) {
 
       <div>
         <span class="kicker">${level.codename} <b>/</b> drill</span>
-        <h3 class="display display-m" style=${{ margin: '0 0 26px', maxWidth: '44ch' }}>
+        <h3 class="display display-m" style=${{ margin: '0 0 var(--s-4)', maxWidth: '44ch' }}>
           ${md(q.q)}
         </h3>
 
@@ -162,7 +162,7 @@ export function Drill({ level, onFinish }) {
 
         ${isLocked ? html`
           <aside class=${'note ' + (answers[idx] === q.answer ? 'note-money' : 'note-warn')}
-            style=${{ marginTop: '26px' }}>
+            style=${{ marginTop: 'var(--s-4)' }}>
             <span class="note-label">
               ${answers[idx] === q.answer ? 'correct' : 'answer: ' + LETTERS[q.answer]}
             </span>

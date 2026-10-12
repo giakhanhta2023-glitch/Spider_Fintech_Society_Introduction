@@ -69,6 +69,30 @@
   --col-gap:   clamp(20px, 3vw, 44px);
   --page:      1320px;
 
+  /* ---- the space scale ------------------------------------------------- */
+  /* Seven steps, each near enough 1.5x the last, and the only vertical
+     distances the interface is allowed to use. These are the numbers the
+     stack and section classes already ran on; naming them is what stops the
+     next view reaching for 14px, then 16px, then 46px. An audit of this
+     repository found 41 distinct pixel values and 85 inline style objects,
+     which is what a missing scale looks like from the outside: every view
+     drifting a few pixels away from every other. */
+  --s-1:  6px;
+  --s-2: 12px;
+  --s-3: 18px;
+  --s-4: 26px;
+  --s-5: 40px;
+  --s-6: 60px;
+  --s-7: 86px;
+
+  /* ---- motion ---------------------------------------------------------- */
+  /* Short enough to feel like a response rather than an animation. Every
+     transition in the file uses these two, and @media (prefers-reduced-motion)
+     at the end of the file takes them to zero. */
+  --dur:   160ms;
+  --dur-s:  90ms;
+  --ease:  cubic-bezier(0.2, 0, 0, 1);
+
   /* The page follows the reader's own setting until they say otherwise, and
      colour-scheme makes the browser's own furniture follow too: scrollbars,
      form controls, and the flash of white before the stylesheet lands. */
@@ -345,11 +369,22 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 .col-1-7  { grid-column: 1 / span 7; }
 .col-1-8  { grid-column: 1 / span 8; }
 .col-1-12 { grid-column: 1 / span 12; }
+/* A grid whose rows need air: columns of prose that become one column on a
+   phone, where the row gutter is all that separates them. Five views were
+   each declaring their own row gap inline, at 46px and 36px. */
+.grid-rows   { row-gap: var(--s-6); }
+.grid-rows-m { row-gap: var(--s-4); }
+.grid-rows-s { row-gap: var(--s-3); }
+/* A quarter of the twelve: four across, and the media queries on .how-col and
+   .medal take it to six and then twelve as the screen narrows. */
+.span-3 { grid-column: span 3; }
+/* A section that runs straight into the one below it, with no closing space. */
+.section-open { padding-bottom: 0; }
 .col-9-12 { grid-column: 9 / span 4; }
 .col-8-12 { grid-column: 8 / span 5; }
 @media (max-width: 900px) {
   /* Stacked, so the columns need a gutter between rows they never needed side by side. */
-  .grid { row-gap: 34px; }
+  .grid { row-gap: var(--s-5); }
   .col-1-7, .col-1-8, .col-9-12, .col-8-12 { grid-column: 1 / span 12; }
   .medal { grid-column: span 6 !important; }
 }
@@ -805,12 +840,12 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
 /* Vertical only, never the shorthand: these classes are sometimes worn by the
    same element as .page, and a shorthand here would replace the page gutter
    with zero and run the text into the edge of the screen. */
-.section { padding-block: clamp(46px, 6vw, 86px); }
-.section-tight { padding-block: clamp(28px, 3.6vw, 48px); }
+.section { padding-block: clamp(var(--s-5), 6vw, var(--s-7)); }
+.section-tight { padding-block: clamp(var(--s-4), 3.6vw, var(--s-6)); }
 
 /* Four columns under one rule, the way a contents page sets its footnotes. */
-.how-col { border-top: 1px solid var(--rule); padding-top: 18px; }
-.how-col .title { margin: 0 0 10px; }
+.how-col { border-top: 1px solid var(--rule); padding-top: var(--s-3); }
+.how-col .title { margin: 0 0 var(--s-2); }
 .how-col .index-sub { margin: 0; }
 @media (max-width: 900px) { .how-col { grid-column: span 6 !important; } }
 @media (max-width: 620px) { .how-col { grid-column: span 12 !important; } }
@@ -819,10 +854,10 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--s-4);
   flex-wrap: wrap;
-  padding-bottom: 14px;
-  margin-bottom: 26px;
+  padding-bottom: var(--s-2);
+  margin-bottom: var(--s-4);
   border-bottom: 2px solid var(--rule-heavy);
 }
 /* Instrument Serif ships a single weight. Any heading left on the browser's
@@ -841,22 +876,40 @@ a.index-row:hover .index-aside { border-color: var(--rule-mid); }
   color: var(--bone);
 }
 .section-head .mono { color: var(--graphite); }
+/* The drill repeats a section heading above every question, where the full
+   closing space would push the question itself below the fold. */
+.section-head-tight { margin-bottom: var(--s-2); }
 
-.kicker { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); display: block; margin-bottom: 10px; }
+.kicker { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); display: block; margin-bottom: var(--s-2); }
 .kicker b { color: var(--accent); font-weight: 500; }
 
 /* ==========================================================================
    PANELS: bordered blocks, never floating cards
    ========================================================================== */
 .panel { border: 1px solid var(--rule); background: var(--ink-raised); padding: clamp(20px, 2.4vw, 32px); }
-.panel-flat { border: 0; border-top: 1px solid var(--rule); background: transparent; padding: 26px 0 0; }
-.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.panel-flat { border: 0; border-top: 1px solid var(--rule); background: transparent; padding: var(--s-4) 0 0; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
 
 .stack   { display: flex; flex-direction: column; }
-.stack-3 { gap: 12px; }
-.stack-4 { gap: 18px; }
-.stack-5 { gap: 26px; }
-.stack-6 { gap: 40px; }
+.stack-2 { gap: var(--s-1); }
+.stack-3 { gap: var(--s-2); }
+.stack-4 { gap: var(--s-3); }
+.stack-5 { gap: var(--s-4); }
+.stack-6 { gap: var(--s-5); }
+.stack-7 { gap: var(--s-6); }
+
+/* ==========================================================================
+   THE FEW UTILITIES
+
+   Deliberately four. A utility for every property is a second design system
+   competing with the first, and this file already lost that argument once:
+   85 inline style objects, 58 of them in one view, were doing exactly these
+   four jobs with their own numbers. Anything structural stays a named class.
+   ========================================================================== */
+.muted  { color: var(--graphite); }
+.quiet  { color: var(--ash); }
+.flush  { margin: 0; }
+.align-right { text-align: right; }
 
 /* ==========================================================================
    PROSE: the curriculum body
@@ -950,6 +1003,55 @@ table.data td:first-child { color: var(--bone); }
 table.data tr:last-child td { border-bottom: 0; }
 /* Row labels are short by design, so they never break across two lines. */
 table.data td.mono { white-space: nowrap; }
+
+/* A meta table: a mono label on the left, its figure hard right. It carries
+   facts about the thing on the page (difficulty, time, best drill) rather
+   than content, which is why the label is quieter than the value it
+   introduces. Three of these were built from .data plus two inline styles per
+   cell, and .data says its first column is --bone while every one of those
+   cells overrode it to --graphite: the stylesheet and the views disagreed
+   about the same table. Saying it once, here, is the whole point. */
+table.meta { width: 100%; border-collapse: collapse; font-size: 1rem; }
+table.meta td {
+  padding: 11px 16px 11px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.meta tr:last-child td { border-bottom: 0; }
+table.meta td:first-child {
+  font-family: var(--mono);
+  color: var(--graphite);
+  white-space: nowrap;
+}
+table.meta td:last-child {
+  padding-right: 0;
+  text-align: right;
+  color: var(--bone);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+/* The one value in a meta table that is allowed to carry a colour, because
+   cleared is the only fact on the page a reader is looking for. */
+table.meta td.is-cleared { color: var(--moss); }
+
+/* The rubric: what each part of a build is worth and what earns it. Marking
+   out of 100 is the one place a number deserves the accent. */
+table.rubric { width: 100%; border-collapse: collapse; }
+table.rubric td {
+  padding: 11px 16px 11px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.rubric tr:last-child td { border-bottom: 0; }
+table.rubric td:first-child {
+  width: 4.5rem;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+table.rubric .title { display: block; margin-bottom: var(--s-1); }
+table.rubric .index-sub { display: block; margin: 0; }
 
 /* The ranking. One accented row, because the first thing anybody looks for on
    a board is themselves. The number column is set in the figure face so the
@@ -1060,6 +1162,11 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   padding: clamp(24px, 3vw, 38px) 0;
   border-top: 1px solid var(--rule);
 }
+/* The same numbered row, closer together. Objectives and requirements are a
+   list to scan; the eight tutorial steps are a list to work through, and they
+   should not sit at the same spacing. */
+.step-s { padding: var(--s-2) 0; grid-template-columns: 2.6rem minmax(0, 1fr); }
+
 .step-num { font-family: var(--mono); font-size: 0.86rem; color: var(--accent); font-variant-numeric: tabular-nums; }
 .step-check {
   margin-top: 18px;
@@ -1116,6 +1223,11 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
 .q-option.is-right .q-key::after { content: 'right'; }
 .q-option.is-wrong .q-key::after { content: 'yours'; }
 .q-option.is-muted { opacity: .45; }
+
+/* The meter beside a count, rather than across the column: it sits in a row
+   with the words that explain it, so it takes the space left over up to a
+   width where a progress bar stops reading as a progress bar. */
+.meter-inline { flex: 1; max-width: 240px; }
 
 .meter { height: 2px; background: var(--rule); }
 .meter > span { display: block; height: 100%; background: var(--accent); transition: width .35s ease; }
@@ -1190,6 +1302,15 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
   border-bottom: 1px solid var(--rule);
   align-items: baseline;
 }
+/* The same row in a narrow column, where four columns against eight would
+   leave the term alone on one line with three words beside it. The lesson
+   aside was building this by hand, with its own padding and its own font
+   size, and that font size was 0.92rem: not one of the eight this file
+   allows, and invisible in a stylesheet because it lived in a component. */
+.defrow-stack { grid-template-columns: 1fr; row-gap: var(--s-1); padding: var(--s-2) 0; }
+/* A list that opens straight under a heading and needs no rule above it. */
+.deflist-open { border-top: 0; }
+
 .defrow dt { font-family: var(--mono); font-size: 0.86rem; color: var(--bone); }
 .defrow dd { margin: 0; color: var(--ash); font-size: 1rem; }
 .defrow .lv { font-family: var(--mono); font-size: 0.76rem; color: var(--graphite); }

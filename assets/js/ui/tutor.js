@@ -176,8 +176,8 @@ export function Tutor({ open, onOpenChange, levelId }) {
           <div class="tutor-id">
             <${Mou} mood=${mood} size=${58} bob />
             <div style=${{ minWidth: 0 }}>
-              <span class="kicker" style=${{ marginBottom: '4px' }}>your fintech tutor</span>
-              <${Dialog.Title} className="display display-s" style=${{ margin: '0 0 10px' }}>
+              <span class="kicker" style=${{ marginBottom: 'var(--s-1)' }}>your fintech tutor</span>
+              <${Dialog.Title} className="display display-s" style=${{ margin: '0 0 var(--s-2)' }}>
                 Mou
               <//>
               <span class="tag-row">
@@ -221,14 +221,14 @@ export function Tutor({ open, onOpenChange, levelId }) {
                 <input class="tutor-input" type="password" placeholder="sk-ant-..." value=${keyValue}
                   onInput=${(e) => setKeyValue(e.target.value)} autoComplete="off" />
               </label>
-              <aside class="note note-warn" style=${{ marginTop: '14px' }}>
+              <aside class="note note-warn" style=${{ marginTop: 'var(--s-2)' }}>
                 <span class="note-label">careful</span>
                 It is stored in this browser only and sent straight to Anthropic. Anyone using this
                 device can read it, so never do this on a shared or public computer.
               </aside>
             </details>
 
-            <div class="btn-row" style=${{ marginTop: '18px' }}>
+            <div class="btn-row" style=${{ marginTop: 'var(--s-3)' }}>
               <${Btn} small onClick=${saveSettings}>save<//>
               <${Btn} small variant="quiet" onClick=${clearSettings}>clear<//>
               ${status ? html`<span class="mono-s" style=${{ color: 'var(--moss)' }}>${status}</span>` : null}

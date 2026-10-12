@@ -24,7 +24,7 @@ function tabsFor(level) {
 function Brief({ level, state }) {
   const brief = level.project || level.setup;
   return html`
-    <div class="grid" style=${{ rowGap: '46px' }}>
+    <div class="grid grid-rows">
       <div class="col-1-7 stack stack-5">
         <div>
           <span class="kicker">what this level is about</span>
@@ -35,9 +35,9 @@ function Brief({ level, state }) {
           <${SectionHead} title="By the end you can" />
           <ol class="steps">
             ${level.objectives.map((o, i) => html`
-              <li class="step" key=${i} style=${{ padding: '14px 0' }}>
+              <li class="step step-s" key=${i}>
                 <span class="step-num">${String(i + 1).padStart(2, '0')}</span>
-                <span class="index-sub" style=${{ margin: 0 }}>${md(o)}</span>
+                <span class="index-sub flush">${md(o)}</span>
               </li>`)}
           </ol>
         </div>
@@ -46,17 +46,17 @@ function Brief({ level, state }) {
       <div class="col-9-12 stack stack-5">
         <div class="panel">
           <span class="kicker">${level.project ? 'you will build' : 'your mission'}</span>
-          <h3 class="display display-m" style=${{ marginBottom: '14px' }}>${brief.title}</h3>
+          <h3 class="display display-m" style=${{ marginBottom: 'var(--s-2)' }}>${brief.title}</h3>
           <p class="index-sub">${md(brief.story)}</p>
           ${level.project ? html`
-            <p class="mono-s" style=${{ marginTop: '18px', lineHeight: 1.6 }}>
+            <p class="mono-s" style=${{ marginTop: 'var(--s-3)', lineHeight: 1.6 }}>
               scope: ${FQ.subst(level.project.scope)}
             </p>` : null}
         </div>
 
         <div>
           <${SectionHead} title="Progress" />
-          <table class="data">
+          <table class="meta">
             <tbody>
               ${[
                 ['best drill', `${state.quizBest} / ${level.quiz.length}`],
@@ -65,8 +65,8 @@ function Brief({ level, state }) {
                 ['level cleared', store.isCleared(level.id) ? 'yes' : 'not yet']
               ].map(([k, v], i) => html`
                 <tr key=${i}>
-                  <td class="mono" style=${{ color: 'var(--graphite)' }}>${k}</td>
-                  <td class="figure" style=${{ textAlign: 'right', color: 'var(--bone)' }}>${v}</td>
+                  <td>${k}</td>
+                  <td>${v}</td>
                 </tr>`)}
             </tbody>
           </table>
@@ -85,10 +85,10 @@ function Brief({ level, state }) {
 /* ------------------------------------------------------------------ learn */
 function Learn({ level, onAskTutor }) {
   return html`
-    <div class="grid" style=${{ rowGap: '46px' }}>
+    <div class="grid grid-rows">
       <div class="col-1-8">
         <${Blocks} blocks=${level.knowledge} />
-        <div class="btn-row" style=${{ marginTop: '44px' }}>
+        <div class="btn-row" style=${{ marginTop: 'var(--s-5)' }}>
           <${Btn} variant="accent" arrow
             onClick=${() => navigate(`#/level/${level.id}/tutorial`)}>on to the tutorial<//>
           <${Btn} variant="quiet" onClick=${onAskTutor}>ask the tutor<//>
@@ -102,11 +102,11 @@ function Learn({ level, onAskTutor }) {
           <p class="rail-label">
             <span>Terms</span><span>${level.glossary.length}</span>
           </p>
-          <dl class="deflist" style=${{ borderTop: 0 }}>
+          <dl class="deflist deflist-open">
             ${level.glossary.map((g, i) => html`
-              <div key=${i} style=${{ padding: '12px 0', borderBottom: '1px solid var(--rule)' }}>
-                <dt class="mono" style=${{ color: 'var(--bone)', marginBottom: '4px' }}>${g.t}</dt>
-                <dd style=${{ margin: 0, color: 'var(--ash)', fontSize: '0.92rem', lineHeight: 1.5 }}>
+              <div class="defrow defrow-stack" key=${i}>
+                <dt class="mono">${g.t}</dt>
+                <dd>
                   ${md(g.d)}
                 </dd>
               </div>`)}
@@ -205,7 +205,7 @@ function Tutorial({ level }) {
             <li class="step" key=${i}>
               <span class="step-num">${String(i + 1).padStart(2, '0')}</span>
               <div>
-                <h3 class="title title-m" style=${{ marginBottom: '16px' }}>${md(step.t)}</h3>
+                <h3 class="title title-m" style=${{ marginBottom: 'var(--s-3)' }}>${md(step.t)}</h3>
                 <${Blocks} blocks=${step.blocks} />
                 ${step.check ? html`
                   <div class="step-check">
@@ -236,7 +236,7 @@ function DrillTab({ level, state, onProgress }) {
   }
 
   return html`
-    <div class="grid" style=${{ rowGap: '36px' }}>
+    <div class="grid grid-rows">
       <div class="col-1-7 stack stack-4">
         <div>
           <span class="kicker">${level.quiz.length} questions</span>
@@ -261,14 +261,14 @@ function DrillTab({ level, state, onProgress }) {
 
       <div class="col-9-12">
         ${state.attempts ? html`
-          <table class="data">
+          <table class="meta">
             <tbody>
-              <tr><td class="mono" style=${{ color: 'var(--graphite)' }}>best score</td>
-                  <td class="figure" style=${{ textAlign: 'right' }}>${state.quizBest}/${level.quiz.length}</td></tr>
-              <tr><td class="mono" style=${{ color: 'var(--graphite)' }}>attempts</td>
-                  <td class="figure" style=${{ textAlign: 'right' }}>${state.attempts}</td></tr>
-              <tr><td class="mono" style=${{ color: 'var(--graphite)' }}>status</td>
-                  <td style=${{ textAlign: 'right' }}>
+              <tr><td>best score</td>
+                  <td>${state.quizBest}/${level.quiz.length}</td></tr>
+              <tr><td>attempts</td>
+                  <td>${state.attempts}</td></tr>
+              <tr><td>status</td>
+                  <td>
                     <${Tag} variant=${state.quizPassed ? 'moss' : ''}>
                       ${state.quizPassed ? 'passed' : 'not yet'}<//>
                   </td></tr>
@@ -307,8 +307,8 @@ function Checklist({ levelId, items, onChange }) {
             <span class="req-text">${md(item)}</span>
           </button>`;
       })}
-      <div style=${{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '18px' }}>
-        <div class="meter" style=${{ flex: 1, maxWidth: '240px' }}>
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginTop: 'var(--s-3)' }}>
+        <div class="meter meter-inline">
           <span style=${{ width: `${(checked / items.length) * 100}%` }} />
         </div>
         <span class="mono">${checked} of ${items.length} done</span>
@@ -341,23 +341,23 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
       <div class="grid">
         <div class="col-1-7">
           <span class="kicker">${project ? 'build' : 'setup'} <b>/</b> level ${num(level)}</span>
-          <h2 class="display display-l" style=${{ marginBottom: '20px' }}>${brief.title}</h2>
+          <h2 class="display display-l" style=${{ marginBottom: 'var(--s-3)' }}>${brief.title}</h2>
           <p class="lede">${md(brief.story)}</p>
         </div>
         <div class="col-9-12">
           ${project ? html`
             <div class="panel">
               <span class="note-label">scope</span>
-              <p class="index-sub" style=${{ margin: 0 }}>${md(project.scope)}</p>
+              <p class="index-sub flush">${md(project.scope)}</p>
               ${project.dataset ? html`
-                <p class="mono-s" style=${{ marginTop: '16px', lineHeight: 1.6 }}>
+                <p class="mono-s" style=${{ marginTop: 'var(--s-3)', lineHeight: 1.6 }}>
                   dataset: ${FQ.subst(project.dataset)}
                 </p>` : null}
             </div>` : null}
         </div>
       </div>
 
-      <div class="grid" style=${{ rowGap: '46px' }}>
+      <div class="grid grid-rows">
         <div class="col-1-7">
           <${SectionHead} title=${project ? 'Requirements' : 'Checklist'}
             note="ticks are saved on this device" />
@@ -368,13 +368,13 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
           ${project ? html`
             <div>
               <${SectionHead} title="Check your numbers" />
-              <p class="index-sub" style=${{ marginTop: 0, marginBottom: '16px' }}>
+              <p class="index-sub" style=${{ marginTop: 0, marginBottom: 'var(--s-3)' }}>
                 Your code should land on exactly these numbers. If one disagrees, that difference
                 is your bug, and it is usually a quick fix.
               </p>
               <ol class="steps">
                 ${project.tests.map((t, i) => html`
-                  <li class="step" key=${i} style=${{ padding: '10px 0', gridTemplateColumns: '2.6rem minmax(0, 1fr)' }}>
+                  <li class="step step-s" key=${i}>
                     <span class="step-num">${String(i + 1).padStart(2, '0')}</span>
                     <span class="mono" style=${{ lineHeight: 1.6, color: 'var(--ash)' }}>
                       ${FQ.subst(t)}
@@ -390,7 +390,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
               ${' '}<code>${brief.solutionPath}/</code>, with a walkthrough and this level's
               answer key.
             </p>
-            <aside class="note note-warn" style=${{ marginBottom: '20px' }}>
+            <aside class="note note-warn" style=${{ marginBottom: 'var(--s-3)' }}>
               <span class="note-label">use it properly</span>
               Have a proper go first, ask the tutor for a hint, then read only the part you are
               stuck on. Retype the fix rather than pasting it, it sticks much better that way.
@@ -412,17 +412,17 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
           </div>
         </div>
 
-        <div class="grid" style=${{ rowGap: '46px' }}>
+        <div class="grid grid-rows">
           <div class="col-1-7">
             <${SectionHead} title="How it is marked" note="100 points" />
-            <table class="data">
+            <table class="rubric">
               <tbody>
                 ${project.rubric.map((r, i) => html`
                   <tr key=${i}>
-                    <td class="figure" style=${{ width: '4.5rem', color: 'var(--accent)' }}>${r.pts}</td>
+                    <td>${r.pts}</td>
                     <td>
-                      <span class="title title-s" style=${{ display: 'block', marginBottom: '4px' }}>${r.t}</span>
-                      <span class="index-sub" style=${{ display: 'block', margin: 0 }}>${md(r.d)}</span>
+                      <span class="title title-s">${r.t}</span>
+                      <span class="index-sub">${md(r.d)}</span>
                     </td>
                   </tr>`)}
               </tbody>
@@ -439,13 +439,13 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
       <div class="grid">
         <div class="col-1-8">
           <hr class="rule-heavy" />
-          <div style=${{ paddingTop: '28px' }}>
+          <div style=${{ paddingTop: 'var(--s-4)' }}>
             ${state.projectDone ? html`
               <div class="stack stack-4">
                 <h3 class="display display-m" style=${{ color: 'var(--moss)' }}>
                   ${project ? 'Shipped.' : 'Lab ready.'}
                 </h3>
-                <p class="index-sub" style=${{ margin: 0 }}>
+                <p class="index-sub flush">
                   ${next ? `Level ${num(next)}, ${next.title}, is open.`
                          : `That is the last level of ${FQ.track(FQ.trackIdOf(level)).title.toLowerCase()}.`}
                 </p>
@@ -462,7 +462,7 @@ function Build({ level, state, onComplete, onReopen, onChecklistChange }) {
                 <h3 class="display display-m">
                   ${project ? 'All done building?' : 'Everything set up?'}
                 </h3>
-                <p class="index-sub" style=${{ margin: 0, maxWidth: '56ch' }}>
+                <p class="index-sub flush" style=${{ maxWidth: '56ch' }}>
                   ${project
                     ? 'Mark it complete once your code runs, the checks below pass, and it is safely in your portfolio repo. That opens the next level.'
                     : `Mark it complete once your notebook runs and your repository is live. That opens level ${num(next)}.`}
@@ -513,7 +513,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
     return html`
       <div class="page section">
         <span class="kicker">level ${num(level)}</span>
-        <h1 class="display display-l" style=${{ margin: '0 0 24px', maxWidth: '18ch' }}>${level.title}</h1>
+        <h1 class="display display-l" style=${{ margin: '0 0 var(--s-4)', maxWidth: '18ch' }}>${level.title}</h1>
         <p class="notice" style=${{ maxWidth: '60ch' }}>
           This one is still locked. Finish
           ${' '}<a class="link" href=${`#/level/${back.id}`}>level ${num(back)}, ${back.title}</a>
@@ -557,7 +557,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
   return html`
     <div class="page">
       <!-- Level masthead: title left, metadata right, divided by a rule. -->
-      <section class="section grid" style=${{ paddingBottom: '0' }}>
+      <section class="section section-open grid">
         <div class="col-1-7">
           <!-- The number and the name, and nothing else. The tagline and the
                codename both belong on the level list, where you are choosing;
@@ -567,36 +567,36 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
         </div>
 
         <div class="col-9-12">
-          <table class="data" style=${{ marginTop: '6px' }}>
+          <table class="meta" style=${{ marginTop: 'var(--s-1)' }}>
             <tbody>
               <tr>
-                <td class="mono" style=${{ color: 'var(--graphite)' }}>difficulty</td>
-                <td style=${{ textAlign: 'right' }}>
+                <td>difficulty</td>
+                <td>
                   <${Gauge} value=${level.difficulty} />
-                  <span class="figure" style=${{ marginLeft: '10px', color: 'var(--bone)' }}>
+                  <span class="figure" style=${{ marginLeft: 'var(--s-2)', color: 'var(--bone)' }}>
                     ${level.difficulty}/10
                   </span>
                 </td>
               </tr>
               <tr>
-                <td class="mono" style=${{ color: 'var(--graphite)' }}>time</td>
-                <td class="figure" style=${{ textAlign: 'right', color: 'var(--bone)' }}>
+                <td>time</td>
+                <td>
                   about ${level.minutes} min
                 </td>
               </tr>
               <tr>
-                <td class="mono" style=${{ color: 'var(--graphite)' }}>covers</td>
+                <td>covers</td>
                 <!-- A list of three short words does not need three boxes
                      drawn round it, and boxes right-justified against a narrow
                      column wrap into an orphan. It is a list; set it as one. -->
-                <td class="figure" style=${{ textAlign: 'right', color: 'var(--bone)' }}>
+                <td>
                   ${level.tags.join(', ')}
                 </td>
               </tr>
               ${store.isCleared(level.id) ? html`
                 <tr>
-                  <td class="mono" style=${{ color: 'var(--graphite)' }}>status</td>
-                  <td class="figure" style=${{ textAlign: 'right', color: 'var(--moss)' }}>cleared</td>
+                  <td>status</td>
+                  <td class="is-cleared">cleared</td>
                 </tr>` : null}
             </tbody>
           </table>
@@ -604,7 +604,7 @@ export function LevelPage({ id, tab, onAskTutor, onProgress, toast }) {
       </section>
 
       <${Tabs.Root} value=${active} onValueChange=${(v) => navigate(`#/level/${level.id}/${v}`)}>
-        <${Tabs.List} style=${{ marginTop: '44px' }}>
+        <${Tabs.List} style=${{ marginTop: 'var(--s-5)' }}>
           ${tabsFor(level).map((t) => html`
             <${Tabs.Trigger} key=${t.id} value=${t.id}>
               ${t.label}
