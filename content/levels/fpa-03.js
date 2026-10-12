@@ -250,7 +250,9 @@ FQ.registerLevel({
         blocks: [
           { p: 'Five checks, each returning findings rather than raising, so the run can report all of them at once ' +
                'rather than one per attempt.' },
-          { code: 'unmapped = set(actuals["account_code"]) - set(MAPPING)\nmissing_month = month not in set(budget["month"])\nghost_centres = (set(budget_month["cost_centre"])\n                 - set(actual_month["cost_centre"]))', lang: 'python', label: 'closepack/checks.py' },
+          { p: 'The dot in `from .load import MAPPING` means the `load` module sitting next to this file. It is ' +
+               'the one line that stops `checks.py` keeping its own second copy of the mapping.' },
+          { code: 'from .load import MAPPING\n\nunmapped = set(actuals["account_code"]) - set(MAPPING)\nmissing_month = month not in set(budget["month"])\nghost_centres = (set(budget_month["cost_centre"])\n                 - set(actual_month["cost_centre"]))', lang: 'python', label: 'closepack/checks.py' },
           { tip: 'Fixing five problems in one pass beats five runs. It reads as a small thing and it changes whether ' +
                  'anybody keeps using your tool.' }
         ],
@@ -273,9 +275,32 @@ FQ.registerLevel({
         blocks: [
           { p: 'Delete a line from PACK_ORDER, run again, and watch the check cell go non zero. Then write that as a ' +
                'test so it is checked every time rather than the once.' },
-          { code: 'def test_the_check_catches_a_dropped_pack_line(monkeypatch):\n    monkeypatch.setattr(load, "PACK_ORDER",\n                        [l for l in load.PACK_ORDER if l != "FX markup"])\n    broken = pack.build("2025-09")\n    assert not broken.ties\n    assert round(broken.tie_difference) == -255_062', lang: 'python', label: 'tests/test_pack.py' }
+          { code: 'from closepack import load, pack\n\n\ndef test_the_check_catches_a_dropped_pack_line(monkeypatch):\n    monkeypatch.setattr(load, "PACK_ORDER",\n                        [l for l in load.PACK_ORDER if l != "FX markup"])\n    broken = pack.build("2025-09")\n    assert not broken.ties\n    assert round(broken.tie_difference) == -255_062', lang: 'python', label: 'tests/test_pack.py' }
         ],
         check: 'The test passes, which means the check works, which is a different claim from the check being present.'
+      },
+      {
+        t: 'Why revenue moved: volume or price',
+        blocks: [
+          { p: 'The pack says revenue beat plan by 151,993. That is the what, not the why. Only two things can ' +
+               'move it: more payments went through than planned, or each one earned less. This splits the ' +
+               'variance into those two parts.' },
+          { p: 'The extra volume also came at the lower rate, and that overlap has to be counted on one side or ' +
+               'the other. Pick one rule, write it in the file, and keep it the same every month. Two rules in ' +
+               'two months is how a bridge stops meaning anything.' },
+          { code: 'def price_volume(volume_actual, volume_plan, rate_actual, rate_plan, reported):\n    """Split a revenue variance into the part volume explains and the part rate explains."""\n    volume_effect = (volume_actual - volume_plan) * rate_plan\n    rate_effect = (rate_actual - rate_plan) * volume_actual\n    return {\n        "volume_effect": volume_effect,\n        "rate_effect": rate_effect,\n        "sum": volume_effect + rate_effect,\n        "rounding": (volume_effect + rate_effect) - reported,\n    }', lang: 'python', label: 'closepack/bridge.py' },
+          { p: 'Pull the four numbers out of the history file and the plan file, pass them in, and September ' +
+               'comes out like this:' },
+          { code: 'volume    404,860,085 actual      354,224,934 plan\nrate          0.5800% actual          0.6200% plan\n\nvolume effect   (404,860,085 - 354,224,934) x 0.6200%   =  +313,937.94\nrate effect     (0.5800% - 0.6200%) x 404,860,085       =  -161,944.04\n                                                  sum   =  +151,993.90\nthe pack already reports                                =  +151,993.49\n                                             rounding   =       +0.41', lang: 'text', label: 'September 2025' },
+          { p: 'Volume was worth 313,938 and the lower rate cost 161,944. They add to the 151,993 the pack ' +
+               'already reports, and that is the point of returning the difference rather than hiding it: if the ' +
+               'two sides stopped agreeing, one of them would be wrong. The 41 cents is rounding, because this ' +
+               'multiplies rates that were rounded already. A dollar is normal. A thousand is a bug.' },
+          { tip: 'This is the paragraph the memo writes itself from. "Revenue beat plan by 152k: volume added ' +
+                 '314k, a lower take rate gave back 162k" is a sentence somebody can act on. "Revenue beat ' +
+                 'plan by 152k" is not.' }
+        ],
+        check: 'Your two effects add to the revenue variance in your own pack, and the leftover is under a dollar.'
       },
       {
         t: 'The chart and the draft memo',
