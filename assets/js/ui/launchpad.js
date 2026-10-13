@@ -53,35 +53,22 @@ const TRACKS = [
    settlement lines from level 10. Nothing here was estimated. */
 const COMPARE = {
   eng: {
-    title: 'The entry-level stack is saturated.',
-    sub: 'Writing code is no longer the scarce part.',
+    title: "To-do apps won't cut it.",
     rows: [
-      { label: 'the market', tone: 'muted',
-        text: 'Computer science graduates sit at 7.0% unemployment and computer ' +
-              'engineering at 7.8%, the second highest of 73 majors. Across all ' +
-              'majors it is 4.2%.',
-        source: 'New York Fed, outcomes by major, 2024 census data' },
-      { label: 'what finquest gives you', tone: 'bright',
-        text: 'You finish holding the work a screen asks about: a ledger that balances ' +
-              'across 400,000 entries, an HTTP API other systems depend on, and a ' +
-              'reconciliation job that explains every difference across 16,639 ' +
-              'settlement lines.' },
+      { label: 'the problem', tone: 'muted',
+        text: 'The market is flooded with generic clones and basic web calculators ' +
+              'that do not prove engineering skills.' },
+      { label: 'the fix', tone: 'bright',
+        text: 'Build a real ledger, a payments API, and a job that reconciles to the cent.' },
     ],
   },
   fpa: {
-    title: 'Excel is no longer enough.',
-    sub: 'The analyst work that gets noticed is the part you stopped doing by hand.',
+    title: 'Excel is dead.',
     rows: [
-      { label: 'the market', tone: 'muted',
-        text: '39.4% of recent graduates are underemployed, in jobs that do not require ' +
-              'a degree. Finance is not the worst hit, which is the point: the degree ' +
-              'alone does not separate you from everyone else holding one.',
-        source: 'New York Fed, outcomes by major, 2024 census data' },
-      { label: 'what finquest gives you', tone: 'bright',
-        text: 'You finish holding the technical half of the job: ten questions answered ' +
-              'from 3,778 invoices in SQL, the same close pack rebuilt in pandas so it ' +
-              'runs in 39 milliseconds, and a fifteen-month model that balances across ' +
-              'all four scenarios.' },
+      { label: 'the problem', tone: 'muted',
+        text: 'Finance degrees stop at the spreadsheet. The work moved to SQL.' },
+      { label: 'the fix', tone: 'bright',
+        text: 'Automate the month end close, and hand over a model that ties.' },
     ],
   },
 };
@@ -165,7 +152,7 @@ export function Launchpad({ onLaunch }) {
     <div class=${'launchpad' + (leaving ? ' is-leaving' : '')} ref=${stackRef}>
       <div class="lp-stack">
         <h1 class="lp-title" data-rise>${s.title}</h1>
-        <p class="lp-sub" data-rise>${s.sub}</p>
+        ${s.sub ? html`<p class="lp-sub" data-rise>${s.sub}</p>` : null}
 
         <div class="lp-panel" data-rise>
           ${step === 0 ? html`
