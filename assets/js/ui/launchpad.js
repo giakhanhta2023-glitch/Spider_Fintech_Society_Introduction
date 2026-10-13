@@ -43,15 +43,43 @@ const TRACKS = [
   },
 ];
 
-/* Screen three: two sentences, no chart. */
-const COMPARE = [
-  { label: 'saturated', tone: 'muted',
-    text: 'Saturated portfolios are built on to-do apps and generic web clones that ' +
-          'do not show you can handle production engineering.' },
-  { label: 'finquest', tone: 'bright',
-    text: 'FinQuest portfolios are built on production realities: distributed ' +
-          'double-entry ledgers, network fees, and real-time transaction processing.' },
-];
+/* Screen three: two sentences, no chart, and it answers to the track chosen on
+   screen two. A finance student and a computer science student are not failing
+   the same screen, so they should not be shown the same one.
+
+   The figures in the FinQuest half are the levels' own: 3,778 invoices and 235
+   merchants from fpa-02, 39 milliseconds from fpa-03, fifteen months across
+   four scenarios from fpa-04, 400,000 entries from level 6 and 16,639
+   settlement lines from level 10. Nothing here was estimated. */
+const COMPARE = {
+  eng: {
+    title: 'The entry-level stack is saturated.',
+    sub: 'A to-do app does not show that you can handle money.',
+    rows: [
+      { label: 'saturated track', tone: 'muted',
+        text: 'Saturated portfolios are built on to-do apps and generic web clones ' +
+              'that do not show you can handle production engineering.' },
+      { label: 'finquest infrastructure', tone: 'bright',
+        text: 'You build a ledger that balances across 400,000 entries, an API other ' +
+              'systems depend on, and a reconciliation job that explains every ' +
+              'difference across 16,639 settlement lines.' },
+    ],
+  },
+  fpa: {
+    title: 'Excel is no longer enough.',
+    sub: 'The analyst work that gets noticed is the part you stopped doing by hand.',
+    rows: [
+      { label: 'saturated track', tone: 'muted',
+        text: 'A finance degree still ends at the spreadsheet. The close gets done by ' +
+              'hand every month, and nothing in the portfolio shows you can make a ' +
+              'machine do it instead.' },
+      { label: 'finquest infrastructure', tone: 'bright',
+        text: 'You answer the ten questions finance asks every month from 3,778 invoices ' +
+              'in SQL, then rebuild the same close pack in pandas so it runs in 39 ' +
+              'milliseconds and stops rather than print a number it cannot defend.' },
+    ],
+  },
+};
 
 /* Screen four. Every figure here came out of running the course's own code. */
 const SIGNALS = [
@@ -60,9 +88,11 @@ const SIGNALS = [
   { id: 'recon',  name: 'Reconciliation', value: '16,639 lines to the cent', tone: 'ok' },
 ];
 
+/* Screen three takes its heading from COMPARE, so the title and the two cards
+   can never disagree about which track the reader picked. */
 const STEPS = [
   { title: 'Choose your track.', sub: 'Two ladders with separate ranks. You can switch later.' },
-  { title: 'The entry-level stack is saturated.', sub: 'A to-do app does not show that you can handle money.' },
+  null,
   { title: 'Build deep infrastructure.', sub: 'Systems that survive retries and reconcile to the cent.' },
 ];
 
@@ -120,7 +150,8 @@ export function Launchpad({ onLaunch }) {
   }
 
   /* ------------------------------------------------------- screens 2 to 4 */
-  const s = STEPS[step];
+  const compare = COMPARE[picked] || COMPARE.eng;
+  const s = STEPS[step] || compare;
   return html`
     <div class=${'launchpad' + (leaving ? ' is-leaving' : '')} ref=${stackRef}>
       <div class="lp-stack">
@@ -145,7 +176,7 @@ export function Launchpad({ onLaunch }) {
 
           ${step === 1 ? html`
             <div class="lp-compare">
-              ${COMPARE.map((c) => html`
+              ${compare.rows.map((c) => html`
                 <div class=${`lp-compare-row is-${c.tone}`} key=${c.label}>
                   <span class="lp-compare-label">${c.label}</span>
                   <p class="lp-compare-text">${c.text}</p>
