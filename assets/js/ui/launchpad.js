@@ -23,9 +23,12 @@
    ========================================================================= */
 import { html, useState, useEffect, useCallback, FQ, store, Btn } from './lib.js';
 
+/* The labels are the job each ladder is aimed at, taken from the outcome and
+   final badge in content/tracks.js. A grander name than the course delivers is
+   a promise it cannot keep. */
 const TRACKS = [
-  { id: 'eng', tone: 'blue',   label: 'Backend Systems Engine',   firms: ['Stripe', 'Adyen'] },
-  { id: 'fpa', tone: 'violet', label: 'Quantitative Risk Systems', firms: ['Capital One', 'Chime'] },
+  { id: 'eng', tone: 'blue',   label: 'Backend engineer',  firms: ['Stripe', 'Adyen'] },
+  { id: 'fpa', tone: 'violet', label: 'Financial analyst', firms: ['Capital One', 'Chime'] },
 ];
 
 const VERIFY = [
@@ -35,9 +38,9 @@ const VERIFY = [
 ];
 
 const STEPS = [
-  { title: 'Choose your track.', sub: 'Initialize your target playground environment.' },
-  { title: 'The entry-level stack is saturated.', sub: 'Generic template repositories fail automated screens.' },
-  { title: 'Build deep infrastructure.', sub: 'Compile systems that survive retries and reconcile to the cent.' },
+  { title: 'Choose your track.', sub: 'Two ladders with separate ranks. You can switch later.' },
+  { title: 'The entry-level stack is saturated.', sub: 'A to-do app does not show that you can handle money.' },
+  { title: 'Build deep infrastructure.', sub: 'Systems that survive retries and reconcile to the cent.' },
 ];
 
 export function Launchpad({ onLaunch }) {
@@ -125,7 +128,7 @@ export function Launchpad({ onLaunch }) {
         </div>
         <div class="lp-gate">
           <h1 class="lp-gate-title">The shortest path to production.</h1>
-          <p class="lp-gate-sub">Build production-grade fintech infrastructure that commands authority.</p>
+          <p class="lp-gate-sub">Build what a fintech company runs on: a ledger, a payments API, and a job that reconciles to the cent.</p>
           <${Btn} variant="accent" onClick=${() => setStarted(true)}>Get Started<//>
         </div>
       </div>`;
