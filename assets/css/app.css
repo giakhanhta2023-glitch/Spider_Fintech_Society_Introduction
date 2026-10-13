@@ -2564,101 +2564,183 @@ pre { font-weight: 400; }
    for no reason anybody could see. */
 .index-row .index-sub { max-width: none; }
 
-/* ==========================================================================
-   THE LAUNCHPAD
 
-   One screen, four zones, shown once. It is centred rather than set on the
-   editorial grid because it has no second column and nothing to scan: the
-   reader does one thing here, which is choose a ladder.
+/* ==========================================================================
+   THE LAUNCHPAD: a bounded shell, three panes, one navigation bar
+
+   The previous version let each zone run the full page width, which is what
+   made it read as a flat dashboard rather than an introduction. Everything
+   now lives inside one bounded card, so the text has an edge to stop at and
+   the three steps occupy the same frame as each other.
    ========================================================================== */
 .launchpad {
-  padding: clamp(40px, 7vh, 96px) 0 clamp(48px, 9vh, 120px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: clamp(16px, 3vw, 32px);
   opacity: 1;
-  transition: opacity 380ms var(--ease);
+  transition: opacity 340ms var(--ease);
 }
-/* The exit staggers upward: the button goes first, the hero last, so the
-   screen leaves in the reverse of the order it was read. */
-.launchpad.is-leaving { opacity: 0; }
-.launchpad.is-leaving .lp-go      { transition-delay: 0ms; }
-.launchpad.is-leaving .lp-tracks  { transition-delay: 60ms; }
-.launchpad.is-leaving .lp-firms   { transition-delay: 120ms; }
-.launchpad.is-leaving .lp-hero    { transition-delay: 180ms; }
-.launchpad.is-leaving > .page > section {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.launchpad > .page > section {
-  opacity: 1;
-  transform: none;
-  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
+.launchpad.is-leaving { opacity: 0; transform: translateY(-8px); }
+
+.lp-shell {
+  width: 100%;
+  max-width: 56rem;
+  margin: clamp(16px, 5vh, 48px) auto 0;
+  background: var(--ink-raised);
+  border: 1px solid var(--card-rule);
+  border-radius: 8px;
+  padding: clamp(22px, 3vw, 36px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(22px, 3vw, 32px);
 }
 
-/* ---------------------------------------------------------------- hero */
-.lp-hero { text-align: center; max-width: 42rem; margin: 0 auto; }
-.lp-hero .display {
-  font-size: clamp(2.1rem, 4.6vw, 3.1rem);
-  line-height: 1.06;
+/* ------------------------------------------------------- the step rail */
+.lp-rail {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--card-rule);
+  display: flex;
+  gap: clamp(16px, 3vw, 36px);
+  flex-wrap: wrap;
+}
+.lp-rail-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+/* A step not reached yet is quiet, not invisible. --card-rule is a hairline
+   colour and measured 1.24:1 as text here, which is the same mistake this
+   stylesheet made once before with locked row metadata. */
+.lp-rail-num { color: var(--dimmer); }
+.lp-rail-item.is-done .lp-rail-num,
+.lp-rail-item.is-done .lp-rail-name { color: var(--ok); }
+.lp-rail-item.is-on .lp-rail-num { color: var(--accent); }
+.lp-rail-item.is-on .lp-rail-name { color: var(--bone); }
+
+/* ------------------------------------------------------------ the pane */
+.lp-pane { min-height: 20rem; }
+.lp-step { display: flex; flex-direction: column; gap: 18px; }
+.lp-head {
+  font-family: var(--display);
   font-weight: 600;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  line-height: 1.14;
+  letter-spacing: -0.025em;
   color: var(--bone);
   margin: 0;
+  text-wrap: balance;
 }
-.lp-sub {
-  margin: 14px auto 0;
-  max-width: 38rem;
+.lp-body {
+  margin: 0;
   font-family: var(--text);
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   line-height: 1.68;
   color: var(--dim);
 }
+.lp-body-wide { max-width: 62ch; }
+.lp-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(18px, 2.6vw, 30px); }
+.lp-col { display: flex; flex-direction: column; gap: 14px; }
 
-/* --------------------------------------------------------------- firms */
-/* Names, never logos, and the label says demand rather than endorsement.
-   None of these companies has any relationship with this course. */
-.lp-firms { margin-top: clamp(40px, 7vh, 72px); text-align: center; }
-.lp-firms-label {
-  display: block;
+.lp-points { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 14px; }
+.lp-points li {
+  font-family: var(--text);
+  font-size: 0.94rem;
+  line-height: 1.62;
+  color: var(--dim);
+}
+.lp-points li::marker { color: var(--accent); }
+
+/* ----------------------------------------------------------- the chart */
+/* Bars with no axis and no figure, and a caption that says so. Drawing a
+   scale here would be inventing data, and this is a page about not doing
+   that. */
+.lp-chart {
+  margin: 0;
+  background: var(--card);
+  border: 1px solid var(--card-rule);
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: center;
+  min-height: 12rem;
+}
+.lp-chart-title,
+.lp-chart-note,
+.lp-chart-label {
   font-family: var(--mono);
   font-weight: 300;
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dimmer);
-  margin-bottom: 18px;
 }
-.lp-firms-row {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: clamp(20px, 5vw, 64px);
-}
-.lp-firms-row li {
-  font-family: var(--display);
-  font-weight: 500;
-  font-size: clamp(0.95rem, 1.7vw, 1.2rem);
-  letter-spacing: -0.01em;
-  color: var(--dimmer);
-  transition: color var(--dur) var(--ease);
-}
-.lp-firms-row li:hover { color: var(--accent); }
+.lp-chart-plot { display: flex; flex-direction: column; gap: 12px; }
+.lp-chart-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); align-items: center; gap: 10px; }
+.lp-bars { display: flex; gap: 3px; }
+.lp-bars i { display: block; width: 100%; max-width: 18px; height: 22px; border-radius: 1px; }
+.lp-bars.is-crowd i { background: var(--block-idle); }
+.lp-bars.is-roles i { background: var(--accent); }
+.lp-chart-note { text-transform: none; letter-spacing: 0.04em; line-height: 1.5; }
 
-/* -------------------------------------------------------------- tracks */
-.lp-tracks {
-  margin-top: clamp(36px, 6vh, 64px);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+/* -------------------------------------------------------- the terminal */
+.lp-term {
+  margin: 0;
+  background: var(--ink-deep);
+  border: 1px solid var(--card-rule);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 12rem;
 }
+.lp-term-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--card-rule);
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.lp-term-body {
+  margin: 0;
+  padding: 14px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--code-ink);
+}
+.lp-line { display: block; white-space: pre-wrap; }
+.lp-tag { color: var(--accent); }
+.lp-tag.is-ok { color: var(--ok); }
+
+/* --------------------------------------------------------- the channels */
+.lp-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .lp-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   text-align: left;
-  padding: clamp(22px, 2.6vw, 32px);
+  padding: clamp(18px, 2.2vw, 24px);
   background: var(--card);
   border: 1px solid var(--card-rule);
   border-radius: 6px;
@@ -2667,20 +2749,14 @@ pre { font-weight: 400; }
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 .lp-card:hover { background: var(--card-hover); }
-
-/* The track's own colour, so the choice is legible before the words are
-   read: blue is the engineering ladder, violet is the analyst one. */
-.lp-card.tone-blue   { --track-accent: var(--accent); --track-rule: var(--accent-rule); }
-.lp-card.tone-violet { --track-accent: var(--violet); --track-rule: var(--violet-rule); }
-.lp-card.is-picked {
-  border-color: var(--track-accent);
-  background: var(--card-hover);
-}
+.lp-card.tone-blue   { --track-accent: var(--accent); }
+.lp-card.tone-violet { --track-accent: var(--violet); }
+.lp-card.is-picked { border-color: var(--track-accent); background: var(--card-hover); }
 
 .lp-card-track {
   font-family: var(--mono);
   font-weight: 300;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--track-accent);
@@ -2688,16 +2764,24 @@ pre { font-weight: 400; }
 .lp-card-head {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   line-height: 1.2;
   letter-spacing: -0.02em;
   color: var(--bone);
 }
-.lp-card-focus {
-  font-family: var(--text);
-  font-size: 0.92rem;
-  line-height: 1.62;
-  color: var(--dim);
+.lp-card-focus { font-family: var(--text); font-size: 0.9rem; line-height: 1.6; color: var(--dim); }
+
+.lp-firm-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.lp-firm {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+  border: 1px solid var(--card-rule);
+  border-radius: 3px;
+  padding: 4px 8px;
 }
 .lp-card-counts {
   font-family: var(--mono);
@@ -2708,25 +2792,62 @@ pre { font-weight: 400; }
   color: var(--dimmer);
 }
 .lp-card-counts b { color: var(--bone); font-weight: 400; }
-.lp-card-counts i { color: var(--dimmer); font-style: normal; margin: 0 4px; }
-.lp-badge { margin-top: 4px; white-space: normal; text-align: left; line-height: 1.5; }
-
-/* ------------------------------------------------------------------ go */
-.lp-go { margin-top: clamp(32px, 5vh, 52px); text-align: center; }
-.lp-note {
-  margin: 14px 0 0;
+.lp-card-counts i { font-style: normal; margin: 0 4px; }
+.lp-foot-note {
+  margin: 0;
   font-family: var(--mono);
   font-weight: 300;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.04em;
+  line-height: 1.6;
   color: var(--dimmer);
 }
 
+/* ------------------------------------------------------- the navigation */
+.lp-nav {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--card-rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.lp-nav-count {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.lp-nav-btns { display: flex; align-items: center; gap: 12px; }
+.lp-back {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 15px 20px;
+  background: none;
+  border: 1px solid var(--card-rule);
+  border-radius: 0;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.lp-back:hover:not(:disabled) { color: var(--bone); border-color: var(--rule-mid); }
+.lp-back:disabled { opacity: 0.4; cursor: not-allowed; }
+
 @media (max-width: 760px) {
-  .lp-tracks { grid-template-columns: 1fr; }
-  .lp-firms-row { gap: 18px 28px; }
+  .lp-split,
+  .lp-channels { grid-template-columns: 1fr; }
+  .lp-pane { min-height: 0; }
+  .lp-nav { flex-direction: column-reverse; align-items: stretch; }
+  .lp-nav-btns { justify-content: space-between; }
+  .lp-nav-count { text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .launchpad,
-  .launchpad > .page > section { transition: none; }
+  .launchpad { transition: none; }
 }
