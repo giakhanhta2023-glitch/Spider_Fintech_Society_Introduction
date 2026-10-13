@@ -41,11 +41,12 @@ def ratio(fg, bg):
 
 DARK = {
     "ink": "#0B0F19", "ink-raised": "#111827", "ink-deep": "#070A12",
-    "bone": "#E9ECF4", "ash": "#9BA4B8", "graphite": "#8A93AC",
+    "bone": "#F8FAFC", "ash": "#CBD5E1", "graphite": "#94A3B8",
+    "dim": "#C2CCDC", "dimmer": "#94A3B8", "card": "#151D30",
     "rule": "#1C2334", "rule-mid": "#2A3650",
     "accent": "#7FB2FF", "accent-solid": "#4F46E5",
     "moss": "#6E9C70", "crimson": "#C25E5E",
-    "syntax-comment": "#737D94", "syntax-number": "#9CC4FF",
+    "syntax-comment": "#949EB5", "syntax-number": "#9CC4FF",
 }
 
 # The light theme keeps the blue cast. A warm cream paper would be a different
@@ -54,10 +55,11 @@ DARK = {
 LIGHT = {
     "ink": "#F4F6FB", "ink-raised": "#FFFFFF", "ink-deep": "#E9EEF8",
     "bone": "#0C101A", "ash": "#454E63", "graphite": "#525B73",
+    "dim": "#434C60", "dimmer": "#606A80", "card": "#FFFFFF",
     "rule": "#DEE4F1", "rule-mid": "#BFC9DE",
     "accent": "#4338CA", "accent-solid": "#4F46E5",
     "moss": "#3F6B45", "crimson": "#A63F3F",
-    "syntax-comment": "#5A6475", "syntax-number": "#1B4FA8",
+    "syntax-comment": "#454D5B", "syntax-number": "#1B4FA8",
 }
 
 # foreground, background, the floor it must clear, and what a reader sees
@@ -65,15 +67,21 @@ PAIRS = [
     ("bone", "ink", 4.5, "primary text on the page"),
     ("bone", "ink-raised", 4.5, "primary text on a panel"),
     ("bone", "ink-deep", 4.5, "primary text in a code well"),
-    ("ash", "ink", 4.5, "secondary text"),
-    ("ash", "ink-raised", 4.5, "secondary text on a panel"),
+    ("ash", "ink", 7.0, "body copy, at the AAA floor"),
+    ("ash", "ink-raised", 7.0, "body copy on a panel"),
+    ("ash", "card", 7.0, "body copy on a card"),
+    ("dim", "ink", 7.0, "body copy under a title"),
+    ("dim", "card", 7.0, "body copy under a title, on a card"),
+    ("dimmer", "ink", 4.5, "metadata and mono micro-labels"),
+    ("dimmer", "card", 4.5, "metadata on a card"),
+    ("graphite", "card", 4.5, "tertiary on a card"),
     ("graphite", "ink", 4.5, "tertiary: mono labels, the index metadata"),
     ("graphite", "ink-raised", 4.5, "tertiary on a panel"),
     ("accent", "ink", 4.5, "accent as text"),
     ("accent", "ink-raised", 4.5, "accent as text on a panel"),
     ("moss", "ink", 4.5, "right answers, shipped"),
     ("crimson", "ink", 4.5, "wrong answers"),
-    ("syntax-comment", "ink-deep", 4.5, "code comments"),
+    ("syntax-comment", "ink-deep", 7.0, "code comments, read as content not chrome"),
     ("syntax-number", "ink-deep", 4.5, "numbers in code"),
     ("moss", "ink-deep", 4.5, "strings in code"),
     ("accent", "ink-deep", 4.5, "keywords in code"),

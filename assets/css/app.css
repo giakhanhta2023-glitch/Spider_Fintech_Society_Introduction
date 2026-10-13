@@ -25,9 +25,10 @@
   --ink:          #0B0F19;
   --ink-raised:   #111827;   /* a panel that must separate from the canvas */
   --ink-deep:     #070A12;   /* code wells and anything set into the page  */
-  --bone:         #E9ECF4;   /* primary text            17.0:1 on ink      */
-  --ash:          #9BA4B8;   /* secondary text           8.1:1 on ink      */
-  --graphite:     #8A93AC;   /* tertiary. 6.6:1 on ink, and it has to be
+  --bone:         #F8FAFC;   /* primary text            18.3:1 on ink, 16.1 on a card */
+  --ash:          #CBD5E1;   /* body copy               12.9:1 on ink, 11.3 on a card.
+                                AAA everywhere it lands, not just on the page ground. */
+  --graphite:     #94A3B8;   /* tertiary. 7.5:1 on ink, and it has to be
                                 that high because glass stacks: a plate
                                 inside the masthead pill sits under two
                                 translucent layers, and the old #78819A
@@ -70,10 +71,14 @@
 
   --block-on:    #3B82F6;
   --block-idle:  #1E293B;
-  /* Two steps quieter than --ash, for the text that sits under a title and
-     the figures beside it. 4.84:1 and 4.73:1 on the card. */
-  --dim:         #808A9F;
-  --dimmer:      #7F889D;
+  /* These two carry most of the secondary copy outside a lesson, and for a
+     long time they were the quietest thing on the page at 4.84:1 and 4.73:1 on
+     a card. check_contrast.py did not cover them, so nothing caught it. Both
+     are now in the checker, --dim at the 7:1 body floor and --dimmer at the
+     tertiary one. */
+  --dim:         #C2CCDC;   /* body copy under a title   10.4:1 on a card */
+  --dimmer:      #94A3B8;   /* metadata, mono micro-labels 6.6:1 on a card */
+  --row-tint:    #1E293B;   /* the stripe that separates table rows        */
 
   /* The second accent. Stripe's own #635BFF measures 4.08:1 as text here and
      fails, the same way its indigo did, so purple gets a readable tone and a
@@ -93,7 +98,7 @@
   --code-ink:       #D3D9E6;   /* body text in a code well, a shade under bone */
   --code-inline:    #151C2B;   /* the tint behind `code` inside a sentence  */
   --row-hover:      #121A2A;   /* the index row under the cursor            */
-  --syntax-comment: #737D94;   /* was #5A6376 and failed at 3.42:1          */
+  --syntax-comment: #949EB5;   /* was #5A6376 and failed at 3.42:1          */
   --syntax-number:  #9CC4FF;
 
   /* ---- semantics: only for right and wrong ----------------------------- */
@@ -209,6 +214,9 @@
   --ash:          #454E63;   /* secondary text           7.1:1              */
   --graphite:     #525B73;   /* tertiary, still legible  5.4:1              */
 
+  --row-tint:     #EDF1FA;   /* the light stripe. Declared here as well as in the
+                                dark block: a token defined in only one theme is how
+                                near-black table text ended up on a navy stripe. */
   --rule:         #DEE4F1;
   --rule-mid:     #BFC9DE;
   --rule-heavy:   var(--bone);
@@ -235,7 +243,7 @@
 
   --block-on:    #4F46E5;
   --block-idle:  #D3DBEB;
-  --dim:         #5C657C;
+  --dim:         #434C60;   /* body copy under a title   7.4:1 at worst */
   --dimmer:      #606A80;
 
   --violet:       #6D28D9;
@@ -249,7 +257,7 @@
   --code-ink:       #1B2233;
   --code-inline:    #EDF1FA;
   --row-hover:      #E9EEF9;
-  --syntax-comment: #5A6475;
+  --syntax-comment: #454D5B;
   --syntax-number:  #1B4FA8;
 
   --moss:         #3F6B45;
@@ -1123,6 +1131,11 @@ table.data th {
   border-bottom: 1px solid var(--rule-mid);
 }
 table.data td { color: var(--ash); }
+/* A stripe reads as a row at a glance where a hairline only reads as an edge,
+   and it costs no extra contrast: body copy is 9.85:1 on this tint. */
+table.data tbody tr:nth-child(odd) { background: var(--row-tint); }
+table.data th, table.data td { padding-left: 14px; }
+table.data th:first-child, table.data td:first-child { padding-left: 10px; }
 table.data td:first-child { color: var(--bone); }
 table.data tr:last-child td { border-bottom: 0; }
 /* Row labels are short by design, so they never break across two lines. */
@@ -2205,8 +2218,13 @@ body.is-gate::before { display: none; }
 }
 
 /* Paragraph spacing grows with the line height: at 1.78 a 1.1em gap reads as
-   a line break rather than a new paragraph. */
+   a line break rather than a new paragraph. A table or a code well is a change
+   of medium, so it gets more room on both sides than a paragraph does. */
 .prose > * + * { margin-top: 1.5em; }
+.prose > * + .table-wrap,
+.prose > * + .codeblock { margin-top: 2rem; }
+.prose > .table-wrap + *,
+.prose > .codeblock + * { margin-top: 2rem; }
 .prose > * + h3 { margin-top: 2.4em; }
 .prose > * + h4 { margin-top: 2em; }
 
