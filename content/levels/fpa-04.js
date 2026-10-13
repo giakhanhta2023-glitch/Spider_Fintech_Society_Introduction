@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: 4,
   codename: 'model',
   title: 'A model that ties',
-  tagline: 'Fifteen months, four scenarios, sixty forecast months, and a balance sheet that balances to the cent in every one of them.',
+  tagline: 'Forecast fifteen months across four scenarios, with a balance sheet that balances in every one.',
   difficulty: 6,
   minutes: 300,
   tags: ['three statement model', 'forecasting', 'working capital', 'scenarios'],

@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: '19',
   codename: 'gauntlet',
   title: 'The screen that filters you out',
-  tagline: 'Fourteen repositories will not help you if you cannot pass the sixty minute screen in front of them. This level is the filter itself: complexity you can feel, the eight patterns that keep appearing, and the practical exercises payments companies actually set.',
+  tagline: 'Pass the sixty minute screen that stands between fourteen repositories and an offer.',
   difficulty: 9,
   minutes: 600,
   tags: ['interviews', 'complexity', 'data structures', 'practice'],

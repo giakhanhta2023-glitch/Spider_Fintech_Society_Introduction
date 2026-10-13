@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 17,
   codename: 'ship',
   title: 'The deploy you can undo',
-  tagline: 'Everything you have built runs on your laptop. This level is the part where it runs somewhere else, on a schedule, behind a pipeline, with a way back when it goes wrong.',
+  tagline: 'Ship it somewhere other than your laptop, on a schedule, behind a pipeline that can refuse.',
   difficulty: 8,
   minutes: 420,
   tags: ['Docker', 'CI/CD', 'infrastructure as code', 'deploys', 'cost'],

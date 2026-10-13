@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: 3,
   codename: 'automate',
   title: 'The part you used to do by hand',
-  tagline: 'The same pack, from the same files, in 39 milliseconds, with checks that stop it printing when it is wrong.',
+  tagline: 'Produce the same close pack from the same files in 39 milliseconds, with checks that stop it.',
   difficulty: 5,
   minutes: 240,
   tags: ['pandas', 'automation', 'data quality', 'month end'],

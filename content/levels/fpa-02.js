@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: 2,
   codename: 'query',
   title: 'SQL for the month end close',
-  tagline: 'Stop asking for an export. 3,778 invoices, 235 merchants, and the ten questions finance asks every month, answered in queries you can re-run.',
+  tagline: 'Answer the ten questions finance asks every month from 3,778 invoices and 235 merchants.',
   difficulty: 4,
   minutes: 240,
   tags: ['sql', 'joins', 'window functions', 'receivables'],

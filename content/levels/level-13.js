@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 13,
   codename: 'migrate',
   title: 'The table that outgrew the machine',
-  tagline: 'Two hundred million payments in one table, a column that has to change type, and a product that cannot go down while you fix either. Partitioning, replicas, and a migration nobody notices.',
+  tagline: 'Change a column type on 200 million rows without taking the product down.',
   difficulty: 9,
   minutes: 480,
   tags: ['partitioning', 'migrations', 'backfills', 'read replicas', 'change data capture'],

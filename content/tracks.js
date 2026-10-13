@@ -12,10 +12,8 @@ FQ.registerTrack({
   name: 'engineering',
   title: 'The engineering track',
   audience: 'computer science and anybody who wants to build the systems',
-  blurb: 'Twenty levels, from a first ledger to a payments platform that takes an ' +
-         'hour of load and survives four injected failures. You finish with ' +
-         'repositories that measure themselves. Four of them are language levels and are optional: ' +
-         'take the ones whose jobs you want.',
+  blurb: 'Twenty levels from a first ledger to a payments platform that survives an hour of load ' +
+         'and four injected failures.',
   outcome: 'backend or platform engineering in fintech',
 
   /* The existing ladder, left in config.js so that file keeps its documented
@@ -29,10 +27,8 @@ FQ.registerTrack({
   name: 'analyst',
   title: 'The analyst track',
   audience: 'finance students who want the tech half of the job',
-  blurb: 'An evening of setup, then four builds: SQL for the month end close, ' +
-         'pandas doing the part you used to do by hand, a three statement model ' +
-         'that ties, and a reporting pack that rebuilds itself from raw data. It ' +
-         'assumes you can use a spreadsheet and assumes nothing else.',
+  blurb: 'Four builds: the month end close in SQL, the manual part in pandas, a model that ties, ' +
+         'and a pack that rebuilds itself.',
   outcome: 'a corporate finance or planning analyst job, where automating your own ' +
            'reporting is the thing that gets noticed',
 

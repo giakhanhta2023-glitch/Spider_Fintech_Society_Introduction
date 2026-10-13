@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: '20',
   codename: 'shipped',
   title: 'The whiteboard, and the thing you hand over',
-  tagline: 'The final round asks you to design a payments system in forty five minutes. You have built most of one. This level turns fifteen repositories into an answer, a platform, and a package somebody can hire from.',
+  tagline: 'Design a payments system in forty five minutes, using the one you have already built.',
   difficulty: 10,
   minutes: 900,
   tags: ['system design', 'capacity', 'capstone', 'portfolio'],

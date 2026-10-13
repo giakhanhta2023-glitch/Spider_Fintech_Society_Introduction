@@ -11,7 +11,7 @@ FQ.registerLevel({
   aside: true,
   codename: 'refund-policy',
   title: 'Ruby, and the rules that change every week',
-  tagline: 'Stripe runs its API on a Ruby monolith, and most payments companies have one file somewhere that decides who gets their money back. This is that file, written the way Ruby is actually used: as a language for the problem rather than a language for the computer.',
+  tagline: 'Write the refund policy in Ruby, the language Stripe runs its own API on.',
   difficulty: 6,
   minutes: 300,
   tags: ['ruby', 'dsl', 'refunds', 'policy'],

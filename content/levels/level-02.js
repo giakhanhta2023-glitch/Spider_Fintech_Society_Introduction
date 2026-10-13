@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 2,
   codename: 'compounding',
   title: 'The time value of money',
-  tagline: 'Interest, compounding, and the one formula the whole industry leans on. It is friendlier than it looks.',
+  tagline: 'Compounding, discounting and the time value of money, as formulas you can hold in your head.',
   difficulty: 2,
   minutes: 90,
   tags: ['interest', 'compounding', 'python basics'],

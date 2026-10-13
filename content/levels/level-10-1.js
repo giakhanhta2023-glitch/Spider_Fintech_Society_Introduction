@@ -12,7 +12,7 @@ FQ.registerLevel({
   aside: true,
   codename: 'checkout-client',
   title: 'The half of the payment the customer can see',
-  tagline: 'Everything so far has been servers talking to servers. This is the other end of the wire: a checkout in TypeScript that never knows the amount, never touches a card number, and cannot charge somebody twice because they pressed the button twice.',
+  tagline: 'Build the checkout in TypeScript, where the money leaves the browser.',
   difficulty: 6,
   minutes: 300,
   tags: ['typescript', 'checkout', 'client side', 'pci'],

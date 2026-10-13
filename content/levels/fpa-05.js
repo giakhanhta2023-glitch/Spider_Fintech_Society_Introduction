@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: 5,
   codename: 'close',
   title: 'The pack that rebuilds itself',
-  tagline: 'Six stages, 258 milliseconds, one document, and a run that stops rather than publishing a number it cannot defend.',
+  tagline: 'Four builds, one run: six stages in 258 ms, and a stop rather than a number it cannot defend.',
   difficulty: 7,
   minutes: 360,
   tags: ['the close', 'reconciliation', 'reporting', 'capstone'],

@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 11,
   codename: 'outbox',
   title: 'The event you thought you published',
-  tagline: 'Commit to the database, then publish an event. One line of code between them, and 5% of your events never happen. This level measures that, fixes it with the outbox pattern, and then deals with the duplicates the fix creates.',
+  tagline: 'Close the gap between committing to the database and publishing an event, where 5% vanish.',
   difficulty: 8,
   minutes: 420,
   tags: ['Kafka', 'outbox', 'idempotent consumers', 'ordering'],

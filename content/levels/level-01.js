@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 1,
   codename: 'onboarding',
   title: 'Fintech orientation',
-  tagline: 'Find out what fintech really means, then get your own lab running in a browser tab. Nothing to install, about twenty minutes.',
+  tagline: 'Set up a lab that runs entirely in a browser tab, and find out what fintech actually builds.',
   difficulty: 1,
   minutes: 60,
   tags: ['fintech basics', 'vocabulary', 'setup'],

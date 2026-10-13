@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 14,
   codename: 'latency',
   title: 'The p99 you promised',
-  tagline: 'Your service averages 70 ms and one request in a hundred takes half a second. This level is about that one, because it is the one the customer remembers and the one the contract is written about.',
+  tagline: 'Chase the one request in a hundred that takes half a second against a 70 ms average.',
   difficulty: 9,
   minutes: 420,
   tags: ['latency', 'percentiles', 'caching', 'rate limiting', 'load shedding'],

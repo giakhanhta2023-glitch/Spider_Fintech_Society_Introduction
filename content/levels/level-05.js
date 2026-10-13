@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 5,
   codename: 'moneykit',
   title: 'The money library everything else imports',
-  tagline: 'Every payments company has one library that owns arithmetic on money, and everything else calls it. You are going to write that library, test it the way people test money code, and ship it behind a pipeline that blocks bad merges.',
+  tagline: 'Package a money library with exact arithmetic, a chosen rounding rule and property tests.',
   difficulty: 5,
   minutes: 300,
   tags: ['Python', 'Decimal', 'testing', 'packaging', 'CI'],

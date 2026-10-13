@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 9,
   codename: 'card-lifecycle',
   title: 'The life of a card payment',
-  tagline: 'Authorise, capture, void, refund, chargeback, expire. Six words that decide whether a merchant gets paid, and the domain knowledge that separates a generic backend candidate from one a payments company wants.',
+  tagline: 'Model the card lifecycle: authorise, capture, void, refund, chargeback and expire.',
   difficulty: 8,
   minutes: 420,
   tags: ['payments', 'state machines', 'declines', 'chargebacks'],

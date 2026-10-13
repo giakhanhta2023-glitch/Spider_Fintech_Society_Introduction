@@ -7,7 +7,7 @@ FQ.registerLevel({
   position: 1,
   codename: 'lab',
   title: 'Mission zero: a lab that works',
-  tagline: 'No build this time. A place to run code, an account to keep it in, and enough words to follow the next four levels without guessing.',
+  tagline: 'Get a place to run code and an account to keep it in, with no build step.',
   difficulty: 1,
   minutes: 90,
   tags: ['setup', 'colab', 'python', 'github'],

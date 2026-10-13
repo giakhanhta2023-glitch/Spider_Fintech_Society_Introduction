@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 12,
   codename: 'saga',
   title: 'The payout that half happened',
-  tagline: 'Debit the ledger, then tell the bank. There is no transaction that covers both, so 13% of your payouts end with the money gone and nobody paid. This level fixes that, and measures the fix.',
+  tagline: 'Coordinate a payout across two systems with no shared transaction, where 13% strand the money.',
   difficulty: 9,
   minutes: 450,
   tags: ['sagas', 'compensation', 'distributed transactions', 'recovery'],

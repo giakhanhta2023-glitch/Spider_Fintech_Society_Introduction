@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 16,
   codename: 'observe',
   title: 'The pager, and what it is allowed to wake you for',
-  tagline: 'A dashboard that is wrong by half, a p99 you cannot average, a metric that costs 244 MB because somebody added one label, and an alert that woke four people to tell them nothing. Then the version that works.',
+  tagline: 'Measure a service honestly: a p99 you cannot average, and the label that cost 244 MB.',
   difficulty: 9,
   minutes: 420,
   tags: ['observability', 'SLOs', 'alerting', 'incident response', 'on-call'],

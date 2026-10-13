@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 6,
   codename: 'ledger-db',
   title: 'The ledger in Postgres, and the query plan that proves it',
-  tagline: 'A ledger in a Python list is a demo. Put it in a real database, make the schema refuse money that does not balance, then measure one query before and after an index and watch it go from 31 milliseconds to 0.1.',
+  tagline: 'Move the ledger into Postgres, let the schema refuse unbalanced money, and read the query plan.',
   difficulty: 6,
   minutes: 360,
   tags: ['Postgres', 'SQL', 'indexes', 'EXPLAIN', 'migrations'],

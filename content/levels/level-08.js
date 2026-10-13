@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 8,
   codename: 'race',
   title: 'Eight requests, one balance, minus $540',
-  tagline: 'Your API is correct when you test it by hand and wrong when eight people press pay at once. This level reproduces that on a real database, then fixes it three ways and measures each one.',
+  tagline: 'Reproduce the race that double-charges a card under load, then make it impossible.',
   difficulty: 8,
   minutes: 420,
   tags: ['concurrency', 'locking', 'isolation', 'connection pools'],

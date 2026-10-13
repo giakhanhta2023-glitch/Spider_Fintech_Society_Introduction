@@ -11,7 +11,7 @@ FQ.registerLevel({
   aside: true,
   codename: 'jvm',
   title: 'Java, for somebody who already writes Python',
-  tagline: 'Capital One, Adyen, Goldman and most of the payments teams inside banks run on the JVM. You do not need to prefer it. You need to be able to be interviewed in it, and to port your own service to prove you can.',
+  tagline: 'Rebuild a core service on the JVM, which is what most payments teams inside banks run.',
   difficulty: 8,
   minutes: 480,
   tags: ['Java', 'Spring Boot', 'JVM', 'Go', 'Testcontainers'],

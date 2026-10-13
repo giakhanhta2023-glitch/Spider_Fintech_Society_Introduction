@@ -70,6 +70,10 @@
 
   --block-on:    #3B82F6;
   --block-idle:  #1E293B;
+  /* Two steps quieter than --ash, for the text that sits under a title and
+     the figures beside it. 4.84:1 and 4.73:1 on the card. */
+  --dim:         #808A9F;
+  --dimmer:      #7F889D;
 
   --accent-glow:  rgba(79, 70, 229, 0.24);
 
@@ -219,6 +223,8 @@
 
   --block-on:    #4F46E5;
   --block-idle:  #D3DBEB;
+  --dim:         #5C657C;
+  --dimmer:      #606A80;
 
   --accent-glow:  rgba(79, 70, 229, 0.18);
 
@@ -2512,3 +2518,30 @@ pre { font-weight: 400; }
   .index-meta { grid-column: 1; }
   .index-num { width: auto; }
 }
+
+/* ==========================================================================
+   SCANNABILITY: the description recedes, the metrics stop shouting
+
+   The title is the thing being scanned. Everything else on the card exists to
+   be read second, so it steps back: the description to --dim at 4.84:1 and
+   the metrics to --dimmer at 4.73:1, both still over the 4.5 floor because
+   dimmer than that is not restraint, it is just harder to read.
+
+   The metric tracking drops from 0.04em to 0.01em. Wide tracking on a mono
+   face at 11px pulls "60 MIN" apart into three separate things; tight is what
+   makes a number read as one value.
+   ========================================================================== */
+.index-row .index-sub { color: var(--dim); }
+.index-meta {
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--dimmer);
+}
+.index-meta .meta-cell { letter-spacing: 0.01em; }
+.status { letter-spacing: 0.04em; }
+
+/* The description is a single line label, not prose, so it takes the column
+   rather than a reading measure. A 68ch cap was squeezing 95 character lines
+   to 555px inside a 653px column and wrapping six of them onto a second line
+   for no reason anybody could see. */
+.index-row .index-sub { max-width: none; }

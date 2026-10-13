@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 3,
   codename: 'transactions',
   title: 'Reading the money',
-  tagline: 'Take 233 messy transaction rows and turn them into the five numbers someone actually wants to know.',
+  tagline: 'Turn 233 messy transaction rows into the five numbers a finance team actually asks for.',
   difficulty: 3,
   minutes: 120,
   tags: ['pandas', 'data cleaning', 'analytics'],

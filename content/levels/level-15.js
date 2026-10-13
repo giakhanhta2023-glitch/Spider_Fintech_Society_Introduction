@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 15,
   codename: 'vault',
   title: 'The keys to the money',
-  tagline: 'Card numbers, secrets, signed requests and the people who should not be able to read any of it. The part of fintech engineering that ends careers when it is done badly, learned before anybody is relying on you.',
+  tagline: 'Handle card numbers, secrets and signed requests so that the wrong people cannot read them.',
   difficulty: 9,
   minutes: 450,
   tags: ['security', 'encryption', 'OAuth2', 'PCI', 'threat modelling'],

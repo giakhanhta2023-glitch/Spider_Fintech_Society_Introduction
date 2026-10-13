@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 10,
   codename: 'reconcile',
   title: 'The processor says one thing, your ledger says another',
-  tagline: 'Every payments company runs this job before anybody arrives in the morning. 16,639 settlement lines against your own books, and the 49 that do not match are the entire job.',
+  tagline: 'Reconcile 16,639 settlement lines against your own books and explain every difference.',
   difficulty: 8,
   minutes: 420,
   tags: ['reconciliation', 'settlement', 'fees', 'payouts'],

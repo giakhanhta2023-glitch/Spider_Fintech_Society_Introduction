@@ -10,7 +10,7 @@ FQ.registerLevel({
   aside: true,
   codename: 'recon-scala',
   title: 'Scala, and the job that runs at four in the morning',
-  tagline: 'Level 10 reconciled 16,639 settlement lines in Python. This does the same job in Scala and checks the two against each other, because the place Scala actually lives in a payments company is the batch that has to be right before anybody arrives.',
+  tagline: 'Reconcile the same 16,639 lines in Scala and check the two implementations agree.',
   difficulty: 7,
   minutes: 330,
   tags: ['scala', 'reconciliation', 'types', 'batch'],
