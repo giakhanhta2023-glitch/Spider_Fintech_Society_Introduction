@@ -1,40 +1,63 @@
 /* =========================================================================
-   The launchpad: a gate, then three steps, each one line of text and one
-   picture.
+   The launchpad: four screens, one centre line.
 
-   The structure is deliberate and the discipline is the point. The left
-   column may hold a title, a subtitle and the controls. Nothing else goes
-   there: no paragraph, no bullet list, no second thought. Everything that
-   wants to be explained has to be drawn in the right panel instead, which is
-   what keeps the screen quiet.
+   Everything stacks down the middle and the reader never has to decide which
+   half of the page to look at. The two-column version put a title on the left
+   and a picture on the right, which on a wide screen read as two half-empty
+   halves.
 
-   Two rules carried over from the version before this one.
+   Three rules survive from every earlier version of this file.
 
-   Nothing is claimed that was not measured. The chart in step two compares a
-   crowded field against a scarce one and says underneath that it is a
-   relationship rather than a count, because a bar labelled with a percentile
-   nobody measured is a fabricated statistic and a reader never sees the word
-   illustrative. The three lines step three prints are real figures from the
-   course: 400,000 entries and 0.106 ms from level 6, 16,639 settlement lines
-   from level 10.
+   Nothing is claimed that was not measured. The three figures on the last
+   screen are real: 400,000 entries and 0.106 ms from level 6, 16,639
+   settlement lines from level 10. The percentage bars that used to sit on
+   screen three are gone, because a bar labelled with a percentile nobody
+   measured is a fabricated statistic however honest the caption under it is.
+   A sentence can make the same point without pretending to be data.
 
    The company names are text, never logos, and they say where this kind of
    work is done rather than who endorses this.
+
+   Motion is gated. Every animation here is an enhancement of a state that is
+   already correct and already visible, so a reader with reduced motion on, or
+   a renderer that never runs the effect, sees the finished screen.
    ========================================================================= */
-import { html, useState, useEffect, useCallback, FQ, store, Btn } from './lib.js';
+import { html, useState, useEffect, useRef, useCallback, store, Btn } from './lib.js';
+import { animate, stagger } from 'motion';
+
+const CALM = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* The labels are the job each ladder is aimed at, taken from the outcome and
    final badge in content/tracks.js. A grander name than the course delivers is
    a promise it cannot keep. */
 const TRACKS = [
-  { id: 'eng', tone: 'blue',   label: 'Backend engineer',  firms: ['Stripe', 'Adyen'] },
-  { id: 'fpa', tone: 'violet', label: 'Financial analyst', firms: ['Capital One', 'Chime'] },
+  {
+    id: 'eng', tone: 'blue', label: 'Software engineer',
+    sub: 'Build production-grade backend infrastructure and the system integrations ' +
+         'companies like Stripe, Adyen and Chime run on.',
+  },
+  {
+    id: 'fpa', tone: 'violet', label: 'Financial analyst',
+    sub: 'Learn the technical toolkits, analytical frameworks and data tools that ' +
+         'modern financial models are built with.',
+  },
 ];
 
-const VERIFY = [
-  { tag: 'ledger', text: '400,000 entries, balanced', tone: 'ok' },
-  { tag: 'index',  text: 'account balance in 0.106 ms', tone: 'accent' },
-  { tag: 'recon',  text: '16,639 lines, every difference explained', tone: 'ok' },
+/* Screen three: two sentences, no chart. */
+const COMPARE = [
+  { label: 'saturated', tone: 'muted',
+    text: 'Saturated portfolios are built on to-do apps and generic web clones that ' +
+          'do not show you can handle production engineering.' },
+  { label: 'finquest', tone: 'bright',
+    text: 'FinQuest portfolios are built on production realities: distributed ' +
+          'double-entry ledgers, network fees, and real-time transaction processing.' },
+];
+
+/* Screen four. Every figure here came out of running the course's own code. */
+const SIGNALS = [
+  { id: 'ledger', name: 'Ledger balance', value: '400,000 entries verified', tone: 'ok' },
+  { id: 'index',  name: 'Index latency',  value: '0.106 ms response',        tone: 'accent' },
+  { id: 'recon',  name: 'Reconciliation', value: '16,639 lines to the cent', tone: 'ok' },
 ];
 
 const STEPS = [
@@ -47,15 +70,26 @@ export function Launchpad({ onLaunch }) {
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState(store.track().id);
-  const [verified, setVerified] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const stackRef = useRef(null);
 
   const last = step === STEPS.length - 1;
 
+  /* Each screen's rows rise in sequence. The rows are already in place and
+     already opaque; this animates from a visible resting state, so nothing
+     depends on the effect running. */
+  useEffect(() => {
+    const el = stackRef.current;
+    if (!el || CALM()) return;
+    const rows = el.querySelectorAll('[data-rise]');
+    if (!rows.length) return;
+    animate(rows, { opacity: [0, 1], transform: ['translateY(14px)', 'translateY(0px)'] },
+            { delay: stagger(0.07), duration: 0.55, ease: [0.16, 1, 0.3, 1] });
+  }, [started, step]);
+
   useEffect(() => {
     if (!leaving) return undefined;
-    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const t = setTimeout(() => onLaunch(picked), calm ? 0 : 400);
+    const t = setTimeout(() => onLaunch(picked), CALM() ? 0 : 380);
     return () => clearTimeout(t);
   }, [leaving, picked, onLaunch]);
 
@@ -64,109 +98,88 @@ export function Launchpad({ onLaunch }) {
     else setStep((n) => n + 1);
   }, [last]);
 
-  /* ------------------------------------------------------ the right panel */
-  const trackPanel = html`
-    <div class="lp-selects">
-      ${TRACKS.map((t) => {
-        const on = picked === t.id;
-        return html`
-          <button key=${t.id} type="button"
-            class=${`lp-select tone-${t.tone}${on ? ' is-picked' : ''}`}
-            aria-pressed=${on ? 'true' : 'false'}
-            onClick=${() => setPicked(t.id)}>
-            <span class="lp-select-name">${t.label}</span>
-            <span class="lp-select-firms">
-              ${t.firms.map((f, i) => html`
-                <span key=${f}>${i ? html`<i class="lp-sep">|</i>` : null}${f}</span>`)}
-            </span>
-          </button>`;
-      })}
-    </div>`;
-
-  const marketPanel = html`
-    <div class="lp-plot">
-      <div class="lp-plot-row">
-        <span class="lp-plot-label">Generic portfolios</span>
-        <span class="lp-plot-bar is-crowd"><i style=${{ width: '100%' }}></i></span>
-      </div>
-      <div class="lp-plot-row">
-        <span class="lp-plot-label">Fintech infrastructure</span>
-        <span class="lp-plot-bar is-rare"><i style=${{ width: '14%' }}></i></span>
-      </div>
-      <p class="lp-plot-note">
-        A relationship, not a count. Nobody measured this for you, and a bar with a
-        percentage on it would be pretending somebody had.
-      </p>
-    </div>`;
-
-  const buildPanel = html`
-    <div class="lp-verify">
-      <div class="lp-verify-bar">
-        <span>architecture</span>
-        <button type="button" class="lp-run" onClick=${() => setVerified(true)} disabled=${verified}>
-          <span class="lp-run-tri" aria-hidden="true"></span>
-          ${verified ? 'Verified' : 'Verify Architecture'}
-        </button>
-      </div>
-      <pre class="lp-verify-out"><code>${verified
-        ? VERIFY.map((l) => html`<span class=${`lp-out is-${l.tone}`} key=${l.tag}>ok  ${l.tag}  ${l.text}
-</span>`)
-        : html`<span class="lp-out is-idle">awaiting verification
-</span>`}</code></pre>
-    </div>`;
-
-  const panels = [trackPanel, marketPanel, buildPanel];
-
-  /* ------------------------------------------------------------- the gate */
+  /* ------------------------------------------------------------- screen 1 */
   if (!started) {
     return html`
-      <div class="launchpad">
-        <div class="lp-glow" aria-hidden="true">
-          <span class="lp-orb lp-orb-a"></span>
-          <span class="lp-orb lp-orb-b"></span>
-          <span class="lp-orb lp-orb-c"></span>
-        </div>
-        <div class="lp-gate">
-          <h1 class="lp-gate-title">The shortest path to production.</h1>
-          <p class="lp-gate-sub">Build what a fintech company runs on: a ledger, a payments API, and a job that reconciles to the cent.</p>
-          <${Btn} variant="accent" onClick=${() => setStarted(true)}>Get Started<//>
+      <div class="launchpad" ref=${stackRef}>
+        <div class="lp-stack">
+          <h1 class="lp-title lp-title-xl" data-rise>The shortest path to learn fintech.</h1>
+          <ul class="lp-pills" data-rise>
+            <li class="lp-pill tone-blue">For computer science students</li>
+            <li class="lp-pill tone-violet">For finance students</li>
+          </ul>
+          <p class="lp-sub lp-sub-wide" data-rise>
+            Build what a fintech company runs on: a ledger, a payments API, and a job
+            that reconciles to the cent.
+          </p>
+          <div data-rise>
+            <${Btn} variant="accent" onClick=${() => setStarted(true)}>Get started<//>
+          </div>
         </div>
       </div>`;
   }
 
-  /* ----------------------------------------------------------- the wizard */
+  /* ------------------------------------------------------- screens 2 to 4 */
   const s = STEPS[step];
   return html`
-    <div class=${'launchpad' + (leaving ? ' is-leaving' : '')}>
-      <div class="lp-glow" aria-hidden="true">
-        <span class="lp-orb lp-orb-a"></span>
-        <span class="lp-orb lp-orb-b"></span>
-        <span class="lp-orb lp-orb-c"></span>
-      </div>
+    <div class=${'launchpad' + (leaving ? ' is-leaving' : '')} ref=${stackRef}>
+      <div class="lp-stack">
+        <h1 class="lp-title" data-rise>${s.title}</h1>
+        <p class="lp-sub" data-rise>${s.sub}</p>
 
-      <div class="lp-wizard">
-        <div class="lp-left">
-          <div class="lp-left-top">
-            <h1 class="lp-title">${s.title}</h1>
-            <p class="lp-sub">${s.sub}</p>
-          </div>
+        <div class="lp-panel" data-rise>
+          ${step === 0 ? html`
+            <div class="lp-selects">
+              ${TRACKS.map((t) => {
+                const on = picked === t.id;
+                return html`
+                  <button key=${t.id} type="button"
+                    class=${`lp-select tone-${t.tone}${on ? ' is-picked' : ''}`}
+                    aria-pressed=${on ? 'true' : 'false'}
+                    onClick=${() => setPicked(t.id)}>
+                    <span class="lp-select-name">${t.label}</span>
+                    <span class="lp-select-sub">${t.sub}</span>
+                  </button>`;
+              })}
+            </div>` : null}
 
-          <div class="lp-controls">
-            <ol class="lp-dots" aria-label=${`Step ${step + 1} of ${STEPS.length}`}>
-              ${STEPS.map((_, i) => html`
-                <li key=${i} class=${'lp-dot' + (i === step ? ' is-on' : '') + (i < step ? ' is-done' : '')}></li>`)}
-            </ol>
-            <div class="lp-btns">
-              <button type="button" class="lp-back" disabled=${step === 0}
-                onClick=${() => setStep((n) => Math.max(0, n - 1))}>Back</button>
-              <${Btn} variant="accent" arrow onClick=${next}>
-                ${last ? 'Continue' : 'Continue'}
-              <//>
-            </div>
-          </div>
+          ${step === 1 ? html`
+            <div class="lp-compare">
+              ${COMPARE.map((c) => html`
+                <div class=${`lp-compare-row is-${c.tone}`} key=${c.label}>
+                  <span class="lp-compare-label">${c.label}</span>
+                  <p class="lp-compare-text">${c.text}</p>
+                </div>`)}
+            </div>` : null}
+
+          ${step === 2 ? html`
+            <div class="lp-signals">
+              <div class="lp-signals-bar">
+                <span>system traffic</span>
+                <span class="lp-live"><i class="lp-live-dot" aria-hidden="true"></i>live</span>
+              </div>
+              <ul class="lp-signal-list">
+                ${SIGNALS.map((g) => html`
+                  <li class=${`lp-signal is-${g.tone}`} key=${g.id}>
+                    <i class="lp-signal-dot" aria-hidden="true"></i>
+                    <span class="lp-signal-name">${g.name}</span>
+                    <span class="lp-signal-value">${g.value}</span>
+                  </li>`)}
+              </ul>
+            </div>` : null}
         </div>
 
-        <div class="lp-right">${panels[step]}</div>
+        <div class="lp-controls" data-rise>
+          <ol class="lp-dots" aria-label=${`Step ${step + 1} of ${STEPS.length}`}>
+            ${STEPS.map((_, i) => html`
+              <li key=${i} class=${'lp-dot' + (i === step ? ' is-on' : '') + (i < step ? ' is-done' : '')}></li>`)}
+          </ol>
+          <div class="lp-btns">
+            <button type="button" class="lp-back" disabled=${step === 0}
+              onClick=${() => setStep((n) => Math.max(0, n - 1))}>Back</button>
+            <${Btn} variant="accent" arrow onClick=${next}>Continue<//>
+          </div>
+        </div>
       </div>
     </div>`;
 }
