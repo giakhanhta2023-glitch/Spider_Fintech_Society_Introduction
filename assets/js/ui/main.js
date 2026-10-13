@@ -10,6 +10,7 @@ import { Mou } from './mou.js';
 import { AuthGate, signOut } from './auth.js';
 import { createRoot } from 'react-dom/client';
 import { Home, Glossary, Dossier, Ranking } from './views.js';
+import { Launchpad } from './launchpad.js';
 import { LevelPage } from './level.js';
 import { Tutor } from './tutor.js';
 import { Toggle, resolved } from './theme.js';
@@ -182,8 +183,22 @@ function App({ user }) {
 
   const refresh = useCallback(() => setVersion((n) => n + 1), []);
 
+  /* The launchpad stands in front of the ladder exactly once, and only on the
+     front page: a reader who arrives on a level link from the tutor or a
+     bookmark goes straight there rather than being sent back to a sales
+     screen. */
+  const [launched, setLaunched] = useState(() => store.launched());
+  const startTrack = useCallback((trackId) => {
+    store.setTrack(trackId);
+    store.markLaunched();
+    setLaunched(true);
+    refresh();
+  }, [refresh]);
+
   let page;
-  if (route.name === 'level') {
+  if (!launched && route.name === 'home') {
+    page = html`<${Launchpad} onLaunch=${startTrack} />`;
+  } else if (route.name === 'level') {
     /* Keyed by route only: a progress update must re-render the page, not
        remount it, or an in-progress drill would be thrown away. */
     page = html`<${LevelPage} key=${`${route.id}-${route.tab}`} id=${route.id}

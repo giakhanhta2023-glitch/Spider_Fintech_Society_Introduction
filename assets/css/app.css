@@ -75,6 +75,18 @@
   --dim:         #808A9F;
   --dimmer:      #7F889D;
 
+  /* The second accent. Stripe's own #635BFF measures 4.08:1 as text here and
+     fails, the same way its indigo did, so purple gets a readable tone and a
+     filled tone rather than one value doing both jobs.
+
+     It is not decoration: blue is the engineering ladder and violet is the
+     analyst one, so the colour tells you which track you are standing in. */
+  --violet:       #A78BFA;
+  --violet-solid: #7C3AED;
+  --violet-deep:  #6D28D9;
+  --violet-wash:  rgba(139, 92, 246, 0.10);
+  --violet-rule:  rgba(139, 92, 246, 0.24);
+
   --accent-glow:  rgba(79, 70, 229, 0.24);
 
   /* ---- code, which has to stay legible in a dark well ------------------ */
@@ -225,6 +237,12 @@
   --block-idle:  #D3DBEB;
   --dim:         #5C657C;
   --dimmer:      #606A80;
+
+  --violet:       #6D28D9;
+  --violet-solid: #7C3AED;
+  --violet-deep:  #5B21B6;
+  --violet-wash:  rgba(124, 58, 237, 0.09);
+  --violet-rule:  rgba(124, 58, 237, 0.24);
 
   --accent-glow:  rgba(79, 70, 229, 0.18);
 
@@ -2545,3 +2563,170 @@ pre { font-weight: 400; }
    to 555px inside a 653px column and wrapping six of them onto a second line
    for no reason anybody could see. */
 .index-row .index-sub { max-width: none; }
+
+/* ==========================================================================
+   THE LAUNCHPAD
+
+   One screen, four zones, shown once. It is centred rather than set on the
+   editorial grid because it has no second column and nothing to scan: the
+   reader does one thing here, which is choose a ladder.
+   ========================================================================== */
+.launchpad {
+  padding: clamp(40px, 7vh, 96px) 0 clamp(48px, 9vh, 120px);
+  opacity: 1;
+  transition: opacity 380ms var(--ease);
+}
+/* The exit staggers upward: the button goes first, the hero last, so the
+   screen leaves in the reverse of the order it was read. */
+.launchpad.is-leaving { opacity: 0; }
+.launchpad.is-leaving .lp-go      { transition-delay: 0ms; }
+.launchpad.is-leaving .lp-tracks  { transition-delay: 60ms; }
+.launchpad.is-leaving .lp-firms   { transition-delay: 120ms; }
+.launchpad.is-leaving .lp-hero    { transition-delay: 180ms; }
+.launchpad.is-leaving > .page > section {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.launchpad > .page > section {
+  opacity: 1;
+  transform: none;
+  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
+}
+
+/* ---------------------------------------------------------------- hero */
+.lp-hero { text-align: center; max-width: 42rem; margin: 0 auto; }
+.lp-hero .display {
+  font-size: clamp(2.1rem, 4.6vw, 3.1rem);
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--bone);
+  margin: 0;
+}
+.lp-sub {
+  margin: 14px auto 0;
+  max-width: 38rem;
+  font-family: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.68;
+  color: var(--dim);
+}
+
+/* --------------------------------------------------------------- firms */
+/* Names, never logos, and the label says demand rather than endorsement.
+   None of these companies has any relationship with this course. */
+.lp-firms { margin-top: clamp(40px, 7vh, 72px); text-align: center; }
+.lp-firms-label {
+  display: block;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+  margin-bottom: 18px;
+}
+.lp-firms-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 64px);
+}
+.lp-firms-row li {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(0.95rem, 1.7vw, 1.2rem);
+  letter-spacing: -0.01em;
+  color: var(--dimmer);
+  transition: color var(--dur) var(--ease);
+}
+.lp-firms-row li:hover { color: var(--accent); }
+
+/* -------------------------------------------------------------- tracks */
+.lp-tracks {
+  margin-top: clamp(36px, 6vh, 64px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.lp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  padding: clamp(22px, 2.6vw, 32px);
+  background: var(--card);
+  border: 1px solid var(--card-rule);
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.lp-card:hover { background: var(--card-hover); }
+
+/* The track's own colour, so the choice is legible before the words are
+   read: blue is the engineering ladder, violet is the analyst one. */
+.lp-card.tone-blue   { --track-accent: var(--accent); --track-rule: var(--accent-rule); }
+.lp-card.tone-violet { --track-accent: var(--violet); --track-rule: var(--violet-rule); }
+.lp-card.is-picked {
+  border-color: var(--track-accent);
+  background: var(--card-hover);
+}
+
+.lp-card-track {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--track-accent);
+}
+.lp-card-head {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--bone);
+}
+.lp-card-focus {
+  font-family: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.62;
+  color: var(--dim);
+}
+.lp-card-counts {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.lp-card-counts b { color: var(--bone); font-weight: 400; }
+.lp-card-counts i { color: var(--dimmer); font-style: normal; margin: 0 4px; }
+.lp-badge { margin-top: 4px; white-space: normal; text-align: left; line-height: 1.5; }
+
+/* ------------------------------------------------------------------ go */
+.lp-go { margin-top: clamp(32px, 5vh, 52px); text-align: center; }
+.lp-note {
+  margin: 14px 0 0;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--dimmer);
+}
+
+@media (max-width: 760px) {
+  .lp-tracks { grid-template-columns: 1fr; }
+  .lp-firms-row { gap: 18px 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launchpad,
+  .launchpad > .page > section { transition: none; }
+}

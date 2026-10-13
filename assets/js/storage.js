@@ -93,7 +93,7 @@
 
   function blank() {
     return { xp: 0, levels: {}, badges: [], started: Date.now(), tutorAsked: 0,
-             track: DEFAULT() };
+             track: DEFAULT(), launched: false };
   }
 
   function read() {
@@ -197,6 +197,14 @@
     trackOf: function (id) {
       return w.FQ && w.FQ.trackOfLevel ? w.FQ.trackOfLevel(id) : DEFAULT();
     },
+    /* The launchpad is a first run, not a gate: it shows once, and choosing a
+       track is what dismisses it. An account that predates this flag has an
+       undefined rather than false, which is falsy, so existing readers see it
+       once as well. That is deliberate: it is also the first time they are
+       asked to choose a ladder on purpose. */
+    launched: function () { return !!state.launched; },
+    markLaunched: function () { state.launched = true; write(); },
+
     setTrack: function (trackId) {
       if (!trackId || trackId === state.track) return activeTrack();
       state.track = trackId;
