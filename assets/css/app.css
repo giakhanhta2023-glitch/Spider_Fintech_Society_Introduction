@@ -96,6 +96,7 @@
   /* The label on a filled accent surface. White on electric green is
      1.85:1; the brand puts its own near-black on the fill instead. */
   --on-accent:    #101010;
+  --telemetry-mute: #A1A1A1;   /* config output keys. 7.36:1 on the canvas */
 
   /* ---- code, which has to stay legible in a dark well ------------------ */
   --code-ink:       #F5F6F7;   /* body text in a code well, a shade under bone */
@@ -259,6 +260,7 @@
 
   --code-ink:       #1B2233;
   --on-accent:      #FFFFFF;
+  --telemetry-mute: #4F4F4F;   /* 7.58:1 on paper */
   --code-inline:    #EDF1FA;
   --row-hover:      #E9EEF9;
   --syntax-comment: #454D5B;
@@ -2800,64 +2802,38 @@ pre { font-weight: 400; }
   color: var(--dimmer);
 }
 
-/* ---------------------------------------- screen 4: the traffic dashboard */
-.lp-signals {
-  background: var(--ink-deep);
-  border: 1px solid var(--card-rule);
-  border-radius: 10px;
-  overflow: hidden;
+/* ------------------------------------------ screen 4: config output, raw
+   No card, no border, no status dot, no pulse. The figures carry it.
+
+   One grid rather than four rows, so every column lines up the way a real
+   payload does: max-content tracks are shared across rows, which is what puts
+   the arrows under each other without padding any string by hand.
+
+   The muted tone is #A1A1A1 at 7.36:1 rather than the #737373 the brief named,
+   which measures 4.01:1 here and is under the floor for text this size. */
+.lp-out {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content max-content max-content max-content;
+  justify-content: center;
+  gap: 14px clamp(10px, 1.6vw, 18px);
+  font-family: var(--mono);
+  font-size: clamp(11px, 1.05vw, 13px);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
   text-align: left;
 }
-.lp-signals-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 18px;
-  border-bottom: 1px solid var(--card-rule);
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--dimmer);
-}
-.lp-live { display: inline-flex; align-items: center; gap: 8px; color: var(--ok); }
-.lp-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
-.lp-signal-list { list-style: none; margin: 0; padding: 0; }
-.lp-signal {
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding: 18px;
-  border-bottom: 1px solid var(--card-rule);
-}
-.lp-signal:last-child { border-bottom: 0; }
-.lp-signal-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
-.lp-signal.is-accent .lp-signal-dot { background: var(--accent); }
-.lp-signal-name {
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  color: var(--ash);
-}
-.lp-signal-value {
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ok);
-  text-align: right;
-}
-.lp-signal.is-accent .lp-signal-value { color: var(--accent); }
+.lp-out-row { display: contents; }
+.lp-out-key { color: var(--telemetry-mute); }
+.lp-out-arrow { color: var(--telemetry-mute); }
+.lp-out-value { margin: 0; color: #FFFFFF; }
+.lp-out-status { color: var(--telemetry-mute); }
 
-/* The pulse is the only ambient motion on the screen, and it is on a dot
-   rather than on anything a reader has to read. */
-@media (prefers-reduced-motion: no-preference) {
-  .lp-live-dot { animation: lp-pulse 2.4s ease-in-out infinite; }
-}
-@keyframes lp-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.45; transform: scale(0.82); }
+/* Under about 380px the four tracks stop fitting, so the status drops to its
+   own line rather than pushing the page sideways. */
+@media (max-width: 400px) {
+  .lp-out { grid-template-columns: max-content max-content 1fr; gap: 10px; }
+  .lp-out-status { grid-column: 1 / -1; margin-top: -4px; }
 }
 
 /* ----------------------------------------------------------- the controls */
@@ -2889,10 +2865,6 @@ pre { font-weight: 400; }
 .lp-back:hover:not(:disabled) { color: #FFFFFF; border-color: var(--rule-mid); }
 .lp-back:disabled { opacity: 0.4; cursor: not-allowed; }
 
-@media (max-width: 560px) {
-  .lp-signal { grid-template-columns: 10px minmax(0, 1fr); row-gap: 6px; }
-  .lp-signal-value { grid-column: 2; text-align: left; }
-}
 @media (prefers-reduced-motion: reduce) {
   .launchpad, .lp-dot { transition: none; }
 }

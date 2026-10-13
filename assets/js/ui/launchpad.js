@@ -73,11 +73,13 @@ const COMPARE = {
   },
 };
 
-/* Screen four. Every figure here came out of running the course's own code. */
+/* Screen four, as config output rather than a dashboard. Every figure came out
+   of running the course's own code: 400,000 entries and 0.106 ms from level 6,
+   16,639 settlement lines from level 10. */
 const SIGNALS = [
-  { id: 'ledger', name: 'Ledger balance', value: '400,000 entries verified', tone: 'ok' },
-  { id: 'index',  name: 'Index latency',  value: '0.106 ms response',        tone: 'accent' },
-  { id: 'recon',  name: 'Reconciliation', value: '16,639 lines to the cent', tone: 'ok' },
+  { key: 'sys.ledger_entries', value: '400,000', status: 'VERIFIED' },
+  { key: 'sys.index_latency',  value: '0.106ms', status: 'OK' },
+  { key: 'sys.reconciliation', value: '16,639',  status: 'RECONCILED' },
 ];
 
 /* Screen three takes its heading from COMPARE, so the title and the two cards
@@ -181,20 +183,15 @@ export function Launchpad({ onLaunch }) {
             </div>` : null}
 
           ${step === 2 ? html`
-            <div class="lp-signals">
-              <div class="lp-signals-bar">
-                <span>system traffic</span>
-                <span class="lp-live"><i class="lp-live-dot" aria-hidden="true"></i>live</span>
-              </div>
-              <ul class="lp-signal-list">
-                ${SIGNALS.map((g) => html`
-                  <li class=${`lp-signal is-${g.tone}`} key=${g.id}>
-                    <i class="lp-signal-dot" aria-hidden="true"></i>
-                    <span class="lp-signal-name">${g.name}</span>
-                    <span class="lp-signal-value">${g.value}</span>
-                  </li>`)}
-              </ul>
-            </div>` : null}
+            <dl class="lp-out">
+              ${SIGNALS.map((g) => html`
+                <div class="lp-out-row" key=${g.key}>
+                  <dt class="lp-out-key">${g.key}</dt>
+                  <span class="lp-out-arrow" aria-hidden="true">-></span>
+                  <dd class="lp-out-value">${g.value}</dd>
+                  <span class="lp-out-status">[${g.status}]</span>
+                </div>`)}
+            </dl>` : null}
         </div>
 
         <div class="lp-controls" data-rise>
