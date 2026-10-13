@@ -13,18 +13,20 @@
 
 <!-- What a chat app or a search result shows when someone pastes the link.
      og:image has to be absolute, so this pair of URLs is the one place in the
-     site that knows its own address. Every logo file is cut from
-     assets/img/brand/fq-logo-source.png by tools/build_brand.py. -->
+     site that knows its own address. Every icon is cut from
+     assets/img/brand/mou-logo-source.png by tools/build_mou_brand.py. The
+     ?v= token has to change whenever the card does: a chat app caches a link
+     preview for weeks and will keep serving the old one otherwise. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="FinQuest">
 <meta property="og:title" content="FinQuest, a fintech training arcade">
 <meta property="og:description" content="Twenty levels of fintech engineering, built rather than watched: from a first ledger to a payments API, a card lifecycle, an event log, a saga and a live schema migration, measured like production.">
 <meta property="og:url" content="https://finquest-rank-nullity.vercel.app/">
-<meta property="og:image" content="https://finquest-rank-nullity.vercel.app/assets/img/og-card.png?v=fq2">
+<meta property="og:image" content="https://finquest-rank-nullity.vercel.app/assets/img/og-card.png?v=mou1">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The FinQuest F(q) logo">
+<meta property="og:image:alt" content="Mou, the FinQuest rabbit, holding a stack of banknotes beside a bitcoin and an ether coin">
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">

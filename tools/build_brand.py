@@ -1,5 +1,15 @@
 """
-Build every logo asset from one source image.
+Build the F(q) wordmark assets. SUPERSEDED, and it will clobber the icons.
+
+The site's mark is Mou now, and tools/build_mou_brand.py builds the favicon,
+the apple touch icon and the link preview card from it. This script still
+writes those same four files from the old F(q) wordmark, so running it puts
+the previous logo back without saying so. It is kept because the wordmark
+source and its transparent cut-outs are still in assets/img/brand, and
+because the unblend trick here is the only way to rebuild them.
+
+Run it only to regenerate brand/fq-logo.png and brand/fq-logo-ink.png, and
+run tools/build_mou_brand.py afterwards to put the real icons back.
 
 Run from the repository root:  python tools/build_brand.py
 
