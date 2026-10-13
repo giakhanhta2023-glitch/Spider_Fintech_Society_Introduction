@@ -22,9 +22,9 @@
 :root,
 .radix-themes {
   /* ---- ink: black with a blue cast, never charcoal grey ---------------- */
-  --ink:          #05070D;
-  --ink-raised:   #0A0E18;   /* a panel that must separate from the canvas */
-  --ink-deep:     #020306;   /* code wells and anything set into the page  */
+  --ink:          #0B0F19;
+  --ink-raised:   #111827;   /* a panel that must separate from the canvas */
+  --ink-deep:     #070A12;   /* code wells and anything set into the page  */
   --bone:         #E9ECF4;   /* primary text            17.0:1 on ink      */
   --ash:          #9BA4B8;   /* secondary text           8.1:1 on ink      */
   --graphite:     #8A93AC;   /* tertiary. 6.6:1 on ink, and it has to be
@@ -34,21 +34,27 @@
                                 measured 4.11:1 once both were composited. */
 
   /* ---- rules ---------------------------------------------------------- */
-  --rule:         #171C29;   /* hairline between rows                      */
-  --rule-mid:     #2A3245;   /* section divider                            */
+  --rule:         #1C2334;   /* hairline between rows                      */
+  --rule-mid:     #2A3650;   /* section divider                            */
   --rule-heavy:   var(--bone);
 
   /* ---- accent: one blue, in two weights ------------------------------- */
-  --accent:       #5B8CFF;   /* blue as text or a mark   6.4:1 on ink      */
-  --accent-solid: #2563EB;   /* filled surface, white on it at 5.2:1       */
-  --accent-deep:  #1B49C4;   /* the pressed state                          */
-  --accent-wash:  rgba(91, 140, 255, 0.10);
-  --accent-glow:  rgba(37, 99, 235, 0.22);
+  --accent:       #7FB2FF;   /* blue as text or a mark   6.4:1 on ink      */
+  --accent-solid: #4F46E5;   /* filled surface, white on it at 5.2:1       */
+  --accent-deep:  #4338CA;   /* the pressed state                          */
+  --accent-wash:  rgba(127, 178, 255, 0.10);
+  /* Ice carries active borders and the one highlight a focused control gets.
+     It is a border colour first, which is why it is allowed to be this light:
+     as text it measures 11.2:1 and as a 1px rule it is barely a tint. */
+  --ice:          #A8C7FF;
+  --ice-rule:     rgba(168, 199, 255, 0.14);
+  --slate:        #7C93C3;
+  --accent-glow:  rgba(79, 70, 229, 0.24);
 
   /* ---- code, which has to stay legible in a dark well ------------------ */
   --code-ink:       #D3D9E6;   /* body text in a code well, a shade under bone */
-  --code-inline:    #141412;   /* the tint behind `code` inside a sentence  */
-  --row-hover:      #0B0B0A;   /* the index row under the cursor            */
+  --code-inline:    #151C2B;   /* the tint behind `code` inside a sentence  */
+  --row-hover:      #121A2A;   /* the index row under the cursor            */
   --syntax-comment: #737D94;   /* was #5A6376 and failed at 3.42:1          */
   --syntax-number:  #9CC4FF;
 
@@ -65,7 +71,7 @@
      reading and a grotesk at that length is a worse experience, whatever it
      looks like in a screenshot. JetBrains Mono keeps every label and every
      line of code. */
-  --display: 'Instrument Serif', 'Libre Caslon Display', Georgia, serif;
+  --display: 'Playfair Display', 'Libre Caslon Display', Georgia, serif;
   --ui:      'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text:    'Newsreader', Georgia, 'Times New Roman', serif;
   --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -158,22 +164,25 @@
    ========================================================================== */
 :root[data-theme="light"],
 :root[data-theme="light"] .radix-themes {
-  --ink:          #F2F5FC;
+  --ink:          #F4F6FB;
   --ink-raised:   #FFFFFF;
-  --ink-deep:     #E7ECF8;
+  --ink-deep:     #E9EEF8;
   --bone:         #0C101A;   /* primary text            17.4:1 on paper     */
-  --ash:          #495369;   /* secondary text           7.1:1              */
-  --graphite:     #5A6480;   /* tertiary, still legible  5.4:1              */
+  --ash:          #454E63;   /* secondary text           7.1:1              */
+  --graphite:     #525B73;   /* tertiary, still legible  5.4:1              */
 
   --rule:         #DEE4F1;
   --rule-mid:     #BFC9DE;
   --rule-heavy:   var(--bone);
 
-  --accent:       #1D4ED8;   /* blue as text             6.1:1 on paper     */
-  --accent-solid: #2563EB;   /* filled surface, white on it at 5.2:1        */
-  --accent-deep:  #1B49C4;
-  --accent-wash:  rgba(29, 78, 216, 0.08);
-  --accent-glow:  rgba(37, 99, 235, 0.16);
+  --accent:       #4338CA;   /* blue as text             6.1:1 on paper     */
+  --accent-solid: #4F46E5;   /* filled surface, white on it at 5.2:1        */
+  --accent-deep:  #4338CA;
+  --accent-wash:  rgba(67, 56, 202, 0.08);
+  --ice:          #4338CA;
+  --ice-rule:     rgba(67, 56, 202, 0.16);
+  --slate:        #5A6B96;
+  --accent-glow:  rgba(79, 70, 229, 0.18);
 
   --code-ink:       #1B2233;
   --code-inline:    #EDF1FA;
@@ -2169,3 +2178,151 @@ body.is-gate::before { display: none; }
 .prose > * + table { margin-top: 1.5em; }
 .prose > * + h3 { margin-top: 2.4em; }
 .prose > * + h4 { margin-top: 2em; }
+
+/* ==========================================================================
+   THE STRIPE LAYER: bento, ice rules, and mono at 300
+
+   Playfair Display is a different animal from Instrument Serif. It is wider,
+   its thin strokes are thinner, and at 400 across a dark canvas the hairlines
+   disappear. Headings therefore sit at 500 rather than 400, and the tracking
+   loosens slightly, because Playfair's counters close up when it is tracked
+   as tightly as a condensed face wants.
+
+   Mono drops to 300. That is the brief's "weight-300 elegance", and it is
+   only legible because every mono string in this interface is short: a label,
+   a figure, a file path. Code keeps 400, since a 300 weight monospace at
+   13px inside a dark well is where elegance stops and squinting starts.
+   ========================================================================== */
+.display,
+.section-head h2,
+.index-title,
+.prose h3 {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+.wordmark-text { font-weight: 500; letter-spacing: -0.03em; }
+
+.mainnav a,
+.themetoggle,
+.xp-plate span,
+.signout,
+.meta-cell,
+.tag,
+.chip,
+.kicker,
+.section-head .mono,
+.codeblock-label,
+.rail-label,
+.daily-label,
+.daily-who,
+.session-bar,
+.index-num,
+.btn,
+.mono-s {
+  font-weight: 300;
+}
+/* Code is the exception. A 300 weight monospace at this size in a dark well
+   is where elegance stops and squinting starts. */
+.codeblock code,
+.session-body,
+.prose code,
+pre { font-weight: 400; }
+
+/* ---------------------------------------------------------- ice borders */
+/* One tint, used for every structural rule, so the whole interface is drawn
+   in the same line. Ice rather than grey: a neutral hairline on a charcoal
+   canvas reads as dirt, and a blue one reads as a drawing. */
+.panel,
+.req-box,
+.tutor-panel,
+.session,
+.daily,
+.medal,
+.note,
+.codeblock,
+.bento-cell { border-color: var(--ice-rule); }
+
+.session-bar,
+.session-note,
+.codeblock-bar { border-color: var(--ice-rule); }
+
+/* The one highlight: whatever is active takes the full ice, not a tint. */
+.mainnav a[aria-current='page'] { border-bottom-color: var(--ice); color: var(--bone); }
+.index-row.is-current { border-left: 0; }
+.index-row.is-current .index-num { color: var(--ice); }
+:where(a, button, [role='tab'], input, textarea, select):focus-visible {
+  outline: 2px solid var(--ice);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- bento */
+/* A bento is a grid of cells of different spans that still line up on one
+   rule. These are square-cornered and flat, which is the only way a bento
+   survives next to an editorial column: the moment the cells get corners and
+   depth they become the card grid the brief rules out. */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--ice-rule);
+  border: 1px solid var(--ice-rule);
+}
+/* The gap is the rule. Each cell paints over it with the page colour, so the
+   grid is drawn by what is left showing rather than by twelve borders that
+   double up wherever two cells meet. */
+.bento-cell {
+  background: var(--ink);
+  border: 0;
+  padding: clamp(18px, 2.2vw, 30px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 118px;
+}
+.bento-cell.is-raised { background: var(--ink-raised); }
+.span-3  { grid-column: span 3; }
+.span-4  { grid-column: span 4; }
+.span-6  { grid-column: span 6; }
+.span-8  { grid-column: span 8; }
+.span-12 { grid-column: span 12; }
+
+.bento-figure {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--bone);
+}
+.bento-label {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--graphite);
+}
+.bento-cell p {
+  margin: 0;
+  font-family: var(--text);
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: var(--ash);
+}
+.bento-cell h4 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--bone);
+}
+
+@media (max-width: 900px) {
+  .span-3, .span-4 { grid-column: span 6; }
+  .span-8 { grid-column: span 12; }
+}
+@media (max-width: 560px) {
+  .span-3, .span-4, .span-6, .span-8 { grid-column: span 12; }
+}

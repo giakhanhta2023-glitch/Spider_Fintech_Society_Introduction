@@ -142,11 +142,23 @@ export function Home({ onAskTutor }) {
       <${TrackSwitch} active=${track} onPick=${pickTrack} />
 
       <!-- The numbers, set as a ruled table rather than four glowing cards. -->
-      <div class="datastrip">
-        <div><span class="v">${cleared}/${rungs}</span><span class="k">levels cleared</span></div>
-        <div><span class="v">${questions}</span><span class="k">drill questions</span></div>
-        <div><span class="v">${projects}</span><span class="k">things to build</span></div>
-        <div><span class="v">${store.xp().toLocaleString()}</span><span class="k">experience</span></div>
+      <div class="bento">
+        <div class="bento-cell span-3 is-raised">
+          <span class="bento-figure">${cleared}/${rungs}</span>
+          <span class="bento-label">levels cleared</span>
+        </div>
+        <div class="bento-cell span-3">
+          <span class="bento-figure">${questions}</span>
+          <span class="bento-label">drill questions</span>
+        </div>
+        <div class="bento-cell span-3">
+          <span class="bento-figure">${projects}</span>
+          <span class="bento-label">things to build</span>
+        </div>
+        <div class="bento-cell span-3">
+          <span class="bento-figure">${store.xp().toLocaleString()}</span>
+          <span class="bento-label">experience</span>
+        </div>
       </div>
 
       <!-- Contents page, for the chosen ladder. -->
@@ -163,17 +175,17 @@ export function Home({ onAskTutor }) {
       <!-- How a level works, as four numbered columns under one rule. -->
       <section class="section-tight">
         <${SectionHead} title="How a level works" />
-        <div class="grid grid-rows-m">
+        <div class="bento">
           ${[
             ['01', 'Learn', 'The ideas, with real numbers worked through and the reasons behind them.'],
             ['02', 'Tutorial', 'Follow along step by step. Everything the build needs is introduced right here.'],
             ['03', 'Drill', `15 questions with instant explanations. ${CFG.quiz.passMark} of 15 opens the build.`],
             ['04', 'Build', 'Something to make using only what you know, with a full solution if you get stuck.']
           ].map(([n, title, body], i) => html`
-            <div key=${i} class="how-col span-3">
-              <span class="kicker"><b>${n}</b></span>
-              <h3 class="title title-m">${title}</h3>
-              <p class="index-sub">${body}</p>
+            <div key=${i} class="bento-cell span-3">
+              <span class="bento-label">${n}</span>
+              <h4>${title}</h4>
+              <p>${body}</p>
             </div>`)}
         </div>
       </section>

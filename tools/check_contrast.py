@@ -40,10 +40,10 @@ def ratio(fg, bg):
 
 
 DARK = {
-    "ink": "#05070D", "ink-raised": "#0A0E18", "ink-deep": "#020306",
+    "ink": "#0B0F19", "ink-raised": "#111827", "ink-deep": "#070A12",
     "bone": "#E9ECF4", "ash": "#9BA4B8", "graphite": "#8A93AC",
-    "rule": "#171C29", "rule-mid": "#2A3245",
-    "accent": "#5B8CFF", "accent-solid": "#2563EB",
+    "rule": "#1C2334", "rule-mid": "#2A3650",
+    "accent": "#7FB2FF", "accent-solid": "#4F46E5",
     "moss": "#6E9C70", "crimson": "#C25E5E",
     "syntax-comment": "#737D94", "syntax-number": "#9CC4FF",
 }
@@ -52,10 +52,10 @@ DARK = {
 # identity, and a worse one: this palette's whole character is that the neutral
 # leans blue rather than grey or beige.
 LIGHT = {
-    "ink": "#F2F5FC", "ink-raised": "#FFFFFF", "ink-deep": "#E7ECF8",
-    "bone": "#0C101A", "ash": "#495369", "graphite": "#5A6480",
+    "ink": "#F4F6FB", "ink-raised": "#FFFFFF", "ink-deep": "#E9EEF8",
+    "bone": "#0C101A", "ash": "#454E63", "graphite": "#525B73",
     "rule": "#DEE4F1", "rule-mid": "#BFC9DE",
-    "accent": "#1D4ED8", "accent-solid": "#2563EB",
+    "accent": "#4338CA", "accent-solid": "#4F46E5",
     "moss": "#3F6B45", "crimson": "#A63F3F",
     "syntax-comment": "#5A6475", "syntax-number": "#1B4FA8",
 }
