@@ -103,10 +103,12 @@ window.FQ_CONTRAST = /* Contrast on a translucent interface, measured the only w
     }
   });
   /* A blank page has no text and therefore no failures, which once let a
-     crashed render report a clean pass. Anything under 20 checked elements on
-     a real view means the page did not render, and that is reported as a
-     failure of the check rather than a success of the design. */
-  const blank = checked < 20;
+     crashed render report a clean pass. The guard counts rendered characters
+     rather than elements: a deliberately sparse screen can hold a dozen text
+     nodes and be perfectly fine, which is what the onboarding gate does, so
+     counting elements reported a working page as broken. */
+  const printed = (document.body.innerText || '').trim().length;
+  const blank = checked === 0 || printed < 120;
   return {
     checked, blank,
     failures: blank ? -1 : fails.length,

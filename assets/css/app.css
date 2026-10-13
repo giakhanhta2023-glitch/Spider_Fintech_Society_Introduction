@@ -2565,274 +2565,164 @@ pre { font-weight: 400; }
 .index-row .index-sub { max-width: none; }
 
 
-/* ==========================================================================
-   THE LAUNCHPAD: a bounded shell, three panes, one navigation bar
 
-   The previous version let each zone run the full page width, which is what
-   made it read as a flat dashboard rather than an introduction. Everything
-   now lives inside one bounded card, so the text has an edge to stop at and
-   the three steps occupy the same frame as each other.
+/* ==========================================================================
+   THE LAUNCHPAD: a gate, then two columns
+
+   The left column may hold a title, a subtitle and the controls, and that is
+   the whole rule. Everything that wants explaining is drawn in the right
+   panel instead, which is what keeps this screen quiet while the rest of the
+   interface stays dense.
+
+   The glow is three blurred ellipses on a fixed, inert layer. Fixed rather
+   than absolute so no blur filter sits on a scrolling container, and inert so
+   nothing on it can swallow a click. They are kept weak on purpose: a wash
+   under text changes its effective background, and the contrast probe reads
+   ancestors rather than painted siblings, so anything strong enough to matter
+   here would be a ratio nothing is checking.
    ========================================================================== */
 .launchpad {
+  position: relative;
+  overflow: hidden;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  padding: clamp(16px, 3vw, 32px);
+  justify-content: center;
+  padding: clamp(20px, 4vw, 40px);
   opacity: 1;
-  transition: opacity 340ms var(--ease);
+  transition: opacity 320ms var(--ease);
 }
-.launchpad.is-leaving { opacity: 0; transform: translateY(-8px); }
+.launchpad.is-leaving { opacity: 0; }
 
-.lp-shell {
-  width: 100%;
-  max-width: 56rem;
-  margin: clamp(16px, 5vh, 48px) auto 0;
-  background: var(--ink-raised);
-  border: 1px solid var(--card-rule);
-  border-radius: 8px;
-  padding: clamp(22px, 3vw, 36px);
+.lp-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.lp-orb { position: absolute; display: block; border-radius: 50%; }
+.lp-orb-a {
+  top: -20%; left: -10%;
+  width: 600px; height: 600px;
+  background: rgba(30, 64, 175, 0.20);
+  filter: blur(130px);
+}
+.lp-orb-b {
+  top: 15%; right: -10%;
+  width: 700px; height: 500px;
+  background: linear-gradient(to bottom right, rgba(79, 70, 229, 0.15), rgba(124, 58, 237, 0.05));
+  filter: blur(150px);
+}
+.lp-orb-c {
+  bottom: -10%; left: 15%;
+  width: 500px; height: 400px;
+  background: rgba(2, 132, 199, 0.10);
+  filter: blur(120px);
+}
+:root[data-theme="light"] .lp-orb-a { background: rgba(30, 64, 175, 0.10); }
+:root[data-theme="light"] .lp-orb-b {
+  background: linear-gradient(to bottom right, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.03));
+}
+:root[data-theme="light"] .lp-orb-c { background: rgba(2, 132, 199, 0.06); }
+
+/* ------------------------------------------------------------- the gate */
+.lp-gate {
+  position: relative;
+  z-index: 10;
+  margin: 0 auto;
+  max-width: 34rem;
+  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: clamp(22px, 3vw, 32px);
+  align-items: center;
+  gap: 14px;
 }
-
-/* ------------------------------------------------------- the step rail */
-.lp-rail {
-  list-style: none;
+.lp-gate-title {
   margin: 0;
-  padding: 0 0 18px;
-  border-bottom: 1px solid var(--card-rule);
-  display: flex;
-  gap: clamp(16px, 3vw, 36px);
-  flex-wrap: wrap;
-}
-.lp-rail-item {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--dimmer);
-}
-/* A step not reached yet is quiet, not invisible. --card-rule is a hairline
-   colour and measured 1.24:1 as text here, which is the same mistake this
-   stylesheet made once before with locked row metadata. */
-.lp-rail-num { color: var(--dimmer); }
-.lp-rail-item.is-done .lp-rail-num,
-.lp-rail-item.is-done .lp-rail-name { color: var(--ok); }
-.lp-rail-item.is-on .lp-rail-num { color: var(--accent); }
-.lp-rail-item.is-on .lp-rail-name { color: var(--bone); }
-
-/* ------------------------------------------------------------ the pane */
-.lp-pane { min-height: 20rem; }
-.lp-step { display: flex; flex-direction: column; gap: 18px; }
-.lp-head {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(1.5rem, 2.8vw, 2rem);
-  line-height: 1.14;
-  letter-spacing: -0.025em;
+  font-size: clamp(2rem, 4.4vw, 2.9rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
   color: var(--bone);
-  margin: 0;
   text-wrap: balance;
 }
-.lp-body {
-  margin: 0;
+.lp-gate-sub {
+  margin: 0 0 10px;
   font-family: var(--text);
-  font-size: 0.96rem;
-  line-height: 1.68;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: var(--dim);
+  max-width: 30rem;
 }
-.lp-body-wide { max-width: 62ch; }
-.lp-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(18px, 2.6vw, 30px); }
-.lp-col { display: flex; flex-direction: column; gap: 14px; }
 
-.lp-points { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 14px; }
-.lp-points li {
-  font-family: var(--text);
-  font-size: 0.94rem;
-  line-height: 1.62;
-  color: var(--dim);
+/* ----------------------------------------------------------- the wizard */
+.lp-wizard {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(22px, 3vw, 36px);
+  align-items: stretch;
 }
-.lp-points li::marker { color: var(--accent); }
-
-/* ----------------------------------------------------------- the chart */
-/* Bars with no axis and no figure, and a caption that says so. Drawing a
-   scale here would be inventing data, and this is a page about not doing
-   that. */
-.lp-chart {
-  margin: 0;
-  background: var(--card);
-  border: 1px solid var(--card-rule);
-  border-radius: 6px;
-  padding: 16px;
+.lp-left {
+  grid-column: span 4;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  justify-content: center;
-  min-height: 12rem;
-}
-.lp-chart-title,
-.lp-chart-note,
-.lp-chart-label {
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dimmer);
-}
-.lp-chart-plot { display: flex; flex-direction: column; gap: 12px; }
-.lp-chart-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); align-items: center; gap: 10px; }
-.lp-bars { display: flex; gap: 3px; }
-.lp-bars i { display: block; width: 100%; max-width: 18px; height: 22px; border-radius: 1px; }
-.lp-bars.is-crowd i { background: var(--block-idle); }
-.lp-bars.is-roles i { background: var(--accent); }
-.lp-chart-note { text-transform: none; letter-spacing: 0.04em; line-height: 1.5; }
-
-/* -------------------------------------------------------- the terminal */
-.lp-term {
-  margin: 0;
-  background: var(--ink-deep);
-  border: 1px solid var(--card-rule);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 12rem;
-}
-.lp-term-bar {
-  display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 9px 14px;
-  border-bottom: 1px solid var(--card-rule);
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dimmer);
+  gap: 32px;
+  min-height: 19rem;
 }
-.lp-term-body {
-  margin: 0;
-  padding: 14px;
-  overflow-x: auto;
-  font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.9;
-  color: var(--code-ink);
-}
-.lp-line { display: block; white-space: pre-wrap; }
-.lp-tag { color: var(--accent); }
-.lp-tag.is-ok { color: var(--ok); }
-
-/* --------------------------------------------------------- the channels */
-.lp-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.lp-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  text-align: left;
-  padding: clamp(18px, 2.2vw, 24px);
-  background: var(--card);
-  border: 1px solid var(--card-rule);
-  border-radius: 6px;
-  cursor: pointer;
-  font: inherit;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.lp-card:hover { background: var(--card-hover); }
-.lp-card.tone-blue   { --track-accent: var(--accent); }
-.lp-card.tone-violet { --track-accent: var(--violet); }
-.lp-card.is-picked { border-color: var(--track-accent); background: var(--card-hover); }
-
-.lp-card-track {
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--track-accent);
-}
-.lp-card-head {
+.lp-title {
+  margin: 0 0 10px;
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  line-height: 1.14;
+  letter-spacing: -0.028em;
   color: var(--bone);
+  text-wrap: balance;
 }
-.lp-card-focus { font-family: var(--text); font-size: 0.9rem; line-height: 1.6; color: var(--dim); }
-
-.lp-firm-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
-.lp-firm {
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--dimmer);
-  border: 1px solid var(--card-rule);
-  border-radius: 3px;
-  padding: 4px 8px;
-}
-.lp-card-counts {
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--dimmer);
-}
-.lp-card-counts b { color: var(--bone); font-weight: 400; }
-.lp-card-counts i { font-style: normal; margin: 0 4px; }
-.lp-foot-note {
+.lp-sub {
   margin: 0;
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 10px;
-  letter-spacing: 0.04em;
+  font-family: var(--text);
+  font-size: 0.92rem;
   line-height: 1.6;
-  color: var(--dimmer);
+  color: var(--dim);
 }
 
-/* ------------------------------------------------------- the navigation */
-.lp-nav {
-  margin-top: auto;
-  padding-top: 18px;
-  border-top: 1px solid var(--card-rule);
+.lp-right {
+  grid-column: span 8;
+  background: var(--ink-raised);
+  border: 1px solid var(--card-rule);
+  border-radius: 12px;
+  padding: clamp(20px, 2.6vw, 32px);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
 }
-.lp-nav-count {
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--dimmer);
+
+/* ---------------------------------------------------------- the controls */
+.lp-controls { display: flex; flex-direction: column; gap: 18px; }
+.lp-dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.lp-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--card-rule);
+  transition: background var(--dur) var(--ease), width var(--dur) var(--ease);
 }
-.lp-nav-btns { display: flex; align-items: center; gap: 12px; }
+.lp-dot.is-done { background: var(--ok); }
+.lp-dot.is-on { width: 22px; border-radius: 3px; background: var(--accent); }
+
+.lp-btns { display: flex; align-items: center; gap: 10px; }
 .lp-back {
   font-family: var(--mono);
   font-weight: 300;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  padding: 15px 20px;
+  padding: 15px 18px;
   background: none;
   border: 1px solid var(--card-rule);
-  border-radius: 0;
   color: var(--dim);
   cursor: pointer;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -2840,14 +2730,137 @@ pre { font-weight: 400; }
 .lp-back:hover:not(:disabled) { color: var(--bone); border-color: var(--rule-mid); }
 .lp-back:disabled { opacity: 0.4; cursor: not-allowed; }
 
-@media (max-width: 760px) {
-  .lp-split,
-  .lp-channels { grid-template-columns: 1fr; }
-  .lp-pane { min-height: 0; }
-  .lp-nav { flex-direction: column-reverse; align-items: stretch; }
-  .lp-nav-btns { justify-content: space-between; }
-  .lp-nav-count { text-align: center; }
+/* ------------------------------------------------- step 1: the selectors */
+.lp-selects { display: flex; flex-direction: column; gap: 14px; }
+.lp-select {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  width: 100%;
+  padding: clamp(20px, 2.4vw, 28px);
+  background: var(--card);
+  border: 1px solid var(--card-rule);
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.lp-select:hover { background: var(--card-hover); }
+.lp-select.tone-blue   { --track-accent: var(--accent); }
+.lp-select.tone-violet { --track-accent: var(--violet); }
+.lp-select.is-picked { border-color: var(--track-accent); background: var(--card-hover); }
+.lp-select-name {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  letter-spacing: -0.02em;
+  color: var(--bone);
+}
+.lp-select.is-picked .lp-select-name { color: var(--track-accent); }
+.lp-select-firms {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.lp-sep { font-style: normal; color: var(--card-rule); margin-right: 10px; }
+
+/* ----------------------------------------------------- step 2: the plot */
+.lp-plot { display: flex; flex-direction: column; gap: 22px; }
+.lp-plot-row { display: flex; flex-direction: column; gap: 10px; }
+.lp-plot-label {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.lp-plot-bar { display: block; height: 14px; background: var(--block-idle); border-radius: 2px; overflow: hidden; }
+.lp-plot-bar i { display: block; height: 100%; border-radius: 2px; }
+.lp-plot-bar.is-crowd i { background: var(--block-idle); }
+.lp-plot-bar.is-rare i { background: var(--accent); box-shadow: 0 0 18px var(--accent-glow); }
+.lp-plot-note {
+  margin: 0;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 0.03em;
+  color: var(--dimmer);
+}
+
+/* --------------------------------------------------- step 3: the verify */
+.lp-verify {
+  background: var(--ink-deep);
+  border: 1px solid var(--card-rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.lp-verify-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--card-rule);
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.lp-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  color: var(--accent);
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-rule);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.lp-run:hover:not(:disabled) { color: var(--ice); border-color: var(--accent); }
+.lp-run:disabled { color: var(--ok); border-color: var(--ok-rule); background: var(--ok-wash); cursor: default; }
+.lp-run-tri {
+  width: 0; height: 0;
+  border-left: 6px solid currentColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+.lp-verify-out {
+  margin: 0;
+  padding: 16px 14px;
+  min-height: 7.5rem;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 2;
+  overflow-x: auto;
+}
+.lp-out { display: block; white-space: pre; }
+.lp-out.is-ok { color: var(--ok); }
+.lp-out.is-accent { color: var(--accent); }
+.lp-out.is-idle { color: var(--dimmer); }
+
+@media (max-width: 900px) {
+  .lp-left, .lp-right { grid-column: span 12; }
+  .lp-left { min-height: 0; gap: 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .launchpad { transition: none; }
+  .launchpad, .lp-dot { transition: none; }
 }
