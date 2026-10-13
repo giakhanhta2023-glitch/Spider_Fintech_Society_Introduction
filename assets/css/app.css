@@ -22,34 +22,34 @@
 :root,
 .radix-themes {
   /* ---- ink: black with a blue cast, never charcoal grey ---------------- */
-  --ink:          #0B0F19;
-  --ink-raised:   #111827;   /* a panel that must separate from the canvas */
-  --ink-deep:     #070A12;   /* code wells and anything set into the page  */
-  --bone:         #F8FAFC;   /* primary text            18.3:1 on ink, 16.1 on a card */
-  --ash:          #CBD5E1;   /* body copy               12.9:1 on ink, 11.3 on a card.
+  --ink:          #101010;
+  --ink-raised:   #1A1A1A;   /* a panel that must separate from the canvas */
+  --ink-deep:     #0B0B0B;   /* code wells and anything set into the page  */
+  --bone:         #FFFFFF;   /* primary text            18.3:1 on ink, 16.1 on a card */
+  --ash:          #BDBDBD;   /* body copy               12.9:1 on ink, 11.3 on a card.
                                 AAA everywhere it lands, not just on the page ground. */
-  --graphite:     #94A3B8;   /* tertiary. 7.5:1 on ink, and it has to be
+  --graphite:     #8B949E;   /* tertiary. 7.5:1 on ink, and it has to be
                                 that high because glass stacks: a plate
                                 inside the masthead pill sits under two
                                 translucent layers, and the old #78819A
                                 measured 4.11:1 once both were composited. */
 
   /* ---- rules ---------------------------------------------------------- */
-  --rule:         #1C2334;   /* hairline between rows                      */
-  --rule-mid:     #2A3650;   /* section divider                            */
+  --rule:         #3D3A39;   /* hairline between rows                      */
+  --rule-mid:     #4A4645;   /* section divider                            */
   --rule-heavy:   var(--bone);
 
   /* ---- accent: one blue, in two weights ------------------------------- */
-  --accent:       #7FB2FF;   /* blue as text or a mark   6.4:1 on ink      */
-  --accent-solid: #4F46E5;   /* filled surface, white on it at 5.2:1       */
-  --accent-deep:  #4338CA;   /* the pressed state                          */
-  --accent-wash:  rgba(127, 178, 255, 0.10);
+  --accent:       #00D992;   /* blue as text or a mark   6.4:1 on ink      */
+  --accent-solid: #00D992;   /* filled surface, white on it at 5.2:1       */
+  --accent-deep:  #10B981;   /* the pressed state                          */
+  --accent-wash:  rgba(0, 217, 146, 0.10);
   /* Ice carries active borders and the one highlight a focused control gets.
      It is a border colour first, which is why it is allowed to be this light:
      as text it measures 11.2:1 and as a 1px rule it is barely a tint. */
-  --ice:          #A8C7FF;
-  --ice-rule:     rgba(168, 199, 255, 0.14);
-  --slate:        #7C93C3;
+  --ice:          #2FD6A1;
+  --ice-rule:     rgba(47, 214, 161, 0.14);
+  --slate:        #8B949E;
 
   /* The dashboard card and the states a level can be in. Every one of these
      was measured on the card rather than on the page, because a wash over a
@@ -57,28 +57,28 @@
      title 14.2:1, description 6.7:1, identifier 5.5:1, emerald label on its
      own wash 7.5:1, and the filled progress block stands 4.0:1 clear of the
      empty one so the on and off states read without colour alone. */
-  --card:        #151D30;
-  --card-hover:  #18203A;
-  --card-rule:   #1E2A42;
-  --ice-rule-strong: rgba(168, 199, 255, 0.28);
-  --accent-rule: rgba(79, 70, 229, 0.30);
+  --card:        #101010;
+  --card-hover:  #1A1A1A;
+  --card-rule:   #3D3A39;
+  --ice-rule-strong: rgba(47, 214, 161, 0.28);
+  --accent-rule: rgba(0, 217, 146, 0.30);
 
-  --ok:          #34D399;
-  --ok-wash:     rgba(16, 185, 129, 0.10);
-  --ok-rule:     rgba(16, 185, 129, 0.22);
-  --idle-wash:   rgba(100, 116, 139, 0.10);
-  --idle-rule:   rgba(100, 116, 139, 0.22);
+  --ok:          #00D992;
+  --ok-wash:     rgba(0, 217, 146, 0.10);
+  --ok-rule:     rgba(0, 217, 146, 0.22);
+  --idle-wash:   rgba(139, 148, 158, 0.10);
+  --idle-rule:   rgba(139, 148, 158, 0.22);
 
-  --block-on:    #3B82F6;
-  --block-idle:  #1E293B;
+  --block-on:    #00D992;
+  --block-idle:  #2A2A2A;
   /* These two carry most of the secondary copy outside a lesson, and for a
      long time they were the quietest thing on the page at 4.84:1 and 4.73:1 on
      a card. check_contrast.py did not cover them, so nothing caught it. Both
      are now in the checker, --dim at the 7:1 body floor and --dimmer at the
      tertiary one. */
-  --dim:         #C2CCDC;   /* body copy under a title   10.4:1 on a card */
-  --dimmer:      #94A3B8;   /* metadata, mono micro-labels 6.6:1 on a card */
-  --row-tint:    #1E293B;   /* the stripe that separates table rows        */
+  --dim:         #BDBDBD;   /* body copy under a title   10.4:1 on a card */
+  --dimmer:      #8B949E;   /* metadata, mono micro-labels 6.6:1 on a card */
+  --row-tint:    #1A1A1A;   /* the stripe that separates table rows        */
 
   /* The second accent. Stripe's own #635BFF measures 4.08:1 as text here and
      fails, the same way its indigo did, so purple gets a readable tone and a
@@ -86,26 +86,29 @@
 
      It is not decoration: blue is the engineering ladder and violet is the
      analyst one, so the colour tells you which track you are standing in. */
-  --violet:       #A78BFA;
-  --violet-solid: #7C3AED;
-  --violet-deep:  #6D28D9;
-  --violet-wash:  rgba(139, 92, 246, 0.10);
-  --violet-rule:  rgba(139, 92, 246, 0.24);
+  --violet:       #2FD6A1;
+  --violet-solid: #10B981;
+  --violet-deep:  #0E9F72;
+  --violet-wash:  rgba(47, 214, 161, 0.10);
+  --violet-rule:  rgba(47, 214, 161, 0.24);
 
-  --accent-glow:  rgba(79, 70, 229, 0.24);
+  --accent-glow:  rgba(0, 217, 146, 0.20);
+  /* The label on a filled accent surface. White on electric green is
+     1.85:1; the brand puts its own near-black on the fill instead. */
+  --on-accent:    #101010;
 
   /* ---- code, which has to stay legible in a dark well ------------------ */
-  --code-ink:       #D3D9E6;   /* body text in a code well, a shade under bone */
-  --code-inline:    #151C2B;   /* the tint behind `code` inside a sentence  */
-  --row-hover:      #121A2A;   /* the index row under the cursor            */
-  --syntax-comment: #949EB5;   /* was #5A6376 and failed at 3.42:1          */
-  --syntax-number:  #9CC4FF;
+  --code-ink:       #F5F6F7;   /* body text in a code well, a shade under bone */
+  --code-inline:    #1A1A1A;   /* the tint behind `code` inside a sentence  */
+  --row-hover:      #1A1A1A;   /* the index row under the cursor            */
+  --syntax-comment: #969FA9;   /* was #5A6376 and failed at 3.42:1          */
+  --syntax-number:  #7EE7C0;
 
   /* ---- semantics: only for right and wrong ----------------------------- */
-  --moss:         #6E9C70;
-  --moss-wash:    rgba(110, 156, 112, 0.10);
-  --crimson:      #C25E5E;
-  --crimson-wash: rgba(194, 94, 94, 0.10);
+  --moss:         #00D992;
+  --moss-wash:    rgba(0, 217, 146, 0.10);
+  --crimson:      #E07A7A;
+  --crimson-wash: rgba(224, 122, 122, 0.10);
 
   /* ---- type ------------------------------------------------------------ */
   /* Space Grotesk carries the interface: the wide geometric grotesk this
@@ -221,44 +224,45 @@
   --rule-mid:     #BFC9DE;
   --rule-heavy:   var(--bone);
 
-  --accent:       #4338CA;   /* blue as text             6.1:1 on paper     */
-  --accent-solid: #4F46E5;   /* filled surface, white on it at 5.2:1        */
-  --accent-deep:  #4338CA;
-  --accent-wash:  rgba(67, 56, 202, 0.08);
-  --ice:          #4338CA;
-  --ice-rule:     rgba(67, 56, 202, 0.16);
-  --slate:        #5A6B96;
+  --accent:       #076B4C;   /* blue as text             6.1:1 on paper     */
+  --accent-solid: #076B4C;   /* filled surface, white on it at 5.2:1        */
+  --accent-deep:  #065F46;
+  --accent-wash:  rgba(7, 107, 76, 0.08);
+  --ice:          #065F46;
+  --ice-rule:     rgba(7, 107, 76, 0.16);
+  --slate:        #5F6B66;
 
   --card:        #FFFFFF;
   --card-hover:  #F7F9FD;
   --card-rule:   #DCE3F0;
-  --ice-rule-strong: rgba(67, 56, 202, 0.30);
-  --accent-rule: rgba(79, 70, 229, 0.28);
+  --ice-rule-strong: rgba(7, 107, 76, 0.30);
+  --accent-rule: rgba(7, 107, 76, 0.28);
 
-  --ok:          #0F766E;
-  --ok-wash:     rgba(15, 118, 110, 0.09);
-  --ok-rule:     rgba(15, 118, 110, 0.24);
+  --ok:          #076B4C;
+  --ok-wash:     rgba(7, 107, 76, 0.09);
+  --ok-rule:     rgba(7, 107, 76, 0.24);
   --idle-wash:   rgba(71, 85, 105, 0.08);
   --idle-rule:   rgba(71, 85, 105, 0.22);
 
-  --block-on:    #4F46E5;
+  --block-on:    #076B4C;
   --block-idle:  #D3DBEB;
   --dim:         #434C60;   /* body copy under a title   7.4:1 at worst */
   --dimmer:      #606A80;
 
-  --violet:       #6D28D9;
-  --violet-solid: #7C3AED;
-  --violet-deep:  #5B21B6;
-  --violet-wash:  rgba(124, 58, 237, 0.09);
-  --violet-rule:  rgba(124, 58, 237, 0.24);
+  --violet:       #065F46;
+  --violet-solid: #076B4C;
+  --violet-deep:  #054E3A;
+  --violet-wash:  rgba(7, 107, 76, 0.09);
+  --violet-rule:  rgba(7, 107, 76, 0.24);
 
-  --accent-glow:  rgba(79, 70, 229, 0.18);
+  --accent-glow:  rgba(7, 107, 76, 0.18);
 
   --code-ink:       #1B2233;
+  --on-accent:      #FFFFFF;
   --code-inline:    #EDF1FA;
   --row-hover:      #E9EEF9;
   --syntax-comment: #454D5B;
-  --syntax-number:  #1B4FA8;
+  --syntax-number:  #0A5C44;
 
   --moss:         #3F6B45;
   --moss-wash:    rgba(63, 107, 69, 0.09);
@@ -320,7 +324,7 @@ body::before {
   z-index: -1;
 }
 
-::selection { background: var(--accent-solid); color: #FFFFFF; }
+::selection { background: var(--accent-solid); color: var(--on-accent); }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 main:focus { outline: none; }
@@ -705,7 +709,7 @@ a.link:hover { color: var(--accent); border-color: var(--accent); }
 }
 .btn:hover { background: var(--bone); color: var(--ink); }
 
-.btn-accent { border-color: var(--accent-solid); background: var(--accent-solid); color: #FFFFFF; }
+.btn-accent { border-color: var(--accent-solid); background: var(--accent-solid); color: var(--on-accent); }
 .btn-accent:hover { background: transparent; color: var(--accent); border-color: var(--accent); }
 
 .btn-quiet { border-color: var(--rule-mid); color: var(--ash); }
@@ -2066,8 +2070,8 @@ body.is-gate::before { display: none; }
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .btn:hover { background: var(--bone); color: var(--ink); }
-.btn-accent { background: var(--accent-solid); border-color: var(--accent-solid); color: #fff; }
-.btn-accent:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+.btn-accent { background: var(--accent-solid); border-color: var(--accent-solid); color: var(--on-accent); }
+.btn-accent:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--on-accent); }
 /* The arrow is a mark on the line, not a disc stuck to the end of a pill. */
 .btn .arrow {
   width: auto;

@@ -40,13 +40,13 @@ def ratio(fg, bg):
 
 
 DARK = {
-    "ink": "#0B0F19", "ink-raised": "#111827", "ink-deep": "#070A12",
-    "bone": "#F8FAFC", "ash": "#CBD5E1", "graphite": "#94A3B8",
-    "dim": "#C2CCDC", "dimmer": "#94A3B8", "card": "#151D30",
-    "rule": "#1C2334", "rule-mid": "#2A3650",
-    "accent": "#7FB2FF", "accent-solid": "#4F46E5",
-    "moss": "#6E9C70", "crimson": "#C25E5E",
-    "syntax-comment": "#949EB5", "syntax-number": "#9CC4FF",
+    "ink": "#101010", "ink-raised": "#1A1A1A", "ink-deep": "#0B0B0B",
+    "bone": "#FFFFFF", "ash": "#BDBDBD", "graphite": "#8B949E",
+    "dim": "#BDBDBD", "dimmer": "#8B949E", "card": "#101010",
+    "rule": "#3D3A39", "rule-mid": "#4A4645",
+    "accent": "#00D992", "accent-solid": "#00D992", "on-accent": "#101010",
+    "moss": "#00D992", "crimson": "#E07A7A",
+    "syntax-comment": "#969FA9", "syntax-number": "#7EE7C0",
 }
 
 # The light theme keeps the blue cast. A warm cream paper would be a different
@@ -57,9 +57,9 @@ LIGHT = {
     "bone": "#0C101A", "ash": "#454E63", "graphite": "#525B73",
     "dim": "#434C60", "dimmer": "#606A80", "card": "#FFFFFF",
     "rule": "#DEE4F1", "rule-mid": "#BFC9DE",
-    "accent": "#4338CA", "accent-solid": "#4F46E5",
+    "accent": "#076B4C", "accent-solid": "#076B4C", "on-accent": "#FFFFFF",
     "moss": "#3F6B45", "crimson": "#A63F3F",
-    "syntax-comment": "#454D5B", "syntax-number": "#1B4FA8",
+    "syntax-comment": "#454D5B", "syntax-number": "#0A5C44",
 }
 
 # foreground, background, the floor it must clear, and what a reader sees
@@ -98,7 +98,16 @@ for name, T in (("DARK", DARK), ("LIGHT", LIGHT)):
         print(f"  {ok} {r:5.2f}  (>= {floor})  {fg:>14} on {bg:<11} {what}")
     print(f"  lowest: {worst:.2f}")
 
-# White on the filled accent button, which is the one inverted pair.
+# The label on the filled accent button, which is the one inverted pair. It
+# used to assume white, which was true while the fill was indigo and became a
+# 1.85:1 failure the moment the fill went electric green. The label is a token
+# now, so the pair is measured rather than assumed.
+bad = False
 for name, T in (("DARK", DARK), ("LIGHT", LIGHT)):
-    r = ratio("#FFFFFF", T["accent-solid"])
-    print(f"\n{name}: white on accent-solid = {r:.2f} (>= 4.5)")
+    r = ratio(T["on-accent"], T["accent-solid"])
+    flag = "ok  " if r >= 4.5 else "FAIL"
+    if r < 4.5:
+        bad = True
+    print(f"\n{name}: {flag} {r:.2f} (>= 4.5)  the label on a filled accent button")
+if bad:
+    raise SystemExit(1)
