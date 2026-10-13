@@ -2784,6 +2784,22 @@ pre { font-weight: 400; }
 }
 .lp-compare-row.is-bright .lp-compare-text { color: #FFFFFF; }
 
+/* A figure on screen names where it came from. Without the line under it the
+   number is just an assertion, which is the thing this screen is arguing
+   against. */
+.lp-compare-source {
+  display: block;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-rule);
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+
 /* ---------------------------------------- screen 4: the traffic dashboard */
 .lp-signals {
   background: var(--ink-deep);

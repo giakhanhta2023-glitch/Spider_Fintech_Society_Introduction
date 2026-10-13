@@ -54,29 +54,34 @@ const TRACKS = [
 const COMPARE = {
   eng: {
     title: 'The entry-level stack is saturated.',
-    sub: 'A to-do app does not show that you can handle money.',
+    sub: 'Writing code is no longer the scarce part.',
     rows: [
-      { label: 'saturated track', tone: 'muted',
-        text: 'Saturated portfolios are built on to-do apps and generic web clones ' +
-              'that do not show you can handle production engineering.' },
-      { label: 'finquest infrastructure', tone: 'bright',
-        text: 'You build a ledger that balances across 400,000 entries, an API other ' +
-              'systems depend on, and a reconciliation job that explains every ' +
-              'difference across 16,639 settlement lines.' },
+      { label: 'the market', tone: 'muted',
+        text: 'Computer science graduates sit at 7.0% unemployment and computer ' +
+              'engineering at 7.8%, the second highest of 73 majors. Across all ' +
+              'majors it is 4.2%.',
+        source: 'New York Fed, outcomes by major, 2024 census data' },
+      { label: 'what finquest gives you', tone: 'bright',
+        text: 'You finish holding the work a screen asks about: a ledger that balances ' +
+              'across 400,000 entries, an HTTP API other systems depend on, and a ' +
+              'reconciliation job that explains every difference across 16,639 ' +
+              'settlement lines.' },
     ],
   },
   fpa: {
     title: 'Excel is no longer enough.',
     sub: 'The analyst work that gets noticed is the part you stopped doing by hand.',
     rows: [
-      { label: 'saturated track', tone: 'muted',
-        text: 'A finance degree still ends at the spreadsheet. The close gets done by ' +
-              'hand every month, and nothing in the portfolio shows you can make a ' +
-              'machine do it instead.' },
-      { label: 'finquest infrastructure', tone: 'bright',
-        text: 'You answer the ten questions finance asks every month from 3,778 invoices ' +
-              'in SQL, then rebuild the same close pack in pandas so it runs in 39 ' +
-              'milliseconds and stops rather than print a number it cannot defend.' },
+      { label: 'the market', tone: 'muted',
+        text: '39.4% of recent graduates are underemployed, in jobs that do not require ' +
+              'a degree. Finance is not the worst hit, which is the point: the degree ' +
+              'alone does not separate you from everyone else holding one.',
+        source: 'New York Fed, outcomes by major, 2024 census data' },
+      { label: 'what finquest gives you', tone: 'bright',
+        text: 'You finish holding the technical half of the job: ten questions answered ' +
+              'from 3,778 invoices in SQL, the same close pack rebuilt in pandas so it ' +
+              'runs in 39 milliseconds, and a fifteen-month model that balances across ' +
+              'all four scenarios.' },
     ],
   },
 };
@@ -99,7 +104,11 @@ const STEPS = [
 export function Launchpad({ onLaunch }) {
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
-  const [picked, setPicked] = useState(store.track().id);
+  /* store.track() is the track id, the way every caller in views.js reads it.
+     This asked for .id on the string, so picked started undefined: no card
+     showed as chosen on arrival, screen three always fell back to the
+     engineering copy, and onLaunch handed setTrack an undefined it rejected. */
+  const [picked, setPicked] = useState(store.track());
   const [leaving, setLeaving] = useState(false);
   const stackRef = useRef(null);
 
@@ -180,6 +189,7 @@ export function Launchpad({ onLaunch }) {
                 <div class=${`lp-compare-row is-${c.tone}`} key=${c.label}>
                   <span class="lp-compare-label">${c.label}</span>
                   <p class="lp-compare-text">${c.text}</p>
+                  ${c.source ? html`<span class="lp-compare-source">${c.source}</span>` : null}
                 </div>`)}
             </div>` : null}
 
