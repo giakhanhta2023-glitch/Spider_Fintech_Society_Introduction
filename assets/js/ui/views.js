@@ -99,47 +99,46 @@ export function Home({ onAskTutor }) {
   return html`
     <div class="page">
 
-      <!-- Masthead: the title and the way in share the left seven columns, so
-           the eye goes name, promise, button without crossing the page. The
-           quote is an aside and sits in the right four where an aside belongs.
-           Deliberately off-centre, and deliberately not two half-empty halves. -->
-      <section class="section grid">
-        <div class="col-1-7">
+      <!-- Masthead: one centred column, read straight down. Name, promise, the
+           way in, the thing you are about to write, and the line of the day as
+           a sign off. The split version put the session in a right hand column,
+           which on a wide screen read as two half-empty halves with nothing
+           deciding which to look at first. One column decides for you. -->
+      <section class="section hero-stack">
+        <div class="hero-head">
           <span class="kicker">Spider Fintech Society</span>
           <h1 class="display display-xl">
             Learn fintech<br />by building it
           </h1>
-          <div class="btn-row" style=${{ marginTop: 'var(--s-4)' }}>
-            <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
-              ${cleared ? `continue level ${String(FQ.positionOf(FQ.level(current))).padStart(2, '0')}`
-                        : `start ${meta.name} level ${first}`}
-            <//>
-            <button class="mou-btn mou-btn-l" type="button" onClick=${onAskTutor}>
-              <${Mou} mood="idle" size=${30} title="Mou" />
-              <span>meet Mou, your tutor</span>
-            </button>
-          </div>
-
-          <!-- One line, picked by the date rather than at random, so the whole
-               society sees the same one on the same day. Under the title now:
-               the session has the right hand column, and a quote is a sign off
-               rather than something to put beside the main claim. -->
-          <div class="hero-sign">
-            <${Companions} size=${52} />
-            ${(() => {
-              const said = FQ.quoteOfTheDay();
-              return said ? html`
-                <figure class="daily">
-                  <span class="daily-label">today</span>
-                  <blockquote class="daily-quote">${said.q}</blockquote>
-                  <figcaption class="daily-who">${said.who}</figcaption>
-                </figure>` : null;
-            })()}
-          </div>
         </div>
 
-        <div class="col-8-12 hero-aside">
-          <${Session} />
+        <div class="btn-row hero-actions">
+          <${Btn} variant="accent" onClick=${() => navigate(`#/level/${current}`)} arrow>
+            ${cleared ? `continue level ${String(FQ.positionOf(FQ.level(current))).padStart(2, '0')}`
+                      : `start ${meta.name} level ${first}`}
+          <//>
+          <button class="mou-btn mou-btn-l" type="button" onClick=${onAskTutor}>
+            <${Mou} mood="idle" size=${30} title="Mou" />
+            <span>meet Mou, your tutor</span>
+          </button>
+        </div>
+
+        <div class="hero-session"><${Session} /></div>
+
+        <!-- One line, picked by the date rather than at random, so the whole
+             society sees the same one on the same day. Last in the stack, where
+             a sign off belongs. -->
+        <div class="hero-sign">
+          <${Companions} size=${52} />
+          ${(() => {
+            const said = FQ.quoteOfTheDay();
+            return said ? html`
+              <figure class="daily">
+                <span class="daily-label">today</span>
+                <blockquote class="daily-quote">${said.q}</blockquote>
+                <figcaption class="daily-who">${said.who}</figcaption>
+              </figure>` : null;
+          })()}
         </div>
       </section>
 
