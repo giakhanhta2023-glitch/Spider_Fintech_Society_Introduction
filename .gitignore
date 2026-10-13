@@ -34,3 +34,6 @@ dev-stub.html
 # prompts into a repository a reviewer is meant to read in two minutes.
 .claude/skills/
 .agents/
+
+# The launch video and its 672 intermediate frames, 164 MB
+brag-output/
