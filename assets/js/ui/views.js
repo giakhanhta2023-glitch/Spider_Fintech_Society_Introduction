@@ -24,6 +24,15 @@ function IndexRow({ level }) {
     aside && 'is-aside',
     !unlocked && 'is-locked'].filter(Boolean).join(' ');
 
+  /* Three states, named once. A level is either closed, open and waiting for
+     work, or finished, and the badge says which in the register of a response
+     code rather than a sentence. */
+  const status = !unlocked
+    ? { tone: 'idle', label: 'locked' }
+    : state.projectDone
+      ? { tone: 'ok', label: level.project ? 'shipped' : 'ready' }
+      : { tone: 'live', label: level.project ? 'build' : 'setup' };
+
   const previous = store.previousIn(level.id);
 
   const body = html`
@@ -41,11 +50,7 @@ function IndexRow({ level }) {
       <span class=${`meta-cell meta-drill${state.quizPassed ? ' is-done' : ''}`}>
         drill ${state.quizBest}/${level.quiz.length}
       </span>
-      <span class=${`meta-cell meta-state${state.projectDone ? ' is-done' : ''}`}>
-        ${!unlocked ? 'locked'
-          : level.project ? (state.projectDone ? 'shipped' : 'build')
-          : (state.projectDone ? 'ready' : 'setup')}
-      </span>
+      <span class=${`status status-${status.tone}`}>${status.label}</span>
     </span>`;
 
   return unlocked
