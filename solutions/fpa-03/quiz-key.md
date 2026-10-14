@@ -1,4 +1,4 @@
-# Level 03: The part you used to do by hand: quiz answer key
+# Level 03: Automate the manual work: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

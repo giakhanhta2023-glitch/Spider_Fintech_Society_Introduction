@@ -1,4 +1,4 @@
-# Level 02: SQL for the month end close
+# Level 02: SQL for the month-end close
 
 > **The revenue query pack** · build project · difficulty 4/10
 

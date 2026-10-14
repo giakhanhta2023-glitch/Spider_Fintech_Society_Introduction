@@ -27,10 +27,10 @@ FQ.registerTrack({
   name: 'analyst',
   title: 'The analyst track',
   audience: 'finance students who want the tech half of the job',
-  blurb: 'Four builds: the month end close in SQL, the manual part in pandas, a model that ties, ' +
-         'and a pack that rebuilds itself.',
-  outcome: 'a corporate finance or planning analyst job, where automating your own ' +
-           'reporting is the thing that gets noticed',
+  blurb: 'Four builds: answer the month-end close in SQL, automate the manual part with pandas, ' +
+         'forecast with a balance sheet that balances, and join it into a report that runs itself.',
+  outcome: 'a corporate finance or planning analyst job, where automating your own reporting ' +
+           'and catching the mistakes in it is what gets noticed',
 
   /* One title per level cleared, so index 0 is where everybody starts. */
   ranks: [

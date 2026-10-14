@@ -1,4 +1,4 @@
-# Level 04: A model that ties
+# Level 04: Build a forecast that balances
 
 > **three-statement: the model, with its own tests** · build project · difficulty 6/10
 

@@ -69,14 +69,14 @@ spreadsheet and assumes nothing else.
 
 | # | Level | You build |
 |---|-------|-----------|
-| 1 | Mission zero: a lab that works | somewhere to run code, and an account to keep it in |
-| 2 | SQL for the month end close | the queries finance asks every month, written once |
-| 3 | The part you used to do by hand | the same pack, from the same files, in milliseconds |
-| 4 | A model that ties | a three statement model that balances, with the circularity resolved |
-| 5 | The pack that rebuilds itself | a reporting pack that regenerates from raw data |
+| 1 | Mission zero: set up your workspace | somewhere to run code, and an account to keep it in |
+| 2 | SQL for the month-end close | the queries finance asks every month, written once |
+| 3 | Automate the manual work | the same pack, from the same files, in 39 milliseconds |
+| 4 | Build a forecast that balances | a three statement model that balances, with the circularity resolved |
+| 5 | Build a report that runs itself | a reporting pack that regenerates from raw data |
 
-Ends at a corporate finance or planning analyst job, where automating your own reporting is the
-thing that gets noticed.
+Ends at a corporate finance or planning analyst job, where automating your own reporting and
+catching the mistakes in it is what gets noticed.
 
 ---
 

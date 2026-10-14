@@ -1,4 +1,4 @@
-# Level 02: SQL for the month end close: quiz answer key
+# Level 02: SQL for the month-end close: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

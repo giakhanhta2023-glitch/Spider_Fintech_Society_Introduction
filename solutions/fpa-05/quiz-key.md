@@ -1,4 +1,4 @@
-# Level 05: The pack that rebuilds itself: quiz answer key
+# Level 05: Build a report that runs itself: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.
@@ -41,7 +41,7 @@
 
 **Why:** An unmapped account means money that appears nowhere in the pack, so the pack would be wrong. A credit note not yet posted leaves the pack correct and needs a sentence.
 
-### 3. Why does the pipeline delete and rebuild the database on every run?
+### 3. Why does the run delete and rebuild the database every time?
 
 - A. To save disk space
 - B. To avoid locking
@@ -57,7 +57,7 @@
 - **C. Two copies of the same logic drift apart from the first bug fix onwards, and then two packs disagree** ✅
 - D. Copying would break the tests
 
-**Why:** It is the same lesson as the mapping table and the sign rule: one implementation, one place to fix it. The monthly pack and the quarterly pack disagreeing is how it shows up.
+**Why:** It is the same lesson as the mapping table and the sign rule: one version, one place to fix it. The monthly pack and the quarterly pack disagreeing is how it shows up.
 
 ### 5. The reconciliation uses an outer join rather than an inner one. Why?
 
@@ -70,21 +70,21 @@
 
 ### 6. Why does the generated document leave every cause as TODO?
 
-- **A. The pipeline knows what moved and cannot know why, and an invented cause is worse than a gap** ✅
+- **A. The run knows what moved and cannot know why, and an invented cause is worse than a gap** ✅
 - B. The feature is unfinished
 - C. To keep the document short
 - D. Because the data is synthetic
 
 **Why:** The machine guarantees completeness, which is what a person writing at 7pm gets wrong. The person supplies causation, which is what they are accountable for.
 
-### 7. What is the strongest test of a pipeline that can stop?
+### 7. What is the strongest test of a run that can stop?
 
 - A. That it retries
 - **B. That when a stage fails, nothing after it runs and nothing is written** ✅
 - C. That it runs successfully on good data
 - D. That it logs the failure
 
-**Why:** A pipeline that stops after writing half a pack has not stopped in any useful sense. Assert the absence of the output file, not just the exit code.
+**Why:** A run that stops after writing half a pack has not stopped in any useful sense. Check that the file is not there, not just that it reported a failure.
 
 ### 8. Six stages take 258 ms and the whole command takes about 4.4 seconds. What is the rest?
 
@@ -104,12 +104,12 @@
 
 **Why:** Provenance is what stops a pack being re-litigated every month. A reader who doubts a number gets somewhere to start that is not your inbox.
 
-### 10. The document is written in a different order from the pipeline's computation. Why?
+### 10. The document is written in a different order from the order the work happens in. Why?
 
 - A. To make the file shorter
-- B. To hide the implementation
+- B. To hide how it was built
 - C. Because the forecast depends on the pack
-- **D. Because a reader wants the five numbers first, and the pipeline has to load the data first** ✅
+- **D. Because a reader wants the five numbers first, and the run has to load the data first** ✅
 
 **Why:** Dependency order and reading order are different problems. Writing the document in computation order is the most common way a technically correct pack goes unread.
 
@@ -120,7 +120,7 @@
 - C. No, automation is unsafe
 - D. Yes, it is fully automated
 
-**Why:** Automate the completeness and keep the accountability. Run it on a schedule so the numbers and the exit code are waiting, and have a person spend twenty minutes on the commentary.
+**Why:** Automate the completeness and keep the accountability. Set it to run overnight so the numbers and the pass or fail are waiting, and have a person spend twenty minutes on the commentary.
 
 ### 12. The same 4,820 break appears for three months running. What changes?
 
@@ -149,10 +149,10 @@
 
 **Why:** Half of what breaks at a handover breaks because of a file that existed only on the machine it was written on. A fresh clone is the only way to find that.
 
-### 15. What single feature separates this pipeline from doing the same work in a spreadsheet?
+### 15. What single thing separates this from doing the same work in a spreadsheet?
 
 - A. It uses a database
-- **B. It can refuse: it stops, writes nothing, and returns a non zero exit code** ✅
+- **B. It can refuse: it stops, writes nothing, and reports a failure** ✅
 - C. It produces charts
 - D. It is faster
 

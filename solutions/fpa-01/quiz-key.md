@@ -1,4 +1,4 @@
-# Level 01: Mission zero: a lab that works: quiz answer key
+# Level 01: Mission zero: set up your workspace: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

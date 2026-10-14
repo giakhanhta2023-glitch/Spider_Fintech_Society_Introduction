@@ -1,4 +1,4 @@
-# Level 05: The pack that rebuilds itself
+# Level 05: Build a report that runs itself
 
 > **monthly-close: raw files to a finished pack, in one command** · build project · difficulty 7/10
 

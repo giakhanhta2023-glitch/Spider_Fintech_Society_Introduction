@@ -1,4 +1,4 @@
-# Level 03: The part you used to do by hand
+# Level 03: Automate the manual work
 
 > **close-pack: the pack, rebuilt as a program** · build project · difficulty 5/10
 

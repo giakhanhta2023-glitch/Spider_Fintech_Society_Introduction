@@ -1,6 +1,6 @@
-# Level 01: Mission zero: a lab that works
+# Level 01: Mission zero: set up your workspace
 
-> **Mission zero: a lab that works** · setup mission · difficulty 1/10
+> **Mission zero: set up your workspace** · setup mission · difficulty 1/10
 
 ## Read this second
 

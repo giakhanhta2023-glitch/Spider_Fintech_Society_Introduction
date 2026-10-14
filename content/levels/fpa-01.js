@@ -6,8 +6,8 @@ FQ.registerLevel({
   track: 'fpa',
   position: 1,
   codename: 'lab',
-  title: 'Mission zero: a lab that works',
-  tagline: 'Get a place to run code and an account to keep it in, with no build step.',
+  title: 'Mission zero: set up your workspace',
+  tagline: 'Set up a place to write code and an account to save your work, with nothing to install.',
   difficulty: 1,
   minutes: 90,
   tags: ['setup', 'colab', 'python', 'github'],
@@ -409,7 +409,7 @@ FQ.registerLevel({
   ],
 
   setup: {
-    title: 'Mission zero: a lab that works',
+    title: 'Mission zero: set up your workspace',
     story: 'There is no build project this time, and that is deliberate. By the end of the evening you need a place ' +
            'to run code, the course data loading in one line, somewhere public to keep what you make, and enough ' +
            'vocabulary that the next four levels read as instructions rather than as noise.',
