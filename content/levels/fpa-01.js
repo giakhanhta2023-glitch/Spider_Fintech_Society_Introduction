@@ -27,41 +27,48 @@ FQ.registerLevel({
 
   knowledge: [
     { h: 'What this track is, and what it is not' },
-    { p: 'You can use a spreadsheet. This track does not teach that, and it does not think less of it: a workbook is ' +
-         'the interface finance runs on, and it will still be open on your second screen for the rest of your ' +
-         'career. What it teaches is the half of the job a workbook cannot do.' },
+    { p: 'Spreadsheets are useful, and finance teams will keep using them. They are good for checking numbers, ' +
+         'changing a model while somebody watches, and showing how you got to an answer.' },
+    { p: 'Some tasks need code instead. Running the same checks every month, working with more rows than fit on a ' +
+         'screen, and joining data from two systems that disagree are all easier to write once than to repeat by ' +
+         'hand.' },
     { table: {
-      head: ['A spreadsheet is the right tool for', 'And the wrong one for'],
+      head: ['Spreadsheets are good for', 'Code is better for'],
       rows: [
-        ['Looking at a number and arguing about it', 'Doing the same thing identically every month'],
-        ['A model somebody will read and change', 'Anything with more rows than the screen'],
-        ['Showing your working to a person', 'Refusing to produce an answer it cannot defend'],
+        ['Exploring numbers and testing an idea', 'Doing the same thing identically every month'],
+        ['A model somebody else will read and change', 'Anything with more rows than the screen'],
+        ['Showing your working to a person', 'Checking that a result is right before it goes out'],
         ['One off analysis you will throw away', 'Joining two systems that disagree']
       ]
     }},
-    { p: 'The right column is this track. Four levels: ask a database the questions the export never answers, write ' +
-         'the monthly pack as a program that refuses to print when it is wrong, build a forecast whose balance sheet ' +
-         'balances in every scenario, and join all of it into one command.' },
-    { money: 'The one number worth knowing before you start: the pack in level 3 takes about ninety minutes a month ' +
-             'by hand and 39 milliseconds as a script. **The time saved is the least interesting part of that.** ' +
-             'What changes is that the checks run every single time, and nobody can paste a value over a formula.' },
+    { p: 'The right column is this track. The next four levels teach you to handle it:' },
+    { ol: [
+      'Ask a database the questions the export never answers.',
+      'Write the monthly pack as a program that refuses to print when it is wrong.',
+      'Build a forecast whose balance sheet balances in every scenario.',
+      'Join all of it into one command.'
+    ]},
+
+    { money: 'The pack you build in level 3 takes about ninety minutes a month by hand and 39 milliseconds as a ' +
+             'script. **The time saved is the least interesting part of that.** The program runs the same checks ' +
+             'every time, and it catches a mistake before the report goes out rather than after.' },
 
     { h: 'Where the code runs' },
     { p: 'Two places, and you will use both. Start with the first.' },
     { table: {
       head: ['', 'Google Colab', 'Python on your own machine'],
       rows: [
-        ['What it is', 'A notebook in a browser tab, free, nothing to install', 'The real thing, in a folder, run from a terminal'],
-        ['Good for', 'Levels 2 and 3: querying, exploring, one off analysis', 'Levels 4 and 5, which are folders of files with tests'],
+        ['What it is', 'A notebook in a browser tab, free, nothing to install', 'Python files in a folder, run from a terminal'],
+        ['Good for', 'Exploring data and trying code out', 'Programs with several files and tests'],
         ['The catch', 'It forgets everything when you close it unless you save to Drive or GitHub', 'An evening of setup, once'],
         ['Start here', '**Yes**', 'Later in this level, and it is fine to come back to it']
       ]
     }},
-    { p: 'Nobody serious writes a monthly process in a notebook, and nobody serious explores a new dataset in a ' +
-         'folder of modules. Knowing which is which is part of the skill.' },
+    { p: 'Use a notebook while you are still finding out what the data says. Use files once you want to run the same ' +
+         'thing again next month. Knowing which is which is part of the skill.' },
 
     { h: 'The eight pieces of Python this track uses' },
-    { p: 'Not a programming course. Eight things, and every line in the next four levels is built from them:' },
+    { p: 'You do not need all of programming. Every line in the next four levels is built from these eight:' },
     { table: {
       head: ['', 'Looks like', 'In a sentence'],
       rows: [
@@ -72,33 +79,33 @@ FQ.registerLevel({
         ['A **dictionary**', '`{"4000": "Transaction fees"}`', 'A lookup: give it a key, get a value. The VLOOKUP of Python'],
         ['A **function**', '`def fee(amount): return amount * 0.029`', 'A named calculation you can call again'],
         ['A **loop**', '`for row in rows:`', 'Do this once for each of those'],
-        ['An **f-string**', '`f"revenue {total:,.0f}"`', 'Build text with numbers in it, formatted the way you want']
+        ['An **f-string**', '`f"revenue {total:,.0f}"`', 'Build text with a number in it, formatted the way you want']
       ]
     }},
-    { warn: 'Python counts from **zero**, so the first item of a list is `rows[0]`. Spreadsheets count from one. This ' +
-            'will catch you twice and then never again.' },
+    { warn: 'Python counts from **zero**, so the first item of a list is `rows[0]` and not `rows[1]`. Spreadsheets ' +
+            'count from one. This will catch you twice and then never again.' },
 
     { h: 'Libraries, pip, and the terminal' },
-    { p: 'Three words that sound like infrastructure and are each one idea.' },
-    { p: '**A library is somebody else\'s code that you use.** `pandas` is a library for tables, `sqlite3` is a ' +
-         'library for databases, `matplotlib` draws charts. You write `import pandas as pd` at the top and then use ' +
-         'it. Colab already has the ones this track needs.' },
-    { p: '**pip is how you get a library onto your own machine.** `pip install pandas`, once, in a terminal. It is ' +
-         'the app store for Python code and it is free.' },
+    { p: 'Three words that sound like infrastructure. Each is one idea.' },
+    { p: '**A library is code somebody else already wrote.** `pandas` is a library for tables, `sqlite3` is a ' +
+         'library for databases, `matplotlib` draws charts. You write `import pandas as pd` at the top of a file and ' +
+         'then use it. Colab already has the ones this track needs.' },
+    { p: '**pip is how you get a library onto your own machine.** `pip install pandas`, once, in a terminal. You ' +
+         'install it once per environment and then forget about it.' },
     { p: '**A terminal is a window where you type a command and the computer runs it.** No icons, no mouse. You will ' +
-         'type perhaps five commands all track, and the one you will type most is `python close.py`. It is not a ' +
-         'test of character, it is a text box.' },
-    { tip: 'Everything in this track also works in VS Code, PyCharm or any editor you prefer. The course does not ' +
-           'care. If you have never installed one, do not start now: Colab first, a text editor later.' },
+         'type perhaps five commands all track. The one you will type most is `python close.py`, which runs the ' +
+         'file called `close.py`. It is a text box.' },
+    { tip: 'Everything here also works in VS Code, PyCharm or any editor you prefer. The course does not care. If ' +
+           'you have never installed one, do not start now: Colab first, an editor later.' },
 
-    { h: 'Why a GitHub account, when you are not a developer' },
+    { h: 'Why you need a GitHub account' },
     { p: 'Two reasons, and the second is the one that gets you a job.' },
-    { p: 'The first is **history**. Git keeps every version of every file with a note about what changed, which is ' +
-         'the thing finance teams fake with `budget_v4_FINAL_v2_jm.xlsx`. The second is that **a hiring manager can ' +
-         'open a link**. A repository with four builds in it, each with a README saying what it does and what it ' +
-         'produced, is evidence in a way a line on a CV is not.' },
+    { p: 'The first is **history**. Git keeps every version of every file with a note saying what changed, which is ' +
+         'the thing finance teams approximate with `budget_v4_FINAL_v2.xlsx`. The second is that **a hiring manager ' +
+         'can open a link**. A repository holding four builds, each with a README saying what it does and what it ' +
+         'produced, is something to review rather than a claim on a CV.' },
     { warn: 'Nothing real goes in a public repository. No client names, no actual company numbers, no credentials, ' +
-            'no exports from your employer. Everything in this course is synthetic for exactly that reason, and that ' +
+            'no exports from your employer. Every dataset in this course is synthetic for that reason, and the ' +
             'habit is one somebody will check.' },
     { check: {
       q: 'Your manager asks why you are learning SQL when the finance system already has a reports tab. What is the ' +
@@ -107,25 +114,26 @@ FQ.registerLevel({
          'nobody did: which merchants drove the September upside, whether the new customers pay later than the old ' +
          'ones, what share of revenue sits in the five biggest accounts. Each of those is currently a request, a ' +
          'queue and a file that answers yesterday\'s question. The second half of the answer is that the reports tab ' +
-         'cannot be checked against anything: one of the first things this track teaches is tying a number to a ' +
+         'cannot be checked against anything. One of the first things this track teaches is tying a number to a ' +
          'second source before publishing it, which is the difference between a report and a number somebody can ' +
          'sign.'
     }},
 
-    { h: 'How a level works' },
+    { h: 'How each level works' },
     { p: 'Four parts, in this order, and the order matters.' },
     { table: {
-      head: ['', 'What it is', 'How long'],
+      head: ['', 'What you do', 'How long'],
       rows: [
         ['**Learn**', 'The ideas, with the real numbers worked through', '20 to 30 minutes'],
-        ['**Tutorial**', 'Follow along, typing it yourself. Every line the build needs is introduced here', '40 to 90 minutes'],
+        ['**Tutorial**', 'Type it yourself. Every line the build needs is introduced here', '40 to 90 minutes'],
         ['**Drill**', '15 questions. 12 right opens the build', '10 minutes'],
         ['**Build**', 'Something to make with only what you have just learned, with a full solution if you get stuck', 'An evening or two']
       ]
     }},
     { p: 'The solutions are public from the start, which is deliberate. Attempt the build, get stuck, read the part ' +
          'you are stuck on, close it and retype the fix from memory. Copying a solution into your own repository ' +
-         'skips the only step that teaches anything, and an interviewer finds that out in ninety seconds.' }
+         'skips the only step that teaches anything, and an interviewer who asks you to change one line finds that ' +
+         'out in ninety seconds.' }
   ],
 
   tutorial: {
