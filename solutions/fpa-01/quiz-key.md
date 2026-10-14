@@ -26,47 +26,47 @@
 ### 1. Where should you run the SQL and pandas levels, 2 and 3?
 
 - **A. In Google Colab, which needs no installation and is right for querying and exploring** ✅
-- B. In a terminal, writing files by hand
-- C. In a local Python installation, because notebooks are not professional
-- D. In Excel, using the Python integration
+- B. In Excel, using the Python integration
+- C. In a terminal, writing files by hand
+- D. In a local Python installation, because notebooks are not professional
 
 **Why:** Colab removes the entire installation problem for the levels that are about asking questions. The later levels become folders of files, and that is when a local Python earns its evening.
 
 ### 2. What is a library, in one sentence?
 
-- A. A paid add-in for Python
+- A. A folder where Python keeps your files
 - B. The place a notebook saves its history
 - **C. Somebody else's code that you import and use, like pandas for tables** ✅
-- D. A folder where Python keeps your files
+- D. A paid add-in for Python
 
 **Why:** pandas, sqlite3 and matplotlib are libraries. `import pandas as pd` is you borrowing years of somebody else's work in one line.
 
 ### 3. What does `pip install pandas` do?
 
-- A. Updates Python itself
-- B. Creates a new notebook
+- A. Creates a new notebook
+- B. Runs pandas
 - **C. Downloads the pandas library onto your machine so you can import it** ✅
-- D. Runs pandas
+- D. Updates Python itself
 
 **Why:** pip is the package manager: it fetches libraries. You need it on your own machine and not in Colab, which already has the common ones.
 
 ### 4. In Python, what is the first item of the list `["alice", "bob", "carol"]`?
 
-- A. rows.first()
+- A. rows[1]
 - **B. rows[0]** ✅
-- C. rows[1]
+- C. rows.first()
 - D. rows["alice"]
 
 **Why:** Python counts from zero. Spreadsheets count from one. This catches everybody twice and then never again.
 
-### 5. An error ends with `KeyError: 'amont'`. What does that mean?
+### 5. You defined `revenue` and `fees`, then ran `total = revene + fees`. Which error comes back?
 
-- A. Python ran out of memory
-- B. The network is down
-- C. The file is corrupt
-- **D. You asked for a name that does not exist, in this case a mistyped column** ✅
+- A. TypeError, because you added two numbers
+- B. No error: Python corrects the spelling
+- C. KeyError, because a column is missing
+- **D. NameError, because `revene` was never defined** ✅
 
-**Why:** A KeyError is asking for a key that is not there. Read the last line of a traceback first: it names the problem, and the lines above it are only the path that reached it.
+**Why:** A NameError is a name Python has never seen, which a typo guarantees. A KeyError is a key or column that is not there, the way `ledger["amont"]` was. A TypeError is a value used in a way its type does not allow, such as adding a number to text. The last line of the error always names which one you have.
 
 ### 6. Which of these is formatting rather than a number?
 
@@ -80,34 +80,34 @@
 ### 7. What does `f"revenue {total:,.0f}"` produce when total is 3361050.34?
 
 - **A. revenue 3,361,050** ✅
-- B. revenue {total}
-- C. revenue 3361050.34
+- B. revenue 3361050.34
+- C. revenue {total}
 - D. revenue 3.36e6
 
 **Why:** The part after the colon is the format: a thousands comma and no decimals. It is the same idea as a cell format, written where the value is printed.
 
 ### 8. Why does the course insist that every dataset in it is synthetic?
 
-- A. To avoid paying for a data provider
+- A. Real data is too large for a course
 - B. Because synthetic data is easier to analyse
-- C. Real data is too large for a course
+- C. To avoid paying for a data provider
 - **D. So that nothing in a public repository could ever be somebody's real financial data** ✅
 
 **Why:** Your repository is public and a hiring manager will open it. The habit of never putting employer or client data where strangers can read it is one somebody will check.
 
 ### 9. What is git actually giving you?
 
-- A. A way to run Python in the cloud
+- A. Somewhere to store large files
 - **B. Every version of every file with a note on what changed, which is what budget_v4_FINAL_v2.xlsx is pretending to be** ✅
-- C. Somewhere to store large files
+- C. A way to run Python in the cloud
 - D. Automatic backups of your laptop
 
 **Why:** History with reasons attached. The second reason is that a public repository is a link a hiring manager can open, which a line on a CV is not.
 
 ### 10. Which task belongs in a spreadsheet rather than in code?
 
-- A. Joining the billing system to the general ledger
-- B. The month end pack, produced identically every month
+- A. The month end pack, produced identically every month
+- B. Joining the billing system to the general ledger
 - **C. A quick look at a number somebody is arguing about in a meeting** ✅
 - D. A forecast that must balance in four scenarios
 
@@ -115,8 +115,8 @@
 
 ### 11. What is a CSV file?
 
-- A. A database
-- B. A compressed spreadsheet
+- A. A compressed spreadsheet
+- B. A database
 - C. A file only Python can read
 - **D. Plain text, one row per line, values separated by commas: a sheet with the formatting removed** ✅
 
@@ -134,26 +134,26 @@
 ### 13. Your notebook worked yesterday and today a variable is undefined. What happened?
 
 - **A. The notebook forgot everything when it closed. The cells need running again, in order** ✅
-- B. pandas was updated
-- C. The data URL changed
-- D. Colab lost your file
+- B. The data URL changed
+- C. Colab lost your file
+- D. pandas was updated
 
 **Why:** A notebook keeps its text but not its memory. That is also why anything that must run every month belongs in a file rather than in cells somebody has to run in the right order.
 
 ### 14. What is the right way to use the published solutions?
 
-- A. Read all of them before starting the level
-- B. Avoid them completely
+- A. Avoid them completely
+- B. Copy the solution into your repository and move on
 - **C. Attempt the build, get stuck, read the part you are stuck on, close it and retype the fix from memory** ✅
-- D. Copy the solution into your repository and move on
+- D. Read all of them before starting the level
 
 **Why:** Copying skips the only step that teaches anything, and an interviewer asking "why does this line exist" finds that out in ninety seconds.
 
 ### 15. What does this level ask you to produce?
 
-- A. Nothing at all
+- A. A variance pack
 - **B. A working lab: Colab running, the course data loading, a GitHub repository, and Python installed for later** ✅
 - C. A SQL query
-- D. A variance pack
+- D. Nothing at all
 
 **Why:** There is no build this time on purpose. An evening spent on installers is the most common reason people stop before writing anything that works.

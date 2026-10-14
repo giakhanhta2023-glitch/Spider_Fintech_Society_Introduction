@@ -177,7 +177,8 @@ FQ.registerLevel({
           { p: 'What each new line does:' },
           { ul: [
             '`import pandas as pd` loads pandas, the library for working with tables, and gives it the short name `pd`.',
-            '`read_csv` reads a CSV file. A CSV is table data with none of a spreadsheet\'s formatting.',
+            '`read_csv` reads a CSV file: plain text, one row per line, values separated by commas, with none ' +
+              'of a spreadsheet\'s formatting.',
             '`shape` tells you how many rows and columns you have.',
             '`head()` shows the first five rows.'
           ]},
@@ -279,52 +280,52 @@ FQ.registerLevel({
     { q: "Where should you run the SQL and pandas levels, 2 and 3?",
       options: [
         "In Google Colab, which needs no installation and is right for querying and exploring",
+        "In Excel, using the Python integration",
         "In a terminal, writing files by hand",
-        "In a local Python installation, because notebooks are not professional",
-        "In Excel, using the Python integration"
+        "In a local Python installation, because notebooks are not professional"
       ],
       answer: 0,
       why: "Colab removes the entire installation problem for the levels that are about asking questions. The later levels become folders of files, and that is when a local Python earns its evening." },
 
     { q: "What is a library, in one sentence?",
       options: [
-        "A paid add-in for Python",
+        "A folder where Python keeps your files",
         "The place a notebook saves its history",
         "Somebody else's code that you import and use, like pandas for tables",
-        "A folder where Python keeps your files"
+        "A paid add-in for Python"
       ],
       answer: 2,
       why: "pandas, sqlite3 and matplotlib are libraries. `import pandas as pd` is you borrowing years of somebody else's work in one line." },
 
     { q: "What does `pip install pandas` do?",
       options: [
-        "Updates Python itself",
         "Creates a new notebook",
+        "Runs pandas",
         "Downloads the pandas library onto your machine so you can import it",
-        "Runs pandas"
+        "Updates Python itself"
       ],
       answer: 2,
       why: "pip is the package manager: it fetches libraries. You need it on your own machine and not in Colab, which already has the common ones." },
 
     { q: "In Python, what is the first item of the list `[\"alice\", \"bob\", \"carol\"]`?",
       options: [
-        "rows.first()",
-        "rows[0]",
         "rows[1]",
+        "rows[0]",
+        "rows.first()",
         "rows[\"alice\"]"
       ],
       answer: 1,
       why: "Python counts from zero. Spreadsheets count from one. This catches everybody twice and then never again." },
 
-    { q: "An error ends with `KeyError: 'amont'`. What does that mean?",
+    { q: "You defined `revenue` and `fees`, then ran `total = revene + fees`. Which error comes back?",
       options: [
-        "Python ran out of memory",
-        "The network is down",
-        "The file is corrupt",
-        "You asked for a name that does not exist, in this case a mistyped column"
+        "TypeError, because you added two numbers",
+        "No error: Python corrects the spelling",
+        "KeyError, because a column is missing",
+        "NameError, because `revene` was never defined"
       ],
       answer: 3,
-      why: "A KeyError is asking for a key that is not there. Read the last line of a traceback first: it names the problem, and the lines above it are only the path that reached it." },
+      why: "A NameError is a name Python has never seen, which a typo guarantees. A KeyError is a key or column that is not there, the way `ledger[\"amont\"]` was. A TypeError is a value used in a way its type does not allow, such as adding a number to text. The last line of the error always names which one you have." },
 
     { q: "Which of these is formatting rather than a number?",
       options: [
@@ -339,8 +340,8 @@ FQ.registerLevel({
     { q: "What does `f\"revenue {total:,.0f}\"` produce when total is 3361050.34?",
       options: [
         "revenue 3,361,050",
-        "revenue {total}",
         "revenue 3361050.34",
+        "revenue {total}",
         "revenue 3.36e6"
       ],
       answer: 0,
@@ -348,9 +349,9 @@ FQ.registerLevel({
 
     { q: "Why does the course insist that every dataset in it is synthetic?",
       options: [
-        "To avoid paying for a data provider",
-        "Because synthetic data is easier to analyse",
         "Real data is too large for a course",
+        "Because synthetic data is easier to analyse",
+        "To avoid paying for a data provider",
         "So that nothing in a public repository could ever be somebody's real financial data"
       ],
       answer: 3,
@@ -358,9 +359,9 @@ FQ.registerLevel({
 
     { q: "What is git actually giving you?",
       options: [
-        "A way to run Python in the cloud",
-        "Every version of every file with a note on what changed, which is what budget_v4_FINAL_v2.xlsx is pretending to be",
         "Somewhere to store large files",
+        "Every version of every file with a note on what changed, which is what budget_v4_FINAL_v2.xlsx is pretending to be",
+        "A way to run Python in the cloud",
         "Automatic backups of your laptop"
       ],
       answer: 1,
@@ -368,8 +369,8 @@ FQ.registerLevel({
 
     { q: "Which task belongs in a spreadsheet rather than in code?",
       options: [
-        "Joining the billing system to the general ledger",
         "The month end pack, produced identically every month",
+        "Joining the billing system to the general ledger",
         "A quick look at a number somebody is arguing about in a meeting",
         "A forecast that must balance in four scenarios"
       ],
@@ -378,8 +379,8 @@ FQ.registerLevel({
 
     { q: "What is a CSV file?",
       options: [
-        "A database",
         "A compressed spreadsheet",
+        "A database",
         "A file only Python can read",
         "Plain text, one row per line, values separated by commas: a sheet with the formatting removed"
       ],
@@ -399,29 +400,29 @@ FQ.registerLevel({
     { q: "Your notebook worked yesterday and today a variable is undefined. What happened?",
       options: [
         "The notebook forgot everything when it closed. The cells need running again, in order",
-        "pandas was updated",
         "The data URL changed",
-        "Colab lost your file"
+        "Colab lost your file",
+        "pandas was updated"
       ],
       answer: 0,
       why: "A notebook keeps its text but not its memory. That is also why anything that must run every month belongs in a file rather than in cells somebody has to run in the right order." },
 
     { q: "What is the right way to use the published solutions?",
       options: [
-        "Read all of them before starting the level",
         "Avoid them completely",
+        "Copy the solution into your repository and move on",
         "Attempt the build, get stuck, read the part you are stuck on, close it and retype the fix from memory",
-        "Copy the solution into your repository and move on"
+        "Read all of them before starting the level"
       ],
       answer: 2,
       why: "Copying skips the only step that teaches anything, and an interviewer asking \"why does this line exist\" finds that out in ninety seconds." },
 
     { q: "What does this level ask you to produce?",
       options: [
-        "Nothing at all",
+        "A variance pack",
         "A working lab: Colab running, the course data loading, a GitHub repository, and Python installed for later",
         "A SQL query",
-        "A variance pack"
+        "Nothing at all"
       ],
       answer: 1,
       why: "There is no build this time on purpose. An evening spent on installers is the most common reason people stop before writing anything that works." }
