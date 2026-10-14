@@ -137,99 +137,118 @@ FQ.registerLevel({
   ],
 
   tutorial: {
-    intro: 'About ninety minutes, and no build at the end of it. Work through it in order: everything after step 4 ' +
-           'is optional tonight and necessary by level 4.',
+    intro: 'About ninety minutes, and there is no project to build tonight. Work through the steps in order. ' +
+           'Steps 1 to 4 are the ones that matter tonight; everything after step 4 can wait until the evening ' +
+           'before level 4. Everything you need to finish this checklist is explained here. If something is ' +
+           'required and never taught, that is a mistake in the course and not in you.',
     steps: [
       {
-        t: 'Open Colab and run one line',
+        t: 'Open Colab and run your first line',
         blocks: [
           { p: 'Go to **colab.research.google.com**, sign in with a Google account, and choose **New notebook**. You ' +
-               'are now looking at an empty cell. Type this and press **Shift and Enter** together:' },
+               'are looking at an empty cell. Type this and press **Shift and Enter** together to run it:' },
           { code: 'print("FinQuest online")', lang: 'python' },
-          { p: 'That is the whole loop you will repeat for the rest of the track: type in a cell, run it, read what ' +
-               'comes back. Rename the notebook `finquest-analyst-01.ipynb` by clicking its name at the top left.' },
-          { tip: 'Three shortcuts are worth learning tonight. **Shift and Enter** runs a cell and moves on, ' +
-                 '**Ctrl and Enter** runs it and stays, and **Ctrl and M then B** adds a cell below.' }
+          { p: 'That is how you will work for the rest of the track: write code in a cell, run it, read what comes ' +
+               'back. Rename the notebook `finquest-analyst-01.ipynb` by clicking its name at the top left.' },
+          { tip: 'Three shortcuts are worth learning tonight. **Shift and Enter** runs the cell and moves to the ' +
+                 'next one, **Ctrl and Enter** runs it and stays where you are, and **Ctrl and M then B** adds a ' +
+                 'new cell below.' }
         ],
         check: 'The words FinQuest online appear under the cell.'
       },
       {
-        t: 'The eight pieces, in one cell each',
+        t: 'Learn the eight basics',
         blocks: [
-          { p: 'Type these rather than copying them. The typing is the point: it is how the shapes become familiar.' },
+          { p: 'Now try the eight pieces of Python from the lesson. Type them rather than copying them. Typing is ' +
+               'what makes the shapes familiar.' },
           { code: 'month = "2025-09"              # a variable holding a string\nrevenue = 3361050.34           # a number: no commas, no dollar sign\n\naccounts = ["alice", "bob", "carol"]        # a list\nprint(accounts[0])                          # counts from zero: alice\n\nnames = {"4000": "Transaction fees", "6100": "Marketing"}   # a dictionary\nprint(names["4000"])                        # Transaction fees\n\ndef fee(amount, rate=0.029):   # a function, with a default\n    return amount * rate\n\nprint(fee(2500))               # 72.5\n\nfor code in names:             # a loop over the keys\n    print(code, names[code])\n\nprint(f"revenue {revenue:,.0f} in {month}")   # an f-string\n# revenue 3,361,050 in 2025-09', lang: 'python' },
-          { p: 'The `:,.0f` inside the f-string is the formatting: a thousands comma and no decimal places. That is ' +
-               'the same idea as a number format in a spreadsheet, written where the number is printed rather than ' +
-               'attached to a cell.' }
+          { p: 'The `:,.0f` inside the f-string controls how the number looks: a comma between thousands and no ' +
+               'decimal places. It is the same idea as a number format in a spreadsheet, written where the number ' +
+               'is printed rather than attached to a cell.' }
         ],
-        check: 'All seven prints produce what the comments say they will.'
+        check: 'Six lines of output, and each one with a comment beside it says what the comment says.'
       },
       {
-        t: 'Read the course data without downloading anything',
+        t: 'Load the course data',
         blocks: [
-          { p: 'Every file this track uses is in the repository and readable by URL. One line gets you the ledger ' +
-               'that levels 2 and 3 are built on:' },
+          { p: 'You do not need to download anything by hand. The course files sit in a public repository, so Python ' +
+               'can read them straight from the web. Run this to load the data levels 2 and 3 use:' },
           { code: 'import pandas as pd\n\nURL = "{{RAW}}/data/fpa-actuals.csv"\nledger = pd.read_csv(URL)\n\nprint(ledger.shape)      # (318, 9)\nledger.head()', lang: 'python' },
-          { p: '`import pandas as pd` is the library line: pandas is now available, under the short name `pd`. ' +
-               '`read_csv` reads a comma separated file, which is what a spreadsheet looks like with the formatting ' +
-               'taken away. `shape` is rows and columns, and `head()` shows the first five rows.' },
-          { warn: 'If the URL is blocked on your network, download the file from the repository and drag it into ' +
-                  'the file pane on the left of Colab, then read it as `pd.read_csv("fpa-actuals.csv")`.' }
+          { p: 'What each new line does:' },
+          { ul: [
+            '`import pandas as pd` loads pandas, the library for working with tables, and gives it the short name `pd`.',
+            '`read_csv` reads a CSV file. A CSV is table data with none of a spreadsheet\'s formatting.',
+            '`shape` tells you how many rows and columns you have.',
+            '`head()` shows the first five rows.'
+          ]},
+          { warn: 'If your network blocks the URL, download the file from the repository and drag it into the file ' +
+                  'panel on the left of Colab, then read it with `pd.read_csv("fpa-actuals.csv")`.' }
         ],
         check: '(318, 9) and a table with journal_id, month, account_code and amount in it.'
       },
       {
-        t: 'Break something on purpose',
+        t: 'Make an error on purpose',
         blocks: [
-          { p: 'Errors are the normal condition of writing code, and the only skill is reading them. Run this:' },
+          { p: 'Errors are a normal part of writing code, and reading them is a skill you can learn in one evening. ' +
+               'Run this line:' },
           { code: 'ledger["amont"]        # a typo: there is no such column', lang: 'python' },
-          { p: 'You get a wall of red. **Read the last line first**, always: it names the problem, and the lines ' +
-               'above it are the path the computer took to get there.' },
+          { p: 'You get a red block of text. Read the **last line first**, because that is the one that says what ' +
+               'went wrong. The lines above it show how the program got there. Here the last line is:' },
           { code: 'KeyError: \'amont\'', lang: 'text' },
-          { p: 'A `KeyError` means you asked for a name that does not exist. `NameError` means you used a variable ' +
-               'you never created. `TypeError` means you did something to the wrong kind of thing, like adding a ' +
-               'number to text. Those three cover most of what you will hit this track.' },
-          { tip: 'When the last line is not enough, paste it into a search engine without your own file names in it. ' +
-                 'Somebody has had that exact error, in public, since about 2009.' }
+          { p: 'A `KeyError` means you asked for a name that does not exist, such as a column that is not in the ' +
+               'table. Two others you will meet often:' },
+          { ul: [
+            '`NameError`, when you use a variable you never defined.',
+            '`TypeError`, when you use a value in a way its type does not allow, such as adding a number to text.'
+          ]},
+          { tip: 'If the message still makes no sense, paste it into a search engine, with your own file names and ' +
+                 'anything private taken out first. Somebody has had that exact error, in public, since about 2009.' }
         ],
         check: 'You can say in one sentence what the last line of an error means.'
       },
       {
-        t: 'A GitHub account and a repository',
+        t: 'Create a GitHub account and repository',
         blocks: [
-          { p: 'Go to **github.com**, sign up, and choose a username you would put on a CV: your name, or your name ' +
-               'and a number. Not a joke you chose at eighteen.' },
-          { p: 'Then **New repository**, named `finquest-analyst`, public, with a README ticked. That README is the ' +
-               'first thing anybody opening the link reads, so put two sentences in it: who you are and what the ' +
+          { p: 'Go to **github.com** and sign up. Choose a username you would be happy to put on a CV: your name, or ' +
+               'your name and a number. Not a joke you chose at eighteen.' },
+          { p: 'Then **New repository**, named `finquest-analyst`, public, with a README ticked. The README is the ' +
+               'first thing anybody opening the link reads, so put two sentences in it: who you are, and what the ' +
                'repository holds.' },
-          { p: 'Saving a Colab notebook into it needs no git commands at all: **File, Save a copy in GitHub**, pick ' +
-               'the repository, write a one line message about what changed.' },
-          { warn: 'Public means public. No employer data, no client names, no passwords or keys in a notebook. If ' +
-                  'you want to practise on your own company\'s numbers, do it in a private repository or not at all.' }
+          { p: 'Saving a Colab notebook into it needs no terminal at all:' },
+          { ol: [
+            'In Colab, click **File**.',
+            'Choose **Save a copy in GitHub**.',
+            'Pick your repository.',
+            'Write one line saying what changed.'
+          ]},
+          { warn: 'Public means public. No employer data, no client names, no passwords or access keys in a ' +
+                  'notebook. Practise on the sample data here. If you want to work on your own company\'s numbers, ' +
+                  'follow its data policy and keep them out of a public repository.' }
         ],
         check: 'github.com/your-name/finquest-analyst exists, is public, and has your level 1 notebook in it.'
       },
       {
-        t: 'Python on your own machine, for later',
+        t: 'Install Python on your computer',
         blocks: [
-          { p: 'Levels 4 and 5 are folders of files with tests rather than notebooks, so at some point you need ' +
-               'Python locally. Tonight is a good time, and so is the evening before level 4.' },
+          { p: 'The early levels run fine in Colab. Levels 4 and 5 are folders of Python files with tests, so at ' +
+               'some point you need Python on your own machine. Tonight works, and so does the evening before ' +
+               'level 4.' },
           { code: '1. python.org/downloads  ->  the big yellow button\n   On Windows, tick "Add python.exe to PATH" on the first screen.\n\n2. Open a terminal:\n     Windows   press the Start key, type "terminal"\n     macOS     press Command and Space, type "terminal"\n\n3. Check it arrived:\n     python --version        ->  Python 3.11.x or newer\n\n4. Get the three libraries this track uses:\n     pip install pandas matplotlib pytest', lang: 'text' },
           { p: 'That is the whole installation. `sqlite3`, the database in level 2, comes with Python and needs ' +
                'nothing.' },
-          { tip: 'If `python` is not found on Windows, you missed the PATH checkbox. Re-run the installer, choose ' +
+          { tip: 'If Windows cannot find `python`, you missed the PATH checkbox. Run the installer again, choose ' +
                  'Modify, and tick it. On macOS try `python3` and `pip3` instead.' }
         ],
         check: '`python --version` prints 3.11 or newer, and `pip install pandas` finishes without an error.'
       },
       {
-        t: 'Prove the lab works',
+        t: 'Check that everything works',
         blocks: [
-          { p: 'One script checks everything at once. Save it as `check_setup.py` and run `python check_setup.py`, ' +
-               'or paste it into a Colab cell.' },
+          { p: 'One script checks the whole lab at once. Save it as `check_setup.py` and run `python ' +
+               'check_setup.py` in your terminal, or paste it into a Colab cell.' },
           { code: 'import sys\n\nprint("python", sys.version.split()[0])\n\nfor name in ["pandas", "sqlite3", "matplotlib"]:\n    try:\n        module = __import__(name)\n        print("ok  ", name)\n    except ImportError:\n        print("MISSING", name, "  ->  pip install", name)\n\nimport pandas as pd\nledger = pd.read_csv("{{RAW}}/data/fpa-actuals.csv")\nprint("the course data loads:", ledger.shape)', lang: 'python' },
-          { p: 'The full version of this, with a few more checks and a friendlier report, is in the solutions folder ' +
-               'for this level. Run yours first.' }
+          { p: 'A fuller version of this, with a few more checks and a clearer report, is in the solutions folder ' +
+               'for this level. Write yours first, then read that one.' }
         ],
         check: 'Python 3.11 or newer, three libraries present, and the ledger loading at (318, 9).'
       }
