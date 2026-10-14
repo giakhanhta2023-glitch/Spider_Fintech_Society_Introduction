@@ -1,4 +1,4 @@
-# Level 18: Java, for somebody who already writes Python: quiz answer key
+# Level 18: Java for Python developers: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

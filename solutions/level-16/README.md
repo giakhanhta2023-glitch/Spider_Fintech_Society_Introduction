@@ -1,4 +1,4 @@
-# Level 16: The pager, and what it is allowed to wake you for
+# Level 16: Alerts and the problems worth waking up for
 
 > **payments-observability: a pager you would trust** · build project · difficulty 9/10
 

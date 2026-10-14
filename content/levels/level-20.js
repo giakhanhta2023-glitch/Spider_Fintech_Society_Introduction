@@ -6,7 +6,7 @@ FQ.registerLevel({
   /* the same: the capstone is level 20 and stays level 20. */
   position: '20',
   codename: 'shipped',
-  title: 'The whiteboard, and the thing you hand over',
+  title: 'Design the system and explain your work',
   tagline: 'Design a payments system in forty five minutes, using the one you have already built.',
   difficulty: 10,
   minutes: 900,

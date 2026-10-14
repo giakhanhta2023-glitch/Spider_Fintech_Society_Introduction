@@ -1,11 +1,11 @@
 /* =========================================================================
-   LEVEL 3: Reading the money: transaction data with pandas
+   LEVEL 3: Understanding transaction data, with pandas
    ========================================================================= */
 FQ.registerLevel({
   id: 3,
   codename: 'transactions',
-  title: 'Reading the money',
-  tagline: 'Turn 233 messy transaction rows into the five numbers a finance team actually asks for.',
+  title: 'Understanding transaction data',
+  tagline: 'Turn 233 messy transaction rows into the five key numbers a finance team actually asks for.',
   difficulty: 3,
   minutes: 120,
   tags: ['pandas', 'data cleaning', 'analytics'],

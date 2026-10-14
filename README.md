@@ -27,34 +27,34 @@ can switch between them on the front page at any time.
 
 ### The engineering track
 
-Twenty levels, from a first ledger to a payments platform that survives an hour of load and four
-injected failures. For computer science students and anybody who wants to build the systems.
+Twenty levels, from your first ledger to a payments platform that survives an hour of heavy load
+and four failures injected on purpose. For computer science students and anybody who wants to build the systems.
 
 | # | Level | You build |
 |---|-------|-----------|
-| 1 | Fintech orientation | a working lab, and the vocabulary |
+| 1 | Introduction to fintech | a working lab, and the vocabulary |
 | 2 | The time value of money | a compound growth engine |
-| 3 | Reading the money | a personal spending analyser |
+| 3 | Understanding transaction data | a personal spending analyser |
 | 4 | Payments and the double-entry ledger | a mini ledger and payment engine |
-| 5 | The money library everything else imports | an exact Money library, tested and packaged |
-| 6 | The ledger in Postgres | a schema, measured with `EXPLAIN` |
-| 7 | The payments API other systems depend on | an HTTP API over the ledger |
+| 5 | Build a money library | an exact Money library, tested and packaged |
+| 6 | Move the ledger to Postgres | a schema, measured with `EXPLAIN` |
+| 7 | Build a payments API | an HTTP API over the ledger |
 | 8 | Eight requests, one balance, minus $540 | a race reproduced, then fixed three ways |
 | 9 | The life of a card payment | a card lifecycle service and network simulator |
-| 10 | The processor says one thing, your ledger says another | a reconciliation engine |
-| 10.1 | The half of the payment the customer can see | a typed checkout that cannot be talked into charging the wrong amount |
-| 10.2 | Scala, and the job that runs at four in the morning | the same reconciliation as level 10, agreeing with it to the cent |
-| 11 | The event you thought you published | an outbox, idempotent consumers, partitioning |
-| 12 | The payout that half happened | a saga with compensation and a sweeper |
-| 13 | The table that outgrew the machine | partition it, migrate it, backfill it live |
-| 14 | The p99 you promised | measure the tail, then cache, limit and shed |
-| 15 | The keys to the money | a card vault with envelope encryption |
-| 16 | The pager, and what it is allowed to wake you for | instrument it, then break it on purpose |
-| 17 | The deploy you can undo | container, pipeline, infrastructure, blue green |
-| 18 | Java, for somebody who already writes Python | port the payments API to Spring Boot, and one component in Go |
-| 19 | The screen that filters you out | forty problems, four exercises, an honest log |
-| 20 | The whiteboard, and the thing you hand over | the platform assembled, load tested, packaged |
-| 20.1 | Ruby, and the rules that change every week | a refund policy a risk lead can read, as a small language of its own |
+| 10 | When the processor and your ledger disagree | a reconciliation engine |
+| 10.1 | The checkout customers see | a typed checkout that cannot be talked into charging the wrong amount |
+| 10.2 | Scala and the overnight job | the same reconciliation as level 10, agreeing with it to the cent |
+| 11 | The event that never arrived | an outbox, idempotent consumers, partitioning |
+| 12 | The payout that only partly worked | a saga with compensation and a sweeper |
+| 13 | When a database table gets too big | partition it, migrate it, backfill it live |
+| 14 | Meet your p99 response-time target | measure the tail, then cache, limit and shed |
+| 15 | Protect the money | a card vault with envelope encryption |
+| 16 | Alerts and the problems worth waking up for | instrument it, then break it on purpose |
+| 17 | Deploy code you can roll back | container, pipeline, infrastructure, blue green |
+| 18 | Java for Python developers | port the payments API to Spring Boot, and one component in Go |
+| 19 | The technical interview screen | forty problems, four exercises, an honest log |
+| 20 | Design the system and explain your work | the platform assembled, load tested, packaged |
+| 20.1 | Ruby and changing refund rules | a refund policy a risk lead can read, as a small language of its own |
 
 **Four levels are optional:** **10.1** TypeScript, **10.2** Scala, **18** Java and Go, **20.1**
 Ruby. None of them blocks the next level, so skip any you do not want.

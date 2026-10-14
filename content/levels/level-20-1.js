@@ -10,7 +10,7 @@ FQ.registerLevel({
   position: '20.1',
   aside: true,
   codename: 'refund-policy',
-  title: 'Ruby, and the rules that change every week',
+  title: 'Ruby and changing refund rules',
   tagline: 'Write the refund policy in Ruby, the language Stripe runs its own API on.',
   difficulty: 6,
   minutes: 300,

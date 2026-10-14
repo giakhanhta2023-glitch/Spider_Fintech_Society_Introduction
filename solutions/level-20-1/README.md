@@ -1,4 +1,4 @@
-# Level 20.1: Ruby, and the rules that change every week
+# Level 20.1: Ruby and changing refund rules
 
 > **A refund policy a risk lead can read** · build project · difficulty 6/10
 

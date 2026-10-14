@@ -1,4 +1,4 @@
-# Level 13: The table that outgrew the machine: quiz answer key
+# Level 13: When a database table gets too big: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

@@ -1,4 +1,4 @@
-# Level 17: The deploy you can undo
+# Level 17: Deploy code you can roll back
 
 > **payments-platform: everything you built, deployable** · build project · difficulty 8/10
 

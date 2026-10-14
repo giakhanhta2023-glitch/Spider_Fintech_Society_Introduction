@@ -1,4 +1,4 @@
-# Level 11: The event you thought you published
+# Level 11: The event that never arrived
 
 > **outbox: events that cannot be lost, consumers that cannot double count** · build project · difficulty 8/10
 

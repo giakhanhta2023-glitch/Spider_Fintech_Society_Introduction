@@ -1,4 +1,4 @@
-# Level 12: The payout that half happened
+# Level 12: The payout that only partly worked
 
 > **payout-saga: the orchestrator that finishes what it started** · build project · difficulty 9/10
 

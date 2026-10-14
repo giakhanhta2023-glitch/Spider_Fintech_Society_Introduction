@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 6,
   codename: 'ledger-db',
-  title: 'The ledger in Postgres, and the query plan that proves it',
-  tagline: 'Move the ledger into Postgres, let the schema refuse unbalanced money, and read the query plan.',
+  title: 'Move the ledger to Postgres',
+  tagline: 'Store the ledger in Postgres, let it refuse unbalanced money, and read the query plan.',
   difficulty: 6,
   minutes: 360,
   tags: ['Postgres', 'SQL', 'indexes', 'EXPLAIN', 'migrations'],

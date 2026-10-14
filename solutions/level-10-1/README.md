@@ -1,4 +1,4 @@
-# Level 10.1: The half of the payment the customer can see
+# Level 10.1: The checkout customers see
 
 > **A checkout that cannot be talked into charging the wrong amount** · build project · difficulty 6/10
 

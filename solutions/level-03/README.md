@@ -1,4 +1,4 @@
-# Level 3: Reading the money
+# Level 3: Understanding transaction data
 
 > **Personal spending analyzer** · build project · difficulty 3/10
 

@@ -1,4 +1,4 @@
-# Level 18: Java, for somebody who already writes Python
+# Level 18: Java for Python developers
 
 > **payments-api-java: the same service, on the JVM** · build project · difficulty 8/10
 

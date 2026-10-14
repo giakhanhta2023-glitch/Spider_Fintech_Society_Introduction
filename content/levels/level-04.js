@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 4,
   codename: 'ledger',
   title: 'Payments and the double-entry ledger',
-  tagline: 'Build a double-entry ledger that balances after every transfer, or refuses the transfer.',
+  tagline: 'Build a ledger that tracks both sides of every transfer, and refuses any that does not balance.',
   difficulty: 4,
   minutes: 150,
   tags: ['double-entry', 'idempotency', 'classes'],

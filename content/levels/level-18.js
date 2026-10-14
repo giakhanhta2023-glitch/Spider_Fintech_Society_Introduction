@@ -10,7 +10,7 @@ FQ.registerLevel({
   position: '18',
   aside: true,
   codename: 'jvm',
-  title: 'Java, for somebody who already writes Python',
+  title: 'Java for Python developers',
   tagline: 'Rebuild a core service on the JVM, which is what most payments teams inside banks run.',
   difficulty: 8,
   minutes: 480,

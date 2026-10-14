@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 12,
   codename: 'saga',
-  title: 'The payout that half happened',
-  tagline: 'Coordinate a payout across two systems with no shared transaction, where 13% strand the money.',
+  title: 'The payout that only partly worked',
+  tagline: 'Coordinate a payout across two systems with no shared transaction, where 13% strand money.',
   difficulty: 9,
   minutes: 450,
   tags: ['sagas', 'compensation', 'distributed transactions', 'recovery'],

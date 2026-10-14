@@ -6,8 +6,8 @@ FQ.registerLevel({
   /* 18 is an aside, so a position counted along the spine would say 18 here. */
   position: '19',
   codename: 'gauntlet',
-  title: 'The screen that filters you out',
-  tagline: 'Pass the sixty minute screen that stands between fourteen repositories and an offer.',
+  title: 'The technical interview screen',
+  tagline: 'Pass the sixty minute screen that stands between your portfolio and an offer.',
   difficulty: 9,
   minutes: 600,
   tags: ['interviews', 'complexity', 'data structures', 'practice'],

@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 17,
   codename: 'ship',
-  title: 'The deploy you can undo',
-  tagline: 'Ship it somewhere other than your laptop, on a schedule, behind a pipeline that can refuse.',
+  title: 'Deploy code you can roll back',
+  tagline: 'Ship somewhere other than your laptop, behind a pipeline that can refuse a bad release.',
   difficulty: 8,
   minutes: 420,
   tags: ['Docker', 'CI/CD', 'infrastructure as code', 'deploys', 'cost'],

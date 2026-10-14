@@ -1,4 +1,4 @@
-# Level 15: The keys to the money: quiz answer key
+# Level 15: Protect the money: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

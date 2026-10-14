@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 2,
   codename: 'compounding',
   title: 'The time value of money',
-  tagline: 'Compounding, discounting and the time value of money, as formulas you can hold in your head.',
+  tagline: 'How money grows over time, how to value it in the future, and what future money is worth now.',
   difficulty: 2,
   minutes: 90,
   tags: ['interest', 'compounding', 'python basics'],

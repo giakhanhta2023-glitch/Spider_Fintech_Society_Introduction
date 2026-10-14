@@ -4,7 +4,7 @@
 FQ.registerLevel({
   id: 15,
   codename: 'vault',
-  title: 'The keys to the money',
+  title: 'Protect the money',
   tagline: 'Handle card numbers, secrets and signed requests so that the wrong people cannot read them.',
   difficulty: 9,
   minutes: 450,

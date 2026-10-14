@@ -1,4 +1,4 @@
-# Level 19: The screen that filters you out
+# Level 19: The technical interview screen
 
 > **interview-gauntlet: forty problems, four exercises, one honest log** · build project · difficulty 9/10
 

@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 11,
   codename: 'outbox',
-  title: 'The event you thought you published',
-  tagline: 'Close the gap between committing to the database and publishing an event, where 5% vanish.',
+  title: 'The event that never arrived',
+  tagline: 'Why an event vanishes after the database commit succeeds, in a system that loses 5% of them.',
   difficulty: 8,
   minutes: 420,
   tags: ['Kafka', 'outbox', 'idempotent consumers', 'ordering'],

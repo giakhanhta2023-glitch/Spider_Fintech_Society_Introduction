@@ -1,4 +1,4 @@
-# Level 10.1: The half of the payment the customer can see: quiz answer key
+# Level 10.1: The checkout customers see: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

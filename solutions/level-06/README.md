@@ -1,4 +1,4 @@
-# Level 6: The ledger in Postgres, and the query plan that proves it
+# Level 6: Move the ledger to Postgres
 
 > **ledger-db: the ledger, in a database that refuses bad money** · build project · difficulty 6/10
 

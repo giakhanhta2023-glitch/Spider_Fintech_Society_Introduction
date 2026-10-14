@@ -1,4 +1,4 @@
-# Level 10: The processor says one thing, your ledger says another: quiz answer key
+# Level 10: When the processor and your ledger disagree: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

@@ -1,4 +1,4 @@
-# Level 14: The p99 you promised
+# Level 14: Meet your p99 response-time target
 
 > **latency-lab: the p99 you can defend** · build project · difficulty 9/10
 

@@ -1,4 +1,4 @@
-# Level 7: The payments API other systems depend on
+# Level 7: Build a payments API
 
 > **payments-api: the interface other companies call** · build project · difficulty 7/10
 

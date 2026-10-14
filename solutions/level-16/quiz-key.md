@@ -1,4 +1,4 @@
-# Level 16: The pager, and what it is allowed to wake you for: quiz answer key
+# Level 16: Alerts and the problems worth waking up for: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

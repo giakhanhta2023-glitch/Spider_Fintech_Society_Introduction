@@ -1,4 +1,4 @@
-# Level 20: The whiteboard, and the thing you hand over
+# Level 20: Design the system and explain your work
 
 > **payments-platform-capstone: all of it, running, measured, and packaged** · build project · difficulty 10/10
 

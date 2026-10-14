@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 9,
   codename: 'card-lifecycle',
   title: 'The life of a card payment',
-  tagline: 'Model the card lifecycle: authorise, capture, void, refund, chargeback and expire.',
+  tagline: 'Build the stages of a card payment: authorise, capture, void, refund, chargeback and expire.',
   difficulty: 8,
   minutes: 420,
   tags: ['payments', 'state machines', 'declines', 'chargebacks'],

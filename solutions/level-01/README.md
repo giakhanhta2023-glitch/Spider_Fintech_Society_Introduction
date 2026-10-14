@@ -1,4 +1,4 @@
-# Level 1: Fintech orientation
+# Level 1: Introduction to fintech
 
 > **Mission zero: get your lab running** · setup mission · difficulty 1/10
 

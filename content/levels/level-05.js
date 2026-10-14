@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 5,
   codename: 'moneykit',
-  title: 'The money library everything else imports',
-  tagline: 'Package a money library with exact arithmetic, a chosen rounding rule and property tests.',
+  title: 'Build a money library',
+  tagline: 'Package a money library with exact arithmetic, one rounding rule, and property tests.',
   difficulty: 5,
   minutes: 300,
   tags: ['Python', 'Decimal', 'testing', 'packaging', 'CI'],

@@ -1,4 +1,4 @@
-# Level 7: The payments API other systems depend on: quiz answer key
+# Level 7: Build a payments API: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

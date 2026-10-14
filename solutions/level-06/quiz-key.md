@@ -1,4 +1,4 @@
-# Level 6: The ledger in Postgres, and the query plan that proves it: quiz answer key
+# Level 6: Move the ledger to Postgres: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

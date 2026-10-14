@@ -1,4 +1,4 @@
-# Level 5: The money library everything else imports
+# Level 5: Build a money library
 
 > **moneykit: the library every later level imports** · build project · difficulty 5/10
 

@@ -1,4 +1,4 @@
-# Level 20.1: Ruby, and the rules that change every week: quiz answer key
+# Level 20.1: Ruby and changing refund rules: quiz answer key
 
 > 15 questions. Pass mark is 12/15 (80%).
 > Generated from `content/levels/` by `tools/build_quiz_keys.js`: do not edit by hand.

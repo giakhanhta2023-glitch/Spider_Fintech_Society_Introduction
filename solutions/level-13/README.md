@@ -1,4 +1,4 @@
-# Level 13: The table that outgrew the machine
+# Level 13: When a database table gets too big
 
 > **payments-at-scale: partition it, migrate it, and let nobody notice** · build project · difficulty 9/10
 

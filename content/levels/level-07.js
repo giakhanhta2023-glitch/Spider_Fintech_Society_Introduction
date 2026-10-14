@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 7,
   codename: 'payments-api',
-  title: 'The payments API other systems depend on',
-  tagline: 'Put an HTTP API in front of the ledger that survives retries and refuses what it should.',
+  title: 'Build a payments API',
+  tagline: 'An API other systems can call, where retries never double pay and bad requests are refused.',
   difficulty: 7,
   minutes: 420,
   tags: ['FastAPI', 'REST', 'idempotency', 'validation', 'pagination'],

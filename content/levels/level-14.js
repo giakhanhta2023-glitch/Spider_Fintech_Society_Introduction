@@ -4,8 +4,8 @@
 FQ.registerLevel({
   id: 14,
   codename: 'latency',
-  title: 'The p99 you promised',
-  tagline: 'Chase the one request in a hundred that takes half a second against a 70 ms average.',
+  title: 'Meet your p99 response-time target',
+  tagline: 'Find why one request in a hundred takes half a second when the average is 70 ms.',
   difficulty: 9,
   minutes: 420,
   tags: ['latency', 'percentiles', 'caching', 'rate limiting', 'load shedding'],

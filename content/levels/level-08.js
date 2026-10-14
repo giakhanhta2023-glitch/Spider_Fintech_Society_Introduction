@@ -5,7 +5,7 @@ FQ.registerLevel({
   id: 8,
   codename: 'race',
   title: 'Eight requests, one balance, minus $540',
-  tagline: 'Reproduce the race that double-charges a card under load, then make it impossible.',
+  tagline: 'Reproduce the race that charges a card twice when requests collide, then make it impossible.',
   difficulty: 8,
   minutes: 420,
   tags: ['concurrency', 'locking', 'isolation', 'connection pools'],

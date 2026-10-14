@@ -1,4 +1,4 @@
-# Level 10: The processor says one thing, your ledger says another
+# Level 10: When the processor and your ledger disagree
 
 > **reconcile: the job that runs before anybody arrives** · build project · difficulty 8/10
 

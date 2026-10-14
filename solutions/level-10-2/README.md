@@ -1,4 +1,4 @@
-# Level 10.2: Scala, and the job that runs at four in the morning
+# Level 10.2: Scala and the overnight job
 
 > **The same reconciliation, in Scala, agreeing to the cent** · build project · difficulty 7/10
 
