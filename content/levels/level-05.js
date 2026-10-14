@@ -284,8 +284,9 @@ FQ.registerLevel({
          '`import` it without copying anything. In Python you declare one in a file called `pyproject.toml`:' },
     { code: '[project]\nname = "moneykit"\nversion = "0.1.0"\nrequires-python = ">=3.11"\ndependencies = []                 # a money library should need nothing\n\n[project.optional-dependencies]\ndev = ["pytest", "hypothesis", "mypy", "ruff", "pytest-cov"]\n\n[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"', lang: 'toml', label: 'pyproject.toml' },
     { p: 'Then `pip install -e ".[dev]"` installs your own package in **editable** mode: the code stays where it is, your ' +
-         'edits take effect immediately, and `import moneykit` works from any folder. That one command is how almost every ' +
-         'Python repository you will ever join expects to be set up.' },
+         'edits take effect immediately, and `import moneykit` works from any folder. It also installs the five tools ' +
+         'listed under `dev`, which is why that list is there. That one command is how almost every Python repository ' +
+         'you will ever join expects to be set up.' },
     { p: 'The version number is a promise in three parts, called **semantic versioning**:' },
     { table: {
       head: ['What changed', 'Version goes', 'Because'],
@@ -370,10 +371,16 @@ FQ.registerLevel({
           { p: 'Write the `pyproject.toml` from the knowledge section, then install the package into your environment in ' +
                'editable mode:' },
           { code: 'pip install -e ".[dev]"\npython -c "import moneykit; print(moneykit.__file__)"', lang: 'bash' },
+          { p: 'One command, two things installed: your own package, editable, and the five tools the `dev` extra names. ' +
+               '`pytest` runs the tests, `hypothesis` generates the inputs in step 6, `pytest-cov` reports coverage, ' +
+               '`ruff` checks style and `mypy` checks your type hints. Nothing later in this level needs anything ' +
+               'else installed.' },
+          { p: 'Check that all five arrived. If one of them is missing, install it by name:' },
+          { code: 'pytest --version\nruff --version\nmypy --version\npip show hypothesis pytest-cov\n\n# if one of those is not found\npip install pytest pytest-cov hypothesis ruff mypy', lang: 'bash' },
           { tip: 'The `src/` folder is a deliberate habit. It makes it impossible to import your package by accident from the ' +
                  'folder you are standing in, so your tests exercise the installed package exactly as a user would.' }
         ],
-        check: 'import moneykit works from any directory, and the path it prints is inside src/.'
+        check: 'import moneykit works from any directory, the path it prints is inside src/, and pytest, ruff and mypy all answer --version.'
       },
       {
         t: 'The currency table',
