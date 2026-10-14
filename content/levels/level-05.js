@@ -377,6 +377,10 @@ FQ.registerLevel({
                'else installed.' },
           { p: 'Check that all five arrived. If one of them is missing, install it by name:' },
           { code: 'pytest --version\nruff --version\nmypy --version\npip show hypothesis pytest-cov\n\n# if one of those is not found\npip install pytest pytest-cov hypothesis ruff mypy', lang: 'bash' },
+          { warn: "Make the folders first and install second. Nothing under `src/` is importable until the package " +
+                  "is installed, so running `pytest` before that answers `ModuleNotFoundError: No module named 'moneykit'`. " +
+                  "Installing before `src/moneykit/__init__.py` exists fails the other way, with `Unable to determine " +
+                  "which files to ship inside the wheel`: hatchling looked for a package and found none." },
           { tip: 'The `src/` folder is a deliberate habit. It makes it impossible to import your package by accident from the ' +
                  'folder you are standing in, so your tests exercise the installed package exactly as a user would.' }
         ],
@@ -455,6 +459,9 @@ FQ.registerLevel({
         t: 'Types, style, coverage',
         blocks: [
           { code: 'ruff check . --fix\nmypy src/moneykit --strict\npytest -q --cov=moneykit --cov-report=term-missing', lang: 'bash' },
+          { p: "`ruff` and `mypy` are handed a path and read the files there. `pytest` imports the package the way " +
+               "somebody who installed it would, so it is the one that stops at collection with `ModuleNotFoundError: " +
+               "No module named 'moneykit'` when the editable install from step 2 was never run." },
           { p: '`--strict` makes mypy demand a type on everything, which is right for a small library and too strong for a ' +
                'large old codebase. Coverage shows which lines no test ever ran; aim high here precisely because the library ' +
                'is small enough that there is no excuse.' },
