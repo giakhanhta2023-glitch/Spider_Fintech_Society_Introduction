@@ -27,63 +27,70 @@ FQ.registerLevel({
   ],
 
   knowledge: [
-    { h: 'Why the list had to go' },
-    { p: 'Level 4 built a working ledger inside one Python program. It failed three tests that any real system has to pass, ' +
-         'and those three are why databases exist:' },
+    { h: 'Why we need a database' },
+    { p: 'Level 4 built a working ledger inside one Python program. Three things about it would stop a real payment ' +
+         'system, and those three are why databases exist.' },
     { table: {
-      head: ['Problem with the list', 'What a database gives you'],
+      head: ['The problem in level 4', 'How a database answers it'],
       rows: [
-        ['Everything vanished when the program stopped', '**Durability**: once saved, it survives a crash or a power cut'],
-        ['Only one program could use it at a time', '**Concurrency**: many programs read and write at once, safely'],
-        ['Answering "what did Alice spend in March" meant a loop', '**Queries**: you say what you want, the database works out how']
+        ['Everything vanished when the program stopped', '**Durability**: once saved, data survives a crash or a power cut'],
+        ['Only one program could use the data at a time', '**Concurrency**: many programs read and write at once, safely'],
+        ['Finding what Alice spent in March meant a loop', '**Queries**: you describe what you want, the database works out how']
       ]
     }},
-    { p: 'This level uses **Postgres**, the database most payments companies run on. You talk to it in **SQL**, a language ' +
-         'for describing data and asking for it back. Some vocabulary first, because the rest of the level leans on it:' },
+    { p: 'This level uses **Postgres**, the database most payments companies run on. You talk to it in **SQL**, a ' +
+         'language for describing data and asking for it back. Some words first, because the rest of the level leans ' +
+         'on them.' },
     { table: {
       head: ['Word', 'Plain meaning'],
       rows: [
         ['**Table**', 'Like one sheet of a spreadsheet: named columns, one row per record'],
         ['**Column type**', 'What a column may hold: a whole number, text, a moment in time'],
         ['**Schema**', 'The design of all your tables together: columns, types and rules'],
-        ['**Constraint**', 'A rule the database enforces on every row, whoever writes it'],
+        ['**Constraint**', 'A rule the database checks every time a row is written or changed'],
         ['**Index**', 'A separate sorted structure that makes finding certain rows fast'],
-        ['**Query plan**', 'The strategy Postgres chose for answering your question. You can ask to see it']
+        ['**Query plan**', 'The steps Postgres chose to answer your question. You can ask to see them']
       ]
     }},
-    { warn: 'One word now means two things. A **money transaction** is an event like "Alice paid Bob". A **database ' +
-            'transaction** is a group of changes saved together or not at all. In this schema one money transaction is ' +
-            'written inside one database transaction, which is convenient and still worth keeping straight in your head.' },
+    { warn: 'One word now means two things. A **money transaction** is an event, such as Alice paying Bob. A ' +
+            '**database transaction** is a group of changes saved together or not at all. In this schema one money ' +
+            'transaction is written inside one database transaction. The two are related, and they are worth keeping ' +
+            'straight in your head.' },
 
-    { h: 'The schema: three tables' },
-    { p: 'An **account** is somewhere money sits. A **transaction** is one money event. An **entry** is one line of that ' +
-         'event: an account and a signed amount. Alice paying Bob $25.00 is one row in `transactions` and two rows in ' +
-         '`entries`: -2500 and +2500.' },
+    { h: 'The database design: three tables' },
+    { p: 'An **account** is somewhere money sits. A **transaction** is one money event. An **entry** is one line of ' +
+         'that event: an account, and the amount it gains or loses.' },
+    { p: "Alice paying Bob $25.00 is one row in `transactions` and two rows in `entries`. Alice's account loses 2,500 " +
+         "cents and Bob's gains 2,500. Money is held in cents rather than dollars, the same whole minor units level 5 " +
+         "stores, so no decimal arithmetic can go wrong on the way in." },
     { code: 'create table accounts (\n  id             bigserial primary key,\n  name           text        not null unique,\n  kind           text        not null check (kind in (\'customer\', \'revenue\', \'world\')),\n  allow_negative boolean     not null default false,\n  created_at     timestamptz not null default now()\n);\n\ncreate table transactions (\n  id              bigserial primary key,\n  memo            text        not null,\n  idempotency_key text        unique,\n  created_at      timestamptz not null default now()\n);\n\ncreate table entries (\n  id             bigserial primary key,\n  transaction_id bigint      not null references transactions(id),\n  account_id     bigint      not null references accounts(id),\n  amount_minor   bigint      not null check (amount_minor <> 0),\n  created_at     timestamptz not null default now()\n);', lang: 'sql', label: 'migrations/0001_initial_schema.sql' },
     { table: {
-      head: ['Piece of the schema', 'What it does'],
+      head: ['The rule in the schema', 'What it means'],
       rows: [
-        ['`bigserial primary key`', 'Numbers every row automatically. The **primary key** is how you point at one row'],
-        ['`bigint` for money', 'Whole minor units, exactly as level 5 stores them, with room for any real balance'],
+        ['`bigserial primary key`', 'A **primary key**: a unique id that numbers every row and points at exactly one'],
+        ['`bigint` for money', 'Whole minor units, with room for any balance a real system will hold'],
         ['`not null`', 'This column can never be left empty'],
-        ['`references transactions(id)`', 'A **foreign key**: an entry can only point at a transaction that exists'],
-        ['`check (amount_minor <> 0)`', 'Refuses an entry of zero, which is always a bug'],
-        ['`unique` on the idempotency key', 'The retry guard from level 4, now enforced by the database itself'],
+        ['`references transactions(id)`', 'A **foreign key**: a row can only point at a row that exists'],
+        ['`check (amount_minor <> 0)`', 'A **check constraint**: it refuses an entry of zero, which is always a bug'],
+        ['`unique` on the idempotency key', 'That value cannot appear twice, which is what stops a duplicate payment'],
         ['`timestamptz`', 'A moment in time that remembers its time zone. Always this, never plain `timestamp`']
       ]
     }},
-    { warn: 'Notice there is no `balance` column on `accounts`. A balance is the sum of the entries. Store it as well and you ' +
-            'have two answers to one question, which this level comes back to at the end, with the query that keeps them ' +
-            'honest.' },
+    { warn: "There is no `balance` column on `accounts`. A balance is the sum of an account's entries. Store it as " +
+            'well and one fact lives in two places, so the day they disagree your system shows a number that is ' +
+            'wrong. The end of this level stores one anyway, safely, and checks every morning that it still agrees.' },
 
-    { h: 'Constraints are the cheapest tests you will ever write' },
-    { p: 'A constraint is a rule the database enforces itself, so it holds no matter which program writes the row: your API, ' +
-         'a one-off script, a colleague typing SQL at midnight, or a service somebody writes next year. Here is what each one ' +
-         'says when you break it, on a real database:' },
+    { h: 'Constraints are rules the database enforces itself' },
+    { p: 'A constraint is a rule the database checks, rather than a rule your code remembers to check.' },
+    { p: 'That matters because data reaches a table from several directions: your API, a one off script, a colleague ' +
+         'typing SQL at midnight, a service somebody writes next year. You cannot depend on every one of them to ' +
+         'check everything. Here are three mistakes the database refuses by itself, on a real database:' },
     { code: 'insert into entries (transaction_id, account_id, amount_minor) values (1, 1, 0);\nERROR:  new row for relation "entries" violates check constraint "entries_amount_minor_check"\n\ninsert into entries (transaction_id, account_id, amount_minor) values (1, 999999, 500);\nERROR:  insert or update on table "entries" violates foreign key constraint "entries_account_id_fkey"\n\ninsert into transactions (memo, idempotency_key) values (\'a retry\', \'key-1\');\nERROR:  duplicate key value violates unique constraint "transactions_idempotency_key_key"', lang: 'text', label: 'three rules, three refusals' },
-    { p: 'The third one is worth sitting with. In level 4 you stopped a double charge by checking a dictionary before ' +
-         'writing. Here the check and the write are one operation inside the database, so two retries arriving in the same ' +
-         'millisecond cannot both get through. Your code catches the error and returns the original transaction.' },
+    { p: 'The third one needs a word for it. An **idempotency key** is a value the caller sends to name one payment, ' +
+         'so a retry of the same request can be recognised as a retry. In level 4 you stopped a double charge by ' +
+         'checking a dictionary before writing. Here the check and the write are one operation inside the database, ' +
+         'so two retries arriving in the same millisecond cannot both get through. Your code catches the error and ' +
+         'returns the original transaction instead of making a second payment.' },
     { check: {
       q: 'Your API already validates that an amount is not zero before inserting. Why write the `check` constraint as well?',
       a: 'Because your API is one door into the data and a database has many. A migration script, a colleague fixing ' +
@@ -94,9 +101,12 @@ FQ.registerLevel({
     }},
 
     { h: 'One transfer is one database transaction' },
-    { p: 'Both entries must land together. In SQL you open a transaction with `begin`, make your changes, and save them all ' +
-         'at once with `commit`. If anything goes wrong in between, `rollback` throws away everything since `begin`, as if ' +
-         'none of it happened.' },
+    { p: "When money moves between two accounts, both entries have to be saved together. Alice pays Bob $25.00, so " +
+         "Alice's account loses 2,500 cents and Bob's gains 2,500. What happens if the system writes Alice's entry " +
+         "and crashes before it writes Bob's? The ledger is wrong, and nothing in it says so." },
+    { p: 'A database transaction prevents that. You open one with `begin`, make your changes, and save them all at ' +
+         'once with `commit`. If anything goes wrong in between, `rollback` throws away everything since `begin`, as ' +
+         'if none of it had happened.' },
     { code: 'begin;\n  insert into transactions (memo, idempotency_key) values (\'coffee\', \'k-7741\') returning id;\n  insert into entries (transaction_id, account_id, amount_minor) values (7741, 1, -2500);\n  insert into entries (transaction_id, account_id, amount_minor) values (7741, 2,  2500);\ncommit;', lang: 'sql' },
     { p: 'That all or nothing guarantee is called **atomicity**, the A in ACID:' },
     { table: {
@@ -108,57 +118,82 @@ FQ.registerLevel({
         ['**D**urability', 'Once saved, it stays saved', 'A power cut a second later does not undo it']
       ]
     }},
-    { p: 'Isolation is the hardest of the four, and it gets a whole level of its own: level 8, where you will reproduce the ' +
-         'failure it exists to prevent.' },
+    { p: 'Isolation is the hardest of the four, and it gets a whole level of its own: level 8, where you will ' +
+         'reproduce the failure it exists to prevent.' },
 
-    { h: 'Making the balance rule impossible to break' },
-    { p: 'The rule that matters is that **the entries of one transaction sum to zero**. A `check` constraint cannot express ' +
-         'it, because a check only ever sees one row and this is a statement about a group of rows. A **trigger** can: a ' +
-         'small function the database runs automatically when a row changes.' },
+    { h: 'Making an unbalanced transfer impossible to record' },
+    { p: 'The rule that matters in a double entry ledger is that **the entries of one transaction sum to zero**. ' +
+         'Alice loses 2,500 and Bob gains 2,500, so the total of that transfer is nothing.' },
+    { p: 'A `check` constraint cannot say that, because a check only ever sees one row and this is a statement about ' +
+         'several rows together. Postgres has another tool for it: a **trigger**, a function the database runs by ' +
+         'itself whenever something happens, such as an entry being inserted.' },
     { code: 'create or replace function entries_balance() returns trigger language plpgsql as $$\nbegin\n  if (select sum(amount_minor) from entries where transaction_id = new.transaction_id) <> 0 then\n    raise exception \'transaction % does not balance\', new.transaction_id;\n  end if;\n  return null;\nend $$;\n\ncreate constraint trigger entries_must_balance\n  after insert on entries\n  deferrable initially deferred        -- check at commit, not after each row\n  for each row execute function entries_balance();', lang: 'sql', label: 'migrations/0002_balance_trigger.sql' },
-    { p: 'The `deferrable initially deferred` line is what makes it work. Think about the moment after the first entry is ' +
-         'inserted: -2500 is there and +2500 is not yet, so the transaction is unbalanced on purpose, briefly. Checked then, ' +
-         'every transfer would fail. **Deferred** means "wait until commit, when every entry is in".' },
-    { p: 'Here is the trigger doing its job on the database this level was written against, with a deliberately unbalanced ' +
-         'transfer of -2500 against +2400:' },
+    { p: 'The `deferrable initially deferred` line is what makes it work, because it tells Postgres to check at ' +
+         'commit rather than after every row. Think about the moment after the first entry is inserted: -2500 is ' +
+         'there and +2500 is not yet. The transaction is unbalanced on purpose, briefly, because the work is still ' +
+         'going on. Checked at that moment, every transfer in the system would be refused.' },
+    { p: 'Now a transfer that really is wrong, -2500 against +2400, on the database this level was written against. ' +
+         'The entries sum to -100, so the database refuses the whole thing at commit:' },
     { code: 'ERROR:  transaction 200002 does not balance\n\n-- and afterwards:\nselect count(*) from transactions where idempotency_key = \'key-bad-1\';   -- 0\nselect count(*) from entries;                                            -- unchanged\nselect sum(amount_minor) from entries;                                   -- 0', lang: 'text' },
-    { p: 'Nothing survived the failure: no transaction row, no entry, and the ledger as a whole still sums to exactly zero. ' +
-         'That is atomicity and the trigger working together, and it is what an auditor actually asks about. Not "is your ' +
-         'code careful", but "could this system record money going missing".' },
-    { money: 'This is the difference between a candidate who says "we use double entry" and one who can show the trigger and ' +
-             'the error message. Very few people have written a deferred constraint, and describing one places you above ' +
-             'most of the pile immediately.' },
+    { p: 'Nothing survived the failure: no transaction row, no entry, and the ledger as a whole still sums to exactly ' +
+         'zero. Atomicity and one database rule did that between them, without a line of application code.' },
+    { h4: 'Why this matters in fintech' },
+    { money: 'There is a difference between saying your system uses double entry and showing how it is enforced. ' +
+             'Being able to explain this trigger, why it waits until commit, and what is left behind when a transfer ' +
+             'fails is what an auditor asks about. Very few candidates have ever written one.' },
 
-    { h: 'EXPLAIN: asking Postgres how it plans to answer' },
-    { p: 'The database decides how to run your query, and you can ask what it decided. `EXPLAIN ANALYZE` runs the query and ' +
-         'reports the plan with real timings. Everything below was measured on 400,002 entries across 2,000 accounts, about ' +
-         '26 MB of data, on a small cloud database.' },
-    { p: 'The most important query in a ledger is one account\'s balance:' },
+    { h: 'EXPLAIN: asking Postgres how it runs a query' },
+    { p: 'When you ask a database a question, Postgres decides how to find the answer. `EXPLAIN ANALYZE` runs the ' +
+         'query and reports the plan it chose, with the time each step really took. Every measurement below came from ' +
+         'one database:' },
+    { ul: [
+      '400,002 entries.',
+      '2,000 accounts.',
+      'About 26 MB of data.',
+      'A small cloud database.'
+    ]},
+    { p: "The most important query in a ledger is one account's balance. Postgres has to find that account's entries " +
+         "and add their amounts together:" },
     { code: 'explain (analyze, buffers)\nselect coalesce(sum(amount_minor), 0) from entries where account_id = 1337;', lang: 'sql' },
+    { h4: 'Finding a balance with no index' },
     { code: 'Finalize Aggregate (actual rows=1.00 loops=1)\n  Buffers: shared hit=3334\n  ->  Gather (actual rows=3.00 loops=1)\n        Workers Planned: 2\n        Workers Launched: 2\n        ->  Partial Aggregate (actual rows=1.00 loops=3)\n              ->  Parallel Seq Scan on entries (actual rows=66.67 loops=3)\n                    Filter: (account_id = 1337)\n                    Rows Removed by Filter: 133267\nExecution Time: 30.917 ms', lang: 'text', label: 'no index: 30.917 ms' },
     { p: 'Read it from the bottom up, because that is the order the work happens in:' },
     { ul: [
-      '**Seq Scan** means Postgres read every row of the table. It had no faster option.',
+      '**Seq Scan** means Postgres read through the whole table rather than jumping to the rows it wanted. It had no faster option.',
       '**Rows Removed by Filter: 133267** is the waste: each of three workers looked at about 133,000 rows to find about 67 useful ones.',
       '**Buffers: shared hit=3334** is how many 8 kilobyte pages it touched, about 26 MB. Buffers are the honest measure of work, because they do not change with how busy the machine is.',
-      '**Workers Launched: 2** means it split the scan across three processes. Postgres reaching for parallel workers on a small query is usually a sign that an index is missing.'
+      '**Workers Launched: 2** means Postgres split the scan across three processes. Reaching for parallel workers on a query this small is usually a sign that an index is missing.'
     ]},
+    { p: 'The shape of the problem is there in the numbers: a great deal of reading to find a handful of rows.' },
 
-    { h: 'The index, and what it is worth' },
-    { p: 'An **index** is a second structure holding the values of one or more columns in sorted order, with pointers back ' +
-         'to the rows. Postgres uses a **B-tree**: a shape that finds any value in a handful of steps rather than by reading ' +
-         'everything, the way a book index sends you to page 214 without your reading the book.' },
+    { h: 'Adding an index, and measuring what it is worth' },
+    { p: 'An **index** is a second structure holding the values of one or more columns in sorted order, with pointers ' +
+         'back to the rows. Postgres uses a **B-tree**, which finds any value in a handful of steps instead of by ' +
+         'reading everything, the way the index at the back of a book sends you to page 214 without your reading the ' +
+         'book.' },
     { code: 'create index entries_account_idx on entries (account_id);', lang: 'sql' },
     { code: 'Aggregate (actual rows=1.00 loops=1)\n  Buffers: shared hit=203 read=3\n  ->  Bitmap Heap Scan on entries (actual rows=200.00 loops=1)\n        Recheck Cond: (account_id = 1337)\n        Heap Blocks: exact=200\n        ->  Bitmap Index Scan on entries_account_idx (actual rows=200.00 loops=1)\n              Index Cond: (account_id = 1337)\nExecution Time: 0.375 ms', lang: 'text', label: 'with an index: 0.375 ms' },
-    { p: 'The same answer, from 3,334 buffers to 206, and from 30.917 ms to 0.375 ms: about **82 times faster**. The plan now ' +
-         'names the index, and "Rows Removed by Filter" is gone, because it no longer reads rows it does not want.' },
-    { p: 'You can go further. That index finds the rows, and Postgres still visits the table to read the amount. An index ' +
-         'that **includes** the amount carries everything the query needs:' },
+    { p: 'The same answer, from 3,334 buffers to 206 and from 30.917 ms to 0.375 ms: about **82 times faster**. The ' +
+         'plan now names the index, and "Rows Removed by Filter" is gone, because Postgres no longer reads rows it ' +
+         'does not want.' },
+    { h4: 'Making the same query faster still' },
+    { p: 'That index finds the rows, and Postgres still visits the table to read each amount. An index that ' +
+         '**includes** the amount carries everything this query needs, which is called a **covering index**:' },
     { code: 'create index entries_account_amount_idx on entries (account_id) include (amount_minor);', lang: 'sql' },
     { code: 'Aggregate (actual rows=1.00 loops=1)\n  Buffers: shared hit=2 read=4\n  ->  Index Only Scan using entries_account_amount_idx on entries (actual rows=200.00 loops=1)\n        Index Cond: (account_id = 1337)\n        Heap Fetches: 0\nExecution Time: 0.106 ms', lang: 'text', label: 'covering index: 0.106 ms' },
-    { p: '**Index Only Scan** with **Heap Fetches: 0** means the table was never touched: six buffers instead of 3,334, and ' +
-         '0.106 ms instead of 30.917, which is **291 times faster** than where you started.' },
-    { p: 'Indexes are not free, and the cost side is the half an interviewer actually wants to hear:' },
+    { p: '**Index Only Scan** with **Heap Fetches: 0** means the table was never touched at all: six buffers instead ' +
+         'of 3,334. Three runs of one question:' },
+    { table: {
+      head: ['What the database had to work with', 'Execution time'],
+      rows: [
+        ['No index', '30.917 ms'],
+        ['An index on `account_id`', '0.375 ms'],
+        ['A covering index on `account_id` carrying the amount', '0.106 ms']
+      ]
+    }},
+    { p: 'The covering index answers about **291 times faster** than where you started.' },
+    { h4: 'Indexes cost something as well' },
+    { p: 'Adding more of them is not always better, and the cost side is the half an interviewer actually wants to hear:' },
     { table: {
       head: ['Object', 'Size on disk'],
       rows: [
@@ -168,9 +203,9 @@ FQ.registerLevel({
         ['`entries_account_amount_idx`, the covering one', '13 MB']
       ]
     }},
-    { p: 'Every index has to be updated on every insert, so writes get slower as you add them, and each one takes disk and ' +
-         'memory. The covering index here is half the size of the table. The rule: index what you filter and join on, ' +
-         'measure before and after, and delete indexes that no query uses.' },
+    { p: 'Every index has to be updated on every insert, so writes get slower as you add them, and each one takes ' +
+         'disk and memory. The covering index here is half the size of the table. The rule: index what you filter and ' +
+         'join on, measure before and after, and delete indexes that no query uses.' },
     { check: {
       q: 'A colleague adds six indexes to `entries` "to be safe", covering every column. Name two things that get worse, and ' +
          'say how you would decide which to keep.',
@@ -181,19 +216,20 @@ FQ.registerLevel({
          'ones still at zero after a representative week, and check the plans of your top queries before and after.'
     }},
 
-    { h: 'The unindexed foreign key that made writes quadratic' },
-    { p: 'This section is a bug that happened while writing this level, on the same database, and it is the most useful part ' +
-         'here because it is exactly how this goes wrong in a real system.' },
-    { p: 'With the balance trigger in place, an insert of 20,000 entries was started. It never finished. Nothing in the ' +
-         'schema looked wrong, and smaller inserts had been instant.' },
-    { p: 'The cause was in the trigger, which runs this query once for every row inserted:' },
+    { h: 'The missing index that made an insert never finish' },
+    { p: 'This section is a bug that happened while this level was being written, on the same database, and it is the ' +
+         'most useful part here because it is how the problem actually arrives: the schema looks correct and the ' +
+         'system is slow anyway.' },
+    { p: 'With the balance trigger in place, an insert of 20,000 entries was started. It never finished. Nothing in ' +
+         'the schema looked wrong, and smaller inserts had been instant.' },
+    { p: 'The cause was inside the trigger, which runs this query once for every row inserted:' },
     { code: 'select sum(amount_minor) from entries where transaction_id = 200003;', lang: 'sql' },
-    { p: 'And `transaction_id` had no index. Postgres **automatically indexes the primary key**, which is the `transactions` ' +
-         'side, and does **not** index the referencing column, which is the `entries` side. So the trigger\'s query was a ' +
-         'full scan of 400,000 rows, measured at:' },
+    { p: 'And `transaction_id` had no index. Postgres **indexes a primary key automatically**, which covers the ' +
+         '`transactions` side, and does **not** index the column that points at it, which is the `entries` side. So ' +
+         'each trigger check read about 400,000 rows:' },
     { code: 'Parallel Seq Scan on entries\n  Filter: (transaction_id = 200003)\n  Rows Removed by Filter: 133666\nExecution Time: 41.697 ms', lang: 'text', label: 'once per inserted row' },
-    { p: 'Twenty thousand rows times 41.697 ms is about **fourteen minutes** of trigger work for one insert. The fix is one ' +
-         'line, and the same query then costs:' },
+    { p: 'Twenty thousand rows at 41.697 ms each is about **fourteen minutes** of trigger work inside one insert. The ' +
+         'fix is one line, and the same query then costs:' },
     { code: 'create index entries_txn_idx on entries (transaction_id);', lang: 'sql', label: 'migrations/0003_index_entries_transaction_id.sql' },
     { code: 'Index Scan using entries_txn_idx on entries (actual rows=4.00 loops=1)\n  Index Cond: (transaction_id = 200003)\nExecution Time: 0.112 ms', lang: 'text', label: 'after the index: 372 times faster' },
     { warn: 'Index the referencing side of every foreign key you look up or cascade through. Postgres does not do it for you, ' +
@@ -210,26 +246,30 @@ FQ.registerLevel({
     }},
 
     { h: 'The balance you show, and the balance that is true' },
-    { p: 'Summing entries is correct, and gets slower as an account grows. At some size you keep a copy of the balance on ' +
-         'the account row. From that moment there are two numbers that must agree, and something has to check:' },
+    { p: "Adding up an account's entries gives the right answer, and it gets slower as the account collects more of " +
+         "them. At some size a payment system keeps a copy of the balance on the account row, so reading it is one " +
+         "cheap lookup. From that moment there are two numbers that have to agree: the one stored on the account, and " +
+         "the one you get by adding the entries up." },
     { code: 'alter table accounts add column balance_minor bigint not null default 0;\n\n-- keep it current inside the same transaction as the entry\ncreate or replace function apply_entry() returns trigger language plpgsql as $$\nbegin\n  update accounts set balance_minor = balance_minor + new.amount_minor\n   where id = new.account_id;\n  return new;\nend $$;\n\ncreate trigger entries_apply after insert on entries\n  for each row execute function apply_entry();', lang: 'sql', label: 'migrations/0004_cached_balance.sql' },
-    { p: 'Because the trigger runs inside the same database transaction as the entry, the two are saved together or not at ' +
-         'all. That removes most ways for them to drift, and not all, so a job runs every morning and should print nothing:' },
+    { p: 'Because the trigger runs inside the same database transaction as the entry, the two are saved together or ' +
+         'neither is. That removes most of the ways they can drift apart, and not all of them, so a job runs every ' +
+         'morning and should print nothing:' },
     { code: 'select a.id, a.name, a.balance_minor, coalesce(sum(e.amount_minor), 0) as from_entries\n  from accounts a\n  left join entries e on e.account_id = a.id\n group by a.id\nhaving a.balance_minor <> coalesce(sum(e.amount_minor), 0);', lang: 'sql', label: 'the query that should return no rows' },
-    { p: 'Level 8 shows you how those two numbers drift apart under concurrent writers, which is the point where this stops ' +
-         'being a tidiness exercise.' },
+    { p: 'Level 8 shows how two writers arriving at the same moment can still pull those two numbers apart, which is ' +
+         'where keeping a stored balance honest stops being a tidiness exercise.' },
 
-    { h: 'Migrations: changing a schema you cannot stop' },
-    { p: 'This schema will change: a new column, a new index, a new table. In a running system you cannot simply edit it, ' +
-         'because other people\'s code is using it right now. So every change is written as a **migration**: a small, ' +
-         'numbered, forward-only file, applied once and never edited afterwards.' },
+    { h: 'Migrations: changing a database that is already running' },
+    { p: "A schema does not stay still: a new column, a new index, a new table. In a running system you cannot simply " +
+         "change it, because other people's code is reading it right now." },
+    { p: 'So every change is written as a **migration**: a small numbered file holding one change, applied in order, ' +
+         'and never edited once it has run anywhere.' },
     { code: 'migrations/\n  0001_initial_schema.sql\n  0002_balance_trigger.sql\n  0003_index_entries_transaction_id.sql\n  0004_cached_balance.sql', lang: 'text' },
     { ol: [
-      '**Never edit a migration that has run anywhere.** Somebody else\'s database already applied the old version and will never see your edit. Write another migration.',
+      "**Never edit a migration that has run anywhere.** Somebody else's database already applied the old version and will never see your edit. Write another migration.",
       '**Make it safe to run twice**, with `create index if not exists` and `add column if not exists`. Deploys get retried.',
       '**Separate adding from removing.** Adding a column or an index is safe while old code runs. Dropping or renaming one breaks it, so that goes in a later release once nothing uses the old name. This is **expand and contract**.',
       '**Build indexes without blocking**: `create index concurrently` takes longer and does not lock out writers. On a busy payments table the plain form can stop every payment while it runs.',
-      '**Set a lock timeout.** `set lock_timeout = \'3s\'` makes a blocked migration fail quickly instead of queueing every query in the system behind it.'
+      "**Set a lock timeout.** `set lock_timeout = '3s'` makes a blocked migration fail quickly instead of queueing every query in the system behind it."
     ]},
     { check: {
       q: 'Your migration adds a `not null` column with a default to a table of forty million rows, and the deploy times out ' +
