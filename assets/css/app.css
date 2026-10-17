@@ -1403,7 +1403,9 @@ table.board td .figure, table.board td .mono-s { white-space: nowrap; }
    ========================================================================== */
 .req {
   display: grid;
-  grid-template-columns: 2.2rem minmax(0, 1fr);
+  /* auto, not a fixed track: the box sizes its own column, so a box that
+     ever grows pushes the text across instead of sitting on top of it. */
+  grid-template-columns: auto minmax(0, 1fr);
   column-gap: 14px;
   width: 100%;
   text-align: left;
@@ -2089,9 +2091,12 @@ body.is-gate::before { display: none; }
 /* Every one of these was carrying an outer shell and an inner core. They get
    a single border and a single padding, and .hero-session gets neither, since
    its only job is to hold the session panel: a box around a box is exactly
-   the bug in the screenshot. */
+   the bug in the screenshot.
+
+   .req-box is deliberately not on this list. It is a 15px checkbox, and card
+   padding turned it into a 57px square that covered the requirement it
+   ticks. */
 .panel,
-.req-box,
 .tutor-panel,
 .session,
 .daily,
